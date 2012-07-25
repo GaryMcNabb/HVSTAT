@@ -1,0 +1,18 @@
+{
+   "content_scripts": [ {
+      "css": [ "jqueryui.css" ],
+      "js": [ "jquery.min.js", "jquery-ui.min.js", "HV_STAT.user.js" ],
+      "matches": [ "http://hentaiverse.org/*" ]
+   } ],
+   "description": "Collects data, analyzes statistics, and enhances the interface of the HentaiVerse",
+   "icons": {
+      "128": "128.png",
+      "16": "16.png",
+      "48": "48.png"
+   },
+   "key": "MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCrpoBnD1yB/vbv5wTnKUAF1xiS+V61ZfBDEDipFtJgcydE4kea6JvPyreJNJ+XPXItpYsCwNG6/aY/OxURXfa8ZZlR0PtP9N9m3zlS7SL2m+jM3k2J4gi4vDNJ8AkAHKvAxneOmQWu+Y1tl5a0S+8Gasuc5b1z7f1+IkwEEEsKGQIDAQAB",
+   "manifest_version": 2,
+   "name": "HV Statistics, Tracking, and Analysis Tool (Chrome Edition)",
+   "version": "5.3.3.3",
+   "web_accessible_resources": [ "channeling.png", "healthpot.png", "manapot.png", "spiritpot.png" ]
+}
