@@ -18,12 +18,8 @@ regex.test(string) is faster than string.match(regex).
 
 Release Info
 ------------
-- For Chrome, name the crx "HVS_CHROME.crx"
-- For Firefox, name main.js "HVS_FIREFOX.user.js"
-
-The zip containing the release should look like this:
-- HVS_CHROME.crx
-- HVS_FIREFOX.user.js
+- For Chrome, name the crx "HVS_CHROME_[VERSION].crx"
+- For Firefox, name main.js "HVS_FIREFOX_[VERSION].user.js"
 
 Firefox users DON'T need jquery.min.js, jqueryui.css or jquery-ui.min.js.
 
