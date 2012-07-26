@@ -4,14 +4,14 @@
 // @description      Collects data, analyzes statistics, and enhances the interface of the HentaiVerse
 // @include          http://hentaiverse.org/*
 // @author           Various (http://forums.e-hentai.org/index.php?showtopic=50962)
-// @version          5.4.0
+// @version          5.4.0.1
 // @require          https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js
 // @require          https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.21/jquery-ui.min.js
 // @resource         jQueryUICSS http://www.starfleetplatoon.com/~cmal/HVSTAT/jqueryui.css
 // ==/UserScript==
 
 var millisecondsAll = TimeCounter(1);
-VERSION = "5.4.0";
+VERSION = "5.4.0.1";
 SAVE_STATS = true;
 MAX_MID = 33;
 SELF_EFF_TOP = 34;
@@ -217,8 +217,7 @@ function displayPowerupBox() {
 	c.setAttribute("style", "position:absolute;top:7px;right:5px;background-color:#EFEEDC;width:30px;height:32px;border-style:double;border-width:2px;border-color:#555555;");
 	var e = document.getElementById("ikey_p");
 	if (e == null) c.innerHTML = "<span style='font-size:16px;font-weight:bold;font-family:arial,helvetica,sans-serif;text-align:center;line-height:32px;cursor:default'>P</span>";
-	else
-	{
+	else {
 		var b = e.getAttribute("onmouseover").match(/set_infopane_item\('.+?'/img)[0].substring(18);
 		c.setAttribute("onmouseover", e.getAttribute("onmouseover"));
 		c.setAttribute("onmouseout", e.getAttribute("onmouseout"));
@@ -237,8 +236,8 @@ function showMonsterStats() {
 	$("#monsterpane > div").each(function (n) {
 		var u = $(this);
 		if (u === undefined || u.height() >= 100) return;
-		var q = _round.monsters[_round.monsters.length - 1 - n];
-		if (q === undefined) return;
+		var monInfo = _round.monsters[_round.monsters.length - 1 - n];
+		if (monInfo === undefined) return;
 		var k = u.children().eq(1).children().eq(0);
 		var s = k.children().length > 1;
 		var e = u.children().eq(2).children().eq(0);
@@ -247,7 +246,7 @@ function showMonsterStats() {
 		var m = e.html().match(/bardead/i);
 		if ((_settings.isShowMonsterHP || _settings.isShowMonsterHPPercent || _settings.isShowStatsPopup) && !m) {
 			var t31 = TimeCounter(1);
-			var l = q.maxHp;
+			var l = monInfo.maxHp;
 			var o = 0;
 			var g = "";
 			var b = e.children().eq(0).children("img").eq(1).width() / e.children().eq(0).children("img").eq(0).width();
@@ -282,15 +281,15 @@ function showMonsterStats() {
 		if (_settings.isShowStatsPopup) {
 			var t45 = TimeCounter(1);
 			o = Math.floor(b * l);
-			q.currHp = o;
-			q.currmp = v;
+			monInfo.currHp = o;
+			monInfo.currmp = v;
 			_round.save();
 			_ltc.monsterpopup[1] += TimeCounter(0, t45);
 		}
 		var t33 = TimeCounter(1);
-		if (_settings.isShowMonsterElements && !m && (q.id < 1000 || _settings.isShowElemHvstatStyle)) {
+		if (_settings.isShowMonsterElements && !m && (monInfo.id < 1000 || _settings.isShowElemHvstatStyle)) {
 			var t;
-			getMonsterElementsById(a, q.id);
+			getMonsterElementsById(a, monInfo.id);
 			var d = a.majWeak === "-" ? "" : "[<span style='color:#005826'>" + a.majWeak + "</span>"
 				+ a.minWeak === "-" ? "" : ";<span style='color:#3CB878'>" + a.minWeak + "</span>"
 				+ a.resist === "-" ? "" : ";<span style='color:red'>" + a.resist + "</span>"
@@ -315,36 +314,36 @@ function showMonsterStats() {
 				var mattack = "";
 				var allm = 0;
 				var allm1 = 0;
-				mclass = q.mclass;
+				mclass = monInfo.mclass;
 				allm += 2;
 				if (_settings.isShowPLHvstatStyle) {
-					mpl = q.mpl;
+					mpl = monInfo.mpl;
 					if (mpl !== 0) allm += 2;
 				}
 				if (_settings.isShowWeakHvstatStyle) {
-					mweak = MElemNum(q.mweak, 1);
+					mweak = MElemNum(monInfo.mweak, 1);
 					allm += 2;
 				}
 				if (_settings.isShowResHvstatStyle) {
-					mresist = MElemNum(q.mresist, 1);
-					mimperv = MElemNum(q.mimperv, 1);
+					mresist = MElemNum(monInfo.mresist, 1);
+					mimperv = MElemNum(monInfo.mimperv, 1);
 					allm += _settings.isShowWeakHvstatStyle ? 2 : 3;
 				}
 				if (_settings.isShowAttackHvstatStyle) {
-					if (q.mskillspell !== undefined) {
-						var sk = String(q.mskillspell);
+					if (monInfo.mskillspell !== undefined) {
+						var sk = String(monInfo.mskillspell);
 						if (sk.length === 1 || sk.match("9")) {
-							if (q.mskillspell < 3 || sk.match("9")) {
-								mskilltype = MElemNum(q.mskilltype, 1);
-								mskillspell = MElemNum(q.mskillspell, 1);
+							if (monInfo.mskillspell < 3 || sk.match("9")) {
+								mskilltype = MElemNum(monInfo.mskilltype, 1);
+								mskillspell = MElemNum(monInfo.mskillspell, 1);
 							} else {
-								mspirittype = MElemNum(q.mskilltype, 1);
-								mspiritsksp = MElemNum(q.mskillspell, 1);
+								mspirittype = MElemNum(monInfo.mskilltype, 1);
+								mspiritsksp = MElemNum(monInfo.mskillspell, 1);
 								allm -= 7;
 							}
 						} else {
 							var mskillspellarray = sk.split("0");
-							var mskilltypearray = String(MElemNum(q.mskilltype, 1)).split(", ");
+							var mskilltypearray = String(MElemNum(monInfo.mskilltype, 1)).split(", ");
 							var sk34 = sk.replace("0","").search(/(3|4)/);
 							var other1 = 0;
 							var other2 = 0;
@@ -426,7 +425,7 @@ function showMonsterStats() {
 							}
 						}
 					}
-					mattack = MElemNum(q.mattack, 1);
+					mattack = MElemNum(monInfo.mattack, 1);
 					allm += 4;
 				}
 				if (mpl === undefined || mpl === null) {
@@ -636,7 +635,7 @@ function showMonsterStats() {
 				if (allm1 > maxchar) {
 					mweak = mweak.replace("Fi", "F").replace("Co", "C").replace("El", "E").replace("Wi", "W").replace("Ho", "H").replace("Da", "D").replace("So", "S").replace("Eem", "Elem");
 				}
-				if (mclass !== 0) {
+				if (mclass !== "0") {
 					d = "";
 					if (_settings.isShowClassHvstatStyle){
 						d = "{<span style='color:blue'>" + mclass;
@@ -664,7 +663,7 @@ function showMonsterStats() {
 						d += mspirittype == "" ? "" : "-<span style='color:red'>" + mspirittype + "</span>";
 						d += ")";
 					}
-						} else d = "[<span style='color:blue;font-weight:bold'>NEW</span>]";
+				} else d = "[<span style='color:blue;font-weight:bold'>NEW</span>]";
 				loadLTCObject();
 				_ltc.isShowElemHvstatStyle[0]++;
 				_ltc.isShowElemHvstatStyle[1] += TimeCounter(0, milliseconds2);
@@ -5275,7 +5274,7 @@ function MonsterPopup() {
 			c.style.width = "270px";
 			c.style.height = "220px";
 			var fi = "<table></table>";
-			if (r.data.cl !== undefined) {
+			if (r.data.cl !== undefined && r.data.cl !== 0) {
 				fi = '<table class="info_' + r.data.h + '" cellspacing="0" cellpadding="0" style="width:100%">'
 					+ '<tr class="monname"><td colspan="2"><b>' + r.data.na + '</b></td></tr>'
 					+ '<tr><td style="width:27%">Health: </td><td>' + r.data.chp + '/' + r.data.mhp + '</td></tr><tr>'
@@ -5297,9 +5296,7 @@ function MonsterPopup() {
 					+ '<tr><td style="width:27%">Health: </td><td>' + r.data.chp + '/' + r.data.mhp + '</td></tr>'
 					+ '<tr><td style="width:27%">Mana: </td><td>' + r.data.cmp +  '%</td></tr>'
 					+ '<tr><td style="width:27%">Spirit: </td><td>' + r.data.csp + '%</td></tr>'
-					+ '<tr><td style="width:27%">Class:</td><td>' + r.data.cl + '</td></tr>'
-					+ '<tr><td style="width:27%">Last scan:</td><td>' + r.data.scd + '</td></tr>'
-					+ '<tr><td></td><td>' + r.data.scago + ' ago</td></tr></table>';
+					+ '<tr><td style="width:27%">Last scan:</td><td>' + r.data.scd + '</td></tr>';
 			}
 			setTimeoutByledalej2 = setTimeout("document.getElementById('popup_box').innerHTML='" + fi + "'", delay);
 			setTimeoutByledalej3 = setTimeout('document.getElementById("popup_box").style.visibility="visible"', delay);
