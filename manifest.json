@@ -10,7 +10,7 @@
 	},
    "content_scripts": [ {
       "css": [ "jqueryui.css" ],
-      "js": [ "jquery.min.js", "jquery-ui.min.js", "HV_STAT.user.js" ],
+      "js": [ "jquery.min.js", "jquery-ui.min.js", "main.js" ],
       "matches": [ "http://hentaiverse.org/*" ]
    } ]
 }
