@@ -17,7 +17,7 @@ regex.test(string) is faster than string.match(regex).
 Release Info
 ------------
 For Chrome, name the crx "HVS_CHROME.crx"
-For Firefox, name the user.js "HVS_FIREFOX.user.js"
+For Firefox, name main.js "HVS_FIREFOX.user.js"
 
 The zip containing the release should look like this:
 [HVSTAT-5.2.2.zip]
