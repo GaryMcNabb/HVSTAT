@@ -4,14 +4,14 @@
 // @description      Collects data, analyzes statistics, and enhances the interface of the HentaiVerse
 // @include          http://hentaiverse.org/*
 // @author           Various (http://forums.e-hentai.org/index.php?showtopic=50962)
-// @version          5.4.0.1
+// @version          5.4.0.2
 // @require          https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js
 // @require          https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.21/jquery-ui.min.js
 // @resource         jQueryUICSS http://www.starfleetplatoon.com/~cmal/HVSTAT/jqueryui.css
 // ==/UserScript==
 
 var millisecondsAll = TimeCounter(1);
-VERSION = "5.4.0.1";
+VERSION = "5.4.0.2";
 SAVE_STATS = true;
 MAX_MID = 33;
 SELF_EFF_TOP = 34;
@@ -138,7 +138,7 @@ function main(b) {
 			_round.reset();
 		}
 	} else {
-		if (!isBattle() && (_round != null)) _round.reset();
+		if (!isBattle() && (_round !== null)) _round.reset();
 		else if (_settings.isColumnInventory && isItemInventoryPage()) initItemsView();
 		else if (isCharacterPage()) collectCurrentProfsData();
 		else if (isShrinePage() && _settings.isTrackShrine) captureShrine();
@@ -160,7 +160,7 @@ function obscureHVIds() {
 		$(a).css("visibility", "hidden");
 	_ltc.obscureHVIds[1] -= TimeCounter(0, t20);
 	var t21 = TimeCounter(1);
-	if (_settings.isChangePageTitle && (document.title == "The HentaiVerse"))
+	if (_settings.isChangePageTitle && (document.title === "The HentaiVerse"))
 		document.title = _settings.customPageTitle
 	_ltc.hidetitle[1] -= TimeCounter(0, t21);
 }
@@ -197,7 +197,7 @@ function highlightLogText() {
 function addBattleLogDividers() {
 	var a = -1;
 	$("#togpane_log td:first-child").each(function () {
-		if ($(this).html() != a) {
+		if ($(this).html() !== a) {
 			if (a >= 0) $(this).parent("tr").before("<tr><td colspan='3'><hr style='border:0; height:1px; background-color:#666666; color:#666666' /></td></tr>")
 			a = $(this).html();
 		}
@@ -216,7 +216,7 @@ function displayPowerupBox() {
 	var c = document.createElement("div");
 	c.setAttribute("style", "position:absolute;top:7px;right:5px;background-color:#EFEEDC;width:30px;height:32px;border-style:double;border-width:2px;border-color:#555555;");
 	var e = document.getElementById("ikey_p");
-	if (e == null) c.innerHTML = "<span style='font-size:16px;font-weight:bold;font-family:arial,helvetica,sans-serif;text-align:center;line-height:32px;cursor:default'>P</span>";
+	if (e === null) c.innerHTML = "<span style='font-size:16px;font-weight:bold;font-family:arial,helvetica,sans-serif;text-align:center;line-height:32px;cursor:default'>P</span>";
 	else {
 		var b = e.getAttribute("onmouseover").match(/set_infopane_item\('.+?'/img)[0].substring(18);
 		c.setAttribute("onmouseover", e.getAttribute("onmouseover"));
@@ -642,25 +642,25 @@ function showMonsterStats() {
 						d += _settings.isShowPLHvstatStyle ? ", " + mpl + "+</span>}" : "</span>}";
 					} else if (_settings.isShowPLHvstatStyle) d = "{<span style='color:blue'>" + mpl + "+</span>}";
 					if (_settings.isShowWeakHvstatStyle) {
-						d += mweak == "0" ? "" : "[<span style='color:#3CB878'>" + mweak + "</span>";
+						d += mweak === "0" ? "" : "[<span style='color:#3CB878'>" + mweak + "</span>";
 						if (!_settings.isShowResHvstatStyle) d += "]";
 					}
 					if (_settings.isShowResHvstatStyle) {
 						if (!_settings.isShowWeakHvstatStyle) d += "[";
-						d += mresist == "-" ? "" : "|<span style='color:#FF3300'>" + mresist + "</span>";
-						d += mimperv == "-" ? "" : "|<b><u><span style='color:#990000'>" + mimperv + "</span></u></b>";
+						d += mresist === "-" ? "" : "|<span style='color:#FF3300'>" + mresist + "</span>";
+						d += mimperv === "-" ? "" : "|<b><u><span style='color:#990000'>" + mimperv + "</span></u></b>";
 						d += "]";
 					}
 					if (_settings.isShowAttackHvstatStyle) {
-						d += mattack == "0" ? "(" : "(<span style='color:black'>" + mattack + "</span>";
-						d += mskillspell == "" ? "" : ";<span style='color:blue'>" + mskillspell + "</span>";
-						d += mskilltype == "" ? "" : "-<span style='color:blue'>" + mskilltype + "</span>";
-						d += mskillspell2 == "" ? "" : "|<span style='color:blue'>" + mskillspell2 + "</span>";
-						d += mskilltype2 == "" ? "" : "-<span style='color:blue'>" + mskilltype2 + "</span>";
-						d += mskillspell3 == "" ? "" : "|<span style='color:blue'>" + mskillspell3 + "</span>";
-						d += mskilltype3 == "" ? "" : "-<span style='color:blue'>" + mskilltype3 + "</span>";
-						d += mspiritsksp == "" ? "" : "|<span style='color:red'>" + mspiritsksp + "</span>";
-						d += mspirittype == "" ? "" : "-<span style='color:red'>" + mspirittype + "</span>";
+						d += mattack === "0" ? "(" : "(<span style='color:black'>" + mattack + "</span>";
+						d += mskillspell === "" ? "" : ";<span style='color:blue'>" + mskillspell + "</span>";
+						d += mskilltype === "" ? "" : "-<span style='color:blue'>" + mskilltype + "</span>";
+						d += mskillspell2 === "" ? "" : "|<span style='color:blue'>" + mskillspell2 + "</span>";
+						d += mskilltype2 === "" ? "" : "-<span style='color:blue'>" + mskilltype2 + "</span>";
+						d += mskillspell3 === "" ? "" : "|<span style='color:blue'>" + mskillspell3 + "</span>";
+						d += mskilltype3 === "" ? "" : "-<span style='color:blue'>" + mskilltype3 + "</span>";
+						d += mspiritsksp === "" ? "" : "|<span style='color:red'>" + mspiritsksp + "</span>";
+						d += mspirittype === "" ? "" : "-<span style='color:red'>" + mspirittype + "</span>";
 						d += ")";
 					}
 				} else d = "[<span style='color:blue;font-weight:bold'>NEW</span>]";
@@ -701,7 +701,7 @@ function createDurationBadge(a) {
 	var g, d;
 	var c, f;
 	d = e.outerHTML().match(/\s\d+?\)/);
-	if (d != null) g = d[0].replace(")", "").replace(" ", "");
+	if (d !== null) g = d[0].replace(")", "").replace(" ", "");
 	if (g >= 0) {
 		var h = e.parent().parent().parent().attr("id") === "monsterpane";
 		c = h ? MON_EFF_TOP : SELF_EFF_TOP;
@@ -1786,7 +1786,7 @@ function getReportOverviewHtml() {
 			z = r.toLocaleDateString() + " " + r.toLocaleTimeString();
 		}
 		var c;
-		if (_overview.lastHourlyTime == 0) c = "Never";
+		if (_overview.lastHourlyTime === 0) c = "Never";
 		else {
 			c = new Date();
 			c.setTime(_overview.lastHourlyTime);
@@ -4070,12 +4070,12 @@ function HVCacheBackup(ID) {
 	this.isLoaded = false;
 }
 function loadBackupObject(ID) {
-	if (_backup[ID] != null) return;
+	if (_backup[ID] !== null) return;
 	_backup[ID] = new HVCacheBackup(ID);
 	_backup[ID].load();
 }
 function loadDatabaseObject() {
-	if (_database != null) return;
+	if (_database !== null) return;
 	_database = new HVMonsterDatabase();
 	_database.load();
 }
@@ -4354,7 +4354,7 @@ function MinimalizeDatabaseSize() {
 	loadDatabaseObject();
 	var mid = 0;
 	while (_database.mclass[mid] !== undefined) {
-		_database.mclass[mid] = _database.mclass[mid] == null ? 0 : _database.mclass[mid] = MClassNum(_database.mclass[mid], 0);
+		_database.mclass[mid] = _database.mclass[mid] === null ? 0 : _database.mclass[mid] = MClassNum(_database.mclass[mid], 0);
 		_database.mattack[mid] = MElemNum(_database.mattack[mid], 0);
 		_database.mweak[mid] = MElemNum(_database.mweak[mid], 0);
 		_database.mresist[mid] = MElemNum(_database.mresist[mid], 0);
@@ -4739,8 +4739,8 @@ function AssumeResistances() {
 }
 function TimeCounter(a, b) {
 	var dtm = new Date();
-	if (a == 1) var b = dtm.getTime();
-	else if (a == 0) b = dtm.getTime() - b;
+	if (a === 1) var b = dtm.getTime();
+	else if (a === 0) b = dtm.getTime() - b;
 	return b;
 }
 function HVLoadTimeCounters() {
@@ -4912,7 +4912,7 @@ function Scanbutton() {
 			}
 		}
 		if (_settings.isEnableSkillHotkey) {
-			if (key == 107 || key == 187){
+			if (key === 107 || key === 187){
 				if (window.pressedSkillbySTAT === 0) {
 					if (!window.pressedScanbySTAT) {
 						// open skill menu
