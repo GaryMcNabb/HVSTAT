@@ -290,10 +290,10 @@ function showMonsterStats() {
 		if (_settings.isShowMonsterElements && !m && (monInfo.id < 1000 || _settings.isShowElemHvstatStyle)) {
 			var t;
 			getMonsterElementsById(a, monInfo.id);
-			var d = a.majWeak === "-" ? "" : "[<span style='color:#005826'>" + a.majWeak + "</span>"
-				+ a.minWeak === "-" ? "" : ";<span style='color:#3CB878'>" + a.minWeak + "</span>"
-				+ a.resist === "-" ? "" : ";<span style='color:red'>" + a.resist + "</span>"
-				+ a.imperv === "-" ? "" : ";<span style='color:black'>" + a.imperv + "</span>]";
+			var d = a.majWeak === "-" ? "" : "[<span style='color:#005826'>" + a.majWeak + "</span>";
+				d += a.minWeak === "-" ? "" : ";<span style='color:#3CB878'>" + a.minWeak + "</span>";
+				d += a.resist === "-" ? "" : ";<span style='color:red'>" + a.resist + "</span>";
+				d += a.imperv === "-" ? "" : ";<span style='color:black'>" + a.imperv + "</span>]";
 			if (_settings.isShowElemHvstatStyle) {
 				var milliseconds2 = TimeCounter(1);
 				var kk = k.children().eq(0);
@@ -3096,8 +3096,8 @@ function getRelativeTime(b) {
 	if (c < (48 * 60 * 60)) return "1 day ago";
 	return (parseInt(c / 86400)).toString() + " days ago";
 }
-function browserIsChrome(){ return navigator.userAgent.match("Chrome"); }
-if (browserIsChrome()) {
+function browserIsChrome(){ return /Chrome/i.test(navigator.userAgent); }
+if (browserIsChrome()) {	//=== Clones a few GreaseMonkey functions for Chrome Users.
 	unsafeWindow = window;
 	function GM_addStyle(a) {
 		var b = document.createElement("style");
@@ -4350,50 +4350,6 @@ function StartDatabase() {
 	if (isBattle()) _ltc.isbattle[1] -= TimeCounter(0, sec);
 	_ltc.save();
 }
-function isMonsterlistPage() { return document.$("t3:first").html().match(/Arthropod/i); }
-function CheaterS(x,y) { return (y||window.location.href).indexOf(x) != -1; }
-function CheaterC(x,html) {
-	var tokens = x.match(/^[^#.]+|[#.][^#.]+/g), res = document.createElement(tokens[0]);
-	tokens.shift();
-	tokens.forEach(function(k) {
-		if (k.charAt(0) === '.') res.className += k.substr(1) + ' ';
-		else if (k.charAt(0) === '#') res.id = k.substr(1);
-	});
-	if (html !== null) res.innerHTML = html;
-	return res;
-}
-function registerMonsterClasses(a) {
-	var sec = TimeCounter(1);
-	loadLTCObject();
-	if (a.which !== 1) return;
-	a.preventDefault();
-	loadDatabaseObject();
-	var data = {}, types = {}, k = 1;
-	var start = new Date().valueOf();
-	Array.prototype.slice.call(document.querySelectorAll('body > table'), 0).forEach(function(x) {
-		var rowsN = x.rows.length;
-		for (var i = 1;i !== rowsN; i++) {
-			if (CheaterS('grey', x.rows[i].cssText)) continue;
-			var mid = x.rows[i].cells[0].textContent;
-			data[mid] = k;
-			_database.mclass[mid] = data[mid];
-		}
-		types[k] = x.previousElementSibling.textContent;
-		k++;
-	});
-	_database.save();
-	a.target.innerHTML = 'Done.';
-	a.target.removeAttribute('href');
-	a.target.removeEventListener('click',registerMonsterClasses);
-	_ltc.main[1] -= TimeCounter(0, sec);
-	if (isBattle()) _ltc.isbattle[1] -= TimeCounter(0, sec);
-	_ltc.save();
-}
-if (CheaterS('monsterlist')) {
-		var a = document.body.insertBefore(CheaterC('a','Register monsters'),document.body.firstChild);
-		a.href = '#';
-		a.addEventListener('click',registerMonsterClasses);
-}
 function MinimalizeDatabaseSize() {
 	loadDatabaseObject();
 	var mid = 0;
@@ -4617,8 +4573,6 @@ function MClassNum(a, b) {
 	}
 	return a;
 }
-
-//function Popupmonsterlist() window.open( "http://hentaiverse.org/pages/monsterlist.php" );
 function HVCollectData() {
 	this.load = function () { loadFromStorage(this, HV_COLL); };
 	this.save = function () { saveToStorage(this, HV_COLL); };
