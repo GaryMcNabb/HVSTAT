@@ -4,14 +4,15 @@
 // @description      Collects data, analyzes statistics, and enhances the interface of the HentaiVerse
 // @include          http://hentaiverse.org/*
 // @author           Various (http://forums.e-hentai.org/index.php?showtopic=50962)
-// @version          5.4.0.2
+// @version          5.4.1
 // @require          https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js
 // @require          https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.21/jquery-ui.min.js
 // @resource         jQueryUICSS http://www.starfleetplatoon.com/~cmal/HVSTAT/jqueryui.css
 // ==/UserScript==
 
+// === GLOBAL VARIABLES
 var millisecondsAll = TimeCounter(1);
-VERSION = "5.4.0.2";
+VERSION = "5.4.1";
 SAVE_STATS = true;
 MAX_MID = 33;
 SELF_EFF_TOP = 34;
@@ -41,6 +42,10 @@ ARENA = 1;
 GRINDFEST = 2;
 ITEM_WORLD = 3;
 CRYSFEST = 4;
+MCOUNT = 0;
+MNUM = -1;
+DOMLOADED = false;
+HASMS = false;
 _overview = null;
 _stats = null;
 _profs = null;
@@ -61,10 +66,17 @@ _lastEquipName = "";
 _artifacts = 0;
 _lastArtName = "";
 _tokenDrops = [0, 0, 0];
-if (!browserIsChrome() && !cssInserted()) {
-	GM_addStyle(GM_getResourceText("jQueryUICSS"));
-	cssAdded();
-}
+
+// === EMBEDDED IMAGES
+I_NBARGREEN = "data:image/gif;base64,R0lGODlhAQAMAIAAAACmFwAAACwAAAAAAQAMAAACA4SPVgA7";
+I_NBARBLUE = "data:image/gif;base64,R0lGODlhAQAMAIAAAAAWuAAAACwAAAAAAQAMAAACA4SPVgA7";
+I_NBARDEAD = "data:image/gif;base64,R0lGODlheAAMANUAAAQEAwUFBAoKCQwMCxwcGg4ODR8fHREREMPCt9DPxM/Ow39+damon6innqWkm3FwaGVkXX9+d52clJuakpyaj7i2qqqonenn2+bk2NrYzdHPxObk2eXj2I6MguPg0dXSxFVUT1dWUcPBt8LAttnXzdjWzDk4NMfEt0dGQklIRO7r3+3q3unm2pyaknNxap6clfDs3+/r3trXzSsqJ2RiXDs6N399d358dygnJScmJQoKCgkJCQMDAwAAAAAAAAAAACwAAAAAeAAMAAAG/8CYcEgsGo/IpHLJbDqfMdUlg2i8WpOsdsvter/gsHhMLkscIhlmJdwkIrhBAMCr2+/4vH5fP7j+gCk8foB/IXYhLoc8KYV/B3yRkncAOzgRChxCJTc6PZ+goaKjpKWiBRQWqhYfHieoq6oPnwQdHh4fPSCxFbcgpsDBpDo2JUIjOcLKy6ILFp8oHs89zqM0FiCtKD0z2J+9JszipDkjQgwC4+qmFh7QHr897arbnye5Dx4dPSYesz0VTqwbKIDBuXQDE35qt7ACqHYPwn2a4epBtlz9ZvWrp5BZwWPJOg5sV6DDhxkP3YVa4KGChQ4sUWQ08WGfSGblNtnwdHNcu1F7KFOu6kDgHiiKHfqd0NdzmY4bxmJwUABHDp1JWLEmggDpTiJDgxTdgQDBwJ8aWdPyqXRJA4shLEhUuVKmrt27ePN2OZMmBgwogAMLHkxYSRAAOw==";
+I_HVLOGO = "data:image/gif;base64,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";
+I_HEALTHPOT = "data:image/gif;base64,R0lGODlhHgAgAOYAAPbt9ho9IwArCAArAAARAAhGCAgrCBFXERFGETR7NAgRCEaDRmmvacrkyvb/9uTt5BFXCDR7KxFGCBpXERpGEQgrABFXACtpGleVRhpXCE+nNBppABFGACt7ERErCDSMETR7GiuMABpXACt7CBpGCCtpETR7ETRpGkanETR7CCtpCE+MK4OvaafTjHKnT5XKcjR7ACtpAAgRAE+MGkZ7GnLBKytXAE+MEUZ7EU+MAHLBEcHklWCnAHKnK57bRq/bcnKnEZXKK57BT5XBGvb/28HkRnKMEa/TI9PtcuT2lfb2r9vTI/bt2wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACwAAAAAHgAgAAAH/4AzJioZhRsbEBkqiykmHSUrLhggKzMjLgwuLj0zLkJBKDc0H6QzpjNAQDcrP0o/QT89NURESUhFQR89PkeqMx83wagoOTk1SklBRz5BSERKSEdLRSMpNUW4KCY0JiZAoDdArUlAR83PRUfqQSU94UhJRZwzOTpHOjw6SURCQ0FBSoj80KFjSI8UHlwgAdIjCTIf+OwdGeJDiZIeQYA4+wGER6oZHCokeCakRyto6bAVcRgriBCBKFLkCKbigAEELwImmdHQIpKfKocYRBaER4gbKFCokGAARA8UP569WCHkVjp///4lSdILhQYgSpkucKWhBhJX4XQU+elw64+1Rf90hEpqAoGBkbR+oBAy0B7bgLR2HFmbMRyKDggITMjp4FkNHkPS+RgCpMgPh9CCYKPM48aGAgYuPHWxg0i6rTUgCvFpMt7gXp0RK1hAZMeLr0PO/vCBKwkAB0mCrY1chPKNEQgqRKDl4EE0h0UAE/mNJEcMfeaQCKkBJIWEChmE7KsVPR4RB+gBPPtx41jvJK9mkBiQAYhZZOUrMjmPvvFkaEc4RMsLFAwAASrNJOGDQ0I58xsRDzARREVI6HBDD+K1gIAAEsyAglpcrfSPgw9stVAr2OxQEgorQMChh9/cAuJltChRQw03AJRMRevNIIEABwZTGRL+tLWDgsUAwVL/Ribt90JyEJASzkrFRYcMEhlFhsRkK7G31wsBVBDlB6gUUUsqVWF2SxBCAeFDjT8IUVcFFkipj0CQvYZNEDrEGMt957GAgAx1AhPEPj00hM1E+WgGj0Wv+HBWCwEYkMFRN1S0Qw47MBHPLTFctuYR8JQay3clhFOZEiVN95MrMBBFWUGfrLUQBxkkmkNuSrjEBBMrsdoDNEAYkQMPMwFRkDkiiFBERwEmk4SnAPW6GkfB3ICDTB59ZMMQHkWHJS0++MDEDjq04gMQOeAwww0wwJBDKjfMUENRh9r4w68auZJuMtaZQkOxqahygwk35CBECy7c0EIDLWjwQwuJ/hDLCw0qmADCCfVmu20gADs=";
+I_MANAPOT = "data:image/gif;base64,R0lGODlhHgAgAOYAACMRGiMIGkYrRmlPafbT9ox7jGkrcvbT/5V7p0YrYD0aYBEIGq+ewWlPjD0acisaRkYrcntXuCMRRsq47QgAGkYrgysRchEARisaYIx7wZ6M0yMRYNvT9j0jpyMaRhEAYCMRcisacmBPpysag089pxEAexEIRisalSMaYAgARhEIYAgAYGBXuAAATwAARgAAGggIYAgIRhERPQgIGisrafb2/z1GaT1PjCMrRmlyjLjB05Wnnmlyaaeeg1dPPfbt5MGvp9uVeysaGoxyctPBwdvT0/b29gAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACwAAAAAHgAgAAAH/4AQGBImhTIyMSYSiw8YKBsVIiQhFRAeIiwiIg0QIggFNgkONKQQphADAwkVDD8MBQwNOUZGRURABTQNOz2qEDQJwag2AgI5P0UFPTsFREY/RD1BQB4POUC4NhgOGBgDoAkDrUUDPc3PQD3qBRsN4URFQJwQAjw9PD48RUYIQwUFP4ww4MFjSIMHKUQQGdCgCLId+Oz1GLLjx48GBQY4YzDARyoIFF6ceIagQSto6bABcRirAAKBNh4ICCYBhosVGQIWgdDQIpGfKocYRFbAB44ENmxISOEiRAMbDJ5lqIDgVjp///4VKdLLxo0BSpl2cHUjBxFX4XgA+elwK4O1QP94hEqKYYWLkbQY2EAw0B7bgLR09FibMZwNFCteqMhZ41kOH0PS7RgyAAgDh9AKYKPsI4EMFy5APBWhw0i6rTkgIvBpMt7gXp0Rt+hgREeGr0POMtiBq8iBGkWCrY0MhHICD4lH0KrBIZpDIICN/CYiAIA+c0QQ5BiA8IUJBPtqQY9npIb5A88YJDjWu8grCBe8DzCLbHxFAuXNN54MrYdDWhl88EIMqDRTxA4OCeXMb0ZwQEABFRHBQwINgKeBXSlAYINaXK30z4IcbLVQK9joUJINFcTgQoY2fHMLh5fR8kMOOSQAUDIVpQcBUwQGUxkR/rSlw4HFDMBSRibhl0H/YjGQEs5KxUGHDBEZRUbEZCupt1cGJQxYSmW1pFIVZrcUINQAO8jIAAJ1vTCDk/oIBNlr2BTAg4ux0FdeBIm9CUwB+zTQEDYT5aMZPBa9ssNZGpTggglHJVCRDgLoQEA8twBwWZk9wONpLCm8sEE4lf1QknQ/uSIEUZQV9MlaC1FggqAC5PaDSwQQsJKpDUAzgAEC+DDTAAWZs8ACQHTkXzJFXArQratxFEwCCsjk0UcBDOERdFTSssMOBOjAQys7DCCAAhAkIIQQAqSSAAQ5FAXojAzkqpEr4yZTnSkO/JqKKglgkIAACGggQgIaTKDBDQxoICgDsSQgAQYhWPDuBLTVBgIAOw==";
+I_SPIRITPOT = "data:image/gif;base64,R0lGODlhHgAgAOYAACsACFcRI//k9tvTlcq4Rvbkla+MEdOvI6eMK+TBRu3Tcv/tr8GVGv/2255yAIxpEcGVK4xyNNO4cnJPAO2vI6dyEXJPEYxPAMqVT08rAK9yK4xPEREIAGk0CIxPGns0AMGVcmkrAKdPEXs0CGk0EadyT9OnjEYaAGkrCIxPK3s0EYM0EVcaAEYaCGkrEad7aXs0GmkaAEYRACsRCIM0Gv/k21caCGkrGpVXRrh7aSsIAHsrGkYaEUYRCFcaEVcRCHs0KysAABEAAEYICCsICFcREUYREXs0NBEICINGRuTKyv/29u3k5AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACwAAAAAHgAgAAAH/4AeKig2hRkZLTYoiyMqJC4pJTgwKR4dJS8lJRoeJRgQDxs0FqQeph4VFRspEgsSEBIaCA0NBQoJEBYaBAeqHhYbwagPFxcICwUQBwQQCg0LCgcUCR0jCAm4Dyo0KioVoBsVrQUVB83PCQfqEC4a4QoFCZweFwYHBg4GBQ0YDBAQCxpIMGCAgYYRQ0ooqKChADIC+OwdYEBgwQINECo4k1DBQSoPMnQceYZBQyto6bAlcBgLAgaBD0ZcCIaCBxEjIAIW8NDQooKfKhkYRAbBwYQNDx6g6EEEhoYHEp6BSIHhVjp///4VKNDrQYQKSpkmcRUBgQJX4Qwk+Olwq4S1Cf8MhEqqwgiRkbQkPMAw0B7bgLQGHFibMdwDEkaE+Mi55BkCBwzSEWBQIYEEh9AgYKPsYEOGGURuPC0xoEG6rQggYvBpMt7gXp0RA0jSYACIrwzOSiCAq4CAJQWCrY2cgPKGDkZ0AKG1hEk0hwkAN/it4EIIfeYUYEBQYUQPHTYw7KsVPV6DJegFPJOw4VjvAq88/OBgo4JZZOUr1jiPvvFkaAc4RAsIRXDQAirNFECAQ0I581sDTNQAQUUKGLCBBuKZYAQSPXjwgFpcrfSPg0xstVAr2AxQ0gMptMChh9/cAuJltCyAAAIbAJRMRet50AMSBwZTmQL+tDWAgsVUwFL/RibtB0JyLZASzkrFRYeMAhlFpsBkK7G3FwgB6BClBagkUEsqVWF2CwRCVUBAjRJgUJcOJ0ipj0CQvYYNBAbEGMt95+VgRBB1AgPBPho0hM1E+WgGj0WvEHCWCQEQYcNRG1Q0wAUD1BDPLSFctuYB8JQay3cuhFPZAiVN95MrHxBFWUGfrLWQDDYkekFuC7hUQw0rsaoBNBWIcIEDM1VQkDkssJBARwEmU4CnAPW6GkfBbLCCTB59FAMDHkWHJS0EEFDDAAa0QkAFF6zgwQYffHBBKht4gEBRh9oowa8auZJuMtaZQkOxqaiygQobXICBCSVsYIISJkQggQmJShDLCwYoqADDDvVmu20gADs=";
+I_CHANNELING = "data:image/gif;base64,R0lGODlhHgAgAOYAAEYjNBEAESMRIzQjNEY0RgAAERERIzQ0VyMjNEZGVyM0RjRGV09yjHKVryNGV3KvyityjE+v00+VrwAaI3LT7U9yeyuVp0/K03Lt9gARERFPTytychErKyNXV0+vryNGRnLT00+MjIz29jRXV3Kvr6f//4zT0yM0NKft7bj//zRGRk9pabjt7cr//4yvr0ZXV3KMjK/T08rt7Wl7e4OVlae4uMrb20/t23Lt25Xt26f/7YPKuLj/7a/t2yNXRsr/7U+ngzRXRtv/7XKvjCtGNE9pV9Pt22CMaSM0I4yvjEZXRoOeg6e4p7jKuGl7YP//5CsRETQjI0Y0NHtpabi4uKenp4ODg3t7e2lpaVdXV0ZGRjQ0NCMjIxEREQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACwAAAAAHgAgAAAH/4AjHx0VhSEwiEuKS1cziDAhkZIhhR0bFRshOzs5KCw/P0KhNVY1SS4pJSKrIjk4ICAeHpghsCI6OjygPzEvTExNGySqrBivFBYRPpkmOLe5Py0/My9WT1Y0G8SrON2xHhwjITk5IiU6ny0yKytUVjYyHSisIt04Fx4bBh/jziWeLFq4+FDNShMjPnZse3XPw4kCHEJ0u+WJRwsYJ1RkuUIjxokQOlYZA3HjggQOBU54mIgCBQ9dLzhs2aKECJYTK+bVw3ChJLgMH0g405EihS4XTrJgQZKxChYVIVRhwADiwgULHDL4AFGOKA8WMIKc2IJlBhIVTbSc+LBDxNSqEf8sIMjQAcQqXCxmfNiiRYsKK1acEjmBYAEJVxcixJ1b9y6PITL5+tUyZSkSLgIyaIBl1eQJunZFtBxxgoCUmVxOdNFChAuXKAYm1Kp6NWvd0D1kSpGiZcsJAVqyvB4gQMCED7Rr0yUBwtkOAwMAmB6LGXPxLgYMcHggK0IILhkcPICVowIHLgOiuB6wpUvx69gN7PgGgUsXB7Bw5JhgQABmBAagh4AA7l3n2nyJbQDebSCEkB121vm3hX0BBNBFfLVYtcFcm4FAAgcPPkigawjY10WFXBhQAWcQMOYBCStkJ2OFFxbnmo0BdvGBCbC0GF4DG/wmowEXWhhAhAIcSSTpEcw1yEEXJzCgwAQCDFlAkfEVZ0CFBmSgBAywhMDBkTMgQOWQWxpQgIUnundhBl6uMJ+YGXBwwgEDohmAmgVcGcCa2HWRgRYrMEfnCRUokGd2ezLap599/pmBFE4MsUMIn/GzwqInNtpFAV70WaSkSKxQC6YZnBAkmmluCeqjFT7axQuanMSBCipcGGKanT4aaZ8GnODEETuQ8IEgCRB44bLLxuprn15wMEMRRwDxQAj5KIols70+mwFEHxQxLAncWeBAiVDoyuaovoYKEQfiVuDBtRB0MCCzkVZYoRf89hutTEocIYEEgQAAOw==";
+
 jQuery.fn.outerHTML = function () {
 	return $("<div>").append(this.eq(0).clone()).html();
 };
@@ -72,13 +84,43 @@ Array.prototype.init = function (b) {
 	if (b === undefined) b = 0;
 	for (var a = 0; a < this.length; a++) this[a] = b;
 };
-main();
+
+loadSettingsObject();
+loadLTCObject();
+
+function evResLoad( e ){
+	var ele = e.target;
+	if (ele.tagName === "IMG"){
+		if (ele.src.indexOf("hentaiverse.png") > -1) ele.setAttribute("SRC", _settings.isHideHVLogo ? "" : I_HVLOGO);
+		else if (ele.src.indexOf("nbargreen.png") > -1) ele.setAttribute("SRC", I_NBARGREEN);
+		else if (ele.src.indexOf("nbarblue.png") > -1){
+			MNUM = (ele.parentNode.parentNode.parentNode.parentNode.parentNode.childNodes.length - 6 ) / 2;
+			MCOUNT++;
+			ele.setAttribute("SRC", I_NBARBLUE);
+			if (!HASMS && DOMLOADED && MCOUNT === MNUM) main2();
+		}
+		else if (ele.src.indexOf("nbardead.png") > -1){
+			ele.setAttribute("SRC", I_NBARDEAD);
+			ele.setAttribute("ALT", "bardead");
+		}
+	}
+}
+
+function evDomLoad(){
+	DOMLOADED = true;
+	if (!browserIsChrome() && !cssInserted()) {
+		GM_addStyle(GM_getResourceText("jQueryUICSS"));
+		cssAdded();
+	}
+    main();
+}
+
 function main(b) {
-	loadLTCObject();
+	loadSettingsObject();
 	var a = localStorage.getItem(HV_EQUIP);
 	var c = (a === null) ? false : JSON.parse(a);
-	loadSettingsObject();
-	if ((_settings.isHideHVLogo || _settings.isChangePageTitle) && isHentaiVerse()) {
+	if (!browserIsChrome() && _settings.isHideHVLogo) document.getElementsByTagName("img")[0].src = "";
+	if (_settings.isChangePageTitle) {
 		var t1 = TimeCounter(1);
 		obscureHVIds();
 		_ltc.hidetitle[0]++;
@@ -116,27 +158,15 @@ function main(b) {
 			_ltc.highlightLogText[0]++;
 			_ltc.highlightLogText[1] += (TimeCounter(0, t5));
 		}
-		if ((_round !== null) && (_round.monsters.length > 0)) {
-			var t6 = TimeCounter(1);
-			showMonsterStats();
-			_ltc.showMonsterStats[0]++;
-			_ltc.showMonsterStats[1] += (TimeCounter(0, t6));
-		}
 		if (_settings.isShowSelfDuration) {
 			var t7 = TimeCounter(1);
 			showSelfEffectsDuration();
 			_ltc.showSelfEffectsDuration[0]++;
 			_ltc.showSelfEffectsDuration[1] += (TimeCounter(0, t7));
 		}
-		if (isBattleOver()) {
-			if (_settings.isShowEndStats) {
-				var t8 = TimeCounter(1);
-				showBattleEndStats();
-				_ltc.showBattleEndStats[1] += (TimeCounter(0, t8));
-			}
-			saveStats();
-			_round.reset();
-		}
+		if ( browserIsChrome() ){
+			if (MCOUNT === MNUM && !HASMS) main2();
+		} else main2();
 	} else {
 		if (!isBattle() && (_round !== null)) _round.reset();
 		else if (_settings.isColumnInventory && isItemInventoryPage()) initItemsView();
@@ -150,19 +180,43 @@ function main(b) {
 		_ltc.showSidebarProfs[1] += (TimeCounter(0, t9));
 	}
 	if (c) inventoryWarning();
-	if (isHentaiVerse()) initUI();
+	initUI();
+	main3();
+}
+function main2(){
+	if ((_round !== null) && (_round.monsters.length > 0)){
+		var t6 = TimeCounter(1);
+		showMonsterStats();
+		_ltc.showMonsterStats[0]++;
+		_ltc.showMonsterStats[1] += (TimeCounter(0, t6));
+	}
+	if (isBattleOver()) {
+		if (_settings.isShowEndStats) {
+			var t8 = TimeCounter(1);
+			showBattleEndStats();
+			_ltc.showBattleEndStats[1] += (TimeCounter(0, t8));
+		}
+		saveStats();
+		_round.reset();
+	}
+	if (_settings.isShowStatsPopup) {
+		var t45 = TimeCounter(1);
+		MonsterPopup();
+		_ltc.monsterpopup[0]++;
+		_ltc.monsterpopup[1] += TimeCounter(0, t45);
+	}
+	if (_settings.isShowScanButton || _settings.isShowSkillButton || _settings.isEnableScanHotkey || _settings.isEnableSkillHotkey) {
+		var t46 = TimeCounter(1);
+		Scanbutton();
+		_ltc.showscanbutton[0]++;
+		_ltc.showscanbutton[1] += TimeCounter(0, t46);
+	}
 }
 function obscureHVIds() {
-	loadLTCObject();
-	var a = document.getElementsByTagName("img")[0];
 	var t20 = TimeCounter(1);
-	if (_settings.isHideHVLogo && (a.src.indexOf("hentaiverse.png") > -1))
-		$(a).css("visibility", "hidden");
-	_ltc.obscureHVIds[1] -= TimeCounter(0, t20);
-	var t21 = TimeCounter(1);
 	if (_settings.isChangePageTitle && (document.title === "The HentaiVerse"))
-		document.title = _settings.customPageTitle
-	_ltc.hidetitle[1] -= TimeCounter(0, t21);
+		document.title = _settings.customPageTitle;
+	_ltc.hidetitle[1] -= TimeCounter(0, t20);
 }
 function highlightLogText() {
 	$("#togpane_log td:last-child").each(function () {
@@ -222,15 +276,14 @@ function displayPowerupBox() {
 		c.setAttribute("onmouseover", e.getAttribute("onmouseover"));
 		c.setAttribute("onmouseout", e.getAttribute("onmouseout"));
 		c.setAttribute("onclick", 'document.getElementById("ckey_items").onclick();document.getElementById("ikey_p").onclick();document.getElementById("ikey_p").onclick()');
-		if (b.match(/health/i)) c.innerHTML = "<img class='PowerupGemIcon' src='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAB4AAAAgCAMAAAAynjhNAAAACXBIWXMAAAsTAAALEwEAmpwYAAAA51BMVEX09q/h75XC3kxyqRiXxTHU6HL1+tZPjROz2HJzqjKw1SqSwhtQjB6c2kZKphWbxFF3vhdRjQhmqAdyvzL17tb1+vU5eBM0jBgTRRMraAlwqFAeVwm/5paVxXM5eAmoz4wJMAkTVwlPjisTRQnx7vVNqDQ5eB4reAkbagY5egJIeB4raAIraBPf7t8JMAIreBNIeBMCMAlIh0hxjhkCMAI5eDkxjAgTRQIeQyMeVwITVwICFAIeRQlpsWkTVxMeRRMJFAoTMAk5eCtYmUiBsWkJFAIeVxPa0yQJRQkraB4rVwLK48o5aB7QNXH7AAACk0lEQVR4Xh2QVZZsORADlWS+XIzN3I9xmHn/6xlX559PSJG2URbr7XZ7d3e+Xa/Xh8Xrp4vNrzcX5Xbz/WYTCzadtv5huVyWOiL+IiBoiJNzZKxYxiaJL0vvfZF2GCaQpkbNwdKfjNvDxKzt4mGxkOqRAJJ0opxSUjxFL0YcSxn61I89uS6rwoW+z/GAnzcmkUBNRSnlBogq5oKMIuUzXn106GIAjBMzE0LUzoX2MHi//gFnqz0clUiAmTFzzhGk4yfftutLnN3ENjjsL7rKUtbTECVpr+UFv0O4ngzBS89mBKLAxn1b24sVzj46V1d19abpROtpl9hUvLSvV/j2jz3mDtOYOTVZOBBgypxl9Hd/4ezv2G52jhPR1PQdYDEQJ04V1/ZP79xufy3ZEBpWupqT92z5VPe3K7z6xbn5syUCn/ZezW147CmpdZMcLvFq25FzxCB28/n8yiH4CaxEQct3+LCVyXDCDWanwNw1GSebc/sf8eG8iBo1hJytut3zTBtY72NHxxXeXpa2Z0pMqhU/E5kEMO+62F6cv2BR4xoJ5BymySuoChxCucTb8+K9sGUl0I6aYRBCUIlh5vb1YefLZcXEmQEylczW5Krybbf/8oKLsCORzggw1pylcdXdLWr7m9ruyYUxJ07M2otaiJPBzX9b4fcTVnIxEnPKY69sBARtDMcvONt+8r7BbtjNiI0fAxlrMjKqjvqpT16E0UV3ZYZwD9Isfe6UzeQztjEO2aDdbMZUUzB5P4yDr5GkX/GVZUxESjNS1BSCeO/fHIZRRAr+yaMwTJ1rmtmuD2hkeFP8/f0g4gsmHZUwhdlMDKEPpMNjKQ/yXir2WPihO2788d/jdTjGGEL068XNf768rPgfR7wxqcQECvQAAAAASUVORK5CYII=' id='healthgem'>";
-		else if (b.match(/mana/i)) c.innerHTML = "<img class='PowerupGemIcon' src='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAB4AAAAgCAMAAAAynjhNAAAACXBIWXMAAAsTAAALEwEAmpwYAAAA51BMVEXz6N/d1dO8raZoUG2Pe47Qw8D08fBGMGWsoMBqUY+pmoeKdXNHL3eUo6FBTGmTeaptcGxHMEVcTkJocY/00fD08fswHmUsL20OBmUjFExmT6kYDEy5wNOMe8AwHkyhjs4GAkwODExGMYcOBkzw0/tETpEwHncjHkwVFT0wIB4/HncjFB4jFGXc0/MGAh4jHmU/HmUBAkw/KqNnMXABAh4wHpYpL0UOBh4YBn4YDB4ODB4BAB4YBkxfW7oODGUYBmUGAE4OAkwwHodPPKN4W7oGAB4YDGXWlX8GBkwjFHcjDB7Ft+swFHeXYDWkAAACk0lEQVR4Xh2QVZZsORADlWS+XIzN3I9xmHn/6xlX559PSJG2URbr7XZ7d3e+Xa/Xh8Xrp4vNrzcX5Xbz/WYTCzadtv5huVyWOiL+IiBoiJNzZKxYxiaJL0vvfZF2GCaQpkbNwdKfjNvDxKzt4mGxkOqRAJJ0opxSUjxFL0YcSxn61I89uS6rwoW+z/GAnzcmkUBNRSnlBogq5oKMIuUzXn106GIAjBMzE0LUzoX2MHi//gFnqz0clUiAmTFzzhGk4yfftutLnN3ENjjsL7rKUtbTECVpr+UFv0O4ngzBS89mBKLAxn1b24sVzj46V1d19abpROtpl9hUvLSvV/j2jz3mDtOYOTVZOBBgypxl9Hd/4ezv2G52jhPR1PQdYDEQJ04V1/ZP79xufy3ZEBpWupqT92z5VPe3K7z6xbn5syUCn/ZezW147CmpdZMcLvFq25FzxCB28/n8yiH4CaxEQct3+LCVyXDCDWanwNw1GSebc/sf8eG8iBo1hJytut3zTBtY72NHxxXeXpa2Z0pMqhU/E5kEMO+62F6cv2BR4xoJ5BymySuoChxCucTb8+K9sGUl0I6aYRBCUIlh5vb1YefLZcXEmQEylczW5Krybbf/8oKLsCORzggw1pylcdXdLWr7m9ruyYUxJ07M2otaiJPBzX9b4fcTVnIxEnPKY69sBARtDMcvONt+8r7BbtjNiI0fAxlrMjKqjvqpT16E0UV3ZYZwD9Isfe6UzeQztjEO2aDdbMZUUzB5P4yDr5GkX/GVZUxESjNS1BSCeO/fHIZRRAr+yaMwTJ1rmtmuD2hkeFP8/f0g4gsmHZUwhdlMDKEPpMNjKQ/yXir2WPihO2788d/jdTjGGEL068XNf768rPgfR7wxqcQECvQAAAAASUVORK5CYII=' id='managem'>";
-		else if (b.match(/spirit/i)) c.innerHTML = "<img class='PowerupGemIcon' src='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAB4AAAAgCAMAAAAynjhNAAAACXBIWXMAAAsTAAALEwEAmpwYAAAA51BMVEX57q/v4ZXewkyqcRjEmDHp03L69daNTxPVuHKrcjLUsyrBlBuOTh7HukaJbBXGl1GtjxePTwihbweqkDL63tb69fV4ORNzThhFExNoKwmocFBXHgnd0JbCmHN4OQnPqIwwCQlFHgmNUCtFEwn43/WMbzR4OR5oOQlTLQZ4OwKHOR5oKwJoKxPu398wCQJoOROHORMUCQmHSEipUBkUCQJ4OTlvTQhFEwJXEiNXHgJFHgIUAgJXEwmje2lFHhNXExMwAgpFCQl4OSuVXEi1e2kwAgJXHhPsryQwEwloKx5oHgLjysp4Kx4hlHV9AAACk0lEQVR4Xh2QVZZsORADlWS+XIzN3I9xmHn/6xlX559PSJG2URbr7XZ7d3e+Xa/Xh8Xrp4vNrzcX5Xbz/WYTCzadtv5huVyWOiL+IiBoiJNzZKxYxiaJL0vvfZF2GCaQpkbNwdKfjNvDxKzt4mGxkOqRAJJ0opxSUjxFL0YcSxn61I89uS6rwoW+z/GAnzcmkUBNRSnlBogq5oKMIuUzXn106GIAjBMzE0LUzoX2MHi//gFnqz0clUiAmTFzzhGk4yfftutLnN3ENjjsL7rKUtbTECVpr+UFv0O4ngzBS89mBKLAxn1b24sVzj46V1d19abpROtpl9hUvLSvV/j2jz3mDtOYOTVZOBBgypxl9Hd/4ezv2G52jhPR1PQdYDEQJ04V1/ZP79xufy3ZEBpWupqT92z5VPe3K7z6xbn5syUCn/ZezW147CmpdZMcLvFq25FzxCB28/n8yiH4CaxEQct3+LCVyXDCDWanwNw1GSebc/sf8eG8iBo1hJytut3zTBtY72NHxxXeXpa2Z0pMqhU/E5kEMO+62F6cv2BR4xoJ5BymySuoChxCucTb8+K9sGUl0I6aYRBCUIlh5vb1YefLZcXEmQEylczW5Krybbf/8oKLsCORzggw1pylcdXdLWr7m9ruyYUxJ07M2otaiJPBzX9b4fcTVnIxEnPKY69sBARtDMcvONt+8r7BbtjNiI0fAxlrMjKqjvqpT16E0UV3ZYZwD9Isfe6UzeQztjEO2aDdbMZUUzB5P4yDr5GkX/GVZUxESjNS1BSCeO/fHIZRRAr+yaMwTJ1rmtmuD2hkeFP8/f0g4gsmHZUwhdlMDKEPpMNjKQ/yXir2WPihO2788d/jdTjGGEL068XNf768rPgfR7wxqcQECvQAAAAASUVORK5CYII=' id='spiritgem'>";
-		else if (b.match(/mystic/i)) c.innerHTML = "<img class='PowerupGemIcon' src='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAB4AAAAgCAMAAAAynjhNAAAACXBIWXMAAAsTAAALEwEAmpwYAAABHVBMVEUYGChwzdEoKChQjY8YLDAnOTgYGBgoGCgICBgIGBgYCBhv6NhSy9BSrLIoKDg4ODgyb3EoSEiBybXI+OdRb3hyrrNISEiT6Nio6OhRamiIiIgoWFi4+OiR7/A4SEhvipExkqWo+Pi46OhoeHhoaGhIODhIWFg4KDhwscxSkqxoe2UoOCdIWkYzSDgoSFio+OdgjW7I+Pg4WFi4+Phx6vAIGygzdowICAhSs861y7VYWFg4KCgoOEiRrbMoWEhSbFdT6NixztGDmJhzr5DY+Oh4eHioqKinubhKNUiR0NSku6TI6OgWT1I4WEh4aGiQrJBx0epIKDjR6NjI2Nhxkq1Sc42Em4L4+OU4OFiw6Nc4SFhISFi4uLhPp4QrFRawbwbgAAACd0lEQVR4XlXPBY7kSBAF0Eg2MxUzYzMzDzPu7v2PsZGuVo/mSy5Z9fJHOGE7rCVJwlqt1jfMXQ9f2CZJUgsgCVgU5UU3jm/j24fqw/uznU4Dk9uEuK5mQhqrVT2O46vhq1dHQVryrk0+tA/hPGBPdslbcW9Y/V69Dkq2bVu3+TbL80Zn1Y23Xlcq/1Q/v64Vz+y4AUDIcrvRKbrdrbNwWK0efTqPOpoJsgCDMxuHF936Vks0j++urwRblasvnQkHQ7jIRVGvx0Pu+/NFX1QKLO86l47LwQxTLO/s1OOz6XF/Jpr3/SbrNHZ3ieO0kc9Jjlzvtt4Kv9+bNY8yEUYlH7Y9MGukgffq9kI/y5rV6n1/IbxfaW47h3+4fsN9zdm7/mxGlfmG4GxnIjZcFNviceD7VMhsQekJ7DFS7taM/pP7g0HmC5Ud05ORUnsh6oZTYjciGH18HAifKqqUkgB87LqHjIK5HBOSJ5yOTigd+VJpRo+I6+5TkEtC7HwPsOYBHXlKaqc0wosFtNxNGIAEPZb6VFqWbjNcHnig75ByzSB1y6MSD1BICHH2kWtuWgEd3cI+xQeoDJ8I0bz8EgilGVvSogqDZblIcScHKb6e7pVsaAdQCueAOW+VbNGet2GwwLD0ESWlac4rkWaTix/eCxuGtPAMSDOrpCWL5LRkSz8bNyzDHExvIibADFlFs7TQpXGALi3kWYURzSIQUAbZQsZuOWTIogkH3mxKiT3NuqaDvyCm6ygNYTv8reRzNG9ywHsX63/HDNzg1MP//2bT4OHFdJ2OwW0vPfofzrdeXH8A5xfTxB0D2695Sguu1DnYhHN/vp5M/gdR8UpX7b699gAAAABJRU5ErkJggg==' id='channelgem'>";
+		if (b.match(/health/i)) c.innerHTML = "<img class='PowerupGemIcon' src='"+ I_HEALTHPOT+ "' id='healthgem'>";
+		else if (b.match(/mana/i)) c.innerHTML = "<img class='PowerupGemIcon' src='"+ I_MANAPOT+ "' id='managem'>";
+		else if (b.match(/spirit/i)) c.innerHTML = "<img class='PowerupGemIcon' src='"+ I_SPIRITPOT+ "' id='spiritgem'>";
+		else if (b.match(/mystic/i)) c.innerHTML = "<img class='PowerupGemIcon' src='"+ I_CHANNELING+ "' id='channelgem'>";
 	}
 	a.after(c);
 }
 function showMonsterStats() {
-	loadLTCObject();
 	if (!(_settings.isShowMonsterHP || _settings.isShowMonsterMP || _settings.isShowMonsterSP || _settings.isShowMonsterElements || _settings.isShowMonsterDuration || _settings.isShowStatsPopup)) return;
 	var a = new ElementalStats();
 	$("#monsterpane > div").each(function (n) {
@@ -249,7 +302,7 @@ function showMonsterStats() {
 			var l = monInfo.maxHp;
 			var o = 0;
 			var g = "";
-			var b = e.children().eq(0).children("img").eq(1).width() / e.children().eq(0).children("img").eq(0).width();
+			var b = e.children().eq(0).children("img").eq(1).width() / 120;
 			if (_settings.isShowMonsterHPPercent) g = (b * 100).toFixed(2) + "%"
 			else {
 				o = Math.floor(b * l);
@@ -262,7 +315,7 @@ function showMonsterStats() {
 		}
 		if ((_settings.isShowMonsterMP || _settings.isShowStatsPopup) && !m) {
 			var t32 = TimeCounter(1);
-			var v = h.children().eq(0).children("img").eq(1).width() / h.children().eq(0).children("img").eq(0).width();
+			var v = h.children().eq(0).children("img").eq(1).width() / 120;
 			var f = (v * 100).toFixed(1);
 			var j = "<div style='position:absolute;z-index:1074;top:11px;font-size:8pt;font-family:arial,helvetica,sans-serif;font-weight:bolder;color:yellow;width:120px;text-align:center'>" + f + "%</div>";
 			h.after(j);
@@ -271,7 +324,7 @@ function showMonsterStats() {
 		}
 		if ((_settings.isShowMonsterSP || _settings.isShowStatsPopup) && !m) {
 			var t62 = TimeCounter(1);
-			var sppart = sp.children().eq(0).children("img").eq(1).width() / sp.children().eq(0).children("img").eq(0).width();
+			var sppart = sp.children().eq(0).children("img").eq(1).width() / 120;
 			var perc = (sppart * 100).toFixed(1);
 			var sptext = "<div style='position:absolute;z-index:1074;top:23px;font-size:8pt;font-family:arial,helvetica,sans-serif;font-weight:bolder;color:yellow;width:120px;text-align:center'>" + perc + "%</div>";
 			sp.after(sptext);
@@ -635,7 +688,7 @@ function showMonsterStats() {
 				if (allm1 > maxchar) {
 					mweak = mweak.replace("Fi", "F").replace("Co", "C").replace("El", "E").replace("Wi", "W").replace("Ho", "H").replace("Da", "D").replace("So", "S").replace("Eem", "Elem");
 				}
-				if (mclass !== "0") {
+				if (mclass !== "0" && mclass !== "undefined") {
 					d = "";
 					if (_settings.isShowClassHvstatStyle){
 						d = "{<span style='color:blue'>" + mclass;
@@ -664,7 +717,6 @@ function showMonsterStats() {
 						d += ")";
 					}
 				} else d = "[<span style='color:blue;font-weight:bold'>NEW</span>]";
-				loadLTCObject();
 				_ltc.isShowElemHvstatStyle[0]++;
 				_ltc.isShowElemHvstatStyle[1] += TimeCounter(0, milliseconds2);
 			}
@@ -689,6 +741,7 @@ function showMonsterStats() {
 		}
 	});
 	_ltc.save();
+	HASMS = true;
 }
 function showMonsterEffectsDuration(a) {
 	a.children().eq(3).children("img").each(createDurationBadge);
@@ -876,7 +929,6 @@ function collectRoundInfo() {
 	var c = "";
 	var d;
 	var b = false;
-	loadLTCObject();
 	loadRoundObject();
 	if (_settings.isRememberSkillsTypes) loadCollectdataObject();
 	if (_settings.isTrackItems) loadDropsObject();
@@ -1635,7 +1687,6 @@ function saveStats() {
 	_stats.save();
 	_rewards.save();
 	_drops.save();
-	loadLTCObject();
 	_ltc.saveStats[0]++;
 	_ltc.saveStats[1] += TimeCounter(0, milliseconds1);
 	_ltc.save();
@@ -4097,7 +4148,6 @@ function HVMonsterDatabase() {
 }
 function StartDatabase() {
 	var sec = TimeCounter(1);
-	loadLTCObject();
 	loadDatabaseObject();
 	_database.mclass[1] = 31;
 	_database.mattack[1] = 52;
@@ -4631,7 +4681,6 @@ function SaveToDatabase(a) {
 }
 function AssumeResistances() {
 	var sec = TimeCounter(1);
-	loadLTCObject();
 	loadDatabaseObject();
 	var n = 0;
 	while (_database.mclass[n] !== undefined) {
@@ -5574,22 +5623,8 @@ function ShrineButton() {
 		$(this).bind("click");
 	});
 }
-main2();
-function main2 () {
-	loadLTCObject();
+function main3 () {
 	if (isBattle()) {
-		if (_settings.isShowStatsPopup) {
-			var t45 = TimeCounter(1);
-			MonsterPopup();
-			_ltc.monsterpopup[0]++;
-			_ltc.monsterpopup[1] += TimeCounter(0, t45);
-		}
-		if (_settings.isShowScanButton || _settings.isShowSkillButton || _settings.isEnableScanHotkey || _settings.isEnableSkillHotkey) {
-			var t46 = TimeCounter(1);
-			Scanbutton();
-			_ltc.showscanbutton[0]++;
-			_ltc.showscanbutton[1] += TimeCounter(0, t46);
-		}
 		if (_settings.isCountPageLoadTime) {
 			var clickedLTC = localStorage.getItem('PLTC');
 			if (clickedLTC !== null) {
@@ -5687,3 +5722,13 @@ function main2 () {
 	_ltc.main[1] += TimeCounter(0, millisecondsAll);
 	_ltc.save();
 }
+
+//=== Event Listeners
+// beforeload triggers each time an external resource is loaded like images.
+// DOMContentLoaded triggers when the DOM has finished loading.
+// DON'T rely on the order of their execution.
+//===================
+if (browserIsChrome()){
+	document.addEventListener( "DOMContentLoaded", evDomLoad, false );
+	document.addEventListener( "beforeload", evResLoad, true );
+} else evDomLoad();
