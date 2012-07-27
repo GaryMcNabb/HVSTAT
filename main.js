@@ -2122,7 +2122,7 @@ function initStatsPane() {
 		ds[1] = ds[2] = ds[3] = ds[4] = ds[5] = "None yet";
 		d[1] = d[2] = d[3] = d[4] = d[5] = "Never";
 		var nd = new Date();
-		for (i = 1; i <= 5; i++) {
+		for (var i = 1; i <= 5; i++) {
 			if (_backup[i].datesave !== 0) {
 				nd.setTime( _backup[i].datesave);
 				ds[i] = nd.toLocaleString();
@@ -5026,7 +5026,7 @@ function Scanbutton() {
 				a.after(c);
 			}
 			if (_settings.isShowSkillButton) {
-				for (i = 0; i < 3; i++) {
+				for (var i = 0; i < 3; i++) {
 					var cs = document.createElement("div");
 					var tops = top + (i + 1) * 14;
 					if (skillnum[i] !== null) {
