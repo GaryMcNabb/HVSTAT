@@ -112,7 +112,7 @@ function evDomLoad(){
 		GM_addStyle(GM_getResourceText("jQueryUICSS"));
 		cssAdded();
 	}
-    main();
+	main();
 }
 
 function main(b) {
@@ -779,7 +779,7 @@ function createDurationBadge(a) {
 					b += "background-color:orange;";
 				else b += "background-color:#EFEEDC;";
 			} else b += "background-color:#EFEEDC;";
-				}
+		}
 		b += "font-size:11px;font-weight:bold;font-family:arial,helvetica,sans-serif;line-height:12px;text-align:center;width:20px;height:12px;border-style:solid;border-width:1px;border-color:#5C0D11;overflow:hidden;top:" + c + "px;left:" + f + "px;cursor:default;'>" + g + "</div>";
 		e.after(b);
 	}
@@ -846,7 +846,7 @@ function healthWarning() {
 		_ltc.main[1] -= TimeCounter(0, sec1);
 		_ltc.isbattle[1] -= TimeCounter(0, sec1);
 		fmp = true;
-		localStorage.setItem(HV_ALERTMP, JSON.stringify(fmp))
+		localStorage.setItem(HV_ALERTMP, JSON.stringify(fmp));
 	}
 	if (!isBattleOver() && _settings.isShowPopup && (bsp <= hsp) && (!fsp || _settings.isNagSP)) {
 		var sec1 = TimeCounter(1);
@@ -855,7 +855,7 @@ function healthWarning() {
 		_ltc.main[1] -= TimeCounter(0, sec1);
 		_ltc.isbattle[1] -= TimeCounter(0, sec1);
 		fsp = true;
-		localStorage.setItem(HV_ALERTSP, JSON.stringify(fsp))
+		localStorage.setItem(HV_ALERTSP, JSON.stringify(fsp));
 	}
 	if (f && (b > a) && _settings.isShowPopup) localStorage.removeItem(HV_ALERT);
 	if (fmp && (bmp > amp) && _settings.isShowPopup) localStorage.removeItem(HV_ALERTMP);
@@ -876,7 +876,7 @@ function collectCurrentProfsData() {
 	_profs.depTotal = parseFloat(a.eq(9).text());
 	_profs.supportTotal = parseFloat(a.eq(11).text());
 	_profs.curativeTotal = parseFloat(a.eq(13).text());
-	_profs.save()
+	_profs.save();
 }
 function showSidebarProfs() {
 	loadProfsObject();
@@ -960,10 +960,10 @@ function collectRoundInfo() {
 		var t87 = TimeCounter(1);
 		var kline = g.html();
 		var kline2 = parseInt(g.next().html()) - 1;
-		var sel0 = $(".t1:contains("+kline+")");
-		var sel = sel0.next().filter(":contains("+kline2+")").next().html();
-		var selall = $(".t1:contains("+kline+")").next().next().text();
-		_ltc.sel[0]++
+		var sel0 = $(".t1:contains(" + kline + ")");
+		var sel = sel0.next().filter(":contains(" + kline2 + ")").next().html();
+		var selall = $(".t1:contains(" + kline + ")").next().next().text();
+		_ltc.sel[0]++;
 		_ltc.sel[1] += TimeCounter(0, t87);
 		if (!_round.isLoaded) {
 			if (c.match(/HP=/)) {
@@ -972,7 +972,7 @@ function collectRoundInfo() {
 				h.currHp = h.maxHp;
 				var mid = parseInt(c.match(/MID=\d+?\s/)[0].replace("MID=", ""));
 				h.id = mid;
-				h.name = c.match(/\([^\.\)]{0,30}\) LV/i)[0].replace("(", "").replace(")", "").replace(" LV","");
+				h.name = c.match(/\([^\.\)]{0,30}\) LV/i)[0].replace("(", "").replace(")", "").replace(" LV", "");
 				if (_settings.isShowElemHvstatStyle) {
 					var t43 = TimeCounter(1);
 					loadDatabaseObject();
@@ -991,14 +991,12 @@ function collectRoundInfo() {
 				if (_settings.isTrackItems) {
 					_round.dropChances++;
 				}
-			} else {
-				if (c.match(/\(Round/)) {
-					var f = c.match(/\(round.*?\)/i)[0].replace("(", "").replace(")", "");
-					var m = f.split(" ");
-					_round.currRound = parseInt(m[1]);
-					if (m.length > 2) {
-						_round.maxRound = parseInt(m[3]);
-					}
+			} else if (c.match(/\(Round/)) {
+				var f = c.match(/\(round.*?\)/i)[0].replace("(", "").replace(")", "");
+				var m = f.split(" ");
+				_round.currRound = parseInt(m[1]);
+				if (m.length > 2) {
+					_round.maxRound = parseInt(m[3]);
 				}
 			}
 			if (_settings.isShowRoundReminder && (_round.maxRound >= _settings.reminderMinRounds) && (_round.currRound === _round.maxRound - _settings.reminderBeforeEnd) && !b) {
@@ -4892,7 +4890,7 @@ function Scanbutton() {
 		}
 	});
 	var skillname = [null, null, null];
-	switch (skillnum[0]){
+	switch (skillnum[0]) {
 	case 110001:
 	case "110001":
 		skillname[0] = "SkyS"; break;
@@ -4909,7 +4907,7 @@ function Scanbutton() {
 	case "150001":
 		skillname[0] = "ConS";
 	}
-	switch (skillnum[1]){
+	switch (skillnum[1]) {
 	case 120002:
 	case "120002":
 		skillname[1] = "VitS"; break;
@@ -4969,7 +4967,7 @@ function Scanbutton() {
 			}
 		}
 		if (_settings.isEnableSkillHotkey) {
-			if (key === 107 || key === 187){
+			if (key === 107 || key === 187) {
 				if (window.pressedSkillbySTAT === 0) {
 					if (!window.pressedScanbySTAT) {
 						// open skill menu
@@ -4979,7 +4977,7 @@ function Scanbutton() {
 							location.href = 'javascript:document.getElementById("ckey_skills").onclick(); void(0);';
 						}
 					}
-					if (!cooldown[0]){
+					if (!cooldown[0]) {
 						if (ischromeSTAT) {
 							document.getElementById(skillnum[0]).onclick();
 						} else {
@@ -5205,7 +5203,7 @@ function MonsterPopup() {
 						mskilltype3 = mskilltypearray[2];
 					}
 				}
-			}			
+			}
 		}
 		if (q.mskilltype === null ||q.mskilltype === 0 ||q.mskilltype === "0") mskilltype = "";
 		if (q.mattack !== undefined) mattack = MElemNum(q.mattack, 1);
@@ -5274,7 +5272,7 @@ function MonsterPopup() {
 		if (mspiritsksp === undefined) {
 			mspiritsksp = "?";
 		} else {
-			mspiritsksp = mspiritsksp.replace(/Spirit:/g,"");
+			mspiritsksp = mspiritsksp.replace(/Spirit:/g, "");
 			mspiritsksp = formatAttackType(mspiritsksp);
 		}
 		mattack = formatAttackType(mattack);
@@ -5382,7 +5380,7 @@ function FindSettingsStats() {
 			case "Battletoads":
 				_charss.difficulty[0] = 8; break;
 			case "IWBTH":
-			_charss.difficulty[0] = 9;
+				_charss.difficulty[0] = 9;
 		}
 	}
 	var tyh = $("#setform img").length;
@@ -5399,10 +5397,10 @@ function FindSettingsStats() {
 function AlertEffectsSelf() {
 	$("div.btps > img").each(function () {
 		var allinfo = $(this).attr("onmouseover")
-			.replace("battle.set_infopane_effect(","")
-			.replace(")","")
+			.replace("battle.set_infopane_effect(", "")
+			.replace(")", "")
 			.replace(/\'\,\s/g, '", ')
-			.replace(/\'/g,"")
+			.replace(/\'/g, "")
 			.split('", ');
 		var effectNames = [
 			"Protection", "Hastened", "Shadow Veil", "Regen", "Absorbing Ward",
@@ -5423,10 +5421,10 @@ function AlertEffectsSelf() {
 function AlertEffectsMonsters() {
 	$("div.btm6 > img").each(function () {
 		var allinfo = $(this).attr("onmouseover")
-			.replace("battle.set_infopane_effect(","")
-			.replace(")","")
+			.replace("battle.set_infopane_effect(", "")
+			.replace(")", "")
 			.replace(/\'\,\s/g, '", ')
-			.replace(/\'/g,"")
+			.replace(/\'/g, "")
 			.split('", ');
 		var effectNames = [
 			"Spreading Poison", "Slowed", "Weakened", "Asleep", "Confused",
