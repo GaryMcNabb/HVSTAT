@@ -4,7 +4,7 @@
 // @description      Collects data, analyzes statistics, and enhances the interface of the HentaiVerse
 // @include          http://hentaiverse.org/*
 // @author           Various (http://forums.e-hentai.org/index.php?showtopic=50962)
-// @version          5.4.1.1
+// @version          5.4.1.2
 // @require          https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js
 // @require          https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.21/jquery-ui.min.js
 // @resource         jQueryUICSS http://www.starfleetplatoon.com/~cmal/HVSTAT/jqueryui.css
@@ -12,7 +12,7 @@
 
 // === GLOBAL VARIABLES
 var millisecondsAll = TimeCounter(1);
-VERSION = "5.4.1.1";
+VERSION = "5.4.1.2";
 SAVE_STATS = true;
 MAX_MID = 33;
 SELF_EFF_TOP = 34;
@@ -508,187 +508,190 @@ function showMonsterStats() {
 				mspirittype = String(mspirittype);
 				mspiritsksp = String(mspiritsksp);
 				mattack = String(mattack);
-				if (_settings.HideThisResHvstatStyle[0] || _settings.HideThisResHvstatStyle[1] || _settings.HideThisResHvstatStyle[2]) {
-					mweak = mweak.replace(", Phys", "Slash, Crush, Pierc").replace("?Phys", "Slash, Crush, Pierc").replace("Phys", "Slash, Crush, Pierc");
-					mresist = mresist.replace(", Phys", "Slash, Crush, Pierc").replace("?Phys", "Slash, Crush, Pierc").replace("Phys", "Slash, Crush, Pierc");
-					mimperv = mimperv.replace(", Phys", "Slash, Crush, Pierc").replace("?Phys", "Slash, Crush, Pierc").replace("Phys", "Slash, Crush, Pierc");
-				}
-				if (_settings.HideThisResHvstatStyle[3] || _settings.HideThisResHvstatStyle[4] || _settings.HideThisResHvstatStyle[5] || _settings.HideThisResHvstatStyle[6]) {
-					mweak = mweak.replace(", Elem", "Fire, Cold, Elec, Wind").replace("?Elem", "Fire, Cold, Elec, Wind").replace("Elem", "Fire, Cold, Elec, Wind");
-					mresist = mresist.replace(", Elem", "Fire, Cold, Elec, Wind").replace("?Elem", "Fire, Cold, Elec, Wind").replace("Elem", "Fire, Cold, Elec, Wind");
-					mimperv = mimperv.replace(", Elem", "Fire, Cold, Elec, Wind").replace("?Elem", "Fire, Cold, Elec, Wind").replace("Elem", "Fire, Cold, Elec, Wind");
-				}
-				if (_settings.HideThisResHvstatStyle[0]) {
-					mweak = mweak.replace(", Slashing", "").replace(", Slash", "").replace("Slashing", "").replace("Slash", "");
-					mresist = mresist.replace(", Slashing", "").replace(", Slash", "").replace("Slashing", "").replace("Slash", "");
-					mimperv = mimperv.replace(", Slashing", "").replace(", Slash", "").replace("Slashing", "").replace("Slash", "");
-				}
-				if (_settings.HideThisResHvstatStyle[1]) {
-					mweak = mweak.replace(", Crushing", "").replace(", Crush", "").replace("Crushing", "").replace("Crush", "");
-					mresist = mresist.replace(", Crushing", "").replace(", Crush", "").replace("Crushing", "").replace("Crush", "");
-					mimperv = mimperv.replace(", Crushing", "").replace(", Crush", "").replace("Crushing", "").replace("Crush", "");
-				}
-				if (_settings.HideThisResHvstatStyle[2]) {
-					mweak = mweak.replace(", Piercing", "").replace(", Pierc", "").replace("Piercing", "").replace("Pierc", "");
-					mresist = mresist.replace(", Piercing", "").replace(", Pierc", "").replace("Piercing", "").replace("Pierc", "");
-					mimperv = mimperv.replace(", Piercing", "").replace(", Pierc", "").replace("Piercing", "").replace("Pierc", "");
-				}
-				if (_settings.HideThisResHvstatStyle[3]) {
-					mweak = mweak.replace(", Fire", "").replace("Fire", "");
-					mresist = mresist.replace(", Fire", "").replace("Fire", "");
-					mimperv = mimperv.replace(", Fire", "").replace("Fire", "");
-				}
-				if (_settings.HideThisResHvstatStyle[4]) {
-					mweak = mweak.replace(", Cold", "").replace("Cold", "");
-					mresist = mresist.replace(", Cold", "").replace("Cold", "");
-					mimperv = mimperv.replace(", Cold", "").replace("Cold", "");
-				}
-				if (_settings.HideThisResHvstatStyle[5]) {
-					mweak = mweak.replace(", Elec", "").replace("Elec", "");
-					mresist = mresist.replace(", Elec", "").replace("Elec", "");
-					mimperv = mimperv.replace(", Elec", "").replace("Elec", "");
-				}
-				if (_settings.HideThisResHvstatStyle[6]) {
-					mweak = mweak.replace(", Wind", "").replace("Wind", "");
-					mresist = mresist.replace(", Wind", "").replace("Wind", "");
-					mimperv = mimperv.replace(", Wind", "").replace("Wind", "");
-				}
-				if (_settings.HideThisResHvstatStyle[7]) {
-					mweak = mweak.replace(", Holy", "").replace("Holy", "");
-					mresist = mresist.replace(", Holy", "").replace("Holy", "");
-					mimperv = mimperv.replace(", Holy", "").replace("Holy", "");
-				}
-				if (_settings.HideThisResHvstatStyle[8]) {
-					mweak = mweak.replace(", Dark", "").replace("Dark", "");
-					mresist = mresist.replace(", Dark", "").replace("Dark", "");
-					mimperv = mimperv.replace(", Dark", "").replace("Dark", "");
-				}
-				if (_settings.HideThisResHvstatStyle[9]) {
-					mweak = mweak.replace(", Soul", "").replace("Soul", "");
-					mresist = mresist.replace(", Soul", "").replace("Soul", "");
-					mimperv = mimperv.replace(", Soul", "").replace("Soul", "");
-				}
-				if (_settings.HideThisResHvstatStyle[10]) {
-					mweak = mweak.replace(", Void", "").replace("Void", "");
-					mresist = mresist.replace(", Void", "").replace("Void", "");
-					mimperv = mimperv.replace(", Void", "").replace("Void", "");
-				}
-				var maxchar = (12 - kkl) * (kkl <= 12 ? 0.7 : 1.4) + 46;
-				allm1 = allm + mclass.length + mskillspell.length + mskilltype.length + mimperv.length + mresist.length + mweak.length + mattack.length + String(mpl).length + mskillspell2.length + mskilltype2.length + mskillspell3.length + mskilltype3.length + mspiritsksp.length + mspirittype.length;
-				if (allm1 > maxchar) {
-					if (kkl > 12 && !isHVFontEngine()) {
-						kk.css("font-size", 12);
-						kk.css("font-weight", "bold")
+				if (_settings.ResizeMonsterInfo){
+					if (_settings.HideThisResHvstatStyle[0] || _settings.HideThisResHvstatStyle[1] || _settings.HideThisResHvstatStyle[2]) {
+						mweak = mweak.replace(", Phys", "Slash, Crush, Pierc").replace("?Phys", "Slash, Crush, Pierc").replace("Phys", "Slash, Crush, Pierc");
+						mresist = mresist.replace(", Phys", "Slash, Crush, Pierc").replace("?Phys", "Slash, Crush, Pierc").replace("Phys", "Slash, Crush, Pierc");
+						mimperv = mimperv.replace(", Phys", "Slash, Crush, Pierc").replace("?Phys", "Slash, Crush, Pierc").replace("Phys", "Slash, Crush, Pierc");
 					}
-					if (kkl >= 17 && !isHVFontEngine()) kk.html(kk.html().slice(0,15) + "...");
-					kkl = kk.html().length;
-					if (kkl <= 5) maxchar =  (12 - kkl)*1.9 + 46;
-					else if (kkl <= 12) maxchar =  (12 - kkl)*1.95 + 46;
-					else if (kkl < 17) maxchar =  (17 - kkl)*0.8 + 46;
-					else maxchar =  (18 - kkl)*1.2 + 46;
-				}
-				if (allm1 > maxchar) {
-					mimperv = mimperv.replace(/\s/g, "");
-					mresist = mresist.replace(/\s/g, "");
-					mweak = mweak.replace(/\s/g, "");
-					mskilltype = mskilltype.replace(/\s/g, "");
-					mskilltype2 = mskilltype2.replace(/\s/g, "");
-					mskillspell = mskillspell.replace(/\s/g, "");
-					mskillspell2 = mskillspell2.replace(/\s/g, "");
+					if (_settings.HideThisResHvstatStyle[3] || _settings.HideThisResHvstatStyle[4] || _settings.HideThisResHvstatStyle[5] || _settings.HideThisResHvstatStyle[6]) {
+						mweak = mweak.replace(", Elem", "Fire, Cold, Elec, Wind").replace("?Elem", "Fire, Cold, Elec, Wind").replace("Elem", "Fire, Cold, Elec, Wind");
+						mresist = mresist.replace(", Elem", "Fire, Cold, Elec, Wind").replace("?Elem", "Fire, Cold, Elec, Wind").replace("Elem", "Fire, Cold, Elec, Wind");
+						mimperv = mimperv.replace(", Elem", "Fire, Cold, Elec, Wind").replace("?Elem", "Fire, Cold, Elec, Wind").replace("Elem", "Fire, Cold, Elec, Wind");
+					}
+					if (_settings.HideThisResHvstatStyle[0]) {
+						mweak = mweak.replace(", Slashing", "").replace(", Slash", "").replace("Slashing", "").replace("Slash", "");
+						mresist = mresist.replace(", Slashing", "").replace(", Slash", "").replace("Slashing", "").replace("Slash", "");
+						mimperv = mimperv.replace(", Slashing", "").replace(", Slash", "").replace("Slashing", "").replace("Slash", "");
+					}
+					if (_settings.HideThisResHvstatStyle[1]) {
+						mweak = mweak.replace(", Crushing", "").replace(", Crush", "").replace("Crushing", "").replace("Crush", "");
+						mresist = mresist.replace(", Crushing", "").replace(", Crush", "").replace("Crushing", "").replace("Crush", "");
+						mimperv = mimperv.replace(", Crushing", "").replace(", Crush", "").replace("Crushing", "").replace("Crush", "");
+					}
+					if (_settings.HideThisResHvstatStyle[2]) {
+						mweak = mweak.replace(", Piercing", "").replace(", Pierc", "").replace("Piercing", "").replace("Pierc", "");
+						mresist = mresist.replace(", Piercing", "").replace(", Pierc", "").replace("Piercing", "").replace("Pierc", "");
+						mimperv = mimperv.replace(", Piercing", "").replace(", Pierc", "").replace("Piercing", "").replace("Pierc", "");
+					}
+					if (_settings.HideThisResHvstatStyle[3]) {
+						mweak = mweak.replace(", Fire", "").replace("Fire", "");
+						mresist = mresist.replace(", Fire", "").replace("Fire", "");
+						mimperv = mimperv.replace(", Fire", "").replace("Fire", "");
+					}
+					if (_settings.HideThisResHvstatStyle[4]) {
+						mweak = mweak.replace(", Cold", "").replace("Cold", "");
+						mresist = mresist.replace(", Cold", "").replace("Cold", "");
+						mimperv = mimperv.replace(", Cold", "").replace("Cold", "");
+					}
+					if (_settings.HideThisResHvstatStyle[5]) {
+						mweak = mweak.replace(", Elec", "").replace("Elec", "");
+						mresist = mresist.replace(", Elec", "").replace("Elec", "");
+						mimperv = mimperv.replace(", Elec", "").replace("Elec", "");
+					}
+					if (_settings.HideThisResHvstatStyle[6]) {
+						mweak = mweak.replace(", Wind", "").replace("Wind", "");
+						mresist = mresist.replace(", Wind", "").replace("Wind", "");
+						mimperv = mimperv.replace(", Wind", "").replace("Wind", "");
+					}
+					if (_settings.HideThisResHvstatStyle[7]) {
+						mweak = mweak.replace(", Holy", "").replace("Holy", "");
+						mresist = mresist.replace(", Holy", "").replace("Holy", "");
+						mimperv = mimperv.replace(", Holy", "").replace("Holy", "");
+					}
+					if (_settings.HideThisResHvstatStyle[8]) {
+						mweak = mweak.replace(", Dark", "").replace("Dark", "");
+						mresist = mresist.replace(", Dark", "").replace("Dark", "");
+						mimperv = mimperv.replace(", Dark", "").replace("Dark", "");
+					}
+					if (_settings.HideThisResHvstatStyle[9]) {
+						mweak = mweak.replace(", Soul", "").replace("Soul", "");
+						mresist = mresist.replace(", Soul", "").replace("Soul", "");
+						mimperv = mimperv.replace(", Soul", "").replace("Soul", "");
+					}
+					if (_settings.HideThisResHvstatStyle[10]) {
+						mweak = mweak.replace(", Void", "").replace("Void", "");
+						mresist = mresist.replace(", Void", "").replace("Void", "");
+						mimperv = mimperv.replace(", Void", "").replace("Void", "");
+					}
+				
+					var maxchar = (12 - kkl) * (kkl <= 12 ? 0.7 : 1.4) + 46;
 					allm1 = allm + mclass.length + mskillspell.length + mskilltype.length + mimperv.length + mresist.length + mweak.length + mattack.length + String(mpl).length + mskillspell2.length + mskilltype2.length + mskillspell3.length + mskilltype3.length + mspiritsksp.length + mspirittype.length;
+					if (allm1 > maxchar) {
+						if (kkl > 12 && !isHVFontEngine()) {
+							kk.css("font-size", 12);
+							kk.css("font-weight", "bold")
+						}
+						if (kkl >= 17 && !isHVFontEngine()) kk.html(kk.html().slice(0,15) + "...");
+						kkl = kk.html().length;
+						if (kkl <= 5) maxchar =  (12 - kkl)*1.9 + 46;
+						else if (kkl <= 12) maxchar =  (12 - kkl)*1.95 + 46;
+						else if (kkl < 17) maxchar =  (17 - kkl)*0.8 + 46;
+						else maxchar =  (18 - kkl)*1.2 + 46;
+					}
+					if (allm1 > maxchar) {
+						mimperv = mimperv.replace(/\s/g, "");
+						mresist = mresist.replace(/\s/g, "");
+						mweak = mweak.replace(/\s/g, "");
+						mskilltype = mskilltype.replace(/\s/g, "");
+						mskilltype2 = mskilltype2.replace(/\s/g, "");
+						mskillspell = mskillspell.replace(/\s/g, "");
+						mskillspell2 = mskillspell2.replace(/\s/g, "");
+						allm1 = allm + mclass.length + mskillspell.length + mskilltype.length + mimperv.length + mresist.length + mweak.length + mattack.length + String(mpl).length + mskillspell2.length + mskilltype2.length + mskillspell3.length + mskilltype3.length + mspiritsksp.length + mspirittype.length;
+					}
+					if (allm1 > maxchar) {
+						mskilltype = mskilltype.replace("Slash", "Sl").replace("Crush", "Cr").replace("Pierc", "Pi");
+						mskilltype2 = mskilltype2.replace("Slash", "Sl").replace("Crush", "Cr").replace("Pierc", "Pi");
+						mskilltype3 = mskilltype3.replace("Slash", "Sl").replace("Crush", "Cr").replace("Pierc", "Pi");
+						mspirittype = mspirittype.replace("Slash", "Sl").replace("Crush", "Cr").replace("Pierc", "Pi");
+						mspiritsksp = mspiritsksp.replace("Spirit:", "S:");
+						mattack = mattack.replace("Slash", "Sl").replace("Crush", "Cr").replace("Pierc", "Pi");
+						allm1 = allm + mclass.length + mskillspell.length + mskilltype.length + mimperv.length + mresist.length + mweak.length + mattack.length + String(mpl).length + mskillspell2.length + mskilltype2.length + mskillspell3.length + mskilltype3.length + mspiritsksp.length + mspirittype.length;
+					}
+					if (allm1 > maxchar) {
+						mimperv = mimperv.replace("Slash", "Sl").replace("Crush", "Cr").replace("Pierc", "Pi");
+						mresist = mresist.replace("Slash", "Sl").replace("Crush", "Cr").replace("Pierc", "Pi");
+						allm1 = allm + mclass.length + mskillspell.length + mskilltype.length + mimperv.length + mresist.length + mweak.length + mattack.length + String(mpl).length + mskillspell2.length + mskilltype2.length + mskillspell3.length + mskilltype3.length + mspiritsksp.length + mspirittype.length;
+					}
+					if (allm1 > maxchar) {
+						mweak = mweak.replace("Slash", "Sl").replace("Crush", "Cr").replace("Pierc", "Pi");
+						mspiritsksp = mspiritsksp.replace("S:", "");
+						allm1 = allm + mclass.length + mskillspell.length + mskilltype.length + mimperv.length + mresist.length + mweak.length + mattack.length + String(mpl).length + mskillspell2.length + mskilltype2.length + mskillspell3.length + mskilltype3.length + mspiritsksp.length + mspirittype.length;
+					}
+					if (allm1 > maxchar) {
+						mclass = mclass.slice(0, 4);
+						allm1 = allm + mclass.length + mskillspell.length + mskilltype.length + mimperv.length + mresist.length + mweak.length + mattack.length + String(mpl).length + mskillspell2.length + mskilltype2.length + mskillspell3.length + mskilltype3.length + mspiritsksp.length + mspirittype.length;
+					}
+					if (allm1 > maxchar) {
+						mclass = mclass.slice(0, 3);
+						allm1 = allm + mclass.length + mskillspell.length + mskilltype.length + mimperv.length + mresist.length + mweak.length + mattack.length + String(mpl).length + mskillspell2.length + mskilltype2.length + mskillspell3.length + mskilltype3.length + mspiritsksp.length + mspirittype.length;
+					}
+					if (allm1 > maxchar) {
+						mskilltype = mskilltype.replace("Fire", "Fir").replace("Cold", "Col").replace("Elec", "Ele").replace("Wind", "Win").replace("Holy", "Hol").replace("Dark", "Dar").replace("Soul", "Sou").replace("Slash", "Sl").replace("Crush", "Cr").replace("Pierc", "Pi");
+						mskilltype2 = mskilltype2.replace("Fire", "Fir").replace("Cold", "Col").replace("Elec", "Ele").replace("Wind", "Win").replace("Holy", "Hol").replace("Dark", "Dar").replace("Soul", "Sou").replace("Slash", "Sl").replace("Crush", "Cr").replace("Pierc", "Pi");
+						mskilltype3 = mskilltype3.replace("Fire", "Fir").replace("Cold", "Col").replace("Elec", "Ele").replace("Wind", "Win").replace("Holy", "Hol").replace("Dark", "Dar").replace("Soul", "Sou").replace("Slash", "Sl").replace("Crush", "Cr").replace("Pierc", "Pi");
+						mspirittype = mspirittype.replace("Fire", "Fir").replace("Cold", "Col").replace("Elec", "Ele").replace("Wind", "Win").replace("Holy", "Hol").replace("Dark", "Dar").replace("Soul", "Sou").replace("Slash", "Sl").replace("Crush", "Cr").replace("Pierc", "Pi");
+						mattack = mattack.replace("Fire", "Fir").replace("Cold", "Col").replace("Elec", "Ele").replace("Wind", "Win").replace("Holy", "Hol").replace("Dark", "Dar").replace("Soul", "Sou").replace("Slash", "Sl").replace("Crush", "Cr").replace("Pierc", "Pi");
+						allm1 = allm + mclass.length + mskillspell.length + mskilltype.length + mimperv.length + mresist.length + mweak.length + mattack.length + String(mpl).length + mskillspell2.length + mskilltype2.length + mskillspell3.length + mskilltype3.length + mspiritsksp.length + mspirittype.length;
+					}
+					if (allm1 > maxchar) {
+						mresist = mresist.replace("Fire", "Fir").replace("Cold", "Col").replace("Elec", "Ele").replace("Wind", "Win").replace("Holy", "Hol").replace("Dark", "Dar").replace("Soul", "Sou").replace("Slash", "Sl").replace("Crush", "Cr").replace("Pierc", "Pi");
+						mimperv = mimperv.replace("Fire", "Fir").replace("Cold", "Col").replace("Elec", "Ele").replace("Wind", "Win").replace("Holy", "Hol").replace("Dark", "Dar").replace("Soul", "Sou").replace("Slash", "Sl").replace("Crush", "Cr").replace("Pierc", "Pi");
+						allm1 = allm + mclass.length + mskillspell.length + mskilltype.length + mimperv.length + mresist.length + mweak.length + mattack.length + String(mpl).length + mskillspell2.length + mskilltype2.length + mskillspell3.length + mskilltype3.length + mspiritsksp.length + mspirittype.length;
+					}
+					if (allm1 > maxchar) {
+						mweak = mweak.replace("Fire", "Fir").replace("Cold", "Col").replace("Elec", "Ele").replace("Wind", "Win").replace("Holy", "Hol").replace("Dark", "Dar").replace("Soul", "Sou").replace("Slash", "Sl").replace("Crush", "Cr").replace("Pierc", "Pi");
+						allm1 = allm + mclass.length + mskillspell.length + mskilltype.length + mimperv.length + mresist.length + mweak.length + mattack.length + String(mpl).length + mskillspell2.length + mskilltype2.length + mskillspell3.length + mskilltype3.length + mspiritsksp.length + mspirittype.length;
+					}
+					if (allm1 > maxchar) {
+						mskillspell = mskillspell.replace("Mag", "Ma").replace("Phys", "Ph");
+						mskillspell2 = mskillspell2.replace("Mag", "Ma").replace("Phys", "Ph");
+						mskillspell3 = mskillspell3.replace("Mag", "Ma").replace("Phys", "Ph");
+						mspiritsksp = mspiritsksp.replace("Mag", "Ma").replace("Phys", "Ph");
+						allm1 = allm + mclass.length + mskillspell.length + mskilltype.length + mimperv.length + mresist.length + mweak.length + mattack.length + String(mpl).length + mskillspell2.length + mskilltype2.length + mskillspell3.length + mskilltype3.length + mspiritsksp.length + mspirittype.length;
+					}
+					if (allm1 > maxchar) {
+						mattack = mattack.replace("Fir", "Fi").replace("Col", "Co").replace("Ele", "El").replace("Win", "Wi").replace("Hol", "Ho").replace("Dar", "Da").replace("Sou", "So").replace("Elm", "Elem");
+						mskilltype = mskilltype.replace("Fir", "Fi").replace("Col", "Co").replace("Ele", "El").replace("Win", "Wi").replace("Hol", "Ho").replace("Dar", "Da").replace("Sou", "So").replace("Elm", "Elem");
+						mskilltype2 = mskilltype2.replace("Fir", "Fi").replace("Col", "Co").replace("Ele", "El").replace("Win", "Wi").replace("Hol", "Ho").replace("Dar", "Da").replace("Sou", "So").replace("Elm", "Elem");
+						mskilltype3 = mskilltype3.replace("Fir", "Fi").replace("Col", "Co").replace("Ele", "El").replace("Win", "Wi").replace("Hol", "Ho").replace("Dar", "Da").replace("Sou", "So").replace("Elm", "Elem");
+						mspirittype = mspirittype.replace("Fir", "Fi").replace("Col", "Co").replace("Ele", "El").replace("Win", "Wi").replace("Hol", "Ho").replace("Dar", "Da").replace("Sou", "So").replace("Elm", "Elem");
+						allm1 = allm + mclass.length + mskillspell.length + mskilltype.length + mimperv.length + mresist.length + mweak.length + mattack.length + String(mpl).length + mskillspell2.length + mskilltype2.length + mskillspell3.length + mskilltype3.length + mspiritsksp.length + mspirittype.length;
+					}
+					if (allm1 > maxchar) {
+						mresist = mresist.replace("Fir", "Fi").replace("Col", "Co").replace("Ele", "El").replace("Win", "Wi").replace("Hol", "Ho").replace("Dar", "Da").replace("Sou", "So").replace("Elm", "Elem");
+						mimperv = mimperv.replace("Fir", "Fi").replace("Col", "Co").replace("Ele", "El").replace("Win", "Wi").replace("Hol", "Ho").replace("Dar", "Da").replace("Sou", "So").replace("Elm", "Elem");
+						allm1 = allm + mclass.length + mskillspell.length + mskilltype.length + mimperv.length + mresist.length + mweak.length + mattack.length + String(mpl).length + mskillspell2.length + mskilltype2.length + mskillspell3.length + mskilltype3.length + mspiritsksp.length + mspirittype.length;
+					}
+					if (allm1 > maxchar) {
+						mweak = mweak.replace("Fir", "Fi").replace("Col", "Co").replace("Ele", "El").replace("Win", "Wi").replace("Hol", "Ho").replace("Dar", "Da").replace("Sou", "So").replace("Elm", "Elem");
+						allm1 = allm + mclass.length + mskillspell.length + mskilltype.length + mimperv.length + mresist.length + mweak.length + mattack.length + String(mpl).length + mskillspell2.length + mskilltype2.length + mskillspell3.length + mskilltype3.length + mspiritsksp.length + mspirittype.length;
+					}
+					if (allm1 > maxchar) {
+						mattack = mattack.replace("Fi", "F").replace("Co", "C").replace("El", "E").replace("Wi", "W").replace("Ho", "H").replace("Da", "D").replace("So", "S").replace("Eem", "Elem");
+						mskilltype = mskilltype.replace("Fi", "F").replace("Co", "C").replace("El", "E").replace("Wi", "W").replace("Ho", "H").replace("Da", "D").replace("So", "S").replace("Eem", "Elem");
+						mskilltype2 = mskilltype2.replace("Fi", "F").replace("Co", "C").replace("El", "E").replace("Wi", "W").replace("Ho", "H").replace("Da", "D").replace("So", "S").replace("Eem", "Elem");
+						mskilltype3 = mskilltype3.replace("Fi", "F").replace("Co", "C").replace("El", "E").replace("Wi", "W").replace("Ho", "H").replace("Da", "D").replace("So", "S").replace("Eem", "Elem");
+						mspirittype = mspirittype.replace("Fi", "F").replace("Co", "C").replace("El", "E").replace("Wi", "W").replace("Ho", "H").replace("Da", "D").replace("So", "S").replace("Eem", "Elem");
+						allm1 = allm + mclass.length + mskillspell.length + mskilltype.length + mimperv.length + mresist.length + mweak.length + mattack.length + String(mpl).length + mskillspell2.length + mskilltype2.length + mskillspell3.length + mskilltype3.length + mspiritsksp.length + mspirittype.length;
+					}
+					if (allm1 > maxchar) {
+						mskillspell = mskillspell.replace("Ma", "M").replace("Ph", "P");
+						mskillspell2 = mskillspell2.replace("Ma", "M").replace("Ph", "P");
+						mskillspell3 = mskillspell3.replace("Ma", "M").replace("Ph", "P");
+						mspiritsksp = mspiritsksp.replace("Ma", "M").replace("Ph", "P");
+						allm1 = allm + mclass.length + mskillspell.length + mskilltype.length + mimperv.length + mresist.length + mweak.length + mattack.length + String(mpl).length + mskillspell2.length + mskilltype2.length + mskillspell3.length + mskilltype3.length + mspiritsksp.length + mspirittype.length;
+					}
+					if (allm1 > maxchar) {
+						mresist = mresist.replace("Fi", "F").replace("Co", "C").replace("El", "E").replace("Wi", "W").replace("Ho", "H").replace("Da", "D").replace("So", "S").replace("Eem", "Elem");
+						mimperv = mimperv.replace("Fi", "F").replace("Co", "C").replace("El", "E").replace("Wi", "W").replace("Ho", "H").replace("Da", "D").replace("So", "S").replace("Eem", "Elem");
+						allm1 = allm + mclass.length + mskillspell.length + mskilltype.length + mimperv.length + mresist.length + mweak.length + mattack.length + String(mpl).length + mskillspell2.length + mskilltype2.length + mskillspell3.length + mskilltype3.length + mspiritsksp.length + mspirittype.length;
+					}
+					if (allm1 > maxchar) {
+						mweak = mweak.replace("Fi", "F").replace("Co", "C").replace("El", "E").replace("Wi", "W").replace("Ho", "H").replace("Da", "D").replace("So", "S").replace("Eem", "Elem");
+					}
 				}
-				if (allm1 > maxchar) {
-					mskilltype = mskilltype.replace("Slash", "Sl").replace("Crush", "Cr").replace("Pierc", "Pi");
-					mskilltype2 = mskilltype2.replace("Slash", "Sl").replace("Crush", "Cr").replace("Pierc", "Pi");
-					mskilltype3 = mskilltype3.replace("Slash", "Sl").replace("Crush", "Cr").replace("Pierc", "Pi");
-					mspirittype = mspirittype.replace("Slash", "Sl").replace("Crush", "Cr").replace("Pierc", "Pi");
-					mspiritsksp = mspiritsksp.replace("Spirit:", "S:");
-					mattack = mattack.replace("Slash", "Sl").replace("Crush", "Cr").replace("Pierc", "Pi");
-					allm1 = allm + mclass.length + mskillspell.length + mskilltype.length + mimperv.length + mresist.length + mweak.length + mattack.length + String(mpl).length + mskillspell2.length + mskilltype2.length + mskillspell3.length + mskilltype3.length + mspiritsksp.length + mspirittype.length;
-				}
-				if (allm1 > maxchar) {
-					mimperv = mimperv.replace("Slash", "Sl").replace("Crush", "Cr").replace("Pierc", "Pi");
-					mresist = mresist.replace("Slash", "Sl").replace("Crush", "Cr").replace("Pierc", "Pi");
-					allm1 = allm + mclass.length + mskillspell.length + mskilltype.length + mimperv.length + mresist.length + mweak.length + mattack.length + String(mpl).length + mskillspell2.length + mskilltype2.length + mskillspell3.length + mskilltype3.length + mspiritsksp.length + mspirittype.length;
-				}
-				if (allm1 > maxchar) {
-					mweak = mweak.replace("Slash", "Sl").replace("Crush", "Cr").replace("Pierc", "Pi");
-					mspiritsksp = mspiritsksp.replace("S:", "");
-					allm1 = allm + mclass.length + mskillspell.length + mskilltype.length + mimperv.length + mresist.length + mweak.length + mattack.length + String(mpl).length + mskillspell2.length + mskilltype2.length + mskillspell3.length + mskilltype3.length + mspiritsksp.length + mspirittype.length;
-				}
-				if (allm1 > maxchar) {
-					mclass = mclass.slice(0, 4);
-					allm1 = allm + mclass.length + mskillspell.length + mskilltype.length + mimperv.length + mresist.length + mweak.length + mattack.length + String(mpl).length + mskillspell2.length + mskilltype2.length + mskillspell3.length + mskilltype3.length + mspiritsksp.length + mspirittype.length;
-				}
-				if (allm1 > maxchar) {
-					mclass = mclass.slice(0, 3);
-					allm1 = allm + mclass.length + mskillspell.length + mskilltype.length + mimperv.length + mresist.length + mweak.length + mattack.length + String(mpl).length + mskillspell2.length + mskilltype2.length + mskillspell3.length + mskilltype3.length + mspiritsksp.length + mspirittype.length;
-				}
-				if (allm1 > maxchar) {
-					mskilltype = mskilltype.replace("Fire", "Fir").replace("Cold", "Col").replace("Elec", "Ele").replace("Wind", "Win").replace("Holy", "Hol").replace("Dark", "Dar").replace("Soul", "Sou").replace("Slash", "Sl").replace("Crush", "Cr").replace("Pierc", "Pi");
-					mskilltype2 = mskilltype2.replace("Fire", "Fir").replace("Cold", "Col").replace("Elec", "Ele").replace("Wind", "Win").replace("Holy", "Hol").replace("Dark", "Dar").replace("Soul", "Sou").replace("Slash", "Sl").replace("Crush", "Cr").replace("Pierc", "Pi");
-					mskilltype3 = mskilltype3.replace("Fire", "Fir").replace("Cold", "Col").replace("Elec", "Ele").replace("Wind", "Win").replace("Holy", "Hol").replace("Dark", "Dar").replace("Soul", "Sou").replace("Slash", "Sl").replace("Crush", "Cr").replace("Pierc", "Pi");
-					mspirittype = mspirittype.replace("Fire", "Fir").replace("Cold", "Col").replace("Elec", "Ele").replace("Wind", "Win").replace("Holy", "Hol").replace("Dark", "Dar").replace("Soul", "Sou").replace("Slash", "Sl").replace("Crush", "Cr").replace("Pierc", "Pi");
-					mattack = mattack.replace("Fire", "Fir").replace("Cold", "Col").replace("Elec", "Ele").replace("Wind", "Win").replace("Holy", "Hol").replace("Dark", "Dar").replace("Soul", "Sou").replace("Slash", "Sl").replace("Crush", "Cr").replace("Pierc", "Pi");
-					allm1 = allm + mclass.length + mskillspell.length + mskilltype.length + mimperv.length + mresist.length + mweak.length + mattack.length + String(mpl).length + mskillspell2.length + mskilltype2.length + mskillspell3.length + mskilltype3.length + mspiritsksp.length + mspirittype.length;
-				}
-				if (allm1 > maxchar) {
-					mresist = mresist.replace("Fire", "Fir").replace("Cold", "Col").replace("Elec", "Ele").replace("Wind", "Win").replace("Holy", "Hol").replace("Dark", "Dar").replace("Soul", "Sou").replace("Slash", "Sl").replace("Crush", "Cr").replace("Pierc", "Pi");
-					mimperv = mimperv.replace("Fire", "Fir").replace("Cold", "Col").replace("Elec", "Ele").replace("Wind", "Win").replace("Holy", "Hol").replace("Dark", "Dar").replace("Soul", "Sou").replace("Slash", "Sl").replace("Crush", "Cr").replace("Pierc", "Pi");
-					allm1 = allm + mclass.length + mskillspell.length + mskilltype.length + mimperv.length + mresist.length + mweak.length + mattack.length + String(mpl).length + mskillspell2.length + mskilltype2.length + mskillspell3.length + mskilltype3.length + mspiritsksp.length + mspirittype.length;
-				}
-				if (allm1 > maxchar) {
-					mweak = mweak.replace("Fire", "Fir").replace("Cold", "Col").replace("Elec", "Ele").replace("Wind", "Win").replace("Holy", "Hol").replace("Dark", "Dar").replace("Soul", "Sou").replace("Slash", "Sl").replace("Crush", "Cr").replace("Pierc", "Pi");
-					allm1 = allm + mclass.length + mskillspell.length + mskilltype.length + mimperv.length + mresist.length + mweak.length + mattack.length + String(mpl).length + mskillspell2.length + mskilltype2.length + mskillspell3.length + mskilltype3.length + mspiritsksp.length + mspirittype.length;
-				}
-				if (allm1 > maxchar) {
-					mskillspell = mskillspell.replace("Mag", "Ma").replace("Phys", "Ph");
-					mskillspell2 = mskillspell2.replace("Mag", "Ma").replace("Phys", "Ph");
-					mskillspell3 = mskillspell3.replace("Mag", "Ma").replace("Phys", "Ph");
-					mspiritsksp = mspiritsksp.replace("Mag", "Ma").replace("Phys", "Ph");
-					allm1 = allm + mclass.length + mskillspell.length + mskilltype.length + mimperv.length + mresist.length + mweak.length + mattack.length + String(mpl).length + mskillspell2.length + mskilltype2.length + mskillspell3.length + mskilltype3.length + mspiritsksp.length + mspirittype.length;
-				}
-				if (allm1 > maxchar) {
-					mattack = mattack.replace("Fir", "Fi").replace("Col", "Co").replace("Ele", "El").replace("Win", "Wi").replace("Hol", "Ho").replace("Dar", "Da").replace("Sou", "So").replace("Elm", "Elem");
-					mskilltype = mskilltype.replace("Fir", "Fi").replace("Col", "Co").replace("Ele", "El").replace("Win", "Wi").replace("Hol", "Ho").replace("Dar", "Da").replace("Sou", "So").replace("Elm", "Elem");
-					mskilltype2 = mskilltype2.replace("Fir", "Fi").replace("Col", "Co").replace("Ele", "El").replace("Win", "Wi").replace("Hol", "Ho").replace("Dar", "Da").replace("Sou", "So").replace("Elm", "Elem");
-					mskilltype3 = mskilltype3.replace("Fir", "Fi").replace("Col", "Co").replace("Ele", "El").replace("Win", "Wi").replace("Hol", "Ho").replace("Dar", "Da").replace("Sou", "So").replace("Elm", "Elem");
-					mspirittype = mspirittype.replace("Fir", "Fi").replace("Col", "Co").replace("Ele", "El").replace("Win", "Wi").replace("Hol", "Ho").replace("Dar", "Da").replace("Sou", "So").replace("Elm", "Elem");
-					allm1 = allm + mclass.length + mskillspell.length + mskilltype.length + mimperv.length + mresist.length + mweak.length + mattack.length + String(mpl).length + mskillspell2.length + mskilltype2.length + mskillspell3.length + mskilltype3.length + mspiritsksp.length + mspirittype.length;
-				}
-				if (allm1 > maxchar) {
-					mresist = mresist.replace("Fir", "Fi").replace("Col", "Co").replace("Ele", "El").replace("Win", "Wi").replace("Hol", "Ho").replace("Dar", "Da").replace("Sou", "So").replace("Elm", "Elem");
-					mimperv = mimperv.replace("Fir", "Fi").replace("Col", "Co").replace("Ele", "El").replace("Win", "Wi").replace("Hol", "Ho").replace("Dar", "Da").replace("Sou", "So").replace("Elm", "Elem");
-					allm1 = allm + mclass.length + mskillspell.length + mskilltype.length + mimperv.length + mresist.length + mweak.length + mattack.length + String(mpl).length + mskillspell2.length + mskilltype2.length + mskillspell3.length + mskilltype3.length + mspiritsksp.length + mspirittype.length;
-				}
-				if (allm1 > maxchar) {
-					mweak = mweak.replace("Fir", "Fi").replace("Col", "Co").replace("Ele", "El").replace("Win", "Wi").replace("Hol", "Ho").replace("Dar", "Da").replace("Sou", "So").replace("Elm", "Elem");
-					allm1 = allm + mclass.length + mskillspell.length + mskilltype.length + mimperv.length + mresist.length + mweak.length + mattack.length + String(mpl).length + mskillspell2.length + mskilltype2.length + mskillspell3.length + mskilltype3.length + mspiritsksp.length + mspirittype.length;
-				}
-				if (allm1 > maxchar) {
-					mattack = mattack.replace("Fi", "F").replace("Co", "C").replace("El", "E").replace("Wi", "W").replace("Ho", "H").replace("Da", "D").replace("So", "S").replace("Eem", "Elem");
-					mskilltype = mskilltype.replace("Fi", "F").replace("Co", "C").replace("El", "E").replace("Wi", "W").replace("Ho", "H").replace("Da", "D").replace("So", "S").replace("Eem", "Elem");
-					mskilltype2 = mskilltype2.replace("Fi", "F").replace("Co", "C").replace("El", "E").replace("Wi", "W").replace("Ho", "H").replace("Da", "D").replace("So", "S").replace("Eem", "Elem");
-					mskilltype3 = mskilltype3.replace("Fi", "F").replace("Co", "C").replace("El", "E").replace("Wi", "W").replace("Ho", "H").replace("Da", "D").replace("So", "S").replace("Eem", "Elem");
-					mspirittype = mspirittype.replace("Fi", "F").replace("Co", "C").replace("El", "E").replace("Wi", "W").replace("Ho", "H").replace("Da", "D").replace("So", "S").replace("Eem", "Elem");
-					allm1 = allm + mclass.length + mskillspell.length + mskilltype.length + mimperv.length + mresist.length + mweak.length + mattack.length + String(mpl).length + mskillspell2.length + mskilltype2.length + mskillspell3.length + mskilltype3.length + mspiritsksp.length + mspirittype.length;
-				}
-				if (allm1 > maxchar) {
-					mskillspell = mskillspell.replace("Ma", "M").replace("Ph", "P");
-					mskillspell2 = mskillspell2.replace("Ma", "M").replace("Ph", "P");
-					mskillspell3 = mskillspell3.replace("Ma", "M").replace("Ph", "P");
-					mspiritsksp = mspiritsksp.replace("Ma", "M").replace("Ph", "P");
-					allm1 = allm + mclass.length + mskillspell.length + mskilltype.length + mimperv.length + mresist.length + mweak.length + mattack.length + String(mpl).length + mskillspell2.length + mskilltype2.length + mskillspell3.length + mskilltype3.length + mspiritsksp.length + mspirittype.length;
-				}
-				if (allm1 > maxchar) {
-					mresist = mresist.replace("Fi", "F").replace("Co", "C").replace("El", "E").replace("Wi", "W").replace("Ho", "H").replace("Da", "D").replace("So", "S").replace("Eem", "Elem");
-					mimperv = mimperv.replace("Fi", "F").replace("Co", "C").replace("El", "E").replace("Wi", "W").replace("Ho", "H").replace("Da", "D").replace("So", "S").replace("Eem", "Elem");
-					allm1 = allm + mclass.length + mskillspell.length + mskilltype.length + mimperv.length + mresist.length + mweak.length + mattack.length + String(mpl).length + mskillspell2.length + mskilltype2.length + mskillspell3.length + mskilltype3.length + mspiritsksp.length + mspirittype.length;
-				}
-				if (allm1 > maxchar) {
-					mweak = mweak.replace("Fi", "F").replace("Co", "C").replace("El", "E").replace("Wi", "W").replace("Ho", "H").replace("Da", "D").replace("So", "S").replace("Eem", "Elem");
-				}
-				if (mclass !== "0" && mclass !== "undefined") {
+				if (mclass !== "0" && mclass !== "undefined" && mclass !== "unde" && mclass !== "und") {
 					d = "";
 					if (_settings.isShowClassHvstatStyle){
 						d = "{<span style='color:blue'>" + mclass;
@@ -2356,6 +2359,7 @@ function initSettingsPane() {
 		+ '<tr><td align="center" style="width:5px;padding-left:65px"><input type="checkbox" name="HideThisResHvstatStyle8" /></td><td colspan="2" style="padding-left:20px">Dark</td></tr>'
 		+ '<tr><td align="center" style="width:5px;padding-left:65px"><input type="checkbox" name="HideThisResHvstatStyle9" /></td><td colspan="2" style="padding-left:20px">Soul</td></tr>'
 		+ '<tr><td align="center" style="width:5px;padding-left:65px"><input type="checkbox" name="HideThisResHvstatStyle10" /></td><td colspan="2" style="padding-left:20px">Void</td></tr>'
+		+ '<tr><td align="center" style="width:5px;padding-left:60px"><input type="checkbox" name="ResizeMonsterInfo" /></td><td colspan="2" style="padding-left:20px">Resize Monster Info if longer than Info box</td></tr>'
 		+ '<tr><td align="center" style="width:5px;padding-left:60px"><input type="checkbox" name="isShowPLHvstatStyle" /></td><td colspan="2" style="padding-left:20px">Show monster power levels from database</td></tr>'
 		+ '<tr><td align="center" style="width:5px;padding-left:40px"><input type="checkbox" name="isShowStatsPopup" /></td><td colspan="2" style="padding-left:10px">Show monster statistics on mouseover - delay: <input type="text" name="monsterPopupDelay" size="3" maxLength="4" style="text-align:right" />ms</td><td align="center" style="width:120px">' + t34 + ' ms (' + (t34*100/t0).toFixed(1) + '%)</td></tr>'
 		+ '<tr><td align="center" style="width:5px;padding-left:50px"><input type="checkbox" name="isMonsterPopupPlacement" /></td><td colspan="2" style="padding-left:20px">Alternative placement for mouseover popup</td></tr></tr>'
@@ -2451,6 +2455,7 @@ function initSettingsPane() {
 	if (_settings.HideThisResHvstatStyle[8]) $("input[name=HideThisResHvstatStyle8]").attr("checked", "checked");
 	if (_settings.HideThisResHvstatStyle[9]) $("input[name=HideThisResHvstatStyle9]").attr("checked", "checked");
 	if (_settings.HideThisResHvstatStyle[10]) 	$("input[name=HideThisResHvstatStyle10]").attr("checked", "checked");
+	if (_settings.ResizeMonsterInfo) $("input[name=ResizeMonsterInfo]").attr("checked", "checked");
 	if (_settings.isShowPLHvstatStyle) $("input[name=isShowPLHvstatStyle]").attr("checked", "checked");
 	if (_settings.isShowElemHvstatStyle) $("input[name=isShowElemHvstatStyle]").attr("checked", "checked");
 	if (_settings.isShowStatsPopup) $("input[name=isShowStatsPopup]").attr("checked", "checked");
@@ -2597,6 +2602,7 @@ function initSettingsPane() {
 	$("input[name=HideThisResHvstatStyle8]").click(saveSettings);
 	$("input[name=HideThisResHvstatStyle9]").click(saveSettings);
 	$("input[name=HideThisResHvstatStyle10]").click(saveSettings);
+	$("input[name=ResizeMonsterInfo]").click(saveSettings);
 	$("input[name=isShowPLHvstatStyle]").click(saveSettings);
 	$("input[name=isShowMonsterDuration]").click(saveSettings);
 	$("input[name=isMonstersEffectsWarnColor]").click(saveSettings);
@@ -2703,6 +2709,7 @@ function saveSettings() {
 	_settings.HideThisResHvstatStyle[8] = $("input[name=HideThisResHvstatStyle8]").get(0).checked;
 	_settings.HideThisResHvstatStyle[9] = $("input[name=HideThisResHvstatStyle9]").get(0).checked;
 	_settings.HideThisResHvstatStyle[10] = $("input[name=HideThisResHvstatStyle10]").get(0).checked;
+	_settings.ResizeMonsterInfo = $("input[name=ResizeMonsterInfo]").get(0).checked;
 	_settings.isShowPLHvstatStyle = $("input[name=isShowPLHvstatStyle]").get(0).checked;
 	_settings.isShowMonsterDuration = $("input[name=isShowMonsterDuration]").get(0).checked;
 	_settings.isMonstersEffectsWarnColor = $("input[name=isMonstersEffectsWarnColor]").get(0).checked;
@@ -3515,6 +3522,7 @@ function HVSettings() {
 	this.isShowWeakHvstatStyle = false;
 	this.isShowResHvstatStyle = false;
 	this.HideThisResHvstatStyle = [false, false, false, false, false, false, false, false, false, false, false];
+	this.ResizeMonsterInfo = false;
 	this.isShowPLHvstatStyle = false;
 	this.isShowMonsterDuration = true;
 	this.isMonstersEffectsWarnColor = false;
@@ -5273,7 +5281,7 @@ function MonsterPopup() {
 		$('.btm1[id*=' + mid + ']').bind('mouseover', {h:num, na:name, mhp:maxhp, chp:currhp, cmp:currmp, csp:currsp, cl:mclass, pl:mpl, at:mattack, sk:mskilltype, sksp:mskillspell, sk2:mskilltype2, sksp2:mskillspell2, sk3:mskilltype3, sksp3:mskillspell3,spty:mspirittype,spss:mspiritsksp, res:mresist, imp:mimperv, we:mweak, scd:dst1, scago:E}, function (r) {
 			c.style.left = leftpixels + "px";
 			a = (56 * parseInt(r.data.h)) + 24;
-			setTimeoutByledalej1 = setTimeout('document.getElementById("popup_box").style.top = ' + a + ' + "px"', delay);
+			setTimeoutByledalej1 = setTimeout(document.getElementById("popup_box").style.top = a + "px", delay);
 			c.style.width = "270px";
 			c.style.height = "220px";
 			var fi = "<table></table>";
@@ -5301,11 +5309,11 @@ function MonsterPopup() {
 					+ '<tr><td style="width:27%">Spirit: </td><td>' + r.data.csp + '%</td></tr>'
 					+ '<tr><td style="width:27%">Last scan:</td><td>' + r.data.scd + '</td></tr>';
 			}
-			setTimeoutByledalej2 = setTimeout("document.getElementById('popup_box').innerHTML='" + fi + "'", delay);
-			setTimeoutByledalej3 = setTimeout('document.getElementById("popup_box").style.visibility="visible"', delay);
+			setTimeoutByledalej2 = setTimeout(document.getElementById("popup_box").innerHTML = fi, delay);
+			setTimeoutByledalej3 = setTimeout(document.getElementById("popup_box").style.visibility = "visible", delay);
 		});
 		$('.btm1[id*=' + mid + ']').bind('mouseout', function () {
-			setTimeout('document.getElementById("popup_box").style.visibility="hidden"', delay);
+			setTimeout(document.getElementById("popup_box").style.visibility = "hidden", delay);
 			clearTimeout(window.setTimeoutByledalej1);
 			clearTimeout(window.setTimeoutByledalej2);
 			clearTimeout(window.setTimeoutByledalej3);
