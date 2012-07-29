@@ -5527,7 +5527,7 @@ function TaggingItems(clean) {
 	var HeavyIDsArray = [];
 	$("#inv_equip div.eqpp, #inv_equip div.eqp, #item_pane div.eqp, #item_pane div.eqpp, #equip div.eqp, #equip div.eqpp, #equip_pane div.eqp, #equip_pane div.eqpp").each(function() {
 		var g = $(this);
-		var itemstype = String(String(g.children().filter(".eqdp").attr("onmouseover")).match(/Level \d+ (One-handed Weapon|Two-handed Weapon|Staff|Shield|Cloth Armor|Light Armor|Heavy Armor)/i)[0]).replace(/Level \d+ /i,"").replace(/ (Weapon|Armor)/i,"");
+		var itemstype = String(String(g.children().filter(".eqdp").attr("onmouseover")).match(/(One-handed Weapon|Two-handed Weapon|Staff|Shield|Cloth Armor|Light Armor|Heavy Armor)/i)[0]).replace(/ (Weapon|Armor)/i,"");
 		var id = parseInt(String(g.children().filter(".eqdp").attr("id")).replace("item_pane",""));
 		var n = 0;
 		var tag = "_new";
