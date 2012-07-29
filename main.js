@@ -938,15 +938,13 @@ function collectRoundInfo() {
 	if (_settings.isTrackRewards) loadRewardsObject();
 	if (_settings.isSpellsSkillsDifference || _settings.isShowStatsPopup) {
 		var t74 = TimeCounter(1);
-		var n4 = 0;
-		var mkeymax2 = _round.monsters.length;
-		while ((n4 < 10) && (_round.monsters[n4] !== undefined)) {
-			var mkey2 = "mkey_" + String(mkeymax2 - n4) ;
-			if (_round.monsters[n4].hasspbar) {
-				var spbar = $('.btm1[id*='+mkey2+']').children().eq(2).children().eq(2);
-				_round.monsters[n4].sp1 = spbar.children().eq(0).children("img").eq(1).width() / spbar.children().eq(0).children("img").eq(0).width();
+		// issue: SP is always zero in the monster popup when first load
+		for (var i = 0; i < _round.monsters.length; i++) {
+			if (_round.monsters[i].hasspbar) {
+				var spbar = $("#" + getMonsterElementId(i)).children().eq(2).children().eq(2);
+				// get current SP percent
+				_round.monsters[i].sp1 = spbar.children().eq(0).children("img").eq(1).width() / 120;
 			}
-			n4++;
 		}
 		_ltc.changedMHits[1] += TimeCounter(0, t74);
 	}
@@ -1030,15 +1028,10 @@ function collectRoundInfo() {
 		}
 		if (_settings.isSpellsSkillsDifference) {
 			var t71 = TimeCounter(1);
-			var num44 = 0;
-			var mkeymax = $("#monsterpane > div").length;
-			while (num44 < 10 &&  _round.monsters[num44] !== undefined) {
-				var mkey = "mkey_" + String(mkeymax - num44);
-				var lll2 = parseInt($('.btm1[id*='+mkey+']').children().eq(2).children().filter(".btm5").length);
-				if (lll2 > 2) {
-					_round.monsters[num44].hasspbar = true;
+			for (var i = 0; i < _round.monsters.length; i++) {
+				if ($("#" + getMonsterElementId(i)).children().eq(2).children().filter(".btm5").length > 2) {
+					_round.monsters[i].hasspbar = true;
 				}
-				num44++;
 			}
 			_ltc.changedMHits[1] += TimeCounter(0, t71);
 		}
@@ -1506,15 +1499,10 @@ function collectRoundInfo() {
 	}
 	if (_settings.isSpellsSkillsDifference) {
 		var t74 = TimeCounter(1);
-		var n4 = 0;
-		var mkeymax2 = _round.monsters.length;
-		while ((n4 < 10) && (_round.monsters[n4] !== undefined)) {
-			var mkey2 = "mkey_" + String(mkeymax2 - n4);
-			if (_round.monsters[n4].hasspbar) {
-				var spbar = $('.btm1[id*='+mkey2+']').children().eq(2).children().eq(2);
-				_round.monsters[n4].sp2 = _round.monsters[n4].sp1;
+		for (var i = 0; i < _round.monsters.length; i++) {
+			if (_round.monsters[i].hasspbar) {
+				_round.monsters[i].sp2 = _round.monsters[i].sp1;
 			}
-			n4++;
 		}
 		_ltc.changedMHits[1] += TimeCounter(0, t74);
 	}
@@ -5065,8 +5053,8 @@ function Scanbutton() {
 		}
 	});
 	while (num < mkeymax) {
-		var mkey = "mkey_" + String((mkeymax - num) % 10);
-		var u = $("#" + mkey);
+		var monsterElementId = getMonsterElementId(mkeymax - num - 1);
+		var u = $("#" + monsterElementId);
 		var e = u.children().eq(2).children().eq(0);
 		var dead = e.html().match(/bardead/i);
 		if (!dead) {
@@ -5076,7 +5064,7 @@ function Scanbutton() {
 				var d = "<span style='font-size:10px;font-weight:bold;font-family:arial,helvetica,sans-serif;text-align:center;vertical-align:text-top;cursor:default'>Scan</span>";
 				c.setAttribute("id", "STATscan_" + String(n));
 				c.setAttribute("style", "position:absolute;top:" + String(top) + "px;left:556px;background-color:#EFEEDC;width:25px;height:10px;border-style:double;border-width:2px;z-index:2;border-color:#555555;");
-				c.setAttribute("onclick", 'document.getElementById("ckey_skills").onclick();document.getElementById("100020").onclick();document.getElementById("' + mkey + '").onclick()');
+				c.setAttribute("onclick", 'document.getElementById("ckey_skills").onclick();document.getElementById("100020").onclick();document.getElementById("' + monsterElementId + '").onclick()');
 				c.innerHTML = d;
 				a.after(c);
 			}
@@ -5092,7 +5080,7 @@ function Scanbutton() {
 							cs.setAttribute("style", style + "opacity:0.3;");
 						} else {
 							cs.setAttribute("style", style);
-							cs.setAttribute("onclick", 'document.getElementById("ckey_skills").onclick();document.getElementById("' + skillnum[i] + '").onclick();document.getElementById("' + mkey + '").onclick()');
+							cs.setAttribute("onclick", 'document.getElementById("ckey_skills").onclick();document.getElementById("' + skillnum[i] + '").onclick();document.getElementById("' + monsterElementId + '").onclick()');
 						}
 						cs.innerHTML = ds;
 						a.after(cs);
@@ -5234,7 +5222,7 @@ function MonsterPopup() {
 		if (mpl === undefined || mpl === null || mpl === 0 || mpl === "0") mpl = "";
 		mclass = q.mclass;
 		if (mclass !== undefined) mclass = MClassNum(mclass, 1);
-		mid = "mkey_" + String(num % 10);
+		var monsterElementId = getMonsterElementId(num - 1);
 		name = q.name;
 		maxhp = q.maxHp;
 		currhp = q.currHp;
@@ -5276,7 +5264,7 @@ function MonsterPopup() {
 			mspiritsksp = formatAttackType(mspiritsksp);
 		}
 		mattack = formatAttackType(mattack);
-		$('.btm1[id*=' + mid + ']').bind('mouseover', {h:num, na:name, mhp:maxhp, chp:currhp, cmp:currmp, csp:currsp, cl:mclass, pl:mpl, at:mattack, sk:mskilltype, sksp:mskillspell, sk2:mskilltype2, sksp2:mskillspell2, sk3:mskilltype3, sksp3:mskillspell3,spty:mspirittype,spss:mspiritsksp, res:mresist, imp:mimperv, we:mweak, scd:dst1, scago:E}, function (r) {
+		$("#" + monsterElementId).bind('mouseover', {h:num, na:name, mhp:maxhp, chp:currhp, cmp:currmp, csp:currsp, cl:mclass, pl:mpl, at:mattack, sk:mskilltype, sksp:mskillspell, sk2:mskilltype2, sksp2:mskillspell2, sk3:mskilltype3, sksp3:mskillspell3,spty:mspirittype,spss:mspiritsksp, res:mresist, imp:mimperv, we:mweak, scd:dst1, scago:E}, function (r) {
 			c.style.left = leftpixels + "px";
 			a = (56 * parseInt(r.data.h)) + 24;
 			setTimeoutByledalej1 = setTimeout(document.getElementById("popup_box").style.top = a + "px", delay);
@@ -5310,8 +5298,8 @@ function MonsterPopup() {
 			setTimeoutByledalej2 = setTimeout(document.getElementById("popup_box").innerHTML = fi, delay);
 			setTimeoutByledalej3 = setTimeout(document.getElementById("popup_box").style.visibility = "visible", delay);
 		});
-		$('.btm1[id*=' + mid + ']').bind('mouseout', function () {
-			setTimeout(document.getElementById("popup_box").style.visibility = "hidden", delay);
+		$("#" + monsterElementId).bind('mouseout', function () {
+			setTimeout('document.getElementById("popup_box").style.visibility="hidden"', delay);
 			clearTimeout(window.setTimeoutByledalej1);
 			clearTimeout(window.setTimeoutByledalej2);
 			clearTimeout(window.setTimeoutByledalej3);
@@ -5406,7 +5394,7 @@ function AlertEffectsSelf() {
 			"Protection", "Hastened", "Shadow Veil", "Regen", "Absorbing Ward",
 			"Spark of Life", "Channeling", "Arcane Focus", "Heartseeker", "Spirit Shield"
 		];
-		for (var n = 0; n < 12; n++) {
+		for (var n = 0; n < effectNames.length; n++) {
 			if (_settings.isEffectsAlertSelf[n]
 					&& allinfo[0].match(effectNames[n])
 					&& allinfo[2] === _settings.EffectsAlertSelfRounds[n]) {
@@ -5431,7 +5419,7 @@ function AlertEffectsMonsters() {
 			"Imperiled", "Blinded", "Silenced", "Nerfed", "Magically Snared",
 			"Lifestream", "Coalesced Mana"
 		];
-		for (var n = 0; n < 12; n++) {
+		for (var n = 0; n < effectNames.length; n++) {
 			if (_settings.isEffectsAlertMonsters[n]
 					&& allinfo[0].match(effectNames[n])
 					&& allinfo[2] === _settings.EffectsAlertMonstersRounds[n]) {
@@ -5727,6 +5715,14 @@ function main3 () {
 	_ltc.main[0]++;
 	_ltc.main[1] += TimeCounter(0, millisecondsAll);
 	_ltc.save();
+}
+function getMonsterElementId(n) {
+	var ids = [
+		"mkey_1", "mkey_2", "mkey_3", "mkey_4", "mkey_5",
+		"mkey_6", "mkey_7", "mkey_8", "mkey_9", "mkey_0"
+	];
+	if (!(0 <= n && n <= 9)) throw new Error("n must be 0 to 9");
+	return ids[n];
 }
 
 //=== Event Listeners
