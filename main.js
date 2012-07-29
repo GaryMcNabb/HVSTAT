@@ -2130,10 +2130,12 @@ function initMainMenu() {
 	initRewardsPane();
 	initShrinePane();
 	initSettingsPane();
-	$("._mainButton").toggle(function () {
-		$(c).dialog("close");
-	}, function () {
-		$(c).dialog("open");
+	$("._mainButton").unbind("click", initMainMenu);
+	$("._mainButton").click(function () {
+		if ($(c).dialog("isOpen"))
+			$(c).dialog("close");
+		else
+			$(c).dialog("open");
 	});
 	_isMenuInitComplete = true;
 	$(c).dialog("open");
