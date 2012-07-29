@@ -797,15 +797,16 @@ function showMonsterNumber() {
 	document.head.appendChild(style2);
 }
 function healthWarning() {
+	var barFrameWidth = 120;
 	var c = document.getElementsByTagName("img")[2];
-	var e = document.getElementsByTagName("img")[3];
+//	var e = document.getElementsByTagName("img")[3];
 	var cmp = document.getElementsByTagName("img")[5];
-	var emp = document.getElementsByTagName("img")[6];
+//	var emp = document.getElementsByTagName("img")[6];
 	var csp = document.getElementsByTagName("img")[8];
-	var esp = document.getElementsByTagName("img")[9];
-	var b = c.width / e.width;
-	var bmp = cmp.width / emp.width;
-	var bsp = csp.width / esp.width;
+//	var esp = document.getElementsByTagName("img")[9];
+	var b = c.width / barFrameWidth;
+	var bmp = cmp.width / barFrameWidth;
+	var bsp = csp.width / barFrameWidth;
 	var d = localStorage.getItem(HV_ALERT);
 	var dmp = localStorage.getItem(HV_ALERTMP);
 	var dsp = localStorage.getItem(HV_ALERTSP);
@@ -859,7 +860,7 @@ function healthWarning() {
 	}
 	if (f && (b > a) && _settings.isShowPopup) localStorage.removeItem(HV_ALERT);
 	if (fmp && (bmp > amp) && _settings.isShowPopup) localStorage.removeItem(HV_ALERTMP);
-	if (f && (bsp > asp) && _settings.isShowPopup) localStorage.removeItem(HV_ALERTSP);
+	if (fsp && (bsp > asp) && _settings.isShowPopup) localStorage.removeItem(HV_ALERTSP);
 }
 function collectCurrentProfsData() {
 	if (!isCharacterPage() || isHVFontEngine()) return;
