@@ -31,6 +31,7 @@ HV_ROUND = "HVRound";
 HV_ALERT = "critAlert";
 HV_ALERTMP = "critAlertMP";
 HV_ALERTSP = "critAlertSP";
+HV_ALERTOC = "fullAlertOC";
 HV_EQUIP = "inventoryAlert";
 HV_DBASE = "HVMonsterDatabase";
 HV_COLL = "HVCollectData";
@@ -804,15 +805,20 @@ function healthWarning() {
 //	var emp = document.getElementsByTagName("img")[6];
 	var csp = document.getElementsByTagName("img")[8];
 //	var esp = document.getElementsByTagName("img")[9];
+	var elemOCBar = document.getElementsByTagName("img")[11];
+//	var elemOCFrame = document.getElementsByTagName("img")[12];
 	var b = c.width / barFrameWidth;
 	var bmp = cmp.width / barFrameWidth;
 	var bsp = csp.width / barFrameWidth;
+	var overchargeRate = elemOCBar.width / barFrameWidth;
 	var d = localStorage.getItem(HV_ALERT);
 	var dmp = localStorage.getItem(HV_ALERTMP);
 	var dsp = localStorage.getItem(HV_ALERTSP);
+	var overchargeAlertState = localStorage.getItem(HV_ALERTOC);
 	var f = (d === null) ? false : JSON.parse(d);
 	var fmp = (dmp === null) ? false : JSON.parse(dmp);
 	var fsp = (dsp === null) ? false : JSON.parse(dsp);
+	var overchargeAlertAlreadyShown = overchargeAlertState === null ? false : JSON.parse(overchargeAlertState);
 	var g = parseFloat(_settings.warnOrangeLevel / 100);
 	var i = parseFloat(_settings.warnRedLevel / 100);
 	var h = parseFloat(_settings.warnAlertLevel / 100);
@@ -858,9 +864,21 @@ function healthWarning() {
 		fsp = true;
 		localStorage.setItem(HV_ALERTSP, JSON.stringify(fsp));
 	}
-	if (f && (b > a) && _settings.isShowPopup) localStorage.removeItem(HV_ALERT);
-	if (fmp && (bmp > amp) && _settings.isShowPopup) localStorage.removeItem(HV_ALERTMP);
-	if (fsp && (bsp > asp) && _settings.isShowPopup) localStorage.removeItem(HV_ALERTSP);
+	if (!isBattleOver() && _settings.isAlertOverchargeFull && overchargeRate >= 1.0 && !overchargeAlertAlreadyShown) {
+		var sec1 = TimeCounter(1);
+		alert("Your overcharge is full.");
+		overchargeAlertAlreadyShown = true;
+		localStorage.setItem(HV_ALERTOC, JSON.stringify(overchargeAlertAlreadyShown));
+		_ltc.main[1] -= TimeCounter(0, sec1);
+		_ltc.isbattle[1] -= TimeCounter(0, sec1);
+	}
+	if (_settings.isShowPopup) {
+		if (f && b > a) localStorage.removeItem(HV_ALERT);
+		if (fmp && bmp > amp) localStorage.removeItem(HV_ALERTMP);
+		if (fsp && bsp > asp) localStorage.removeItem(HV_ALERTSP);
+	}
+	if (overchargeAlertAlreadyShown && overchargeRate < 1.0)
+		localStorage.removeItem(HV_ALERTOC);
 }
 function collectCurrentProfsData() {
 	if (!isCharacterPage() || isHVFontEngine()) return;
@@ -2323,7 +2341,8 @@ function initSettingsPane() {
 		+ '<tr><td align="center" style="width:5px;padding-left:20px"><input type="checkbox" name="isShowEndProfs" /></td><td colspan="2" style="padding-left:10px">Show Proficiency Gain Summary</td><tr><td align="center" style="width:5px;padding-left:40px"><input type="checkbox" name="isShowEndProfsMagic" /></td><td colspan="2" style="padding-left:30px">Show Magic Proficiency</td></tr>'
 		+ '<tr><td align="center" style="width:5px;padding-left:40px"><input type="checkbox" name="isShowEndProfsArmor" /></td><td colspan="2" style="padding-left:30px">Show Armor Proficiency</td></tr>'
 		+ '<tr><td align="center" style="width:5px;padding-left:40px"><input type="checkbox" name="isShowEndProfsWeapon" /></td><td colspan="2" style="padding-left:30px">Show Weapon Proficiency</td></tr>'
-		+ '<tr><td align="center" style="width:120px"></td></tr><td align="center" style="width:5px"><input type="checkbox" name="isAlertGem" /></td><td colspan="2">Alert on Powerup drops</td></tr>'
+		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isAlertGem" /></td><td colspan="2">Alert on Powerup drops</td></tr>'
+		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isAlertOverchargeFull" /></td><td colspan="2">Alert when overcharge is full</td></tr>'
 		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isShowMonsterNumber"></td><td colspan="2">Show Numbers intead of letters next to monsters.</td></tr>'
 		+ '<tr><td colspan="2" style="padding-left:10px">Display Monster Stats:</td></tr>'
 		+ '<tr><td align="center" style="width:5px;padding-left:20px"><input type="checkbox" name="isShowMonsterHP" /></td><td colspan="2">Show monster HP (<span style="color:red">Estimated</span>)</td><td align="center" style="width:120px">' + t25 + ' ms (' + (t25*100/t0).toFixed(1) + '%)</td></tr>'
@@ -2465,6 +2484,7 @@ function initSettingsPane() {
 	if (_settings.isShowRoundReminder) $("input[name=isShowRoundReminder]").attr("checked", "checked");
 	$("input[name=reminderMinRounds]").attr("value", _settings.reminderMinRounds);
 	if (_settings.isAlertGem) $("input[name=isAlertGem]").attr("checked", "checked");
+	if (_settings.isAlertOverchargeFull) $("input[name=isAlertOverchargeFull]").attr("checked", "checked");
 	$("input[name=reminderBeforeEnd]").attr("value", _settings.reminderBeforeEnd);
 	if (_settings.isHideHVLogo) $("input[name=isHideHVLogo]").attr("checked", "checked");
 	if (_settings.isChangePageTitle) $("input[name=isChangePageTitle]").attr("checked", "checked");
@@ -2609,6 +2629,7 @@ function initSettingsPane() {
 	$("input[name=reminderMinRounds]").change(saveSettings);
 	$("input[name=reminderBeforeEnd]").change(saveSettings);
 	$("input[name=isAlertGem]").click(saveSettings);
+	$("input[name=isAlertOverchargeFull]").click(saveSettings);
 	$("input[name=isHideHVLogo]").click(saveSettings);
 	$("input[name=isShowScanButton]").click(saveSettings);
 	$("input[name=isShowSkillButton]").click(saveSettings);
@@ -2716,6 +2737,7 @@ function saveSettings() {
 	_settings.reminderMinRounds = $("input[name=reminderMinRounds]").get(0).value;
 	_settings.reminderBeforeEnd = $("input[name=reminderBeforeEnd]").get(0).value;
 	_settings.isAlertGem = $("input[name=isAlertGem]").get(0).checked;
+	_settings.isAlertOverchargeFull = $("input[name=isAlertOverchargeFull]").get(0).checked;
 	_settings.isHideHVLogo = $("input[name=isHideHVLogo]").get(0).checked;
 	_settings.isShowScanButton = $("input[name=isShowScanButton]").get(0).checked;
 	_settings.isShowSkillButton = $("input[name=isShowSkillButton]").get(0).checked;
@@ -3529,6 +3551,7 @@ function HVSettings() {
 	this.reminderMinRounds = 3;
 	this.reminderBeforeEnd = 1;
 	this.isAlertGem = true;
+	this.isAlertOverchargeFull = false;
 	this.isHideHVLogo = false;
 	this.isChangePageTitle = false;
 	this.customPageTitle = "HV";
