@@ -1055,25 +1055,32 @@ function collectRoundInfo() {
 			_ltc.changedMHits[1] += TimeCounter(0, t71);
 		}
 		if (_settings.isAlertGem && c.match(/drops a (.*) Gem/)) {
-			var sec2 = TimeCounter(1);
+			var sec1 = TimeCounter(1);
 			alert("You picked up a " + RegExp.$1 + " Gem.");
-			_ltc.collectRoundInfo[1] -= TimeCounter(0, sec2);
-			_ltc.main[1] -= TimeCounter(0, sec2);
-			_ltc.isbattle[1] -= TimeCounter(0, sec2);
+			_ltc.collectRoundInfo[1] -= TimeCounter(0, sec1);
+			_ltc.main[1] -= TimeCounter(0, sec1);
+			_ltc.isbattle[1] -= TimeCounter(0, sec1);
+		}
+		if (_settings.isWarnAbsorbTrigger && /The spell is absorbed/.test(c)) {
+			var sec1 = TimeCounter(1);
+			alert("Absorbing Ward has triggered.");
+			_ltc.collectRoundInfo[1] -= TimeCounter(0, sec1);
+			_ltc.main[1] -= TimeCounter(0, sec1);
+			_ltc.isbattle[1] -= TimeCounter(0, sec1);
 		}
 		if (_settings.isWarnSparkTrigger && c.match(/spark of life.*defeat/ig)) {
-			var sec3 = TimeCounter(1);
+			var sec1 = TimeCounter(1);
 			alert("Spark of Life has triggered!!");
-			_ltc.collectRoundInfo[1] -= TimeCounter(0, sec3);
-			_ltc.main[1] -= TimeCounter(0, sec3);
-			_ltc.isbattle[1] -= TimeCounter(0, sec3);
+			_ltc.collectRoundInfo[1] -= TimeCounter(0, sec1);
+			_ltc.main[1] -= TimeCounter(0, sec1);
+			_ltc.isbattle[1] -= TimeCounter(0, sec1);
 		}
 		if (_settings.isWarnSparkExpire && c.match(/spark of life.*expired/ig)) {
-			var sec4 = TimeCounter(1);
+			var sec1 = TimeCounter(1);
 			alert("Spark of Life has expired!!");
-			_ltc.collectRoundInfo[1] -= TimeCounter(0, sec4);
-			_ltc.main[1] -= TimeCounter(0, sec4);
-			_ltc.isbattle[1] -= TimeCounter(0, sec4);
+			_ltc.collectRoundInfo[1] -= TimeCounter(0, sec1);
+			_ltc.main[1] -= TimeCounter(0, sec1);
+			_ltc.isbattle[1] -= TimeCounter(0, sec1);
 		}
 		if ((_settings.isShowSidebarProfs || _settings.isTrackStats) && c.match(/0.0(\d+) points of (.*?) proficiency/ig)) {
 			var p = (RegExp.$1) / 100;
@@ -1931,15 +1938,47 @@ function getReportOverviewHtml() {
 			+ '<tr><td colspan="2" style="padding-left:10px">Last found: <span style="color:blue">' + s + '</span> (' + H + ')</td></tr></table>'
 	}
 	x += '<table class="_UI" cellspacing="0" cellpadding="2" style="width:100%"><tr><td>&nbsp;</td></tr>'
-		+ '<tr><td style="width:33%"><b>General Options:</b></td><td style="width:34%"><b>Battle Enhancement:</b></td><td style="width:33%"><b>Tracking Status:</b></td></tr>'
-		+ '<tr><td style="padding-left:10px;width:33%">HP Warning:</td><td style="padding-left:10px;width:34%">Log Highlighting: ' + h + '</td><td style="padding-left:10px;width:33%">Battle Stats: ' + B + '</td></tr>'
-		+ '<tr><td style="padding-left:20px;width:33%">Spark Warning: ' + u + '</td><td style="padding-left:10px;width:34%">Turn Divider: ' + n + '</td><td style="padding-left:10px;width:33%">Item Drops: ' + A + '</td></tr>'
-		+ '<tr><td style="padding-left:20px;width:33%">Highlight QC: ' + C + '</td><td style="padding-left:10px;width:34%">Status Effect Duration: ' + D + '</td><td style="padding-left:10px;width:33%">Arena Rewards: ' + l + '</td></tr>'
-		+ '<tr><td style="padding-left:20px;width:33%">Popup: ' + j + '</td><td style="padding-left:10px;width:34%">Monster Stats:</td><td style="padding-left:10px;width:33%">Shrine: ' + Shrine + '</td></tr>'
-		+ '<tr><td style="padding-left:20px;width:33%">Battle Type: ' + i + '</td><td style="padding-left:20px;width:34%">' + y + '</td><td style="padding-left:10px;width:33%"></td></tr>'
-		+ '<tr><td style="padding-left:10px;width:33%">Proficiency Table: ' + b + '</td><td style="padding-left:10px;width:34%">Battle Summary: ' + G + '</td><td style="padding-left:10px;width:33%"></td></tr>'
-		+ '<tr><td style="padding-left:10px;width:33%">Column Inventory: ' + m + '</td><td style="padding-left:10px;width:34%">Round Reminder: ' + o + '</td><td></td></tr>'
-		+ '<tr><td style="padding-left:10px;width:33%">Hide HV Logo: ' + p + '</td><td style="padding-left:10px;width:34%">Powerup Alerts: ' + J + "</td><td></td></tr></table>";
+		+ '<tr>'
+			+ '<td style="width:33%"><b>General Options:</b></td>'
+			+ '<td style="width:34%"><b>Battle Enhancement:</b></td>'
+			+ '<td style="width:33%"><b>Tracking Status:</b></td>'
+		+ '</tr><tr>'
+			+ '<td style="padding-left:10px;width:33%">HP Warning:</td>'
+			+ '<td style="padding-left:10px;width:34%">Log Highlighting: ' + h + '</td>'
+			+ '<td style="padding-left:10px;width:33%">Battle Stats: ' + B + '</td>'
+		+ '</tr><tr>'
+			+ '<td style="padding-left:20px;width:33%">Absorb Warning: ' + (_settings.isWarnAbsorbTrigger ? a : w) + '</td>'
+			+ '<td style="padding-left:10px;width:34%">Turn Divider: ' + n + '</td>'
+			+ '<td style="padding-left:10px;width:33%">Item Drops: ' + A + '</td>'
+		+ '</tr><tr>'
+			+ '<td style="padding-left:20px;width:33%">Spark Warning: ' + u + '</td>'
+			+ '<td style="padding-left:10px;width:34%">Status Effect Duration: ' + D + '</td>'
+			+ '<td style="padding-left:10px;width:33%">Arena Rewards: ' + l + '</td>'
+		+ '</tr><tr>'
+			+ '<td style="padding-left:20px;width:33%">Highlight QC: ' + C + '</td>'
+			+ '<td style="padding-left:10px;width:34%">Monster Stats:</td>'
+			+ '<td style="padding-left:10px;width:33%">Shrine: ' + Shrine + '</td>'
+		+ '</tr><tr>'
+			+ '<td style="padding-left:20px;width:33%">Popup: ' + j + '</td>'
+			+ '<td style="padding-left:20px;width:34%">' + y + '</td>'
+			+ '<td style="padding-left:10px;width:33%"></td>'
+		+ '</tr><tr>'
+			+ '<td style="padding-left:20px;width:33%">Battle Type: ' + i + '</td>'
+			+ '<td style="padding-left:10px;width:34%">Battle Summary: ' + G + '</td>'
+			+ '<td></td>'
+		+ '</tr><tr>'
+			+ '<td style="padding-left:10px;width:33%">Proficiency Table: ' + b + '</td>'
+			+ '<td style="padding-left:10px;width:34%">Round Reminder: ' + o + '</td>'
+			+ '<td></td>'
+		+ '</tr><tr>'
+			+ '<td style="padding-left:10px;width:33%">Column Inventory: ' + m + '</td>'
+			+ '<td style="padding-left:10px;width:34%">Powerup Alerts: ' + J + '</td>'
+			+ '<td></td>'
+		+ '</tr><tr>'
+			+ '<td style="padding-left:10px;width:33%">Hide HV Logo: ' + p + '</td>'
+			+ '<td style="padding-left:10px;width:34%">Overcharge Alert: ' + (_settings.isAlertOverchargeFull ? a : w) + '</td>'
+			+ '<td></td>'
+		+ '</tr></table>';
 	if (_overview.isLoaded && _overview.totalRounds > 0)
 		x += '<table class="_UI" cellspacing="0" cellpadding="2" style="width:100%"><tr><td align="right" colspan="3"><input type="button" class="_resetOverview" value="Reset Overview" /></td></tr></table>'
 	return x;
@@ -2342,7 +2381,7 @@ function initSettingsPane() {
 		+ '<tr><td align="center" style="width:5px;padding-left:40px"><input type="checkbox" name="isShowEndProfsArmor" /></td><td colspan="2" style="padding-left:30px">Show Armor Proficiency</td></tr>'
 		+ '<tr><td align="center" style="width:5px;padding-left:40px"><input type="checkbox" name="isShowEndProfsWeapon" /></td><td colspan="2" style="padding-left:30px">Show Weapon Proficiency</td></tr>'
 		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isAlertGem" /></td><td colspan="2">Alert on Powerup drops</td></tr>'
-		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isAlertOverchargeFull" /></td><td colspan="2">Alert when overcharge is full</td></tr>'
+		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isAlertOverchargeFull" /></td><td colspan="2">Alert when Overcharge is full</td></tr>'
 		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isShowMonsterNumber"></td><td colspan="2">Show Numbers intead of letters next to monsters.</td></tr>'
 		+ '<tr><td colspan="2" style="padding-left:10px">Display Monster Stats:</td></tr>'
 		+ '<tr><td align="center" style="width:5px;padding-left:20px"><input type="checkbox" name="isShowMonsterHP" /></td><td colspan="2">Show monster HP (<span style="color:red">Estimated</span>)</td><td align="center" style="width:120px">' + t25 + ' ms (' + (t25*100/t0).toFixed(1) + '%)</td></tr>'
@@ -2387,7 +2426,6 @@ function initSettingsPane() {
 		+ '<tr><td align="center" style="width:5px;padding-left:30px"><input type="checkbox" name="isEffectsAlertSelf1" /></td><td style="padding-left:10px">Hastened</td><td style="width:440px">- alert on <input type="text" name="EffectsAlertSelfRounds1" size="1" maxLength="3" style="text-align:right;font-size:11px;font-weight:bold" />rounds remaining</td><td></td></tr>'
 		+ '<tr><td align="center" style="width:5px;padding-left:30px"><input type="checkbox" name="isEffectsAlertSelf2" /></td><td style="padding-left:10px">Shadow Veil</td><td style="width:440px">- alert on <input type="text" name="EffectsAlertSelfRounds2" size="1" maxLength="3" style="text-align:right;font-size:11px;font-weight:bold" />rounds remaining</td><td></td></tr>'
 		+ '<tr><td align="center" style="width:5px;padding-left:30px"><input type="checkbox" name="isEffectsAlertSelf3" /></td><td style="padding-left:10px">Regen</td><td style="width:440px">- alert on <input type="text" name="EffectsAlertSelfRounds3" size="1" maxLength="3" style="text-align:right;font-size:11px;font-weight:bold" />rounds remaining</td><td></td></tr>'
-		+ '<tr><td align="center" style="width:5px;padding-left:30px"><input type="checkbox" name="isEffectsAlertSelf4" /></td><td style="padding-left:10px">Absorbing Ward</td><td style="width:440px">- alert on <input type="text" name="EffectsAlertSelfRounds4" size="1" maxLength="3" style="text-align:right;font-size:11px;font-weight:bold" />rounds remaining</td><td></td></tr>'
 		+ '<tr><td align="center" style="width:5px;padding-left:30px"><input type="checkbox" name="isEffectsAlertSelf5" /></td><td style="padding-left:10px">Spark of Life</td><td style="width:440px">- alert on <input type="text" name="EffectsAlertSelfRounds5" size="1" maxLength="3" style="text-align:right;font-size:11px;font-weight:bold" />rounds remaining</td><td></td></tr>'
 		+ '<tr><td align="center" style="width:5px;padding-left:30px"><input type="checkbox" name="isEffectsAlertSelf7" /></td><td style="padding-left:10px">Arcane Focus</td><td style="width:440px">- alert on <input type="text" name="EffectsAlertSelfRounds7" size="1" maxLength="3" style="text-align:right;font-size:11px;font-weight:bold" />rounds remaining</td><td></td></tr>'
 		+ '<tr><td align="center" style="width:5px;padding-left:30px"><input type="checkbox" name="isEffectsAlertSelf8" /></td><td style="padding-left:10px">Heartseeker</td><td style="width:440px">- alert on <input type="text" name="EffectsAlertSelfRounds8" size="1" maxLength="3" style="text-align:right;font-size:11px;font-weight:bold" />rounds remaining</td><td></td></tr>'
@@ -2405,7 +2443,8 @@ function initSettingsPane() {
 		+ '<tr><td align="center" style="width:5px;padding-left:30px"><input type="checkbox" name="isEffectsAlertMonsters8" /></td><td style="padding-left:10px">Nerfed</td><td style="width:440px">- alert on <input type="text" name="EffectsAlertMonstersRounds8" size="1" maxLength="3" style="text-align:right;font-size:11px;font-weight:bold" />rounds remaining</td><td></td></tr>'
 		+ '<tr><td align="center" style="width:5px;padding-left:30px"><input type="checkbox" name="isEffectsAlertMonsters9" /></td><td style="padding-left:10px">Magically Snared</td><td style="width:440px">- alert on <input type="text" name="EffectsAlertMonstersRounds9" size="1" maxLength="3" style="text-align:right;font-size:11px;font-weight:bold" />rounds remaining</td><td></td></tr>'
 		+ '<tr><td align="center" style="width:5px;padding-left:30px"><input type="checkbox" name="isEffectsAlertMonsters10" /></td><td style="padding-left:10px">Lifestream</td><td style="width:440px">- alert on <input type="text" name="EffectsAlertMonstersRounds10" size="1" maxLength="3" style="text-align:right;font-size:11px;font-weight:bold" />rounds remaining</td><td></td></tr>'
-		+ '<tr><td colspan="2" style="padding-left:10px">Spark Warning:</td></tr>'
+		+ '<tr><td colspan="2" style="padding-left:10px">Specific Spell Warning:</td></tr>'
+		+ '<tr><td align="center" style="width:5px;padding-left:20px"><input type="checkbox" name="isWarnAbsorbTrigger" /></td><td colspan="2">Alert when Absorbing Ward triggers</td></tr>'
 		+ '<tr><td align="center" style="width:5px;padding-left:20px"><input type="checkbox" name="isWarnSparkTrigger" /></td><td colspan="2">Alert when Spark of Life triggers</td></tr>'
 		+ '<tr><td align="center" style="width:5px;padding-left:20px"><input type="checkbox" name="isWarnSparkExpire" /></td><td colspan="2">Alert when Spark of Life expires</td></tr>'
 		+ '<tr><td colspan="2" style="padding-left:10px">Alert Mode:</td></tr>'
@@ -2517,7 +2556,6 @@ function initSettingsPane() {
 	if (_settings.isEffectsAlertSelf[1]) $("input[name=isEffectsAlertSelf1]").attr("checked", "checked");
 	if (_settings.isEffectsAlertSelf[2]) $("input[name=isEffectsAlertSelf2]").attr("checked", "checked");
 	if (_settings.isEffectsAlertSelf[3]) $("input[name=isEffectsAlertSelf3]").attr("checked", "checked");
-	if (_settings.isEffectsAlertSelf[4]) $("input[name=isEffectsAlertSelf4]").attr("checked", "checked");
 	if (_settings.isEffectsAlertSelf[5]) $("input[name=isEffectsAlertSelf5]").attr("checked", "checked");
 	if (_settings.isEffectsAlertSelf[6]) $("input[name=isEffectsAlertSelf6]").attr("checked", "checked");
 	if (_settings.isEffectsAlertSelf[7]) $("input[name=isEffectsAlertSelf7]").attr("checked", "checked");
@@ -2527,7 +2565,6 @@ function initSettingsPane() {
 	$("input[name=EffectsAlertSelfRounds1]").attr("value", _settings.EffectsAlertSelfRounds[1]);
 	$("input[name=EffectsAlertSelfRounds2]").attr("value", _settings.EffectsAlertSelfRounds[2]);
 	$("input[name=EffectsAlertSelfRounds3]").attr("value", _settings.EffectsAlertSelfRounds[3]);
-	$("input[name=EffectsAlertSelfRounds4]").attr("value", _settings.EffectsAlertSelfRounds[4]);
 	$("input[name=EffectsAlertSelfRounds5]").attr("value", _settings.EffectsAlertSelfRounds[5]);
 	$("input[name=EffectsAlertSelfRounds6]").attr("value", _settings.EffectsAlertSelfRounds[6]);
 	$("input[name=EffectsAlertSelfRounds7]").attr("value", _settings.EffectsAlertSelfRounds[7]);
@@ -2577,6 +2614,7 @@ function initSettingsPane() {
 	$("input[name=warnAlertLevelSP]").attr("value", _settings.warnAlertLevelSP);
 	if (_settings.isNagSP) $("input[name=isNagSP]").attr("checked", "checked");
 	if (_settings.isShowPopup) $("input[name=isShowPopup]").attr("checked", "checked");
+	if (_settings.isWarnAbsorbTrigger) $("input[name=isWarnAbsorbTrigger]").attr("checked", "checked");
 	if (_settings.isWarnSparkTrigger) $("input[name=isWarnSparkTrigger]").attr("checked", "checked");
 	if (_settings.isWarnSparkExpire) $("input[name=isWarnSparkExpire]").attr("checked", "checked");
 	$("input[name=isShowHighlight]").click(saveSettings);
@@ -2657,6 +2695,7 @@ function initSettingsPane() {
 	$("input[name=isMainEffectsAlertMonsters]").click(saveSettings);
 	$("input[name^=isEffectsAlertMonsters]").click(saveSettings);
 	$("input[name^=EffectsAlertMonstersRounds]").change(saveSettings);
+	$("input[name=isWarnAbsorbTrigger]").click(saveSettings);
 	$("input[name=isWarnSparkTrigger]").click(saveSettings);
 	$("input[name=isWarnSparkExpire]").click(saveSettings);
 	$("input[name=isWarnH]").click(saveSettings);
@@ -2768,7 +2807,7 @@ function saveSettings() {
 	_settings.isEffectsAlertSelf[1] = $("input[name=isEffectsAlertSelf1]").get(0).checked;
 	_settings.isEffectsAlertSelf[2] = $("input[name=isEffectsAlertSelf2]").get(0).checked;
 	_settings.isEffectsAlertSelf[3] = $("input[name=isEffectsAlertSelf3]").get(0).checked;
-	_settings.isEffectsAlertSelf[4] = $("input[name=isEffectsAlertSelf4]").get(0).checked;
+	_settings.isEffectsAlertSelf[4] = false; // absorb is obsolete
 	_settings.isEffectsAlertSelf[5] = $("input[name=isEffectsAlertSelf5]").get(0).checked;
 	_settings.isEffectsAlertSelf[6] = $("input[name=isEffectsAlertSelf6]").get(0).checked;
 	_settings.isEffectsAlertSelf[7] = $("input[name=isEffectsAlertSelf7]").get(0).checked;
@@ -2779,7 +2818,7 @@ function saveSettings() {
 	_settings.EffectsAlertSelfRounds[1] = $("input[name=EffectsAlertSelfRounds1]").get(0).value;
 	_settings.EffectsAlertSelfRounds[2] = $("input[name=EffectsAlertSelfRounds2]").get(0).value;
 	_settings.EffectsAlertSelfRounds[3] = $("input[name=EffectsAlertSelfRounds3]").get(0).value;
-	_settings.EffectsAlertSelfRounds[4] = $("input[name=EffectsAlertSelfRounds4]").get(0).value;
+	_settings.EffectsAlertSelfRounds[4] = 0; // absorb is obsolete
 	_settings.EffectsAlertSelfRounds[5] = $("input[name=EffectsAlertSelfRounds5]").get(0).value;
 	_settings.EffectsAlertSelfRounds[6] = $("input[name=EffectsAlertSelfRounds6]").get(0).value;
 	_settings.EffectsAlertSelfRounds[7] = $("input[name=EffectsAlertSelfRounds7]").get(0).value;
@@ -2810,6 +2849,7 @@ function saveSettings() {
 	_settings.EffectsAlertMonstersRounds[9] = $("input[name=EffectsAlertMonstersRounds9]").get(0).value;
 	_settings.EffectsAlertMonstersRounds[10] = $("input[name=EffectsAlertMonstersRounds10]").get(0).value;
 	_settings.EffectsAlertMonstersRounds[11] = $("input[name=EffectsAlertMonstersRounds11]").get(0).value;
+	_settings.isWarnAbsorbTrigger = $("input[name=isWarnAbsorbTrigger]").get(0).checked;
 	_settings.isWarnSparkTrigger = $("input[name=isWarnSparkTrigger]").get(0).checked;
 	_settings.isWarnSparkExpire = $("input[name=isWarnSparkExpire]").get(0).checked;
 	_settings.isHighlightQC = $("input[name=isHighlightQC]").get(0).checked;
@@ -3496,6 +3536,7 @@ function HVSettings() {
 	this.isMainEffectsAlertMonsters = false;
 	this.isEffectsAlertMonsters = [false, false, false, false, false, false, false, false, false, false, false, false];
 	this.EffectsAlertMonstersRounds = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+	this.isWarnAbsorbTrigger = false;
 	this.isWarnSparkTrigger = true;
 	this.isWarnSparkExpire = true;
 	this.isHighlightQC = true;
