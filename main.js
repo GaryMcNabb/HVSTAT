@@ -5100,7 +5100,6 @@ function MonsterPopup() {
 	var id = 0;
 	var num = _round.monsters.length;
 	var c = document.getElementById("popup_box");
-	var a = 0;
 	var name = "";
 	var maxhp = "";
 	var currhp = "";
@@ -5125,6 +5124,7 @@ function MonsterPopup() {
 	var delay2 = Math.floor(delay * 0.5);
 	var placement = _settings.isMonsterPopupPlacement;
 	var leftpixels = placement ? 955 : 300;
+	var elemMonsterPane = $("#monsterpane");
 	loadRoundObject();
 	while (n < 10 && (_round.monsters[n] !== undefined)) {
 		var q = _round.monsters[n];
@@ -5266,17 +5266,18 @@ function MonsterPopup() {
 		}
 		mattack = formatAttackType(mattack);
 		$("#" + monsterElementId).bind('mouseover', {h:num, na:name, mhp:maxhp, chp:currhp, cmp:currmp, csp:currsp, cl:mclass, pl:mpl, at:mattack, sk:mskilltype, sksp:mskillspell, sk2:mskilltype2, sksp2:mskillspell2, sk3:mskilltype3, sksp3:mskillspell3,spty:mspirittype,spss:mspiritsksp, res:mresist, imp:mimperv, we:mweak, scd:dst1, scago:E}, function (r) {
+			var popupHeight = 220;
+			var popupTopOffset = elemMonsterPane.offset().top + (r.data.h - 1) * ((elemMonsterPane.height() - popupHeight) / 9);
 			c.style.left = leftpixels + "px";
-			a = (56 * parseInt(r.data.h)) + 24;
-			setTimeoutByledalej1 = setTimeout(document.getElementById("popup_box").style.top = a + "px", delay);
+			setTimeoutByledalej1 = setTimeout('document.getElementById("popup_box").style.top = ' + popupTopOffset + ' + "px"', delay);
 			c.style.width = "270px";
-			c.style.height = "220px";
+			c.style.height = String(popupHeight) + "px";
 			var fi = "<table></table>";
 			if (r.data.cl !== undefined && r.data.cl !== 0) {
 				fi = '<table class="info_' + r.data.h + '" cellspacing="0" cellpadding="0" style="width:100%">'
 					+ '<tr class="monname"><td colspan="2"><b>' + r.data.na + '</b></td></tr>'
-					+ '<tr><td style="width:27%">Health: </td><td>' + r.data.chp + '/' + r.data.mhp + '</td></tr><tr>'
-					+ '<td style="width:27%">Mana: </td><td>' + r.data.cmp + '%</td></tr>'
+					+ '<tr><td style="width:27%">Health: </td><td>' + r.data.chp + '/' + r.data.mhp + '</td></tr>'
+					+ '<tr><td style="width:27%">Mana: </td><td>' + r.data.cmp + '%</td></tr>'
 					+ '<tr><td style="width:27%">Spirit: </td><td>' + r.data.csp + '%</td></tr>'
 					+ '<tr><td style="width:27%">Class:</td><td>' + r.data.cl + '</td></tr>'
 					+ '<tr><td style="width:27%">Power level:</td><td>' + r.data.pl + '</td></tr>'
@@ -5296,8 +5297,8 @@ function MonsterPopup() {
 					+ '<tr><td style="width:27%">Spirit: </td><td>' + r.data.csp + '%</td></tr>'
 					+ '<tr><td style="width:27%">Last scan:</td><td>' + r.data.scd + '</td></tr>';
 			}
-			setTimeoutByledalej2 = setTimeout(document.getElementById("popup_box").innerHTML = fi, delay);
-			setTimeoutByledalej3 = setTimeout(document.getElementById("popup_box").style.visibility = "visible", delay);
+			setTimeoutByledalej2 = setTimeout("document.getElementById('popup_box').innerHTML='" + fi + "'", delay);
+			setTimeoutByledalej3 = setTimeout('document.getElementById("popup_box").style.visibility="visible"', delay);
 		});
 		$("#" + monsterElementId).bind('mouseout', function () {
 			setTimeout('document.getElementById("popup_box").style.visibility="hidden"', delay);
