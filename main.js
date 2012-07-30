@@ -4,7 +4,7 @@
 // @description      Collects data, analyzes statistics, and enhances the interface of the HentaiVerse
 // @include          http://hentaiverse.org/*
 // @author           Various (http://forums.e-hentai.org/index.php?showtopic=50962)
-// @version          5.4.1.2
+// @version          5.4.1.3
 // @require          https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js
 // @require          https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.21/jquery-ui.min.js
 // @resource         jQueryUICSS http://www.starfleetplatoon.com/~cmal/HVSTAT/jqueryui.css
@@ -12,7 +12,7 @@
 
 // === GLOBAL VARIABLES
 var millisecondsAll = TimeCounter(1);
-VERSION = "5.4.1.2";
+VERSION = "5.4.1.3";
 SAVE_STATS = true;
 MAX_MID = 33;
 SELF_EFF_TOP = 34;
@@ -55,7 +55,7 @@ _shrine = null;
 _drops = null;
 _settings = null;
 _round = null;
-_backup = [null, null, null, null, null];
+_backup = [null, null, null, null, null, null];
 _database = null;
 _collectdata = null;
 _charss = null;
@@ -2036,7 +2036,7 @@ function getReportStatsHtml() {
 		c += '<tr><td colspan="2" style="padding-left:20px">Drain HP chance: ' + (f === 0 ? 0 : (_stats.weaponprocs[4]*100 / f).toFixed(2)) + '%</td></tr>';
 		c += '<tr><td colspan="2" style="padding-left:20px">Drain MP chance: ' + (f === 0 ? 0 : (_stats.weaponprocs[5]*100 / f).toFixed(2)) + '%</td></tr>';
 		c += '<tr><td colspan="2" style="padding-left:20px">Drain SP chance: ' + (f === 0 ? 0 : (_stats.weaponprocs[6]*100 / f).toFixed(2)) + '%</td></tr>';
-		c += '<tr><td colspan="2"><b>Defensive Statistics:</b></td></tr><tr><td style="padding-left:10px">Overall chance of getting hit: ' + (_stats.mAttempts === 0 ? 0 : (d / _stats.mAttempts * 100).toFixed(2)) + '%</td><td style="padding-left:10px">Average HP restored by Cure:</td></tr><tr><td style="padding-left:20px">Miss chance: ' + (_stats.mAttempts === 0 ? 0 : (_stats.pDodges / _stats.mAttempts * 100).toFixed(2)) + '%</td><td style="padding-left:20px">Cure: ' + (_stats.cureCounts[0] === 0 ? 0 : (_stats.cureTotals[0] / _stats.cureCounts[0]).toFixed(2)) + ' HP/cast</td></tr><tr><td style="padding-left:20px">Evade chance: ' + (_stats.mAttempts === 0 ? 0 : (_stats.pEvades / _stats.mAttempts * 100).toFixed(2)) + '%</td><td style="padding-left:20px">Cure II: ' + (_stats.cureCounts[1] === 0 ? 0 : (_stats.cureTotals[1] / _stats.cureCounts[1]).toFixed(2)) + ' HP/cast</td></tr><tr><td style="padding-left:20px">Block chance: ' + (_stats.mAttempts === 0 ? 0 : (_stats.pBlocks / _stats.mAttempts * 100).toFixed(2)) + '%</td><td style="padding-left:20px">Cure III: ' + (_stats.cureCounts[2] === 0 ? 0 : (_stats.cureTotals[2] / _stats.cureCounts[2]).toFixed(2)) + ' HP/cast</td></tr><tr><td style="padding-left:20px">Parry chance: ' + (_stats.mAttempts === 0 ? 0 : (_stats.pParries / _stats.mAttempts * 100).toFixed(2)) + '%</td><td style="padding-left:10px">Absorb casting efficiency: ' + (_stats.absArry[0] === 0 ? 0 : (_stats.absArry[1] / _stats.absArry[0] * 100).toFixed(2)) + '%</td></tr><tr><td style="padding-left:20px">Resist chance: ' + (_stats.mSpells === 0 ? 0 : (_stats.pResists / _stats.mSpells * 100).toFixed(2)) + '%</td><td style="padding-left:20px">Average MP drained by Absorb: ' + (_stats.absArry[1] === 0 ? 0 : (_stats.absArry[2] / _stats.absArry[1]).toFixed(2)) + ' MP/trigger</td></tr><tr><td style="padding-left:10px">Monster crit chance: ' + (_stats.mAttempts === 0 ? 0 : (_stats.mHits[1] / _stats.mAttempts * 100).toFixed(2)) + '%</td><td style="padding-left:20px">Average MP returns of Absorb: ' + (_stats.absArry[0] === 0 ? 0 : (_stats.absArry[2] / _stats.absArry[0]).toFixed(2)) + ' MP/cast</td></tr><tr><td style="padding-left:20px">Percent of monster hits that are crits: ' + (d === 0 ? 0 : (_stats.mHits[1] / d * 100).toFixed(2)) + '%</td></tr><tr><td style="padding-left:10px">Average damage taken per hit: ' + (_stats.mHits[0] === 0 ? 0 : (_stats.dTaken[0] / _stats.mHits[0]).toFixed(2)) + '</td></tr><tr><td style="padding-left:10px">Average damage taken per crit: ' + (_stats.mHits[1] === 0 ? 0 : (_stats.dTaken[1] / _stats.mHits[1]).toFixed(2)) + '</td></tr><tr><td style="padding-left:10px">Average damage taken: ' + (d === 0 ? 0 : ((_stats.dTaken[0] + _stats.dTaken[1]) / d).toFixed(2)) + '</td></tr><tr><td style="padding-left:10px">Average total damage taken per round: ' + (_stats.rounds === 0 ? 0 : ((_stats.dTaken[0] + _stats.dTaken[1]) / _stats.rounds).toFixed(2)) + '</td></tr><tr><td align="left" colspan="7"><form>SelectBackup:<select id="BackupNumber"><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select>' + '<input type="button" class="_savebackup" value="Save Backup" />' + '<input type="button" class="_loadbackup" value="Load Backup"/>' + '<input type="button" class="_addtobackup" value="AddTo Backup"/>' + '<input type="button" class="_addfrombackup" value="AddFrom Backup"/>' + '<input type="button" class="_resetbackup" value="Remove Backup"/></td></tr></form>' + '<tr><td><input type="button" class="_checkbackups" value="Check Existing Backups"/></td></tr>' + '</td></tr><tr><td align="right" colspan="2"><input type="button" class="_resetStats" value="Reset Stats" /></td></tr>'
+		c += '<tr><td colspan="2"><b>Defensive Statistics:</b></td></tr><tr><td style="padding-left:10px">Overall chance of getting hit: ' + (_stats.mAttempts === 0 ? 0 : (d / _stats.mAttempts * 100).toFixed(2)) + '%</td><td style="padding-left:10px">Average HP restored by Cure:</td></tr><tr><td style="padding-left:20px">Miss chance: ' + (_stats.mAttempts === 0 ? 0 : (_stats.pDodges / _stats.mAttempts * 100).toFixed(2)) + '%</td><td style="padding-left:20px">Cure: ' + (_stats.cureCounts[0] === 0 ? 0 : (_stats.cureTotals[0] / _stats.cureCounts[0]).toFixed(2)) + ' HP/cast</td></tr><tr><td style="padding-left:20px">Evade chance: ' + (_stats.mAttempts === 0 ? 0 : (_stats.pEvades / _stats.mAttempts * 100).toFixed(2)) + '%</td><td style="padding-left:20px">Cure II: ' + (_stats.cureCounts[1] === 0 ? 0 : (_stats.cureTotals[1] / _stats.cureCounts[1]).toFixed(2)) + ' HP/cast</td></tr><tr><td style="padding-left:20px">Block chance: ' + (_stats.mAttempts === 0 ? 0 : (_stats.pBlocks / _stats.mAttempts * 100).toFixed(2)) + '%</td><td style="padding-left:20px">Cure III: ' + (_stats.cureCounts[2] === 0 ? 0 : (_stats.cureTotals[2] / _stats.cureCounts[2]).toFixed(2)) + ' HP/cast</td></tr><tr><td style="padding-left:20px">Parry chance: ' + (_stats.mAttempts === 0 ? 0 : (_stats.pParries / _stats.mAttempts * 100).toFixed(2)) + '%</td><td style="padding-left:10px">Absorb casting efficiency: ' + (_stats.absArry[0] === 0 ? 0 : (_stats.absArry[1] / _stats.absArry[0] * 100).toFixed(2)) + '%</td></tr><tr><td style="padding-left:20px">Resist chance: ' + (_stats.mSpells === 0 ? 0 : (_stats.pResists / _stats.mSpells * 100).toFixed(2)) + '%</td><td style="padding-left:20px">Average MP drained by Absorb: ' + (_stats.absArry[1] === 0 ? 0 : (_stats.absArry[2] / _stats.absArry[1]).toFixed(2)) + ' MP/trigger</td></tr><tr><td style="padding-left:10px">Monster crit chance: ' + (_stats.mAttempts === 0 ? 0 : (_stats.mHits[1] / _stats.mAttempts * 100).toFixed(2)) + '%</td><td style="padding-left:20px">Average MP returns of Absorb: ' + (_stats.absArry[0] === 0 ? 0 : (_stats.absArry[2] / _stats.absArry[0]).toFixed(2)) + ' MP/cast</td></tr><tr><td style="padding-left:20px">Percent of monster hits that are crits: ' + (d === 0 ? 0 : (_stats.mHits[1] / d * 100).toFixed(2)) + '%</td></tr><tr><td style="padding-left:10px">Average damage taken per hit: ' + (_stats.mHits[0] === 0 ? 0 : (_stats.dTaken[0] / _stats.mHits[0]).toFixed(2)) + '</td></tr><tr><td style="padding-left:10px">Average damage taken per crit: ' + (_stats.mHits[1] === 0 ? 0 : (_stats.dTaken[1] / _stats.mHits[1]).toFixed(2)) + '</td></tr><tr><td style="padding-left:10px">Average damage taken: ' + (d === 0 ? 0 : ((_stats.dTaken[0] + _stats.dTaken[1]) / d).toFixed(2)) + '</td></tr><tr><td style="padding-left:10px">Average total damage taken per round: ' + (_stats.rounds === 0 ? 0 : ((_stats.dTaken[0] + _stats.dTaken[1]) / _stats.rounds).toFixed(2)) + '</td></tr><tr><td align="left" colspan="7"><form>SelectBackup:<select id="BackupNumber"><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select>' + '<input type="button" class="_backupFunc" value="Save Backup" />' + '<input type="button" class="_backupFunc" value="Load Backup"/>' + '<input type="button" class="_backupFunc" value="AddTo Backup"/>' + '<input type="button" class="_backupFunc" value="AddFrom Backup"/>' + '<input type="button" class="_backupFunc" value="Remove Backup"/></td></tr></form>' + '<tr><td><input type="button" class="_checkBackups" value="Check Existing Backups"/></td></tr>' + '</td></tr><tr><td align="right" colspan="2"><input type="button" class="_resetStats" value="Reset Stats" /></td></tr>'
 	}
 	c += "</table>";
 	return c;
@@ -2211,7 +2211,7 @@ function initStatsPane() {
 	$("._resetStats").click(function () {
 		if (confirm("Reset Stats tab?")) _stats.reset();
 	});
-	$("._checkbackups").click(function () {
+	$("._checkBackups").click(function () {
 		loadBackupObject(1);
 		loadBackupObject(2);
 		loadBackupObject(3);
@@ -2233,8 +2233,9 @@ function initStatsPane() {
 				d[i] = nd.toLocaleString();
 				if (browserIsChrome()) d[i] = nd.toLocaleDateString() + " " + nd.toLocaleTimeString();
 			}
+			
 		}
-		alert("Backup 1:\nLast save date: " + ds[1] + "\nStats tracked since: " + d[1] + "\nNumber of rounds tracked: " + _backup[1].rounds
+		alert( "Backup 1:\nLast save date: " + ds[1] + "\nStats tracked since: " + d[1] + "\nNumber of rounds tracked: " + _backup[1].rounds
 			+ "\n\nBackup 2\nLast save date: " + ds[2] + "\nStats tracked since: " + d[2] + "\nNumber of rounds tracked: " + _backup[2].rounds
 			+ "\n\nBackup 3\nLast save date: " + ds[3] + "\nStats tracked since: " + d[3] + "\nNumber of rounds tracked: " + _backup[3].rounds
 			+ "\n\nBackup 4\nLast save date: " + ds[4] + "\nStats tracked since: " + d[4] + "\nNumber of rounds tracked: " + _backup[4].rounds
