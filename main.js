@@ -2363,6 +2363,7 @@ function initSettingsPane() {
 		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isShowSkillButton" /></td><td colspan="2">Show skill button </td><td align="center" style="width:120px"></td></tr>'
 		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isEnableSkillHotkey" /></td><td colspan="2">Enable Weapon Skill Hotkeys: "+" / "=" and numpad"+" (Works without skillbutton)</td><td align="center" style="width:120px"></td></tr>'
 		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isShowEquippedSet" /></td><td colspan="2">Show equipped set number at left panel (<span style="color:red">Downloadable/Custom Local Fonts only!</span>)</td><td align="center" style="width:120px">' + t38 + ' ms (' + (t38*100/t0).toFixed(1) + '%)</td></tr>'
+		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isDisableForgeHotKeys" /></td><td colspan="2">Disable hot keys in the Forge (<span style="color:red">Strongry recommended if use item tags</span>)</td><td></td></tr>'
 		+ '<tr><td colspan="3">Show item tags in:</td><td align="center" style="width:120px">' + t36 + ' ms by tagging</td></tr>'
 		+ '<tr><td align="center" style="width:5px;padding-left:15px"><input type="checkbox" name="isShowTags0" /></td><td colspan="3" style="padding-left:15px">Equipment page </td></tr>'
 		+ '<tr><td align="center" style="width:5px;padding-left:15px"><input type="checkbox" name="isShowTags1" /></td><td colspan="3" style="padding-left:15px">Bazaar shop page </td></tr>'
@@ -2530,6 +2531,7 @@ function initSettingsPane() {
 	if (_settings.isChangePageTitle) $("input[name=isChangePageTitle]").attr("checked", "checked");
 	if (_settings.isStartAlert) $("input[name=isStartAlert]").attr("checked", "checked");
 	if (_settings.isShowEquippedSet) $("input[name=isShowEquippedSet]").attr("checked", "checked");
+	if (_settings.isDisableForgeHotKeys) $("input[name=isDisableForgeHotKeys]").attr("checked", "checked");
 	if (_settings.isShowTags[0]) $("input[name=isShowTags0]").attr("checked", "checked");
 	if (_settings.isShowTags[1]) $("input[name=isShowTags1]").attr("checked", "checked");
 	if (_settings.isShowTags[2]) $("input[name=isShowTags2]").attr("checked", "checked");
@@ -2678,6 +2680,7 @@ function initSettingsPane() {
 	$("input[name=isChangePageTitle]").click(saveSettings);
 	$("input[name=isStartAlert]").click(saveSettings);
 	$("input[name=isShowEquippedSet]").click(saveSettings);
+	$("input[name=isDisableForgeHotKeys]").click(saveSettings);
 	$("input[name^=isShowTags]").click(saveSettings);
 	$("input[name=StartAlertHP]").change(saveSettings);
 	$("input[name=StartAlertMP]").change(saveSettings);
@@ -2786,6 +2789,7 @@ function saveSettings() {
 	_settings.isCountPageLoadTime = $("input[name=isCountPageLoadTime]").get(0).checked;
 	_settings.isChangePageTitle = $("input[name=isChangePageTitle]").get(0).checked;
 	_settings.isShowEquippedSet = $("input[name=isShowEquippedSet]").get(0).checked;
+	_settings.isDisableForgeHotKeys = $("input[name=isDisableForgeHotKeys]").get(0).checked;
 	_settings.isShowTags[0] = $("input[name=isShowTags0]").get(0).checked;
 	_settings.isShowTags[1] = $("input[name=isShowTags1]").get(0).checked;
 	_settings.isShowTags[2] = $("input[name=isShowTags2]").get(0).checked;
@@ -3611,6 +3615,7 @@ function HVSettings() {
 	this.isEnableSkillHotkey = false;
 	this.isCountPageLoadTime = false;
 	this.isShowEquippedSet = false;
+	this.isDisableForgeHotKeys = false;
 	//0-twohanded fighter; 1-elemental mage
 	//0-equipment page, 1-shop, 2-itemworld, 3-moogle, 4-forge
 	this.isShowTags = [false, false, false, false, false, false];
@@ -5508,178 +5513,118 @@ function CheckForAction() {
 	});
 }
 function TaggingItems(clean) {
+	// can clean tag data when visited the Inventory page
+	// because all equipments which is owned are listed.
 	loadTagsObject();
-	var taID = null;
-	var taTAG = null;
-	var taTYPE = null;
-	var OneHandedTAGsArray = [];
-	var OneHandedIDsArray = [];
-	var TwoHandedTAGsArray = [];
-	var TwoHandedIDsArray = [];
-	var StaffsTAGsArray = [];
-	var StaffsIDsArray = [];
-	var ShieldTAGsArray = [];
-	var ShieldIDsArray = [];
-	var ClothTAGsArray = [];
-	var ClothIDsArray = [];
-	var LightTAGsArray = [];
-	var LightIDsArray = [];
-	var HeavyTAGsArray = [];
-	var HeavyIDsArray = [];
+	var equipTagArrayTable = [
+		{id: _tags.OneHandedIDs,	value: _tags.OneHandedTAGs,	idClean: [], valueClean: []},
+		{id: _tags.TwoHandedIDs,	value: _tags.TwoHandedTAGs,	idClean: [], valueClean: []},
+		{id: _tags.StaffsIDs,		value: _tags.StaffsTAGs,	idClean: [], valueClean: []},
+		{id: _tags.ShieldIDs,		value: _tags.ShieldTAGs,	idClean: [], valueClean: []},
+		{id: _tags.ClothIDs,		value: _tags.ClothTAGs,		idClean: [], valueClean: []},
+		{id: _tags.LightIDs,		value: _tags.LightTAGs,		idClean: [], valueClean: []},
+		{id: _tags.HeavyIDs,		value: _tags.HeavyTAGs,		idClean: [], valueClean: []}
+	];
 	$("#inv_equip div.eqpp, #inv_equip div.eqp, #item_pane div.eqp, #item_pane div.eqpp, #equip div.eqp, #equip div.eqpp, #equip_pane div.eqp, #equip_pane div.eqpp").each(function() {
-		var g = $(this);
-		var itemstype = String(String(g.children().filter(".eqdp").attr("onmouseover")).match(/(One-handed Weapon|Two-handed Weapon|Staff|Shield|Cloth Armor|Light Armor|Heavy Armor)/i)[0]).replace(/ (Weapon|Armor)/i,"");
-		var id = parseInt(String(g.children().filter(".eqdp").attr("id")).replace("item_pane",""));
-		var n = 0;
-		var tag = "_new";
-		if (itemstype.match(/One-Handed/i)) {
-			n = jQuery.inArray(id, _tags.OneHandedIDs);
-			tag = _tags.OneHandedTAGs[n];
-			if (clean > 0 && tag !== undefined) {
-				OneHandedTAGsArray.push(tag);
-				OneHandedIDsArray.push(id);
-			}
-			taTYPE = 0;
-			if (n < 0) n = parseInt(_tags.OneHandedTAGs.length) + 1;
-		} else if (itemstype.match(/Two-Handed/i)) {
-			n = jQuery.inArray(id, _tags.TwoHandedIDs);
-			tag = _tags.TwoHandedTAGs[n];
-			if (clean > 0 && tag !== undefined) {
-				TwoHandedTAGsArray.push(tag);
-				TwoHandedIDsArray.push(id);
-			}
-			taTYPE = 1;
-			if (n < 0) n = parseInt(_tags.TwoHandedTAGs.length) + 1;
-		} else if (itemstype.match(/Staff/i)) {
-			n = jQuery.inArray(id, _tags.StaffsIDs);
-			tag = _tags.StaffsTAGs[n];
-			if (clean > 0 && tag !== undefined) {
-				StaffsTAGsArray.push(tag);
-				StaffsIDsArray.push(id);
-			}
-			taTYPE = 2;
-			if (n < 0) n = parseInt(_tags.StaffsTAGs.length) + 1;
-		} else if (itemstype.match(/Shield/i)) {
-			n = jQuery.inArray(id, _tags.ShieldIDs);
-			tag = _tags.ShieldTAGs[n];
-			if (clean > 0 && tag !== undefined) {
-				ShieldTAGsArray.push(tag);
-				ShieldIDsArray.push(id);
-			}
-			taTYPE = 3;
-			if (n < 0) n = parseInt(_tags.ShieldTAGs.length) + 1;
-		} else if (itemstype.match(/Cloth/i)) {
-			n = jQuery.inArray(id, _tags.ClothIDs);
-			tag = _tags.ClothTAGs[n];
-			if (clean > 0 && tag !== undefined) {
-				ClothTAGsArray.push(tag);
-				ClothIDsArray.push(id);
-			}
-			taTYPE = 4;
-			if (n < 0) n = parseInt(_tags.ClothTAGs.length) + 1;
-		} else if (itemstype.match(/Light/i)) {
-			n = jQuery.inArray(id, _tags.LightIDs);
-			tag = _tags.LightTAGs[n];
-			if (clean > 0 && tag !== undefined) {
-				LightTAGsArray.push(tag);
-				LightIDsArray.push(id);
-			}
-			taTYPE = 5;
-			if (n < 0) n = parseInt(_tags.LightTAGs.length) + 1;
-		} else if (itemstype.match(/Heavy/i)) {
-			n = jQuery.inArray(id, _tags.HeavyIDs);
-			tag = _tags.HeavyTAGs[n];
-			if (clean > 0 && tag !== undefined) {
-				HeavyTAGsArray.push(tag);
-				HeavyIDsArray.push(id);
-			}
-			taTYPE = 6;
-			if (n < 0) n = parseInt(_tags.HeavyTAGs.length) + 1;
+		var eqp = $(this);
+		var eqdp = eqp.children().filter(".eqdp");
+		var equipType = String(eqdp.attr("onmouseover"))
+			.match(/(One-handed Weapon|Two-handed Weapon|Staff|Shield|Cloth Armor|Light Armor|Heavy Armor) &nbsp; &nbsp; Level/i)[0]
+			.replace(/ &nbsp; &nbsp; Level/i, "")
+			.replace(/ (Weapon|Armor)/i, "");
+		var id = parseInt(String(eqdp.attr("id")).replace("item_pane", ""), 10);
+		var equipTypeIdx = -1;
+		if (/One-Handed/i.test(equipType)) {
+			equipTypeIdx = 0;
+		} else if (/Two-Handed/i.test(equipType)) {
+			equipTypeIdx = 1;
+		} else if (/Staff/i.test(equipType)) {
+			equipTypeIdx = 2;
+		} else if (/Shield/i.test(equipType)) {
+			equipTypeIdx = 3;
+		} else if (/Cloth/i.test(equipType)) {
+			equipTypeIdx = 4;
+		} else if (/Light/i.test(equipType)) {
+			equipTypeIdx = 5;
+		} else if (/Heavy/i.test(equipType)) {
+			equipTypeIdx = 6;
 		}
-		if (tag === undefined) tag = "_new";
-		var tagid = "tagid_" + String(id);
-		var tagbox = $("#leftpane input.ByledalejTag[name=tagid_"+id+"]");
-		var exist = tagbox.length;
-		if (exist > 0) {
-			tagbox.attr("alt", n);
-			tagbox.attr("value", tag);
+		if (equipTypeIdx < 0) throw new Exception("unexpected equipment type");
+		var idArray = equipTagArrayTable[equipTypeIdx].id;
+		var valueArray = equipTagArrayTable[equipTypeIdx].value;
+		var idCleanArray = equipTagArrayTable[equipTypeIdx].idClean;
+		var valueCleanArray = equipTagArrayTable[equipTypeIdx].valueClean;
+		var index = jQuery.inArray(id, idArray);
+		var tagValue = "";
+		if (index < 0) {
+			tagValue = "_new";
 		} else {
-			var a = "<div style='font-size:10px;font-weight:bold;font-family:arial,helvetica,sans-serif;text-align:right;width:60px; height:18px; position:absolute; top:1px;left:330px'><input type='text' class='ByledalejTag' name='tagid_"+id+"'  alt='"+n+"' size='4' maxLength='4' value='"+tag+"' /></div>";
-			g.children().eq(1).after(a);
+			tagValue = valueArray[index];
+			if (clean) {
+				idCleanArray.push(id);
+				valueCleanArray.push(tagValue);
+			}
 		}
-		$("input.ByledalejTag[name=tagid_"+id+"]").unbind().bind("change", {y:taTYPE, x:tagid}, saveTags);
+		var html = "<div style='font-size:10px; font-weight:bold; font-family:arial,helvetica,sans-serif; text-align:right; position:absolute; bottom:-21px; Left:320px; opacity:0.8;'>"
+			+ "<input type='text' class='ByledalejTag' name='tagid_" + id + "' size='5' maxLength='6' value='" + tagValue + "' /></div>";
+		eqp.children().eq(1).after(html);
+		$("input.ByledalejTag[name=tagid_" + id + "]").change(function (event) {
+			var target = event.target;
+			var tagId = parseInt(target.name.replace("tagid_", ""), 10);
+			var tagValue = target.value;
+			var index = jQuery.inArray(tagId, idArray);
+			if (index >= 0) {
+				valueArray[index] = tagValue;
+			} else {
+				idArray.push(tagId);
+				valueArray.push(tagValue);
+			}
+			_tags.save();
+		});
 	});
-	var cleaned = 0;
-	if (clean > 0 && OneHandedTAGsArray.length < _tags.OneHandedTAGs.length) {
-		_tags.OneHandedTAGs = OneHandedTAGsArray;
-		_tags.OneHandedIDs = OneHandedIDsArray;
-		cleaned++;
+	if (clean) {
+		var cleaned = false;
+		for (var i = 0; i < equipTagArrayTable.length; i++) {
+			if (equipTagArrayTable[i].id.length > equipTagArrayTable[i].idClean.length) {
+				idCleanArray = equipTagArrayTable[i].idClean;
+				valueCleanArray = equipTagArrayTable[i].valueClean;
+				switch (i) {
+				case 0:
+					_tags.OneHandedIDs = idCleanArray;
+					_tags.OneHandedTAGs = valueCleanArray;
+					break;
+				case 1:
+					_tags.TwoHandedIDs = idCleanArray;
+					_tags.TwoHandedTAGs = valueCleanArray;
+					break;
+				case 2:
+					_tags.StaffsIDs = idCleanArray;
+					_tags.StaffsTAGs = valueCleanArray;
+					break;
+				case 3:
+					_tags.ShieldIDs = idCleanArray;
+					_tags.ShieldTAGs = valueCleanArray;
+					break;
+				case 4:
+					_tags.ClothIDs = idCleanArray;
+					_tags.ClothTAGs = valueCleanArray;
+					break;
+				case 5:
+					_tags.LightIDs = idCleanArray;
+					_tags.LightTAGs = valueCleanArray;
+					break;
+				case 6:
+					_tags.HeavyIDs = idCleanArray;
+					_tags.HeavyTAGs = valueCleanArray;
+					break;
+				}
+				cleaned = true;
+			}
+		}
+		if (cleaned) {
+			_tags.save();
+		}
 	}
-	if (clean > 0 && TwoHandedTAGsArray.length < _tags.TwoHandedTAGs.length) {
-		_tags.TwoHandedTAGs = TwoHandedTAGsArray;
-		_tags.TwoHandedIDs = TwoHandedIDsArray;
-		cleaned++;
-	}
-	if (clean > 0 && StaffsTAGsArray.length < _tags.StaffsTAGs.length) {
-		_tags.StaffsTAGs = StaffsTAGsArray;
-		_tags.StaffsIDs = StaffsIDsArray;
-		cleaned++;
-	}
-	if (clean > 0 && ShieldTAGsArray.length < _tags.ShieldTAGs.length) {
-		_tags.ShieldTAGs = ShieldTAGsArray;
-		_tags.ShieldIDs = ShieldIDsArray;
-		cleaned++;
-	}
-	if (clean > 0 && ClothTAGsArray.length < _tags.ClothTAGs.length) {
-		_tags.ClothTAGs = ClothTAGsArray;
-		_tags.ClothIDs = ClothIDsArray;
-		cleaned++;
-	}
-	if (clean > 0 && LightTAGsArray.length < _tags.LightTAGs.length) {
-		_tags.LightTAGs = LightTAGsArray;
-		_tags.LightIDs = LightIDsArray;
-		cleaned++;
-	}
-	if (clean > 0 && HeavyTAGsArray.length < _tags.HeavyTAGs.length) {
-		_tags.HeavyTAGs = HeavyTAGsArray;
-		_tags.HeavyIDs = HeavyIDsArray;
-		cleaned++;
-	}
-	if (cleaned > 0) {
-		_tags.save();
-		TaggingItems();
-	}
-}
-function saveTags(z) {
-	var taID = null;
-	var taTAG = null;
-	z.data.y = parseInt(z.data.y);
-	var h = $("input.ByledalejTag[name='"+z.data.x+"']");
-	var nn = parseInt(h.attr("alt"));
-	if (z.data.y === 0) {
-		_tags.OneHandedIDs[nn] = parseInt(String(h.attr("name")).replace("tagid_",""));
-		_tags.OneHandedTAGs[nn] = h.attr("value");
-	} else if (z.data.y === 1) {
-		_tags.TwoHandedIDs[nn] = parseInt(String(h.attr("name")).replace("tagid_",""));
-		_tags.TwoHandedTAGs[nn] = h.attr("value");
-	} else if (z.data.y === 2) {
-		_tags.StaffsIDs[nn] = parseInt(String(h.attr("name")).replace("tagid_",""));
-		_tags.StaffsTAGs[nn] = h.attr("value");
-	} else if (z.data.y === 3) {
-		_tags.ShieldIDs[nn] = parseInt(String(h.attr("name")).replace("tagid_",""));
-		_tags.ShieldTAGs[nn] = h.attr("value");
-	} else if (z.data.y === 4) {
-		_tags.ClothIDs[nn] = parseInt(String(h.attr("name")).replace("tagid_",""));
-		_tags.ClothTAGs[nn] = h.attr("value");
-	} else if (z.data.y === 5) {
-		_tags.LightIDs[nn] = parseInt(String(h.attr("name")).replace("tagid_",""));
-		_tags.LightTAGs[nn] = h.attr("value");
-	} else if (z.data.y === 6) {
-		_tags.HeavyIDs[nn] = parseInt(String(h.attr("name")).replace("tagid_",""));
-		_tags.HeavyTAGs[nn] = h.attr("value");
-	}
-	_tags.save();
-	TaggingItems();
 }
 function ShrineButton() {
 	$("#item_pane.cspp div[id$=item_pane]").each(function() {
@@ -5722,25 +5667,25 @@ function main3 () {
 	} else {
 		if (isEquipmentInventoryPage() && _settings.isShowTags[0]) {
 			var t47 = TimeCounter(1);
-			TaggingItems(0);
+			TaggingItems(false);
 			_ltc.taggingitems[0]++;
 			_ltc.taggingitems[1] += TimeCounter(0, t47);
 		}
 		if (isAllInventoryPage() && _settings.isShowTags[5]) {
 			var t47 = TimeCounter(1);
-			TaggingItems(1);
+			TaggingItems(true);
 			_ltc.taggingitems[0]++;
 			_ltc.taggingitems[1] += TimeCounter(0, t47);
 		}
 		if (isShopPage() && _settings.isShowTags[1]) {
 			var t48 = TimeCounter(1);
-			TaggingItems(0);
+			TaggingItems(false);
 			_ltc.taggingitems[0]++;
 			_ltc.taggingitems[1] += TimeCounter(0, t48);
 		}
 		if (isItemWorldPage() && _settings.isShowTags[2]) {
 			var t49 = TimeCounter(1);
-			TaggingItems(0);
+			TaggingItems(false);
 			_ltc.taggingitems[0]++;
 			_ltc.taggingitems[1] += TimeCounter(0, t49);
 		}
@@ -5752,7 +5697,10 @@ function main3 () {
 		}
 		if (isForgePage() && _settings.isShowTags[4]) {
 			var t51 = TimeCounter(1);
-			TaggingItems(0);
+			TaggingItems(false);
+			if (_settings.isDisableForgeHotKeys) {
+				document.onkeypress = null;
+			}
 			_ltc.taggingitems[0]++;
 			_ltc.taggingitems[1] += TimeCounter(0, t51);
 		}
