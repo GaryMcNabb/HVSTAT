@@ -293,7 +293,7 @@ function showMonsterStats() {
 	$("#monsterpane > div").each(function (n) {
 		var u = $(this);
 		if (u === undefined || u.height() >= 100) return;
-		var monInfo = _round.monsters[_round.monsters.length - 1 - n];
+		var monInfo = _round.monsters[n];
 		if (monInfo === undefined) return;
 		var k = u.children().eq(1).children().eq(0);
 		var s = k.children().length > 1;
@@ -958,18 +958,29 @@ function collectRoundInfo() {
 	if (_settings.isRememberSkillsTypes) loadCollectdataObject();
 	if (_settings.isTrackItems) loadDropsObject();
 	if (_settings.isTrackRewards) loadRewardsObject();
+	if (!_round.isLoaded) {
+		// create monster objects
+		$("#monsterpane > div").each(function () {
+			var monster = new HVMonster();
+			_round.monsters.push(monster);
+		});
+	}
 	if (_settings.isSpellsSkillsDifference || _settings.isShowStatsPopup) {
 		var t74 = TimeCounter(1);
-		// issue: SP is always zero in the monster popup when first load
 		for (var i = 0; i < _round.monsters.length; i++) {
+			var e = $("#" + getMonsterElementId(i)).children().eq(2).children();
+			if (e.filter(".btm5").length > 2) {
+				_round.monsters[i].hasspbar = true;
+			}
 			if (_round.monsters[i].hasspbar) {
-				var spbar = $("#" + getMonsterElementId(i)).children().eq(2).children().eq(2);
+				var spbar = e.eq(2);
 				// get current SP percent
 				_round.monsters[i].sp1 = spbar.children().eq(0).children("img").eq(1).width() / 120;
 			}
 		}
 		_ltc.changedMHits[1] += TimeCounter(0, t74);
 	}
+	var index = _round.monsters.length - 1;
 	$("#togpane_log td:first-child").each(function (j) {
 		var g = $(this);
 		var k = g.next().next();
@@ -987,7 +998,7 @@ function collectRoundInfo() {
 		_ltc.sel[1] += TimeCounter(0, t87);
 		if (!_round.isLoaded) {
 			if (c.match(/HP=/)) {
-				var h = new HVMonster();
+				var h = _round.monsters[index];
 				h.maxHp = parseInt(c.match(/HP=\d+(\.)?[0-9]+?$/)[0].replace("HP=", ""));
 				h.currHp = h.maxHp;
 				var mid = parseInt(c.match(/MID=\d+?\s/)[0].replace("MID=", ""));
@@ -1007,10 +1018,10 @@ function collectRoundInfo() {
 					h.datescan = _database.datescan[mid];
 					_ltc.isShowElemHvstatStyle[1] += TimeCounter(0, t43);
 				}
-				_round.monsters.push(h);
 				if (_settings.isTrackItems) {
 					_round.dropChances++;
 				}
+				index--;
 			} else if (c.match(/\(Round/)) {
 				var f = c.match(/\(round.*?\)/i)[0].replace("(", "").replace(")", "");
 				var m = f.split(" ");
@@ -1047,15 +1058,6 @@ function collectRoundInfo() {
 		}
 		if (g.html() !== e) {
 			return false;
-		}
-		if (_settings.isSpellsSkillsDifference) {
-			var t71 = TimeCounter(1);
-			for (var i = 0; i < _round.monsters.length; i++) {
-				if ($("#" + getMonsterElementId(i)).children().eq(2).children().filter(".btm5").length > 2) {
-					_round.monsters[i].hasspbar = true;
-				}
-			}
-			_ltc.changedMHits[1] += TimeCounter(0, t71);
 		}
 		if (_settings.isAlertGem && c.match(/drops a (.*) Gem/)) {
 			var sec1 = TimeCounter(1);
@@ -1136,16 +1138,15 @@ function collectRoundInfo() {
 				var milliseconds3 = TimeCounter(1);
 				_round.scan[0] = c.match(/scanning [^\.]{1,30}\.{3,}/i)[0].replace("Scanning ", "").replace("...", "");
 				var scanname = c.match(/scanning [^\.]{1,30}\.{3,}/i)[0].replace("Scanning ", "").replace("...", "");
-				var monnum = 0;
-				while ((monnum < 10) && (_round.monsters[monnum] !== undefined)) {
-					if (_round.monsters[monnum].name === scanname) {
-						_round.scan[0] = _round.monsters[monnum].id;
+				var i;
+				for (i = 0; i < _round.monsters.length; i++) {
+					if (_round.monsters[i].name === scanname) {
+						_round.scan[0] = _round.monsters[i].id;
 						break;
 					}
-					monnum++;
 				}
 				if (c.match(/Monster Class.{1,37}(Common|Uncommon|Rare|Legendary|Ultimate)/i)) {
-					_round.scan[1] =c.match(/Monster Class.{1,37}(Common|Uncommon|Rare|Legendary|Ultimate)/i)[0].replace("Monster Class:</strong></td><td style=\"width:60%\">", "");
+					_round.scan[1] = c.match(/Monster Class.{1,37}(Common|Uncommon|Rare|Legendary|Ultimate)/i)[0].replace("Monster Class:</strong></td><td style=\"width:60%\">", "");
 					_round.scan[2] = 0;
 				} else {	
 					_round.scan[1] = c.match(/[a-z]+. Power Level/i)[0].replace(", Power Level", "");
@@ -1162,15 +1163,15 @@ function collectRoundInfo() {
 					SaveToDatabase(1);
 				}
 				var mid = parseInt(_round.scan[0]);
-				_round.monsters[monnum].mclass = _database.mclass[mid];
-				_round.monsters[monnum].mpl = _database.mpl[mid];
-				_round.monsters[monnum].mattack = _database.mattack[mid];
-				_round.monsters[monnum].mweak = _database.mweak[mid];
-				_round.monsters[monnum].mresist = _database.mresist[mid];
-				_round.monsters[monnum].mimperv = _database.mimperv[mid];
-				_round.monsters[monnum].mskilltype = _database.mskilltype[mid];
-				_round.monsters[monnum].mskillspell = _database.mskillspell[mid];
-				_round.monsters[monnum].datescan = _database.datescan[mid];
+				_round.monsters[i].mclass = _database.mclass[mid];
+				_round.monsters[i].mpl = _database.mpl[mid];
+				_round.monsters[i].mattack = _database.mattack[mid];
+				_round.monsters[i].mweak = _database.mweak[mid];
+				_round.monsters[i].mresist = _database.mresist[mid];
+				_round.monsters[i].mimperv = _database.mimperv[mid];
+				_round.monsters[i].mskilltype = _database.mskilltype[mid];
+				_round.monsters[i].mskillspell = _database.mskillspell[mid];
+				_round.monsters[i].datescan = _database.datescan[mid];
 				_ltc.isRememberScan[0]++;
 				_ltc.isRememberScan[1] += TimeCounter(0, milliseconds3);
 				_ltc.collectRoundInfo[1] -= TimeCounter(0, milliseconds3);
@@ -1244,16 +1245,14 @@ function collectRoundInfo() {
 						_round.pskills[4] += o;
 					}
 					if (_settings.isRememberSkillsTypes) {
-						var maxmon = parseInt(_round.monsters.length) - 1;
 						var milliseconds21 = TimeCounter(1);
-						var monnum4 = 0;
-						while (monnum4 <= maxmon) {
-							if (sel.match(/[^\.]{1,30} (uses|casts) /i)[0].replace(" uses ","").replace(" casts ","") === _round.monsters[monnum4].name) {
-								var mid = parseInt(_round.monsters[monnum4].id);
+						for (var j = 0; j < _round.monsters.length; j++) {
+							if (sel.match(/[^\.]{1,30} (uses|casts) /i)[0].replace(" uses ","").replace(" casts ","") === _round.monsters[j].name) {
+								var mid = parseInt(_round.monsters[j].id);
 								var stype = c.match(/[a-z]{1,10} damage/i)[0].replace(" damage","");
 								_collectdata.skillmid.push(mid);
 								_collectdata.skilltype.push(stype);
-								var spdiff = _round.monsters[monnum4].sp1 - _round.monsters[monnum4].sp2;
+								var spdiff = _round.monsters[j].sp1 - _round.monsters[j].sp2;
 								if (sel.match(/ casts /i)) {
 									if (spdiff < 0) {
 										_collectdata.mskillspell.push(3);
@@ -1270,7 +1269,6 @@ function collectRoundInfo() {
 								_collectdata.save();
 								break;
 							}
-							monnum4++;
 						}
 						_ltc.changedMHits[0]++;
 						_ltc.changedMHits[1] += TimeCounter(0, milliseconds21);
@@ -1439,7 +1437,7 @@ function collectRoundInfo() {
 				if (t < 1) {
 					t = 1;
 				}
-				itemToAdd = itemToAdd.replace(/(\d){1,2}.?x?.?/, "")
+				itemToAdd = itemToAdd.replace(/(\d){1,2}.?x?.?/, "");
 				_drops.crysDropbyBT[_round.battleType]++;
 			}
 			for (var j = 0; j < _drops.itemArry.length; j++) {
@@ -5128,8 +5126,8 @@ function Scanbutton() {
 			}
 		}
 	});
-	while (num < mkeymax) {
-		var monsterElementId = getMonsterElementId(mkeymax - num - 1);
+	for (var j = 0; j < _round.monsters.length; j++) {
+		var monsterElementId = getMonsterElementId(j);
 		var u = $("#" + monsterElementId);
 		var e = u.children().eq(2).children().eq(0);
 		var dead = e.html().match(/bardead/i);
@@ -5164,16 +5162,12 @@ function Scanbutton() {
 				}
 			}
 		}
-		num++;
-		n--;
 	}
 }
 function MonsterPopup() {
 	$('.btm1').unbind('mouseover');
 	$('.btm1').unbind('mouseout');
-	var n = 0;
 	var id = 0;
-	var num = _round.monsters.length;
 	var c = document.getElementById("popup_box");
 	var name = "";
 	var maxhp = "";
@@ -5201,8 +5195,8 @@ function MonsterPopup() {
 	var leftpixels = placement ? 955 : 300;
 	var elemMonsterPane = $("#monsterpane");
 	loadRoundObject();
-	while (n < 10 && (_round.monsters[n] !== undefined)) {
-		var q = _round.monsters[n];
+	for (var i = 0; i < _round.monsters.length; i++) {
+		var q = _round.monsters[i];
 		mskilltype = "";
 		mskillspell = "";
 		mattack = "";
@@ -5298,7 +5292,7 @@ function MonsterPopup() {
 		if (mpl === undefined || mpl === null || mpl === 0 || mpl === "0") mpl = "";
 		mclass = q.mclass;
 		if (mclass !== undefined) mclass = MClassNum(mclass, 1);
-		var monsterElementId = getMonsterElementId(num - 1);
+		var monsterElementId = getMonsterElementId(i);
 		name = q.name;
 		maxhp = q.maxHp;
 		currhp = q.currHp;
@@ -5340,7 +5334,7 @@ function MonsterPopup() {
 			mspiritsksp = formatAttackType(mspiritsksp);
 		}
 		mattack = formatAttackType(mattack);
-		$("#" + monsterElementId).bind('mouseover', {h:num, na:name, mhp:maxhp, chp:currhp, cmp:currmp, csp:currsp, cl:mclass, pl:mpl, at:mattack, sk:mskilltype, sksp:mskillspell, sk2:mskilltype2, sksp2:mskillspell2, sk3:mskilltype3, sksp3:mskillspell3,spty:mspirittype,spss:mspiritsksp, res:mresist, imp:mimperv, we:mweak, scd:dst1, scago:E}, function (r) {
+		$("#" + monsterElementId).bind('mouseover', {h:i, na:name, mhp:maxhp, chp:currhp, cmp:currmp, csp:currsp, cl:mclass, pl:mpl, at:mattack, sk:mskilltype, sksp:mskillspell, sk2:mskilltype2, sksp2:mskillspell2, sk3:mskilltype3, sksp3:mskillspell3,spty:mspirittype,spss:mspiritsksp, res:mresist, imp:mimperv, we:mweak, scd:dst1, scago:E}, function (r) {
 			var popupHeight = 220;
 			var popupTopOffset = elemMonsterPane.offset().top + (r.data.h - 1) * ((elemMonsterPane.height() - popupHeight) / 9);
 			c.style.left = leftpixels + "px";
@@ -5381,8 +5375,6 @@ function MonsterPopup() {
 			clearTimeout(window.setTimeoutByledalej2);
 			clearTimeout(window.setTimeoutByledalej3);
 		});
-		n++;
-		num--;
 	}
 }
 function StartBattleAlerts () {
