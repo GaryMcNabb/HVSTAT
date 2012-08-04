@@ -250,11 +250,14 @@ function highlightLogText() {
 	});
 }
 function addBattleLogDividers() {
-	var a = -1;
+	var previousTurn = null;
 	$("#togpane_log td:first-child").each(function () {
-		if ($(this).html() !== a) {
-			if (a >= 0) $(this).parent("tr").before("<tr><td colspan='3'><hr style='border:0; height:1px; background-color:#666666; color:#666666' /></td></tr>")
-			a = $(this).html();
+		var currentTurn = $(this).html();
+		if (/^\d+$/.test(currentTurn)) {
+			if (previousTurn && previousTurn !== currentTurn) {
+				$(this).parent("tr").before("<tr><td colspan='3'><hr style='border:0; height:1px; background-color:#666666; color:#666666' /></td></tr>");
+			}
+			previousTurn = currentTurn;
 		}
 	});
 }
