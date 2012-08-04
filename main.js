@@ -172,7 +172,15 @@ function main(b) {
 		if (!isBattle() && (_round !== null)) _round.reset();
 		else if (_settings.isColumnInventory && isItemInventoryPage()) initItemsView();
 		else if (isCharacterPage()) collectCurrentProfsData();
-		else if (isShrinePage() && _settings.isTrackShrine) captureShrine();
+		else if (isShrinePage()) {
+			if (_settings.isTrackShrine) {
+				captureShrine();
+			}
+			if (browserIsChrome()) {
+				// workaround to make enable SPACE key
+				window.document.onkeydown = null;
+			}
+		}
 	}
 	if (_settings.isShowSidebarProfs) {
 		var t9 = TimeCounter(1);
