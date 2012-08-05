@@ -234,7 +234,7 @@ function highlightLogText() {
 		if (a.match(/(you crit)|crits|blasts|unleash/i)) b.css("font-weight", "bold");
 		if (a.match(/(you (hit|crit|counter))|(your offhand (hit|crit))|(unleash)/i)) b.css("color", !_settings.isAltHighlight ? "blue" : "black");
 		else if (a.match(/you cast/i) || a.match(/explodes for/i)) b.css("color", "teal");
-		else if (a.match(/hits|blasts/i) && !a.match(/hits you /i) && !a.match(/(bleeding wound)|(spreading poison)|(your spike shield)|(searing skin)|(burning soul) hits/i)) b.css("color", !_settings.isAltHighlight ? "teal" : "black");
+		else if (a.match(/hits|blasts|crits/i) && !a.match(/(hits|crits) you /i) && !a.match(/(bleeding wound)|(spreading poison)|(your spike shield)|(searing skin)|(burning soul) hits/i)) b.css("color", !_settings.isAltHighlight ? "teal" : "black");
 		else if (a.match(/procs the effect/i) && !_settings.isAltHighlight) b.css("color", "#800080");
 		else if (a.match(/(bleeding wound)|(spreading poison)|(your spike shield)|(searing skin)|(burning soul) hits/i) && !a.match(/has expired/i)) b.css("color", "#800080");
 		else if (a.match(/(you (dodge|evade|block|parry|resist))|(misses.*?against you)/i)) b.css("color", !_settings.isAltHighlight ? "#999999" : "#555555");
