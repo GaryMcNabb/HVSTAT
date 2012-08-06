@@ -1,10 +1,11 @@
 // ==UserScript==
+// ==UserScript==
 // @name             HV Statistics, Tracking, and Analysis Tool
 // @namespace        HV STAT
 // @description      Collects data, analyzes statistics, and enhances the interface of the HentaiVerse
 // @include          http://hentaiverse.org/*
 // @author           Various (http://forums.e-hentai.org/index.php?showtopic=50962)
-// @version          5.4.1.5
+// @version          5.4.1.6
 // @require          https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js
 // @require          https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.21/jquery-ui.min.js
 // @resource         jQueryUICSS http://www.starfleetplatoon.com/~cmal/HVSTAT/jqueryui.css
@@ -12,7 +13,7 @@
 
 // === GLOBAL VARIABLES
 var millisecondsAll = TimeCounter(1);
-VERSION = "5.4.1.5";
+VERSION = "5.4.1.6";
 SAVE_STATS = true;
 MAX_MID = 33;
 SELF_EFF_TOP = 34;
@@ -43,10 +44,6 @@ ARENA = 1;
 GRINDFEST = 2;
 ITEM_WORLD = 3;
 CRYSFEST = 4;
-MCOUNT = 0;
-MNUM = -1;
-DOMLOADED = false;
-HASMS = false;
 _overview = null;
 _stats = null;
 _profs = null;
@@ -86,20 +83,7 @@ Array.prototype.init = function (b) {
 loadSettingsObject();
 loadLTCObject();
 
-function evResLoad( e ){
-	var ele = e.target;
-	if (ele.tagName !== "IMG") return;
-	if (ele.src === "http://ehgt.org/v/hentaiverse.png")
-		ele.setAttribute("SRC", _settings.isHideHVLogo ? "" : I_HVLOGO);
-	else if (ele.src === "http://ehgt.org/v/s/nbarblue.png"){
-		MNUM = ( ele.parentNode.parentNode.parentNode.parentNode.parentNode.childNodes.length - 6 ) / 2;
-		MCOUNT++;
-		if ( !HASMS && DOMLOADED && MCOUNT === MNUM ) main2();
-	}
-}
-
 function evDomLoad(){
-	DOMLOADED = true;
 	if (!browserIsChrome() && !cssInserted()) {
 		GM_addStyle(GM_getResourceText("jQueryUICSS"));
 		cssAdded();
@@ -111,7 +95,7 @@ function main(b) {
 	loadSettingsObject();
 	var a = localStorage.getItem(HV_EQUIP);
 	var c = (a === null) ? false : JSON.parse(a);
-	if (!browserIsChrome() && _settings.isHideHVLogo) document.getElementsByTagName("img")[0].src = "";
+	if (_settings.isHideHVLogo) document.getElementsByTagName("img")[0].src = "";
 	if (_settings.isChangePageTitle) {
 		var t1 = TimeCounter(1);
 		obscureHVIds();
@@ -156,9 +140,7 @@ function main(b) {
 			_ltc.showSelfEffectsDuration[0]++;
 			_ltc.showSelfEffectsDuration[1] += (TimeCounter(0, t7));
 		}
-		if ( browserIsChrome() ){
-			if (MCOUNT === MNUM && !HASMS) main2();
-		} else main2();
+		main2();
 	} else {
 		if (!isBattle() && (_round !== null)) _round.reset();
 		else if (_settings.isColumnInventory && isItemInventoryPage()) initItemsView();
@@ -305,7 +287,7 @@ function showMonsterStats() {
 			var l = monInfo.maxHp;
 			var o = 0;
 			var g = "";
-			var b = e.children().eq(0).children("img").eq(1).width() / 120;
+			var b = e[0].getElementsByTagName("img")[1].getAttribute("style").slice(6,-2) / 120;
 			if (_settings.isShowMonsterHPPercent) g = (b * 100).toFixed(2) + "%"
 			else {
 				o = Math.floor(b * l);
@@ -318,16 +300,16 @@ function showMonsterStats() {
 		}
 		if ((_settings.isShowMonsterMP || _settings.isShowStatsPopup) && !m) {
 			var t32 = TimeCounter(1);
-			var v = h.children().eq(0).children("img").eq(1).width() / 120;
+			var v = h[0].getElementsByTagName("img")[1].getAttribute("style").slice(6,-2) / 120;
 			var f = (v * 100).toFixed(1);
 			var j = "<div style='position:absolute;z-index:1074;top:11px;font-size:8pt;font-family:arial,helvetica,sans-serif;font-weight:bolder;color:yellow;width:120px;text-align:center'>" + f + "%</div>";
 			h.after(j);
 			_ltc.showmp[0]++;
 			_ltc.showmp[1] += TimeCounter(0, t32);
 		}
-		if ((_settings.isShowMonsterSP || _settings.isShowStatsPopup) && !m) {
+		if ((_settings.isShowMonsterSP || _settings.isShowStatsPopup) && !m && sp.length > 0) {
 			var t62 = TimeCounter(1);
-			var sppart = sp.children().eq(0).children("img").eq(1).width() / 120;
+			var sppart = sp[0].getElementsByTagName("img")[1].getAttribute("style").slice(6,-2) / 120;
 			var perc = (sppart * 100).toFixed(1);
 			var sptext = "<div style='position:absolute;z-index:1074;top:23px;font-size:8pt;font-family:arial,helvetica,sans-serif;font-weight:bolder;color:yellow;width:120px;text-align:center'>" + perc + "%</div>";
 			sp.after(sptext);
@@ -5736,12 +5718,6 @@ function getMonsterElementId(n) {
 	return ids[n];
 }
 
-//=== Event Listeners
-// beforeload triggers each time an external resource is loaded like images.
-// DOMContentLoaded triggers when the DOM has finished loading.
-// DON'T rely on the order of their execution.
-//===================
-if (browserIsChrome()){
+if (browserIsChrome())
 	document.addEventListener( "DOMContentLoaded", evDomLoad, false );
-	document.addEventListener( "beforeload", evResLoad, true );
-} else evDomLoad();
+else evDomLoad();
