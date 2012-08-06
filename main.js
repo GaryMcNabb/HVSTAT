@@ -5,7 +5,7 @@
 // @description      Collects data, analyzes statistics, and enhances the interface of the HentaiVerse
 // @include          http://hentaiverse.org/*
 // @author           Various (http://forums.e-hentai.org/index.php?showtopic=50962)
-// @version          5.4.1.6
+// @version          5.4.1.7
 // @require          https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js
 // @require          https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.21/jquery-ui.min.js
 // @resource         jQueryUICSS http://www.starfleetplatoon.com/~cmal/HVSTAT/jqueryui.css
@@ -13,7 +13,7 @@
 
 // === GLOBAL VARIABLES
 var millisecondsAll = TimeCounter(1);
-VERSION = "5.4.1.6";
+VERSION = "5.4.1.7";
 SAVE_STATS = true;
 MAX_MID = 33;
 SELF_EFF_TOP = 34;
@@ -77,7 +77,8 @@ jQuery.fn.outerHTML = function () {
 };
 Array.prototype.init = function (b) {
 	if (b === undefined) b = 0;
-	for (var a = 0; a < this.length; a++) this[a] = b;
+	var a = this.length;
+	while (a--) this[a] = b;
 };
 
 loadSettingsObject();
@@ -88,21 +89,20 @@ function evDomLoad(){
 		GM_addStyle(GM_getResourceText("jQueryUICSS"));
 		cssAdded();
 	}
-	main();
-}
-
-function main(b) {
-	loadSettingsObject();
 	var a = localStorage.getItem(HV_EQUIP);
 	var c = (a === null) ? false : JSON.parse(a);
-	if (_settings.isHideHVLogo) document.getElementsByTagName("img")[0].src = "";
-	if (_settings.isChangePageTitle) {
-		var t1 = TimeCounter(1);
-		obscureHVIds();
+	if (_settings.isHideHVLogo){
+		var t = TimeCounter(1);
+		document.getElementsByTagName("img")[0].src = "";
+		_ltc.hidelogo[0]++;
+		_ltc.hidelogo[1] += (TimeCounter(0, t));
+	}
+	
+	if (_settings.isChangePageTitle && document.title === "The HentaiVerse") {
+		var t = TimeCounter(1);
+		document.title = _settings.customPageTitle;
 		_ltc.hidetitle[0]++;
-		_ltc.hidetitle[1] += (TimeCounter(0, t1));
-		_ltc.obscureHVIds[0]++;
-		_ltc.obscureHVIds[1] += (TimeCounter(0, t1));
+		_ltc.hidetitle[1] += (TimeCounter(0, t));
 	}
 	if (isBattle()) {
 		if (_settings.isShowMonsterNumber) showMonsterNumber();
@@ -140,19 +140,42 @@ function main(b) {
 			_ltc.showSelfEffectsDuration[0]++;
 			_ltc.showSelfEffectsDuration[1] += (TimeCounter(0, t7));
 		}
-		main2();
+		if ((_round !== null) && (_round.monsters.length > 0)){
+			var t6 = TimeCounter(1);
+			showMonsterStats();
+			_ltc.showMonsterStats[0]++;
+			_ltc.showMonsterStats[1] += (TimeCounter(0, t6));
+		}
+		if (isBattleOver()) {
+			if (_settings.isShowEndStats) {
+				var t8 = TimeCounter(1);
+				showBattleEndStats();
+				_ltc.showBattleEndStats[1] += (TimeCounter(0, t8));
+			}
+			saveStats();
+			_round.reset();
+		}
+		if (_settings.isShowStatsPopup) {
+			var t45 = TimeCounter(1);
+			MonsterPopup();
+			_ltc.monsterpopup[0]++;
+			_ltc.monsterpopup[1] += TimeCounter(0, t45);
+		}
+		if (_settings.isShowScanButton || _settings.isShowSkillButton || _settings.isEnableScanHotkey || _settings.isEnableSkillHotkey) {
+			var t46 = TimeCounter(1);
+			Scanbutton();
+			_ltc.showscanbutton[0]++;
+			_ltc.showscanbutton[1] += TimeCounter(0, t46);
+		}
 	} else {
 		if (!isBattle() && (_round !== null)) _round.reset();
 		else if (_settings.isColumnInventory && isItemInventoryPage()) initItemsView();
 		else if (isCharacterPage()) collectCurrentProfsData();
 		else if (isShrinePage()) {
-			if (_settings.isTrackShrine) {
+			if (_settings.isTrackShrine)
 				captureShrine();
-			}
-			if (browserIsChrome()) {
-				// workaround to make enable SPACE key
-				window.document.onkeydown = null;
-			}
+			if (browserIsChrome())
+				window.document.onkeydown = null;	// workaround to make enable SPACE key
 		}
 	}
 	if (_settings.isShowSidebarProfs) {
@@ -163,72 +186,62 @@ function main(b) {
 	}
 	if (c) inventoryWarning();
 	initUI();
-	main3();
-}
-function main2(){
-	if ((_round !== null) && (_round.monsters.length > 0)){
-		var t6 = TimeCounter(1);
-		showMonsterStats();
-		_ltc.showMonsterStats[0]++;
-		_ltc.showMonsterStats[1] += (TimeCounter(0, t6));
-	}
-	if (isBattleOver()) {
-		if (_settings.isShowEndStats) {
-			var t8 = TimeCounter(1);
-			showBattleEndStats();
-			_ltc.showBattleEndStats[1] += (TimeCounter(0, t8));
-		}
-		saveStats();
-		_round.reset();
-	}
-	if (_settings.isShowStatsPopup) {
-		var t45 = TimeCounter(1);
-		MonsterPopup();
-		_ltc.monsterpopup[0]++;
-		_ltc.monsterpopup[1] += TimeCounter(0, t45);
-	}
-	if (_settings.isShowScanButton || _settings.isShowSkillButton || _settings.isEnableScanHotkey || _settings.isEnableSkillHotkey) {
-		var t46 = TimeCounter(1);
-		Scanbutton();
-		_ltc.showscanbutton[0]++;
-		_ltc.showscanbutton[1] += TimeCounter(0, t46);
-	}
-}
-function obscureHVIds() {
-	var t20 = TimeCounter(1);
-	if (_settings.isChangePageTitle && (document.title === "The HentaiVerse"))
-		document.title = _settings.customPageTitle;
-	_ltc.hidetitle[1] -= TimeCounter(0, t20);
+	main2();
 }
 function highlightLogText() {
-	$("#togpane_log td:last-child").each(function () {
-		var b = $(this);
-		var a = b.html();
-		if (a.match(/(you crit)|crits|blasts|unleash/i)) b.css("font-weight", "bold");
-		if (a.match(/(you (hit|crit|counter))|(your offhand (hit|crit))|(unleash)/i)) b.css("color", !_settings.isAltHighlight ? "blue" : "black");
-		else if (a.match(/you cast/i) || a.match(/explodes for/i)) b.css("color", "teal");
-		else if (a.match(/hits|blasts|crits/i) && !a.match(/(hits|crits) you /i) && !a.match(/(bleeding wound)|(spreading poison)|(your spike shield)|(searing skin)|(burning soul) hits/i)) b.css("color", !_settings.isAltHighlight ? "teal" : "black");
-		else if (a.match(/procs the effect/i) && !_settings.isAltHighlight) b.css("color", "#800080");
-		else if (a.match(/(bleeding wound)|(spreading poison)|(your spike shield)|(searing skin)|(burning soul) hits/i) && !a.match(/has expired/i)) b.css("color", "#800080");
-		else if (a.match(/(you (dodge|evade|block|parry|resist))|(misses.*?against you)/i)) b.css("color", !_settings.isAltHighlight ? "#999999" : "#555555");
-		else if (a.match(/restores|(you are healed)|recovered/i)) b.css("color", "green");
-		else if (a.match(/you gain/i) && !a.match(/drained/i) && !_settings.isAltHighlight) b.css("color", "#ba9e1c");
-		else if (a.match(/(hostile spell is drained)|(you drain)|(ether theft drains)|(lifestream drains)/i)) b.css("color", "green");
-		else if (a.match(/enough mp/i)) b.css("color", "#ff7777");
-		else if (a.match(/(hits|crits) you /i) && !a.match(/(hits|crits) you for 1 /i)) b.css("color", "red");
-		else if (a.match(/(hits|crits) you for 1 /i)) b.css("color", "#999999");
-		else if (a.match(/Your attack misses its mark/)) b.css("color", !_settings.isAltHighlight ? "#999999" : "orange");
-		else if (a.match(/Your spell misses its mark/)) b.css("color", !_settings.isAltHighlight ? "#999999" : "orange");
-		else if (a.match(/casts/)) b.css("color", "#0016b8");
-		else if (a.match(/uses/i)) b.css("color", !_settings.isAltHighlight ? "orange" : "blue");
-		else if (a.match(/powerup/i)) b.css("color", "#ff00ff");
-		else if (a.match(/charging soul/i)) b.css("color", "#C97600");
-		else if (a.match(/your spirit shield absorbs/i)) b.css("color", "#C97600");
+	var array = document.getElementById('togpane_log').getElementsByTagName('tr');
+	var i = array.length;
+	while (i--) {
+		var b = array[i].lastChild;
+		var a = b.innerHTML.toLowerCase();
+		if (a.indexOf('you crit')>-1 || a.indexOf('crits')>-1 || a.indexOf('blasts')>-1 || a.indexOf('unleash')>-1)
+			b.style.fontWeight = "bold";
+		if (a.indexOf('you hit')>-1 || a.indexOf('you crit')>-1 || a.indexOf('you counter')>-1 || a.indexOf('your offhand hit')>-1 || a.indexOf('your offhand crit')>-1 || a.indexOf('unleash')>-1)
+			b.style.color = !_settings.isAltHighlight ? "blue" : "black";
+		else if (a.indexOf('you cast')>-1 || a.indexOf('explodes for')>-1)
+			b.style.color = "teal";
+		else if ((a.indexOf('hits')>-1 || a.indexOf('blasts')>-1 || a.indexOf('crits')>-1 ) && !a.indexOf('hits you ')>-1 && !a.indexOf('crits you ')>-1 && !a.indexOf('bleeding wound hits')>-1 && !a.indexOf('spreading poison hits')>-1 && !a.indexOf('your spike shield hits')>-1 && !a.indexOf('searing skin hits')>-1 && !a.indexOf('burning soul hits')>-1)
+			b.style.color = !_settings.isAltHighlight ? "teal" : "black";
+		else if (a.indexOf('procs the effect')>-1 && !_settings.isAltHighlight)
+			b.style.color = "#800080";
+		else if (a.indexOf('bleeding wound hits')>-1 || a.indexOf('spreading poison hits')>-1 || a.indexOf('your spike shield hits')>-1 || a.indexOf('searing skin hits')>-1 || a.indexOf('burning soul hits')>-1 && !a.indexOf('has expired')> -1)
+			b.style.color = "#800080";
+		else if (a.indexOf('you resist')>-1 || a.indexOf('you dodge')>-1 || a.indexOf('you evade')>-1 || a.indexOf('you block')>-1 ||a.indexOf('you parry')>-1 ||(a.indexOf('misses')>-1 && a.indexOf('against you')>-1))
+			b.style.color = !_settings.isAltHighlight ? "#999999" : "#555555";
+		else if (a.indexOf('restores')>-1 || a.indexOf('you are healed')>-1 || a.indexOf('recovered')>-1)
+			b.style.color = "green";
+		else if (a.indexOf('you gain')>-1 && !a.indexOf('drained')>-1 && !_settings.isAltHighlight)
+			b.style.color = "#ba9e1c";
+		else if (a.indexOf('hostile spell is drained')>-1 || a.indexOf('you drain')>-1 || a.indexOf('ether theft drains')>-1 || a.indexOf('lifestream drains')>-1)
+			b.style.color = "green";
+		else if (a.indexOf('enough mp')>-1)
+			b.style.color = "#ff7777";
+		else if ((a.indexOf('hits you for ')>-1 || a.indexOf('crits you for ')>-1) && !a.indexOf('hits you for 1 ')>-1 && !a.indexOf('crits you for 1 ')>-1)
+			b.style.color = "red";
+		else if (a.indexOf('hits you for 1 ')>-1 || a.indexOf('crits you for 1 ')>-1)
+			b.style.color = "#999999";
+		else if (a.indexOf('Your attack misses its mark')>-1)
+			b.style.color = !_settings.isAltHighlight ? "#999999" : "orange";
+		else if (a.indexOf('Your spell misses its mark')>-1)
+			b.style.color = !_settings.isAltHighlight ? "#999999" : "orange";
+		else if (a.indexOf('casts')>-1)
+			b.style.color = "#0016b8";
+		else if (a.indexOf('uses')>-1)
+			b.style.color = !_settings.isAltHighlight ? "orange" : "blue";
+		else if (a.indexOf('powerup')>-1)
+			b.style.color = "#ff00ff";
+		else if (a.indexOf('charging soul')>-1)
+			b.style.color = "#C97600";
+		else if (a.indexOf('your spirit shield absorbs')>-1)
+			b.style.color = "#C97600";
+			
 		if (_settings.isAltHighlight) {
-			if (a.match(/gains the effect (bleeding|penetrated|stun|(ripened soul))/i) && !a.match(/(bleeding|penetrated|stun|(ripened soul)).*expired/i)) b.css("color", "#800080");
-			else if (a.match(/proficiency/i)) b.css("color", "#ba9e1c");
+			if (a.indexOf('gains the effect ')>-1 && (a.indexOf('penetrated')>-1 || a.indexOf('stun')>-1 || a.indexOf('ripened soul')>-1))
+				b.style.color = "#800080";
+			else if (a.indexOf('proficiency')>-1)
+				b.style.color = "#ba9e1c";
 		}
-	});
+	}
 }
 function addBattleLogDividers() {
 	var previousTurn = null;
@@ -868,9 +881,10 @@ function collectCurrentProfsData() {
 	if (!isCharacterPage() || isHVFontEngine()) return;
 	loadProfsObject();
 	var c = $(".eqm").children().eq(0).children().eq(1).children();
-	var b;
-	for (b = 0; b < _profs.weapProfTotals.length; b++) _profs.weapProfTotals[b] = parseFloat(c.eq(0).children().eq(1).find(".fd12").eq(b * 2 + 1).text());
-	for (b = 0; b < _profs.armorProfTotals.length; b++) _profs.armorProfTotals[b] = parseFloat(c.eq(0).children().eq(1).find(".fd12").eq(b * 2 + 7).text());
+	var b = _profs.weapProfTotals.length;
+	while (b--) _profs.weapProfTotals[b] = parseFloat(c.eq(0).children().eq(1).find(".fd12").eq(b * 2 + 1).text());
+	b = _profs.armorProfTotals.length;
+	while (b--) _profs.armorProfTotals[b] = parseFloat(c.eq(0).children().eq(1).find(".fd12").eq(b * 2 + 7).text());
 	var a = c.eq(1).children().eq(1).find(".fd12");
 	_profs.elemTotal = parseFloat(a.eq(1).text());
 	_profs.divineTotal = parseFloat(a.eq(3).text());
@@ -948,7 +962,8 @@ function collectRoundInfo() {
 	}
 	if (_settings.isSpellsSkillsDifference || _settings.isShowStatsPopup) {
 		var t74 = TimeCounter(1);
-		for (var i = 0; i < _round.monsters.length; i++) {
+		var i = _round.monsters.length;
+		while (i--) {
 			var e = $("#" + getMonsterElementId(i)).children().eq(2).children();
 			if (e.filter(".btm5").length > 2) {
 				_round.monsters[i].hasspbar = true;
@@ -1119,8 +1134,8 @@ function collectRoundInfo() {
 				var milliseconds3 = TimeCounter(1);
 				_round.scan[0] = c.match(/scanning [^\.]{1,30}\.{3,}/i)[0].replace("Scanning ", "").replace("...", "");
 				var scanname = c.match(/scanning [^\.]{1,30}\.{3,}/i)[0].replace("Scanning ", "").replace("...", "");
-				var i;
-				for (i = 0; i < _round.monsters.length; i++) {
+				var i = _round.monsters.length;
+				while (i--) {
 					if (_round.monsters[i].name === scanname) {
 						_round.scan[0] = _round.monsters[i].id;
 						break;
@@ -1227,7 +1242,8 @@ function collectRoundInfo() {
 					}
 					if (_settings.isRememberSkillsTypes) {
 						var milliseconds21 = TimeCounter(1);
-						for (var j = 0; j < _round.monsters.length; j++) {
+						var j = _round.monsters.length;
+						while (j--) {
 							if (sel.match(/[^\.]{1,30} (uses|casts) /i)[0].replace(" uses ","").replace(" casts ","") === _round.monsters[j].name) {
 								var mid = parseInt(_round.monsters[j].id);
 								var stype = c.match(/[a-z]{1,10} damage/i)[0].replace(" damage","");
@@ -1399,7 +1415,8 @@ function collectRoundInfo() {
 				_drops.artDrop++;
 				_drops.artDropbyBT[_round.battleType]++;
 				n = true;
-				for (var j = 0; j < _drops.artArry.length; j++) {
+				var j = _drops.artArry.length;
+				while (j--) {
 					if (itemToAdd === _drops.artArry[j]) {
 						_drops.artQtyArry[j]++;
 						n = false;
@@ -1421,7 +1438,8 @@ function collectRoundInfo() {
 				itemToAdd = itemToAdd.replace(/(\d){1,2}.?x?.?/, "");
 				_drops.crysDropbyBT[_round.battleType]++;
 			}
-			for (var j = 0; j < _drops.itemArry.length; j++) {
+			var j = _drops.itemArry.length;
+			while (j--) {
 				if (itemToAdd === _drops.itemArry[j]) {
 					_drops.itemQtyArry[j] += t;
 					_drops.itemDrop++;
@@ -1450,7 +1468,8 @@ function collectRoundInfo() {
 			if (_settings.isTrackRewards) {
 				_rewards.artRwrd++;
 				n = true;
-				for (var j = 0; j < _rewards.artRwrdArry.length; j++) {
+				var j = _rewards.artRwrdArry.length;
+				while (j--) {
 					if (itemToAdd === _rewards.artRwrdArry[j]) {
 						_rewards.artRwrdQtyArry[j]++;
 						n = false;
@@ -1470,7 +1489,8 @@ function collectRoundInfo() {
 				itemToAdd = itemToAdd.replace(/\dx /, "");
 			}
 			n = true;
-			for (var j = 0; j < _rewards.itemRwrdArry.length; j++) {
+			var j = _rewards.itemRwrdArray.length;
+			while (j--) {
 				if (itemToAdd === _rewards.itemRwrdArry[j]) {
 					_rewards.itemRwrdQtyArry[j] += t;
 					n = false;
@@ -1507,7 +1527,8 @@ function collectRoundInfo() {
 	}
 	if (_settings.isSpellsSkillsDifference) {
 		var t74 = TimeCounter(1);
-		for (var i = 0; i < _round.monsters.length; i++) {
+		var i = _round.monsters.length;
+		while (i--) {
 			if (_round.monsters[i].hasspbar) {
 				_round.monsters[i].sp2 = _round.monsters[i].sp1;
 			}
@@ -2054,9 +2075,11 @@ function getReportItemHtml() {
 			else e += "<td></td><td></td></tr>";
 		}
 		e += '<tr><td colspan="4"><b>Equipment:</b></td></tr>';
-		for (var c = _drops.eqArray.length - 1; c >= 0; c--) e += '<tr><td colspan="4" style="padding-left:10px">' + _drops.eqArray[c] + "</td></tr>";
+		var c = _drops.eqArray.length;
+		while (c--) e += '<tr><td colspan="4" style="padding-left:10px">' + _drops.eqArray[c] + "</td></tr>";
 		e += '<tr><td colspan="4"><b>Artifact:</b></td></tr>';
-		for (var c = 0; c < _drops.artArry.length; c++) e += '<tr><td colspan="4" style="padding-left:10px">' + _drops.artArry[c] + " x " + _drops.artQtyArry[c] + "</td></tr>";
+		c = _drops.artArry.length;
+		while (c--) e += '<tr><td colspan="4" style="padding-left:10px">' + _drops.artArry[c] + " x " + _drops.artQtyArry[c] + "</td></tr>";
 		e += '<tr><td align="right" colspan="4"><input type="button" class="_resetItems" value="Reset Drops" /></td></tr>';
 	}
 	e += "</table>";
@@ -2072,11 +2095,14 @@ function getReportRewardHtml() {
 		var a = _rewards.tokenDrops[0] + _rewards.tokenDrops[1] + _rewards.tokenDrops[2];
 		var b = a / 100;
 		e += '<tr><td style="width:50%"><b>Total Rewards:</b> ' + _rewards.totalRwrds + '</td><td style="width:50%"><b>Token Bonus:</b> ' + a + " (" + (a / c).toFixed(2) + '% chance)</td></tr><tr><td style="padding-left:10px;width:50%">Artifact: ' + _rewards.artRwrd + " (" + (c === 0 ? 0 : (_rewards.artRwrd / c).toFixed(2)) + '%)</td><td style="padding-left:10px;width:50%">[Token of Blood]: ' + _rewards.tokenDrops[0] + " (" + (b === 0 ? 0 : (_rewards.tokenDrops[0] / b).toFixed(2)) + '%)</td></tr><tr><td style="padding-left:10px;width:50%">Equipment: ' + _rewards.eqRwrd + " (" + (c === 0 ? 0 : (_rewards.eqRwrd / c).toFixed(2)) + '%)</td><td style="padding-left:10px;width:50%">[Token of Healing]: ' + _rewards.tokenDrops[1] + " (" + (b === 0 ? 0 : (_rewards.tokenDrops[1] / b).toFixed(2)) + '%)</td></tr><tr><td style="padding-left:10px;width:50%">Item: ' + _rewards.itemsRwrd + " (" + (c === 0 ? 0 : (_rewards.itemsRwrd / c).toFixed(2)) + '%)</td><td style="padding-left:10px;width:50%">[Chaos Token]: ' + _rewards.tokenDrops[2] + " (" + (b === 0 ? 0 : (_rewards.tokenDrops[2] / b).toFixed(2)) + '%)</td></tr><tr><td colspan="2"><b>Artifact:</b></td></tr>';
-		for (var d = 0; d < _rewards.artRwrdArry.length; d++) e += '<tr><td colspan="2" style="padding-left:10px">' + _rewards.artRwrdArry[d] + " x " + _rewards.artRwrdQtyArry[d] + "</td></tr>";
+		var d = _rewards.artRwrdArry.length;
+		while (d--) e += '<tr><td colspan="2" style="padding-left:10px">' + _rewards.artRwrdArry[d] + " x " + _rewards.artRwrdQtyArry[d] + "</td></tr>";
 		e += '<tr><td colspan="2"><b>Equipment:</b></td></tr>';
-		for (var d = _rewards.eqRwrdArry.length - 1; d >= 0; d--) e += '<tr><td colspan="2" style="padding-left:10px">' + _rewards.eqRwrdArry[d] + "</tr></td>";
+		d = _rewards.eqRwrdArry.length;
+		while (d--) e += '<tr><td colspan="2" style="padding-left:10px">' + _rewards.eqRwrdArry[d] + "</tr></td>";
 		e += '<tr><td colspan="2"><b>Item:</b></td></tr>';
-		for (var d = 0; d < _rewards.itemRwrdArry.length; d++) e += '<tr><td colspan="2" style="padding-left:10px">' + _rewards.itemRwrdArry[d] + " x " + _rewards.itemRwrdQtyArry[d] + "</td></tr>";
+		d = _rewards.itemRwrdArry.length;
+		while (d--) e += '<tr><td colspan="2" style="padding-left:10px">' + _rewards.itemRwrdArry[d] + " x " + _rewards.itemRwrdQtyArry[d] + "</td></tr>";
 		e += '<tr><td align="right" colspan="2"><input type="button" class="_resetRewards" value="Reset Arena Rewards" /></td></tr>';
 	}
 	e += "</table>";
@@ -2111,7 +2137,8 @@ function getReportShrineHtml() {
 			+ '<tr><td style="padding-left:10px">Crystals: ' + _shrine.artifactCrystal + ' (' + h + '% chance)</td></tr>'
 			+ '<tr><td style="padding-left:10px">Energy Drinks: ' + _shrine.artifactItem + ' (' + f + "% chance)</td></tr>";
 			+ '<tr><td ><b>Trophies:</b> ' + _shrine.trophyArray.length + ' traded</td></tr>';
-		for (var b = _shrine.trophyArray.length - 1; b >= 0; b--)
+		var b = _shrine.trophyArray.length;
+		while (b--)
 			c += '<tr><td style="padding-left:10px">' + _shrine.trophyArray[b] + "</td></tr>";
 		c += '<tr><td align="right"><input type="button" class="_clearTrophies" value="Clear Trophies" /> <input type="button" class="_resetShrine" value="Reset Shrine" /></td></tr>';
 	}
@@ -2296,7 +2323,7 @@ function initSettingsPane() {
 	var t0b = ((_ltc.main[1] - _ltc.isbattle[1]) / (_ltc.main[0] - _ltc.isbattle[0])).toFixed();
 	var t1 = (_ltc.main[1] / _ltc.main[0]).toFixed();
 	var t2 = (_ltc.collectRoundInfo[1] / _ltc.collectRoundInfo[0]).toFixed(1);
-	var t3 = (_ltc.obscureHVIds[1] / _ltc.obscureHVIds[0]).toFixed();
+	var t3 = (_ltc.hidelogo[1] / _ltc.hidelogo[0]).toFixed();
 	var t4 = (_ltc.highlightLogText[1] / _ltc.highlightLogText[0]).toFixed(1);
 	var t5 = (_ltc.addBattleLogDividers[1] / _ltc.addBattleLogDividers[0]).toFixed(1);
 	var t6 = (_ltc.showRoundCounter[1] / _ltc.showRoundCounter[0]).toFixed(1);
@@ -4848,7 +4875,7 @@ function HVLoadTimeCounters() {
 	this.cloneFrom = clone;
 	this.collectRoundInfo = [0, 0];
 	this.main = [0, 0];
-	this.obscureHVIds = [0, 0];
+	this.hidelogo = [0, 0];
 	this.highlightLogText = [0, 0];
 	this.addBattleLogDividers = [0, 0];
 	this.showRoundCounter = [0, 0];
@@ -5107,7 +5134,8 @@ function Scanbutton() {
 			}
 		}
 	});
-	for (var j = 0; j < _round.monsters.length; j++) {
+	var j = _round.monsters.length;
+	while (j--) {
 		var monsterElementId = getMonsterElementId(j);
 		var u = $("#" + monsterElementId);
 		var e = u.children().eq(2).children().eq(0);
@@ -5124,7 +5152,8 @@ function Scanbutton() {
 				a.after(c);
 			}
 			if (_settings.isShowSkillButton) {
-				for (var i = 0; i < 3; i++) {
+				var i = 3;
+				while (i--) {
 					var cs = document.createElement("div");
 					var tops = top + (i + 1) * 14;
 					if (skillnum[i] !== null) {
@@ -5176,7 +5205,8 @@ function MonsterPopup() {
 	var leftpixels = placement ? 955 : 300;
 	var elemMonsterPane = $("#monsterpane");
 	loadRoundObject();
-	for (var i = 0; i < _round.monsters.length; i++) {
+	var i = _round.monsters.length;
+	while (i--) {
 		var q = _round.monsters[i];
 		mskilltype = "";
 		mskillspell = "";
@@ -5444,7 +5474,8 @@ function AlertEffectsSelf() {
 			"Protection", "Hastened", "Shadow Veil", "Regen", "Absorbing Ward",
 			"Spark of Life", "Channeling", "Arcane Focus", "Heartseeker", "Spirit Shield"
 		];
-		for (var n = 0; n < effectNames.length; n++) {
+		var n = effectNames.length;
+		while (n--) {
 			if (_settings.isEffectsAlertSelf[n]
 					&& allinfo[0].match(effectNames[n])
 					&& allinfo[2] === _settings.EffectsAlertSelfRounds[n]) {
@@ -5469,7 +5500,8 @@ function AlertEffectsMonsters() {
 			"Imperiled", "Blinded", "Silenced", "Nerfed", "Magically Snared",
 			"Lifestream", "Coalesced Mana"
 		];
-		for (var n = 0; n < effectNames.length; n++) {
+		var n = effectNames.length;
+		while (n--) {
 			if (_settings.isEffectsAlertMonsters[n]
 					&& allinfo[0].match(effectNames[n])
 					&& allinfo[2] === _settings.EffectsAlertMonstersRounds[n]) {
@@ -5560,7 +5592,8 @@ function TaggingItems(clean) {
 	});
 	if (clean) {
 		var cleaned = false;
-		for (var i = 0; i < equipTagArrayTable.length; i++) {
+		var i = equipTagArrayTable.length;
+		while (i--) {
 			if (equipTagArrayTable[i].id.length > equipTagArrayTable[i].idClean.length) {
 				idCleanArray = equipTagArrayTable[i].idClean;
 				valueCleanArray = equipTagArrayTable[i].valueClean;
@@ -5607,7 +5640,7 @@ function ShrineButton() {
 		$(this).bind("click");
 	});
 }
-function main3 () {
+function main2 () {
 	if (isBattle()) {
 		if (_settings.isCountPageLoadTime) {
 			var clickedLTC = localStorage.getItem('PLTC');
