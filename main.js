@@ -5,7 +5,7 @@
 // @description      Collects data, analyzes statistics, and enhances the interface of the HentaiVerse
 // @include          http://hentaiverse.org/*
 // @author           Various (http://forums.e-hentai.org/index.php?showtopic=50962)
-// @version          5.4.1.7
+// @version          5.4.1.8
 // @require          https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js
 // @require          https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.21/jquery-ui.min.js
 // @resource         jQueryUICSS http://www.starfleetplatoon.com/~cmal/HVSTAT/jqueryui.css
@@ -13,7 +13,7 @@
 
 // === GLOBAL VARIABLES
 var millisecondsAll = TimeCounter(1);
-VERSION = "5.4.1.7";
+VERSION = "5.4.1.8";
 SAVE_STATS = true;
 MAX_MID = 33;
 SELF_EFF_TOP = 34;
@@ -93,7 +93,8 @@ function evDomLoad(){
 	var c = (a === null) ? false : JSON.parse(a);
 	if (_settings.isHideHVLogo){
 		var t = TimeCounter(1);
-		document.getElementsByTagName("img")[0].src = "";
+		var hvlogo = document.images[0];
+		hvlogo.parentNode.removeChild(hvlogo);
 		_ltc.hidelogo[0]++;
 		_ltc.hidelogo[1] += (TimeCounter(0, t));
 	}
