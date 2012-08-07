@@ -1495,7 +1495,7 @@ function collectRoundInfo() {
 				itemToAdd = itemToAdd.replace(/\dx /, "");
 			}
 			n = true;
-			var j = _rewards.itemRwrdArray.length;
+			var j = _rewards.itemRwrdArry.length;
 			while (j--) {
 				if (itemToAdd === _rewards.itemRwrdArry[j]) {
 					_rewards.itemRwrdQtyArry[j] += t;
