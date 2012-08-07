@@ -1,5 +1,4 @@
 // ==UserScript==
-// ==UserScript==
 // @name             HV Statistics, Tracking, and Analysis Tool
 // @namespace        HV STAT
 // @description      Collects data, analyzes statistics, and enhances the interface of the HentaiVerse
@@ -84,6 +83,18 @@ Array.prototype.init = function (b) {
 loadSettingsObject();
 loadLTCObject();
 
+//-- Hide Logo ASAP to avoid flashing in Chrome.
+//-- Flash still occurs for Firefoxers.
+if (_settings.isHideHVLogo){
+	var t = TimeCounter(1);
+	var eStyle = document.createElement('style');
+	eStyle.type = 'text/css';
+	eStyle.appendChild(document.createTextNode('.cw{visibility:hidden}'));
+	document.childNodes[1].appendChild(eStyle);
+	_ltc.hidelogo[0]++;
+	_ltc.hidelogo[1] += (TimeCounter(0, t));
+}
+
 function evDomLoad(){
 	if (!browserIsChrome() && !cssInserted()) {
 		GM_addStyle(GM_getResourceText("jQueryUICSS"));
@@ -91,13 +102,6 @@ function evDomLoad(){
 	}
 	var a = localStorage.getItem(HV_EQUIP);
 	var c = (a === null) ? false : JSON.parse(a);
-	if (_settings.isHideHVLogo){
-		var t = TimeCounter(1);
-		var hvlogo = document.images[0];
-		hvlogo.parentNode.removeChild(hvlogo);
-		_ltc.hidelogo[0]++;
-		_ltc.hidelogo[1] += (TimeCounter(0, t));
-	}
 	
 	if (_settings.isChangePageTitle && document.title === "The HentaiVerse") {
 		var t = TimeCounter(1);
