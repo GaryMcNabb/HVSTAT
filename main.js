@@ -43,6 +43,7 @@ ARENA = 1;
 GRINDFEST = 2;
 ITEM_WORLD = 3;
 CRYSFEST = 4;
+ISBATTLE = 0;
 _overview = null;
 _stats = null;
 _profs = null;
@@ -109,7 +110,8 @@ function evDomLoad(){
 		_ltc.hidetitle[0]++;
 		_ltc.hidetitle[1] += (TimeCounter(0, t));
 	}
-	if (isBattle()) {
+	if (document.getElementById("togpane_log")) ISBATTLE = 1;
+	if (ISBATTLE) {
 		if (_settings.isShowMonsterNumber) showMonsterNumber();
 		if (_settings.isMainEffectsAlertSelf) AlertEffectsSelf();
 		if (_settings.isMainEffectsAlertMonsters) AlertEffectsMonsters();
@@ -173,7 +175,7 @@ function evDomLoad(){
 			_ltc.showscanbutton[1] += TimeCounter(0, t46);
 		}
 	} else {
-		if (!isBattle() && (_round !== null)) _round.reset();
+		if (!ISBATTLE && (_round !== null)) _round.reset();
 		else if (_settings.isColumnInventory && isItemInventoryPage()) initItemsView();
 		else if (isCharacterPage()) collectCurrentProfsData();
 		else if (isShrinePage()) {
@@ -2970,7 +2972,6 @@ function captureShrine() {
 	}
 	return;
 }
-function isBattle() { return ($("#togpane_log").length > 0); }
 function isBattleOver() { return ($("#battleform .btcp").length > 0); }
 function isItemInventoryPage() { return document.location.href.match(/s=character&ss=it/i); }
 function isAllInventoryPage() { return document.location.href.match(/s=Character&ss=in/i); }
@@ -4483,7 +4484,7 @@ function StartDatabase() {
 	_database.save();
 	alert("Done");
 	_ltc.main[1] -= TimeCounter(0, sec);
-	if (isBattle()) _ltc.isbattle[1] -= TimeCounter(0, sec);
+	if (ISBATTLE) _ltc.isbattle[1] -= TimeCounter(0, sec);
 	_ltc.save();
 }
 function MinimalizeDatabaseSize() {
@@ -4869,7 +4870,7 @@ function AssumeResistances() {
 	alert("Done");
 	_database.save();
 	_ltc.main[1] -= TimeCounter(0, sec);
-	if (isBattle()) _ltc.isbattle[1] -= TimeCounter(0, sec);
+	if (ISBATTLE) _ltc.isbattle[1] -= TimeCounter(0, sec);
 	_ltc.save();
 }
 function TimeCounter(a, b) {
@@ -5651,7 +5652,7 @@ function ShrineButton() {
 	});
 }
 function main2 () {
-	if (isBattle()) {
+	if (ISBATTLE) {
 		if (_settings.isCountPageLoadTime) {
 			var clickedLTC = localStorage.getItem('PLTC');
 			if (clickedLTC !== null) {
