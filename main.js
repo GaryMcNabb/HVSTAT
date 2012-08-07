@@ -264,8 +264,10 @@ function showRoundCounter() {
 	var c = _round.currRound;
 	var a = _round.maxRound;
 	b = a > 0 ? c + "/" + a : "#" + c;
-	html = "<div style='font-size:18px;font-weight:bold;font-family:arial,helvetica,sans-serif;text-align:right;position:absolute;top:6px;right:17px;'><div style='" + (c === a - 1 ? "color:orange;'>" : c === a ? "color:red;'>" : "'>") + b + "</div></div>";
-	$("#battleform").children().eq(0).append(html);
+  div = document.createElement('div');
+  div.setAttribute('style', 'font-size:18px;font-weight:bold;font-family:arial,helvetica,sans-serif;text-align:right;position:absolute;top:6px;right:17px;');
+  div.innerHTML = "<div style='" + (c === a - 1 ? "color:orange;'>" : c === a ? "color:red;'>" : "'>") + b + "</div>";
+  document.getElementById('battleform').children[0].appendChild(div);
 }
 function displayPowerupBox() {
 	var a = $("div.btp");
