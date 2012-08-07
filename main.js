@@ -245,16 +245,19 @@ function highlightLogText() {
 	}
 }
 function addBattleLogDividers() {
-	var previousTurn = null;
-	$("#togpane_log td:first-child").each(function () {
-		var currentTurn = $(this).html();
-		if (/^\d+$/.test(currentTurn)) {
-			if (previousTurn && previousTurn !== currentTurn) {
-				$(this).parent("tr").before("<tr><td colspan='3'><hr style='border:0; height:1px; background-color:#666666; color:#666666' /></td></tr>");
-			}
-			previousTurn = currentTurn;
-		}
-	});
+	var previousTurn = null, array = document.getElementById('togpane_log').getElementsByTagName('tr'), i = array.length;
+	while (i--) {
+		var currentTurn = array[i].firstChild.innerHTML;
+    if (!isNaN(parseInt(currentTurn))) {
+      if (previousTurn && previousTurn !== currentTurn) {
+        var tr = document.createElement('tr');
+        tr.innerHTML = "<td colspan='3'><hr style='border:0; height:1px; background-color:#666666; color:#666666' /></td>";
+        var parent = array[i].firstChild.parentNode;
+        parent.parentNode.insertBefore(tr, parent.nextSibling);
+      }
+      previousTurn = currentTurn;
+    }
+  }
 }
 function showRoundCounter() {
 	var b = "";
