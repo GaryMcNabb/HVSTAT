@@ -245,24 +245,29 @@ function highlightLogText() {
 	}
 }
 function addBattleLogDividers() {
-	var previousTurn = null;
-	$("#togpane_log td:first-child").each(function () {
-		var currentTurn = $(this).html();
-		if (/^\d+$/.test(currentTurn)) {
-			if (previousTurn && previousTurn !== currentTurn) {
-				$(this).parent("tr").before("<tr><td colspan='3'><hr style='border:0; height:1px; background-color:#666666; color:#666666' /></td></tr>");
-			}
-			previousTurn = currentTurn;
-		}
-	});
+	var previousTurn = null, array = document.getElementById('togpane_log').getElementsByTagName('tr'), i = array.length;
+	while (i--) {
+		var currentTurn = array[i].firstChild.innerHTML;
+    if (!isNaN(parseInt(currentTurn))) {
+      if (previousTurn && previousTurn !== currentTurn) {
+        var tr = document.createElement('tr');
+        tr.innerHTML = "<td colspan='3'><hr style='border:0; height:1px; background-color:#666666; color:#666666' /></td>";
+        var parent = array[i].firstChild.parentNode;
+        parent.parentNode.insertBefore(tr, parent.nextSibling);
+      }
+      previousTurn = currentTurn;
+    }
+  }
 }
 function showRoundCounter() {
 	var b = "";
 	var c = _round.currRound;
 	var a = _round.maxRound;
 	b = a > 0 ? c + "/" + a : "#" + c;
-	html = "<div style='font-size:18px;font-weight:bold;font-family:arial,helvetica,sans-serif;text-align:right;position:absolute;top:6px;right:17px;'><div style='" + (c === a - 1 ? "color:orange;'>" : c === a ? "color:red;'>" : "'>") + b + "</div></div>";
-	$("#battleform").children().eq(0).append(html);
+  div = document.createElement('div');
+  div.setAttribute('style', 'font-size:18px;font-weight:bold;font-family:arial,helvetica,sans-serif;text-align:right;position:absolute;top:6px;right:17px;');
+  div.innerHTML = "<div style='" + (c === a - 1 ? "color:orange;'>" : c === a ? "color:red;'>" : "'>") + b + "</div>";
+  document.getElementById('battleform').children[0].appendChild(div);
 }
 function displayPowerupBox() {
 	var a = $("div.btp");
