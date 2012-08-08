@@ -28,8 +28,8 @@ Don't use regex if possible. It can be extremely slow.
 
 Release Info
 ------------
-- For Chrome, name the crx "HVS_CHROME_[VERSION].crx"
-- For Firefox, name main.js "HVS_FIREFOX_[VERSION].user.js"
+- For Chrome, name the crx "HVS\_CHROME\_[VERSION].crx"
+- For Firefox, name main.js "HVS\_FIREFOX\_[VERSION].user.js"
 
 Firefox users DON'T need jquery.min.js, jqueryui.css or jquery-ui.min.js.
 Before releasing a build, group all the javascript files into 1 and minify it.
