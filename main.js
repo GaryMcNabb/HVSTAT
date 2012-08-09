@@ -4,7 +4,7 @@
 // @description      Collects data, analyzes statistics, and enhances the interface of the HentaiVerse
 // @include          http://hentaiverse.org/*
 // @author           Various (http://forums.e-hentai.org/index.php?showtopic=50962)
-// @version          5.4.1.9
+// @version          5.4.1.10
 // @require          https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js
 // @require          https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.21/jquery-ui.min.js
 // @resource         jQueryUICSS http://www.starfleetplatoon.com/~cmal/HVSTAT/jqueryui.css
@@ -12,7 +12,7 @@
 
 // === GLOBAL VARIABLES
 var millisecondsAll = TimeCounter(1);
-VERSION = "5.4.1.9";
+VERSION = "5.4.1.10";
 SAVE_STATS = true;
 MAX_MID = 33;
 SELF_EFF_TOP = 34;
@@ -397,7 +397,10 @@ function showMonsterStats() {
 		var h = u.children[2].children[1];
 		var sp = u.children[2].children[2];
 		
-		if (e.innerHTML.indexOf('bardead') > -1) continue;
+		if (e.innerHTML.indexOf('bardead') > -1){
+			monInfo.currHp = 0;
+			continue;
+		};
 		if (_settings.isShowMonsterHP || _settings.isShowMonsterHPPercent || _settings.isShowStatsPopup) {
 			var t31 = TimeCounter(1);
 			var l = monInfo.maxHp;
@@ -407,7 +410,7 @@ function showMonsterStats() {
 			if (_settings.isShowMonsterHPPercent) g = (b * 100).toFixed(2) + "%"
 			else {
 				o = Math.floor(b * l);
-				g = o + " / " + l;
+				g = (o > 0 ? o : 1) + " / " + l;
 			}
 			var r = "<div style='position:absolute;z-index:1074;top:-1px;font-size:8pt;font-family:arial,helvetica,sans-serif;font-weight:bolder;color:yellow;width:120px;text-align:center'>" + g + "</div>";
 			e.innerHTML += r;
@@ -2842,7 +2845,6 @@ function initSettingsPane() {
 	$("._resetSettings").click(function (){ if (confirm("Reset Settings to default?")) _settings.reset(); })
 	$("._resetAll").click(function (){ if (confirm("Reset All Tracking data?")) HVResetTracking(); })
 	$("._masterReset").click(function (){ if (confirm("This will delete ALL HV data saved in localStorage.\nAre you sure you want to do this?")) HVMasterReset(); })
-//	$("._redirectlist").click(function (){ if (confirm("Pop up monsterlist window?")) Popupmonsterlist(); })
 }
 function saveSettings() {
 	_settings.isShowHighlight = $("input[name=isShowHighlight]").get(0).checked;
@@ -5409,7 +5411,7 @@ function MonsterPopup() {
 		name = q.name;
 		maxhp = q.maxHp;
 		currhp = q.currHp;
-		if (currhp === null || currhp === undefined || isNaN(currhp)) currhp = 0;
+		if (currhp === null || currhp === undefined || isNaN(currhp) || currhp === 0) continue;
 		currmp = (q.currmp * 100).toFixed(2);
 		if (currmp === null || currmp === undefined || isNaN(currmp)) currmp = 0;
 		currsp = (q.sp2 * 100).toFixed(2);
