@@ -10,6 +10,330 @@
 // @resource         jQueryUICSS http://www.starfleetplatoon.com/~cmal/HVSTAT/jqueryui.css
 // ==/UserScript==
 
+// The goals of the develop-scan branch:
+//
+// - New global variables and functions are stored in the package
+// - Add function that local storage 'HVMonsterDatabase' migrates to new IndexedDB
+// - Add function to import/export monster database
+// - Monster information to be saved are added
+//   - monster trainer
+//   - effects when scanned
+//   - skill name
+//   - skill hit date
+// - Replace HVMonster() with HVStat.Monster
+// - Replace MonsterPopup()
+// - Remove AssumeResistances()
+// - Remove StartDatabase()
+// - Remove MinimalizeDatabaseSize()
+// - Modify showMonsterStats()
+
+// Package
+var HVStat = {};
+
+// functions for reading old monster database
+// finally to be obsolete
+HVStat.migration = {}
+HVStat.migration.monsterClassFromCode = function (code) {
+	var monsterClassTable = {
+		"Arthropod": "1",
+		"Avion":     "2",
+		"Beast":     "3",
+		"Celestial": "4",
+		"Daimon":    "5",
+		"Dragonkin": "6",
+		"Elemental": "7",
+		"Giant":     "8",
+		"Humanoid":  "9",
+		"Mechanoid": "10",
+		"Reptilian": "11",
+		"Sprite":    "12",
+		"Undead":    "13",
+		"Common":    "31",
+		"Uncommon":  "32",
+		"Rare":      "33",
+		"Legendary": "34",
+		"Ultimate":  "35"
+	};
+	code = String(code);
+	var key;
+	var found = false;
+	for (key in monsterClassTable) {
+		if (monsterClassTable[key] === code) {
+			found = true;
+			break;
+		}
+	}
+	if (found) {
+		return key;
+	} else {
+		return "Unknown";
+	}
+};
+HVStat.migration.skillTypeFromCode = function (code) {
+	code = String(code);
+	var str;
+	switch (code) {
+	case "1":
+		str = "Magical";
+		break;
+	case "2":
+		str = "Physical";
+		break;
+	case "3": // Spirit Skill
+		str = "Magical";
+		break;
+	case "4": // Spirit Skill
+		str = "Physical";
+		break;
+	default:
+		str = "?";
+	}
+	return str;
+};
+HVStat.migration.damageTypeFromCode = function (code) {
+	var damageTypeTable = {
+		"Nothing":  "99",
+		"Crushing": "52",
+		"Slashing": "51",
+		"Piercing": "53",
+		"Fire":     "61",
+		"Cold":     "62",
+		"Elec":     "63",
+		"Wind":     "64",
+		"Holy":     "71",
+		"Dark":     "72",
+		"Soul":     "73",
+		"Void":     "74"
+	};
+	code = String(code);
+	var str = "";
+	for (var i = 0; i < code.length; i += 2) {
+		var partialCode = code.substring(i, i + 2);
+		var key;
+		var found = false;
+		for (key in damageTypeTable) {
+			if (damageTypeTable[key] === partialCode) {
+				found = true;
+				break;
+			}
+		}
+		if (str.length > 0) {
+			str += ", ";
+		}
+		if (found) {
+			str += key;
+		} else {
+			str += "?";
+		}
+	}
+	return str;
+};
+HVStat.migration.getMonsterInfo = function (monster, monsterId) {
+	var i = Number(monsterId);
+	if (isNaN(i)) {
+		throw new Error("monsterId must be a number");
+	}
+	var skillCode, manaSkill1Code, manaSkill2Code, spiritSkillCode;
+	var damageCode, manaSkill1DamageCode, manaSkill2DamageCode, spiritSkillDamageCode;
+	var skill;
+	if (_database.mclass[i]) {
+		monster.scannedInfo = Object.create(HVStat.MonsterScannedInfo);
+		var si = monster.scannedInfo;
+		si.id = monster.id;
+		si.registrationDate = _database.datescan[i];
+		si.effectsWhenScanned = null;
+		si.trainer = null;
+		si.monsterClass = HVStat.migration.monsterClassFromCode(_database.mclass[i]);
+		si.powerLevel = _database.mpl[i] ? _database.mpl[i] : null;
+		si.meleeAttack = HVStat.migration.damageTypeFromCode(_database.mattack[i]);
+		si.weakAgainst = HVStat.migration.damageTypeFromCode(_database.mweak[i]);
+		si.resistantTo = HVStat.migration.damageTypeFromCode(_database.mresist[i]);
+		si.imperviousTo = HVStat.migration.damageTypeFromCode(_database.mimperv[i]);
+	}
+	if (_database.mskillspell[i]) {
+		monster.manaSkills = [];
+		skillCode = String(_database.mskillspell[i]);
+		manaSkill1Code = skillCode.substring(0, 1);
+		manaSkill2Code = skillCode.substring(1, 2);
+		spiritSkillCode = skillCode.substring(2, 3);
+		damageCode = String(_database.mskilltype[i]);
+		if (manaSkill1Code.length) {
+			monster.manaSkills[0] = Object.create(HVStat.MonsterSkill);
+			skill = monster.manaSkills[0];
+			skill.id = monster.id;
+			skill.name = null;
+			skill.type = HVStat.migration.skillTypeFromCode(manaSkill1Code);
+			manaSkill1DamageCode = damageCode.substring(0, 2);
+			skill.damageType = HVStat.migration.damageTypeFromCode(manaSkill1DamageCode);
+			skill.registrationDate = null;
+		}
+		if (manaSkill2Code.length && manaSkill2Code !== "0") {
+			monster.manaSkills[1] = Object.create(HVStat.MonsterSkill);
+			skill = monster.manaSkills[1];
+			skill.id = monster.id;
+			skill.name = null;
+			skill.type = HVStat.migration.skillTypeFromCode(manaSkill1Code);
+			manaSkill2DamageCode = damageCode.substring(2, 4);
+			skill.damageType = HVStat.migration.damageTypeFromCode(manaSkill2DamageCode);
+			skill.registrationDate = null;
+		}
+		if (spiritSkillCode.length) {
+			monster.spiritSkills = [];
+			monster.spiritSkills[0] = Object.create(HVStat.MonsterSkill);
+			skill = monster.spiritSkills[0];
+			skill.id = monster.id;
+			skill.name = null;
+			skill.type = HVStat.migration.skillTypeFromCode(spiritSkillCode);
+			if (monster.manaSkills.length === 1) {
+				spiritSkillDamageCode = damageCode.substring(2, 4);
+			} else if (monster.manaSkills.length === 2) {
+				spiritSkillDamageCode = damageCode.substring(4, 6);
+			} else {
+				throw new Error("unexpected damageCode[" + damageCode + "]");
+			}
+			skill.damageType = HVStat.migration.damageTypeFromCode(spiritSkillDamageCode);
+			skill.registrationDate = null;
+		}
+	}
+};
+// Prototype Objects
+HVStat.MonsterSkill = {
+	id: null,
+	name: null,
+	type: null,
+	damageType: null,
+	registrationDate: null
+};
+HVStat.MonsterScannedInfo = {
+	id: null,
+	registrationDate: null,
+	effectsWhenScanned: null,
+	trainer: null,
+	monsterClass: null,
+	powerLevel: null,
+	meleeAttack: null,
+	weakAgainst: null,
+	resistantTo: null,
+	imperviousTo: null
+};
+HVStat.Monster = {
+	// from battle log
+	id: null,
+	name: null,
+	maxHp: null,
+	currentHp: null,
+	// from monster pane
+	currentMpRate: null,
+	previousMpRate: null,
+	hasSpiritPoint: null,
+	currentSpRate: null,
+	previousSpRate: null,
+	// from battle log when used and hit
+	manaSkills: null,
+	spiritSkills: null,
+	// from battle log when scanning
+	scannedInfo: null,
+	// for popup
+	index: -1
+};
+// functions for rendering
+HVStat.getDateTimeString = function (date) {
+	if (browserIsChrome()) {
+		// see http://code.google.com/p/chromium/issues/detail?id=3607
+		return date.toLocaleDateString() + " " + date.toLocaleTimeString();
+	} else {
+		return date.toDateString() + " " + date.toTimeString();
+	}
+};
+HVStat.getElapsedFrom = function (date) {
+	if (!date) return "";
+	var mins = 0, hours = 0, days = 0;
+	var str;
+	mins = Math.floor(((new Date()).getTime() - date.getTime()) / (60 * 1000));
+	if (mins >= 60) {
+		hours = Math.floor(mins / 60);
+		mins = mins % 60;
+	}
+	if (hours >= 24) {
+		days = Math.floor(hours / 24);
+		hours = hours % 24;
+	}
+	str = String(mins) + " mins";
+	if (hours > 0) {
+		str = String(hours) + " hours, " + str;
+	}
+	if (days > 0) {
+		str = String(days) + " days, " + str;
+	}
+	return str;
+};
+HVStat.renderMonsterPopup = function (monster) {
+	var formatSkill = function (skill) {
+		var str = (skill.type ? skill.type : "?") + "-"
+			+ (skill.damageType ? skill.damageType : "?");
+		if (skill.name) {
+			str += " (" + skill.name + ")";
+		}
+		if (skill.registrationDate) {
+			str += " [" + (skill.registrationDate) + "]";
+		}
+		return str;
+	};
+	var i, len, skill;
+	var si = monster.scannedInfo;
+	var html = '<table cellspacing="0" cellpadding="0" style="width:100%">'
+		+ '<tr class="monname"><td colspan="2"><b>' + monster.name + '</b></td></tr>'
+		+ '<tr><td>ID: </td><td>' + monster.id + '</td></tr>'
+		+ '<tr><td>Health: </td><td>' + monster.currentHp + ' / ' + monster.maxHp + '</td></tr>'
+		+ '<tr><td>Mana: </td><td>' + (monster.currentMpRate * 100).toFixed(2) + '%</td></tr>';
+	if (monster.hasSpiritPoint) {
+		html += '<tr><td>Spirit: </td><td>' + (monster.currentSpRate * 100).toFixed(2) + '%</td></tr>';
+	}
+	if (si) {
+		html += '<tr><td>Class:</td><td>' + (si.monsterClass ? si.monsterClass : "?") + '</td></tr>'
+			+ '<tr><td>Trainer:</td><td>' + (si.trainer !== null ? si.trainer : "?") + '</td></tr>';
+		if (si.powerLevel) {
+			html += '<tr><td>Power Level:</td><td>' + si.powerLevel + '</td></tr>';
+		}
+		html += '<tr><td>Melee Attack:</td><td>' + (si.meleeAttack ? si.meleeAttack : "?") + '</td></tr>';
+	}
+	if (monster.manaSkills && monster.manaSkills.length > 0) {
+		html += '<tr><td>Mana Skills:</td><td>';
+		len = monster.manaSkills.length;
+		for (i = 0; i < len; i++) {
+			if (i > 0) {
+				html += '<br/>';
+			}
+			html += formatSkill(monster.manaSkills[i]);
+		}
+		html += '</td></tr>';
+	}
+	if (monster.spiritSkills && monster.spiritSkills.length > 0) {
+		html += '<tr><td>Spirit Skill:</td><td>';
+		html += formatSkill(monster.spiritSkills[0]);
+		html += '</td></tr>';
+	}
+	if (si) {
+		var now = (new Date()).getTime();
+		var lastScan = new Date();
+		var lastScanString;
+		if (si.registrationDate) {
+			lastScan.setTime(si.registrationDate);
+			lastScanString = HVStat.getDateTimeString(lastScan);
+		} else {
+			lastScanString = "Never";
+		}
+		html += '<tr><td>Weak against:</td><td>' + (si.weakAgainst ? si.weakAgainst : "?") + '</td></tr>'
+			+ '<tr><td>Resistant to:</td><td>' + (si.resistantTo ? si.resistantTo : "?") + '</td></tr>'
+			+ '<tr><td>Impervious to:</td><td>' + (si.imperviousTo ? si.imperviousTo : "?") + '</td></tr>'
+			+ '<tr><td>Effects when scanned:</td><td>' + (si.effectsWhenScanned ? si.effectsWhenScanned : "?") + '</td></tr>'
+			+ '<tr><td>Last Scan:</td><td>' + lastScanString + '</td></tr>'
+			+ '<tr><td></td><td>' + HVStat.getElapsedFrom(lastScan) + ' ago</td></tr>';
+	}
+	html += '</table>';
+	return html;
+};
+
 // === GLOBAL VARIABLES
 var millisecondsAll = TimeCounter(1);
 VERSION = "5.4.1.8";
@@ -164,7 +488,8 @@ function evDomLoad(){
 		}
 		if (_settings.isShowStatsPopup) {
 			var t45 = TimeCounter(1);
-			MonsterPopup();
+//			MonsterPopup();
+			MonsterPopup2();
 			_ltc.monsterpopup[0]++;
 			_ltc.monsterpopup[1] += TimeCounter(0, t45);
 		}
@@ -970,6 +1295,8 @@ function collectRoundInfo() {
 		$("#monsterpane > div").each(function () {
 			var monster = new HVMonster();
 			_round.monsters.push(monster);
+			var monsterV2 = Object.create(HVStat.Monster);
+			_round.monstersV2.push(monsterV2);
 		});
 	}
 	if (_settings.isSpellsSkillsDifference || _settings.isShowStatsPopup) {
@@ -979,11 +1306,13 @@ function collectRoundInfo() {
 			var e = $("#" + getMonsterElementId(i)).children().eq(2).children();
 			if (e.filter(".btm5").length > 2) {
 				_round.monsters[i].hasspbar = true;
+				_round.monstersV2[i].hasSpiritPoint = true;
 			}
 			if (_round.monsters[i].hasspbar) {
 				var spbar = e.eq(2);
 				// get current SP percent
 				_round.monsters[i].sp1 = spbar.children().eq(0).children("img").eq(1).width() / 120;
+				_round.monstersV2[i].currentSpRate = spbar.children().eq(0).children("img").eq(1).width() / 120;
 			}
 		}
 		_ltc.changedMHits[1] += TimeCounter(0, t74);
@@ -1006,6 +1335,12 @@ function collectRoundInfo() {
 		_ltc.sel[1] += TimeCounter(0, t87);
 		if (!_round.isLoaded) {
 			if (c.match(/HP=/)) {
+				var monster = _round.monstersV2[index];
+				monster.id = /MID=(\d+)\s/.exec(c)[1];
+				monster.name = /\(([^\.\)]{0,30})\) LV/.exec(c)[1];
+				monster.maxHp = parseFloat(/HP=(\d+\.?\d*)$/.exec(c)[1]);
+				monster.currentHp = monster.maxHp;
+
 				var h = _round.monsters[index];
 				h.maxHp = parseInt(c.match(/HP=\d+(\.)?[0-9]+?$/)[0].replace("HP=", ""));
 				h.currHp = h.maxHp;
@@ -1015,6 +1350,12 @@ function collectRoundInfo() {
 				if (_settings.isShowElemHvstatStyle) {
 					var t43 = TimeCounter(1);
 					loadDatabaseObject();
+
+					// TODO: read from new database
+					if (monster.index < 0) {
+						HVStat.migration.getMonsterInfo(monster, monster.id);
+					}
+
 					h.mclass = _database.mclass[mid];
 					h.mpl = _database.mpl[mid];
 					h.mattack = _database.mattack[mid];
@@ -1142,6 +1483,39 @@ function collectRoundInfo() {
 			_profs.save();
 		}
 		if (_settings.isRememberScan) {
+			if (c.indexOf("Scanning") >= 0) {
+				var scannedMonsterName = /Scanning ([^\.]{0,30})\.{3,}/.exec(c)[1];
+				var scannedMonsterIndex = -1;
+				for (i = 0; i < _round.monstersV2.length; i++) {
+					if (_round.monstersV2[i].name === scannedMonsterName) {
+						scannedMonsterIndex = i;
+						break;
+					}
+				}
+				if (scannedMonsterIndex >= 0) {
+					var monsterV2 = _round.monstersV2[scannedMonsterIndex];
+					monsterV2.scannedInfo = Object.create(HVStat.MonsterScannedInfo);
+					var si = monsterV2.scannedInfo;
+					si.id = monsterV2.id;
+					si.registrationDate = new Date();
+					si.effectsWhenScanned = null; // TODO
+					si.trainer = /Monster Trainer:.*?<\/td><td.*?>(.+?)<\/td/.exec(c)[1];
+					var officialClassRE = /Monster Class:.*?<\/td><td.*?>(Common|Uncommon|Rare|Legendary|Ultimate)/;
+					if (officialClassRE.test(c)) {
+						si.monsterClass = officialClassRE.exec(c)[1];
+						si.powerLevel = null;
+					} else {
+						var result = /Monster Class:.*?<\/td><td.*?>([A-Za-z]+), Power Level (\d+)<\/td/.exec(c);
+						if (result.length !== 3) throw new Exception("Unexpected scanning result");
+						si.monsterClass = result[1];
+						si.powerLevel = result[2];
+					}
+					si.meleeAttack = /Melee Attack:.*?<\/td><td.*?>(.+?)<\/td/.exec(c)[1];
+					si.weakAgainst = /Weak against:.*?<\/td><td.*?>(.+?)<\/td/.exec(c)[1];
+					si.resistantTo = /Resistant to:.*?<\/td><td.*?>(.+?)<\/td/.exec(c)[1];
+					si.imperviousTo = /Impervious to:.*?<\/td><td.*?>(.+?)<\/td/.exec(c)[1];
+				}
+			}
 			if (c.match(/scanning/i)) {
 				var milliseconds3 = TimeCounter(1);
 				_round.scan[0] = c.match(/scanning [^\.]{1,30}\.{3,}/i)[0].replace("Scanning ", "").replace("...", "");
@@ -1543,6 +1917,7 @@ function collectRoundInfo() {
 		while (i--) {
 			if (_round.monsters[i].hasspbar) {
 				_round.monsters[i].sp2 = _round.monsters[i].sp1;
+				_round.monstersV2[i].previousSpRate = _round.monstersV2[i].currentSpRate;
 			}
 		}
 		_ltc.changedMHits[1] += TimeCounter(0, t74);
@@ -3303,6 +3678,7 @@ function HVRound() {
 	this.save = function () { saveToStorage(this, HV_ROUND); };
 	this.reset = function () { deleteFromStorage(HV_ROUND); };
 	this.cloneFrom = clone;
+	this.monstersV2 = [];	// TODO: finally replace monsters
 	this.monsters = [];
 	this.currRound = 0;
 	this.maxRound = 0;
@@ -5393,6 +5769,36 @@ function MonsterPopup() {
 		});
 		$("#" + monsterElementId).bind('mouseout', function () {
 			setTimeout('document.getElementById("popup_box").style.visibility="hidden"', delay);
+			clearTimeout(window.setTimeoutByledalej1);
+			clearTimeout(window.setTimeoutByledalej2);
+			clearTimeout(window.setTimeoutByledalej3);
+		});
+	}
+}
+// TODO: finally replace MonsterPopup
+function MonsterPopup2() {
+	var popup = document.getElementById("popup_box");
+	var delay = _settings.monsterPopupDelay;
+	var popupLeftOffset = _settings.isMonsterPopupPlacement ? 955 : 300;
+	var elemMonsterPane = $("#monsterpane");
+	loadRoundObject();
+	var i = _round.monstersV2.length;
+	while (i--) {
+		var monsterElementId = getMonsterElementId(i);
+		$("#" + monsterElementId).bind('mouseover', {index: i}, function (event) {
+			var index = event.data.index;
+			var popupHeight = 280;
+			var popupTopOffset = elemMonsterPane.offset().top + index * ((elemMonsterPane.height() - popupHeight) / 9);
+			popup.style.left = popupLeftOffset + "px";
+			popup.style.width = "270px";
+			popup.style.height = String(popupHeight) + "px";
+			var html = HVStat.renderMonsterPopup(_round.monstersV2[index]);
+			setTimeoutByledalej1 = setTimeout('document.getElementById("popup_box").style.top = ' + popupTopOffset + ' + "px"', delay);
+			setTimeoutByledalej2 = setTimeout("document.getElementById('popup_box').innerHTML = '" + html + "'", delay);
+			setTimeoutByledalej3 = setTimeout('document.getElementById("popup_box").style.visibility = "visible"', delay);
+		});
+		$("#" + monsterElementId).bind('mouseout', function () {
+			setTimeout('document.getElementById("popup_box").style.visibility = "hidden"', delay);
 			clearTimeout(window.setTimeoutByledalej1);
 			clearTimeout(window.setTimeoutByledalej2);
 			clearTimeout(window.setTimeoutByledalej3);
