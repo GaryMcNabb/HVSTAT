@@ -4,7 +4,7 @@
 // @description      Collects data, analyzes statistics, and enhances the interface of the HentaiVerse
 // @include          http://hentaiverse.org/*
 // @author           Various (http://forums.e-hentai.org/index.php?showtopic=50962)
-// @version          5.4.1.8
+// @version          5.4.1.9
 // @require          https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js
 // @require          https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.21/jquery-ui.min.js
 // @resource         jQueryUICSS http://www.starfleetplatoon.com/~cmal/HVSTAT/jqueryui.css
@@ -12,7 +12,7 @@
 
 // === GLOBAL VARIABLES
 var millisecondsAll = TimeCounter(1);
-VERSION = "5.4.1.8";
+VERSION = "5.4.1.9";
 SAVE_STATS = true;
 MAX_MID = 33;
 SELF_EFF_TOP = 34;
@@ -181,7 +181,107 @@ function evDomLoad(){
 	}
 	if (c) inventoryWarning();
 	initUI();
-	main2();
+	
+	if (ISBATTLE) {
+		if (_settings.isCountPageLoadTime) {
+			var clickedLTC = localStorage.getItem('PLTC');
+			if (clickedLTC !== null) {
+				if (clickedLTC[1] === 1) {
+					localStorage.removeItem('PLTC');
+					_ltc.pageLoad[0] = 1;
+					var treadyload = (TimeCounter(0, clickedLTC.slice(3, 16)) - TimeCounter(0, millisecondsAll));
+					if (treadyload < 3000) {
+						_ltc.pageLoad[2]++;
+						_ltc.pageLoad[3] += treadyload;
+					}
+					var d45 = new Date();
+					d45.setTime(clickedLTC.slice(3, 16));
+					var ltchour = d45.getHours();
+					var n11 = 1;
+					while (n11 < 9) {
+						if (ltchour < (n11 * 3)) {
+							if (treadyload < 3000) {
+								_ltc.pageLoad[2 + (n11 * 2)]++;
+								_ltc.pageLoad[3 + (n11 * 2)] += treadyload;
+							}
+							break;
+						}
+						n11++;
+					}
+				}
+			}
+			CheckForAction();
+		}
+		_ltc.isbattle[0]++;
+		_ltc.isbattle[1] += TimeCounter(0, millisecondsAll);
+	} else {
+		if (isEquipmentInventoryPage() && _settings.isShowTags[0]) {
+			var t47 = TimeCounter(1);
+			TaggingItems(false);
+			_ltc.taggingitems[0]++;
+			_ltc.taggingitems[1] += TimeCounter(0, t47);
+		}
+		if (isAllInventoryPage() && _settings.isShowTags[5]) {
+			var t47 = TimeCounter(1);
+			TaggingItems(true);
+			_ltc.taggingitems[0]++;
+			_ltc.taggingitems[1] += TimeCounter(0, t47);
+		}
+		if (isShopPage() && _settings.isShowTags[1]) {
+			var t48 = TimeCounter(1);
+			TaggingItems(false);
+			_ltc.taggingitems[0]++;
+			_ltc.taggingitems[1] += TimeCounter(0, t48);
+		}
+		if (isItemWorldPage() && _settings.isShowTags[2]) {
+			var t49 = TimeCounter(1);
+			TaggingItems(false);
+			_ltc.taggingitems[0]++;
+			_ltc.taggingitems[1] += TimeCounter(0, t49);
+		}
+		if (isMoogleWrite() && _settings.isShowTags[3]) {
+			var t50 = TimeCounter(1);
+			$("#mailform #leftpane").children().eq(3).children().eq(1).click(TaggingItems);
+			_ltc.taggingitems[0]++;
+			_ltc.taggingitems[1] += TimeCounter(0, t50);
+		}
+		if (isForgePage() && _settings.isShowTags[4]) {
+			var t51 = TimeCounter(1);
+			TaggingItems(false);
+			if (_settings.isDisableForgeHotKeys) {
+				document.onkeypress = null;
+			}
+			_ltc.taggingitems[0]++;
+			_ltc.taggingitems[1] += TimeCounter(0, t51);
+		}
+		if (_settings.isRememberSkillsTypes) {
+			loadCollectdataObject();
+			if (_collectdata.skillmid.length > 3) {
+				SaveToDatabase(2);
+			}
+		}
+		if ((_settings.isStartAlert || _settings.isShowEquippedSet) && !isHVFontEngine()) {
+			var t52 = TimeCounter(1);
+			FindSettingsStats();
+			_ltc.startalerts[0]++;
+			_ltc.startalerts[1] += TimeCounter(0, t52);
+		}
+		if (_settings.isStartAlert && !isHVFontEngine()) {
+			var t53 = TimeCounter(1);
+			StartBattleAlerts();
+			_ltc.startalerts[0]++;
+			_ltc.startalerts[1] += TimeCounter(0, t53);
+		}
+	}
+	if (!isHVFontEngine() && _settings.isShowEquippedSet) {
+		var t54 = TimeCounter(1);
+		SetDisplay();
+		_ltc.showset[0]++;
+		_ltc.showset[1] += TimeCounter(0, t54);
+	}
+	_ltc.main[0]++;
+	_ltc.main[1] += TimeCounter(0, millisecondsAll);
+	_ltc.save();
 }
 function highlightLogText() {
 	var array = document.getElementById('togpane_log').getElementsByTagName('tr');
@@ -1795,7 +1895,6 @@ function getReportOverviewHtml() {
 	var j = "";
 	var y = "";
 	var m = _settings.isColumnInventory ? a : w;
-//	var p = _settings.isHideHVLogo ? a : w;
 	var b = _settings.isShowSidebarProfs ? a : w;
 	var o = _settings.isShowRoundReminder ? a : w;
 	var h = _settings.isShowHighlight ? a : w;
@@ -2144,7 +2243,7 @@ function getReportShrineHtml() {
 			+ '<tr><td style="padding-left:10px">Attributes: ' + _shrine.artifactStat + ' (' + b + '% chance)</td></tr>'
 			+ '<tr><td style="padding-left:10px">Hath: ' + _shrine.artifactHathTotal + ' (' + a + '% chance; ' + e + ' Hath per Artifact)</td></tr>'
 			+ '<tr><td style="padding-left:10px">Crystals: ' + _shrine.artifactCrystal + ' (' + h + '% chance)</td></tr>'
-			+ '<tr><td style="padding-left:10px">Energy Drinks: ' + _shrine.artifactItem + ' (' + f + "% chance)</td></tr>";
+			+ '<tr><td style="padding-left:10px">Energy Drinks: ' + _shrine.artifactItem + ' (' + f + "% chance)</td></tr>"
 			+ '<tr><td ><b>Trophies:</b> ' + _shrine.trophyArray.length + ' traded</td></tr>';
 		var b = _shrine.trophyArray.length;
 		while (b--)
@@ -2373,7 +2472,6 @@ function initSettingsPane() {
 		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isCountPageLoadTime" /></td><td colspan="3">Count page load time (it may have big impact on performance)</td></tr>'
 		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isShowSidebarProfs" /></td><td colspan="2">Show proficiencies in sidebar</td><td align="center" style="width:120px">' + t13 + ' ms (' + (t13*100/t0).toFixed(1) + '%)</td></tr>'
 		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isColumnInventory" /></td><td colspan="2">Use column view for item inventory (<span style="color:red">Downloadable/Custom Local Fonts only!</span>)</td></tr>'
-//		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isHideHVLogo" /></td><td colspan="2">Hide HentaiVerse logo</td><td align="center" style="width:120px">' + t3 + ' ms (' + (t3*100/t0).toFixed(1) + '%)</td></tr>'
 		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isChangePageTitle" /></td><td colspan="2">Change HentaiVerse page title: <input type="text" name="customPageTitle" size="40" /></td><td align="center" style="width:120px">' + t24 + ' ms (' + (t24*100/t0).toFixed(1) + '%)</td></tr>'
 		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isStartAlert" /></td><td colspan="2">Warnings berfore starting Challenges when HP is below <input type="text" name="StartAlertHP" size="1" maxLength="2" style="text-align:right" />%, MP is below <input type="text" name="StartAlertMP" size="1" maxLength="2" style="text-align:right" />%, SP is below <input type="text" name="StartAlertSP" size="1" maxLength="2" style="text-align:right" />% or difficulty is over <select id="StartAlertDifficulty"><option id=diff1 value=1>Easy</option><option id=diff2 value=2>Normal</option><option id=diff3 value=3>Hard</option><option id=diff4 value=4>Heroic</option><option id=diff5 value=5>Nightmare</option><option id=diff6 value=6>Hell</option><option id=diff7 value=7>Nintendo</option><option id=diff8 value=8>Battletoads</option></select> (<span style="color:red">Downloadable/Custom Local Fonts only!</span>)</td><td align="center" style="width:120px">' + t37 + ' ms (' + (t37*100/t0b).toFixed(1) + '%)</td></tr>'
 		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isShowScanButton" /></td><td colspan="2">Show scan button</td><td align="center" style="width:120px">' + t35 + ' ms (' + (t35*100/t0).toFixed(1) + '%)</td></tr>'
@@ -2545,7 +2643,6 @@ function initSettingsPane() {
 	if (_settings.isAlertGem) $("input[name=isAlertGem]").attr("checked", "checked");
 	if (_settings.isAlertOverchargeFull) $("input[name=isAlertOverchargeFull]").attr("checked", "checked");
 	$("input[name=reminderBeforeEnd]").attr("value", _settings.reminderBeforeEnd);
-//	if (_settings.isHideHVLogo) $("input[name=isHideHVLogo]").attr("checked", "checked");
 	if (_settings.isChangePageTitle) $("input[name=isChangePageTitle]").attr("checked", "checked");
 	if (_settings.isStartAlert) $("input[name=isStartAlert]").attr("checked", "checked");
 	if (_settings.isShowEquippedSet) $("input[name=isShowEquippedSet]").attr("checked", "checked");
@@ -2689,7 +2786,6 @@ function initSettingsPane() {
 	$("input[name=reminderBeforeEnd]").change(saveSettings);
 	$("input[name=isAlertGem]").click(saveSettings);
 	$("input[name=isAlertOverchargeFull]").click(saveSettings);
-//	$("input[name=isHideHVLogo]").click(saveSettings);
 	$("input[name=isShowScanButton]").click(saveSettings);
 	$("input[name=isShowSkillButton]").click(saveSettings);
 	$("input[name=isEnableSkillHotkey]").click(saveSettings);
@@ -2799,7 +2895,6 @@ function saveSettings() {
 	_settings.reminderBeforeEnd = $("input[name=reminderBeforeEnd]").get(0).value;
 	_settings.isAlertGem = $("input[name=isAlertGem]").get(0).checked;
 	_settings.isAlertOverchargeFull = $("input[name=isAlertOverchargeFull]").get(0).checked;
-//	_settings.isHideHVLogo = $("input[name=isHideHVLogo]").get(0).checked;
 	_settings.isShowScanButton = $("input[name=isShowScanButton]").get(0).checked;
 	_settings.isShowSkillButton = $("input[name=isShowSkillButton]").get(0).checked;
 	_settings.isEnableScanHotkey = $("input[name=isEnableScanHotkey]").get(0).checked;
@@ -3615,7 +3710,6 @@ function HVSettings() {
 	this.reminderBeforeEnd = 1;
 	this.isAlertGem = true;
 	this.isAlertOverchargeFull = false;
-//	this.isHideHVLogo = false;
 	this.isChangePageTitle = false;
 	this.customPageTitle = "HV";
 	this.isColumnInventory = false;
@@ -5404,7 +5498,7 @@ function StartBattleAlerts () {
 	$('#arenaform img[onclick*="arenaform"]').each(function () {
 		var g = $(this);
 		var oldOnClick = g.attr("onclick");
-		var newOnClick = 'if(confirm("Are you sure you want to start this challenge on ' + diff + ' difficulty, with set number: ' + _charss.set; + '?\\n';
+		var newOnClick = 'if(confirm("Are you sure you want to start this challenge on ' + diff + ' difficulty, with set number: ' + _charss.set + '?\\n';
 		if (_settings.StartAlertHP > sHP) newOnClick += '\\n - HP is only '+ sHP+ '%';
 		if (_settings.StartAlertMP > sMP) newOnClick += '\\n - MP is only '+ sMP+ '%';
 		if (_settings.StartAlertSP > sSP) newOnClick += '\\n - SP is only '+ sSP+ '%';
@@ -5648,108 +5742,6 @@ function ShrineButton() {
 		$(this).bind("click");
 	});
 }
-function main2 () {
-	if (ISBATTLE) {
-		if (_settings.isCountPageLoadTime) {
-			var clickedLTC = localStorage.getItem('PLTC');
-			if (clickedLTC !== null) {
-				if (clickedLTC[1] === 1) {
-					localStorage.removeItem('PLTC');
-					_ltc.pageLoad[0] = 1;
-					var treadyload = (TimeCounter(0, clickedLTC.slice(3, 16)) - TimeCounter(0, millisecondsAll));
-					if (treadyload < 3000) {
-						_ltc.pageLoad[2]++;
-						_ltc.pageLoad[3] += treadyload;
-					}
-					var d45 = new Date();
-					d45.setTime(clickedLTC.slice(3, 16));
-					var ltchour = d45.getHours();
-					var n11 = 1;
-					while (n11 < 9) {
-						if (ltchour < (n11 * 3)) {
-							if (treadyload < 3000) {
-								_ltc.pageLoad[2 + (n11 * 2)]++;
-								_ltc.pageLoad[3 + (n11 * 2)] += treadyload;
-							}
-							break;
-						}
-						n11++;
-					}
-				}
-			}
-			CheckForAction();
-		}
-		_ltc.isbattle[0]++;
-		_ltc.isbattle[1] += TimeCounter(0, millisecondsAll);
-	} else {
-		if (isEquipmentInventoryPage() && _settings.isShowTags[0]) {
-			var t47 = TimeCounter(1);
-			TaggingItems(false);
-			_ltc.taggingitems[0]++;
-			_ltc.taggingitems[1] += TimeCounter(0, t47);
-		}
-		if (isAllInventoryPage() && _settings.isShowTags[5]) {
-			var t47 = TimeCounter(1);
-			TaggingItems(true);
-			_ltc.taggingitems[0]++;
-			_ltc.taggingitems[1] += TimeCounter(0, t47);
-		}
-		if (isShopPage() && _settings.isShowTags[1]) {
-			var t48 = TimeCounter(1);
-			TaggingItems(false);
-			_ltc.taggingitems[0]++;
-			_ltc.taggingitems[1] += TimeCounter(0, t48);
-		}
-		if (isItemWorldPage() && _settings.isShowTags[2]) {
-			var t49 = TimeCounter(1);
-			TaggingItems(false);
-			_ltc.taggingitems[0]++;
-			_ltc.taggingitems[1] += TimeCounter(0, t49);
-		}
-		if (isMoogleWrite() && _settings.isShowTags[3]) {
-			var t50 = TimeCounter(1);
-			$("#mailform #leftpane").children().eq(3).children().eq(1).click(TaggingItems);
-			_ltc.taggingitems[0]++;
-			_ltc.taggingitems[1] += TimeCounter(0, t50);
-		}
-		if (isForgePage() && _settings.isShowTags[4]) {
-			var t51 = TimeCounter(1);
-			TaggingItems(false);
-			if (_settings.isDisableForgeHotKeys) {
-				document.onkeypress = null;
-			}
-			_ltc.taggingitems[0]++;
-			_ltc.taggingitems[1] += TimeCounter(0, t51);
-		}
-		if (_settings.isRememberSkillsTypes) {
-			loadCollectdataObject();
-			if (_collectdata.skillmid.length > 3) {
-				SaveToDatabase(2);
-			}
-		}
-		if ((_settings.isStartAlert || _settings.isShowEquippedSet) && !isHVFontEngine()) {
-			var t52 = TimeCounter(1);
-			FindSettingsStats();
-			_ltc.startalerts[0]++;
-			_ltc.startalerts[1] += TimeCounter(0, t52);
-		}
-		if (_settings.isStartAlert && !isHVFontEngine()) {
-			var t53 = TimeCounter(1);
-			StartBattleAlerts();
-			_ltc.startalerts[0]++;
-			_ltc.startalerts[1] += TimeCounter(0, t53);
-		}
-	}
-	if (!isHVFontEngine() && _settings.isShowEquippedSet) {
-		var t54 = TimeCounter(1);
-		SetDisplay();
-		_ltc.showset[0]++;
-		_ltc.showset[1] += TimeCounter(0, t54);
-	}
-	_ltc.main[0]++;
-	_ltc.main[1] += TimeCounter(0, millisecondsAll);
-	_ltc.save();
-}
 function getMonsterElementId(n) {
 	var ids = [
 		"mkey_1", "mkey_2", "mkey_3", "mkey_4", "mkey_5",
@@ -5758,7 +5750,6 @@ function getMonsterElementId(n) {
 	if (!(0 <= n && n <= 9)) throw new Error("n must be 0 to 9");
 	return ids[n];
 }
-
 if (browserIsChrome())
 	document.addEventListener( "DOMContentLoaded", evDomLoad, false );
 else evDomLoad();
