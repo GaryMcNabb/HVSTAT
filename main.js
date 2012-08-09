@@ -84,18 +84,6 @@ Array.prototype.init = function (b) {
 loadSettingsObject();
 loadLTCObject();
 
-//-- Hide Logo ASAP to avoid flashing in Chrome.
-//-- Flash still occurs for Firefoxers.
-if (_settings.isHideHVLogo){
-	var t = TimeCounter(1);
-	var eStyle = document.createElement('style');
-	eStyle.type = 'text/css';
-	eStyle.appendChild(document.createTextNode('.cw{visibility:hidden}'));
-	document.childNodes[1].appendChild(eStyle);
-	_ltc.hidelogo[0]++;
-	_ltc.hidelogo[1] += (TimeCounter(0, t));
-}
-
 function evDomLoad(){
 	if (!browserIsChrome() && !cssInserted()) {
 		GM_addStyle(GM_getResourceText("jQueryUICSS"));
@@ -1807,7 +1795,7 @@ function getReportOverviewHtml() {
 	var j = "";
 	var y = "";
 	var m = _settings.isColumnInventory ? a : w;
-	var p = _settings.isHideHVLogo ? a : w;
+//	var p = _settings.isHideHVLogo ? a : w;
 	var b = _settings.isShowSidebarProfs ? a : w;
 	var o = _settings.isShowRoundReminder ? a : w;
 	var h = _settings.isShowHighlight ? a : w;
@@ -1999,7 +1987,7 @@ function getReportOverviewHtml() {
 			+ '<td style="padding-left:10px;width:34%">Powerup Alerts: ' + J + '</td>'
 			+ '<td></td>'
 		+ '</tr><tr>'
-			+ '<td style="padding-left:10px;width:33%">Hide HV Logo: ' + p + '</td>'
+//			+ '<td style="padding-left:10px;width:33%">Hide HV Logo: ' + p + '</td>'
 			+ '<td style="padding-left:10px;width:34%">Overcharge Alert: ' + (_settings.isAlertOverchargeFull ? a : w) + '</td>'
 			+ '<td></td>'
 		+ '</tr></table>';
@@ -2385,7 +2373,7 @@ function initSettingsPane() {
 		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isCountPageLoadTime" /></td><td colspan="3">Count page load time (it may have big impact on performance)</td></tr>'
 		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isShowSidebarProfs" /></td><td colspan="2">Show proficiencies in sidebar</td><td align="center" style="width:120px">' + t13 + ' ms (' + (t13*100/t0).toFixed(1) + '%)</td></tr>'
 		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isColumnInventory" /></td><td colspan="2">Use column view for item inventory (<span style="color:red">Downloadable/Custom Local Fonts only!</span>)</td></tr>'
-		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isHideHVLogo" /></td><td colspan="2">Hide HentaiVerse logo</td><td align="center" style="width:120px">' + t3 + ' ms (' + (t3*100/t0).toFixed(1) + '%)</td></tr>'
+//		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isHideHVLogo" /></td><td colspan="2">Hide HentaiVerse logo</td><td align="center" style="width:120px">' + t3 + ' ms (' + (t3*100/t0).toFixed(1) + '%)</td></tr>'
 		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isChangePageTitle" /></td><td colspan="2">Change HentaiVerse page title: <input type="text" name="customPageTitle" size="40" /></td><td align="center" style="width:120px">' + t24 + ' ms (' + (t24*100/t0).toFixed(1) + '%)</td></tr>'
 		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isStartAlert" /></td><td colspan="2">Warnings berfore starting Challenges when HP is below <input type="text" name="StartAlertHP" size="1" maxLength="2" style="text-align:right" />%, MP is below <input type="text" name="StartAlertMP" size="1" maxLength="2" style="text-align:right" />%, SP is below <input type="text" name="StartAlertSP" size="1" maxLength="2" style="text-align:right" />% or difficulty is over <select id="StartAlertDifficulty"><option id=diff1 value=1>Easy</option><option id=diff2 value=2>Normal</option><option id=diff3 value=3>Hard</option><option id=diff4 value=4>Heroic</option><option id=diff5 value=5>Nightmare</option><option id=diff6 value=6>Hell</option><option id=diff7 value=7>Nintendo</option><option id=diff8 value=8>Battletoads</option></select> (<span style="color:red">Downloadable/Custom Local Fonts only!</span>)</td><td align="center" style="width:120px">' + t37 + ' ms (' + (t37*100/t0b).toFixed(1) + '%)</td></tr>'
 		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isShowScanButton" /></td><td colspan="2">Show scan button</td><td align="center" style="width:120px">' + t35 + ' ms (' + (t35*100/t0).toFixed(1) + '%)</td></tr>'
@@ -2557,7 +2545,7 @@ function initSettingsPane() {
 	if (_settings.isAlertGem) $("input[name=isAlertGem]").attr("checked", "checked");
 	if (_settings.isAlertOverchargeFull) $("input[name=isAlertOverchargeFull]").attr("checked", "checked");
 	$("input[name=reminderBeforeEnd]").attr("value", _settings.reminderBeforeEnd);
-	if (_settings.isHideHVLogo) $("input[name=isHideHVLogo]").attr("checked", "checked");
+//	if (_settings.isHideHVLogo) $("input[name=isHideHVLogo]").attr("checked", "checked");
 	if (_settings.isChangePageTitle) $("input[name=isChangePageTitle]").attr("checked", "checked");
 	if (_settings.isStartAlert) $("input[name=isStartAlert]").attr("checked", "checked");
 	if (_settings.isShowEquippedSet) $("input[name=isShowEquippedSet]").attr("checked", "checked");
@@ -2701,7 +2689,7 @@ function initSettingsPane() {
 	$("input[name=reminderBeforeEnd]").change(saveSettings);
 	$("input[name=isAlertGem]").click(saveSettings);
 	$("input[name=isAlertOverchargeFull]").click(saveSettings);
-	$("input[name=isHideHVLogo]").click(saveSettings);
+//	$("input[name=isHideHVLogo]").click(saveSettings);
 	$("input[name=isShowScanButton]").click(saveSettings);
 	$("input[name=isShowSkillButton]").click(saveSettings);
 	$("input[name=isEnableSkillHotkey]").click(saveSettings);
@@ -2811,7 +2799,7 @@ function saveSettings() {
 	_settings.reminderBeforeEnd = $("input[name=reminderBeforeEnd]").get(0).value;
 	_settings.isAlertGem = $("input[name=isAlertGem]").get(0).checked;
 	_settings.isAlertOverchargeFull = $("input[name=isAlertOverchargeFull]").get(0).checked;
-	_settings.isHideHVLogo = $("input[name=isHideHVLogo]").get(0).checked;
+//	_settings.isHideHVLogo = $("input[name=isHideHVLogo]").get(0).checked;
 	_settings.isShowScanButton = $("input[name=isShowScanButton]").get(0).checked;
 	_settings.isShowSkillButton = $("input[name=isShowSkillButton]").get(0).checked;
 	_settings.isEnableScanHotkey = $("input[name=isEnableScanHotkey]").get(0).checked;
@@ -3627,7 +3615,7 @@ function HVSettings() {
 	this.reminderBeforeEnd = 1;
 	this.isAlertGem = true;
 	this.isAlertOverchargeFull = false;
-	this.isHideHVLogo = false;
+//	this.isHideHVLogo = false;
 	this.isChangePageTitle = false;
 	this.customPageTitle = "HV";
 	this.isColumnInventory = false;
