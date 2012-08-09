@@ -276,7 +276,7 @@ function showRoundCounter() {
   document.getElementById('battleform').children[0].appendChild(div);
 }
 function displayPowerupBox() {
-	var a = $("div.btp");
+	var a = document.getElementsByClassName("btp");
 	var c = document.createElement("div");
 	c.setAttribute("style", "position:absolute;top:7px;right:5px;background-color:#EFEEDC;width:30px;height:32px;border-style:double;border-width:2px;border-color:#555555;");
 	var e = document.getElementById("ikey_p");
@@ -291,53 +291,56 @@ function displayPowerupBox() {
 		else if (b.match(/spirit/i)) c.innerHTML = "<img class='PowerupGemIcon' src='"+ I_SPIRITPOT+ "' id='spiritgem'>";
 		else if (b.match(/mystic/i)) c.innerHTML = "<img class='PowerupGemIcon' src='"+ I_CHANNELING+ "' id='channelgem'>";
 	}
-	a.after(c);
+	a[0].appendChild(c);
 }
 function showMonsterStats() {
 	if (!(_settings.isShowMonsterHP || _settings.isShowMonsterMP || _settings.isShowMonsterSP || _settings.isShowMonsterElements || _settings.isShowMonsterDuration || _settings.isShowStatsPopup)) return;
 	var a = new ElementalStats();
-	$("#monsterpane > div").each(function (n) {
-		var u = $(this);
-		if (u === undefined || u.height() >= 100) return;
-		var monInfo = _round.monsters[n];
-		if (monInfo === undefined) return;
-		var k = u.children().eq(1).children().eq(0);
-		var s = k.children().length > 1;
-		var e = u.children().eq(2).children().eq(0);
-		var h = u.children().eq(2).children().eq(1);
-		var sp = u.children().eq(2).children().eq(2);
-		var m = e.html().match(/bardead/i);
-		if ((_settings.isShowMonsterHP || _settings.isShowMonsterHPPercent || _settings.isShowStatsPopup) && !m) {
+	var monPane = document.getElementById('monsterpane');
+	var array = monPane.getElementsByClassName('btm1');
+	var i = array.length;
+	while(i--){
+		var u = array[i];
+		var monInfo = _round.monsters[i];
+		if (monInfo === undefined) continue;
+		var k = u.children[1].children[0];
+		var s = k.children.length;
+		var e = u.children[2].children[0];
+		var h = u.children[2].children[1];
+		var sp = u.children[2].children[2];
+		
+		if (e.innerHTML.indexOf('bardead') > -1) continue;
+		if (_settings.isShowMonsterHP || _settings.isShowMonsterHPPercent || _settings.isShowStatsPopup) {
 			var t31 = TimeCounter(1);
 			var l = monInfo.maxHp;
 			var o = 0;
 			var g = "";
-			var b = e[0].getElementsByTagName("img")[1].getAttribute("style").slice(6,-2) / 120;
+			var b = e.getElementsByTagName("img")[1].getAttribute("style").slice(6,-2) / 120;
 			if (_settings.isShowMonsterHPPercent) g = (b * 100).toFixed(2) + "%"
 			else {
 				o = Math.floor(b * l);
 				g = o + " / " + l;
 			}
 			var r = "<div style='position:absolute;z-index:1074;top:-1px;font-size:8pt;font-family:arial,helvetica,sans-serif;font-weight:bolder;color:yellow;width:120px;text-align:center'>" + g + "</div>";
-			e.after(r);
+			e.innerHTML += r;
 			_ltc.showhp[0]++;
 			_ltc.showhp[1] += TimeCounter(0, t31);
 		}
-		if ((_settings.isShowMonsterMP || _settings.isShowStatsPopup) && !m) {
+		if (_settings.isShowMonsterMP || _settings.isShowStatsPopup) {
 			var t32 = TimeCounter(1);
-			var v = h[0].getElementsByTagName("img")[1].getAttribute("style").slice(6,-2) / 120;
+			var v = h.getElementsByTagName("img")[1].getAttribute("style").slice(6,-2) / 120;
 			var f = (v * 100).toFixed(1);
 			var j = "<div style='position:absolute;z-index:1074;top:11px;font-size:8pt;font-family:arial,helvetica,sans-serif;font-weight:bolder;color:yellow;width:120px;text-align:center'>" + f + "%</div>";
-			h.after(j);
+			h.innerHTML += j;
 			_ltc.showmp[0]++;
 			_ltc.showmp[1] += TimeCounter(0, t32);
 		}
-		if ((_settings.isShowMonsterSP || _settings.isShowStatsPopup) && !m && sp.length > 0) {
+		if (sp && (_settings.isShowMonsterSP || _settings.isShowStatsPopup)) {
 			var t62 = TimeCounter(1);
-			var sppart = sp[0].getElementsByTagName("img")[1].getAttribute("style").slice(6,-2) / 120;
+			var sppart = sp.getElementsByTagName("img")[1].getAttribute("style").slice(6,-2) / 120;
 			var perc = (sppart * 100).toFixed(1);
 			var sptext = "<div style='position:absolute;z-index:1074;top:23px;font-size:8pt;font-family:arial,helvetica,sans-serif;font-weight:bolder;color:yellow;width:120px;text-align:center'>" + perc + "%</div>";
-			sp.after(sptext);
+			sp.innerHTML += sptext;
 			_ltc.showsp[0]++;
 			_ltc.showsp[1] += TimeCounter(0, t62);
 		}
@@ -350,7 +353,7 @@ function showMonsterStats() {
 			_ltc.monsterpopup[1] += TimeCounter(0, t45);
 		}
 		var t33 = TimeCounter(1);
-		if (_settings.isShowMonsterElements && !m && (monInfo.id < 1000 || _settings.isShowElemHvstatStyle)) {
+		if (_settings.isShowMonsterElements && (monInfo.id < 1000 || _settings.isShowElemHvstatStyle)) {
 			var t;
 			getMonsterElementsById(a, monInfo.id);
 			var d = a.majWeak === "-" ? "" : "[<span style='color:#005826'>" + a.majWeak + "</span>";
@@ -358,9 +361,10 @@ function showMonsterStats() {
 				d += a.resist === "-" ? "" : ";<span style='color:red'>" + a.resist + "</span>";
 				d += a.imperv === "-" ? "" : ";<span style='color:black'>" + a.imperv + "</span>]";
 			if (_settings.isShowElemHvstatStyle) {
+			
 				var milliseconds2 = TimeCounter(1);
-				var kk = k.children().eq(0);
-				var kkl = kk.html().length;
+				var kk = k.children[0];
+				var kkl = kk.innerHTML.length;
 				var mclass = "";
 				var mpl = "";
 				var mweak = "";
@@ -518,6 +522,9 @@ function showMonsterStats() {
 				mspirittype = String(mspirittype);
 				mspiritsksp = String(mspiritsksp);
 				mattack = String(mattack);
+
+				// Disabling test resizing until it can be implemented with less suck - GaryMcNabb
+				/*
 				if (_settings.ResizeMonsterInfo){
 					if (_settings.HideThisResHvstatStyle[0] || _settings.HideThisResHvstatStyle[1] || _settings.HideThisResHvstatStyle[2]) {
 						mweak = mweak.replace(", Phys", "Slash, Crush, Pierc").replace("?Phys", "Slash, Crush, Pierc").replace("Phys", "Slash, Crush, Pierc");
@@ -701,6 +708,7 @@ function showMonsterStats() {
 						mweak = mweak.replace("Fi", "F").replace("Co", "C").replace("El", "E").replace("Wi", "W").replace("Ho", "H").replace("Da", "D").replace("So", "S").replace("Eem", "Elem");
 					}
 				}
+				*/
 				if (mclass !== "0" && mclass !== "undefined" && mclass !== "unde" && mclass !== "und") {
 					d = "";
 					if (_settings.isShowClassHvstatStyle){
@@ -733,15 +741,13 @@ function showMonsterStats() {
 				_ltc.isShowElemHvstatStyle[0]++;
 				_ltc.isShowElemHvstatStyle[1] += TimeCounter(0, milliseconds2);
 			}
-			if (s) {
+			if ( s > 1 ) {
 				t = "<div style='cursor:default;position:relative;top:-2px;left:2px;padding:0 1px;margin-left:0px;white-space:nowrap'>" + d + "</span></div>";
-				k.after(t);
+				k.innerHTML += t;
 			} else {
 				t = "<div style='font-family:arial;font-size:7pt;font-style:normal;font-weight:bold;display:inline;cursor:default;padding:0 1px;margin-left:1px;white-space:nowrap'>" + d + "</span></div>";
-				var p = k.children().eq(0);
-				var c = p.html();
-				p.html(c + t);
-				p.css("white-space", "nowrap");
+				k.children[0].innerHTML += t;
+				k.children[0].style.whiteSpace = "nowrap";
 			}
 		}
 		_ltc.showelem[0]++;
@@ -752,26 +758,29 @@ function showMonsterStats() {
 			_ltc.showMonsterEffectsDuration[0]++;
 			_ltc.showMonsterEffectsDuration[1] += TimeCounter(0, t2);
 		}
-	});
+	}
 	_ltc.save();
-	HASMS = true;
 }
 function showMonsterEffectsDuration(a) {
-	a.children().eq(3).children("img").each(createDurationBadge);
+	var array = a.children[3].getElementsByTagName("img");
+	var i = array.length
+	while(i--)createDurationBadge(array[i], i);
 }
 function showSelfEffectsDuration() {
-	$(".btps img").each(createDurationBadge);
+	var array = document.getElementsByClassName("btps")[0].getElementsByTagName("img");
+	var i = array.length;
+	while(i--)createDurationBadge(array[i], i);
 }
-function createDurationBadge(a) {
-	var e = $(this);
+function createDurationBadge(a, x) {
+	var e = a;
 	var g, d;
 	var c, f;
-	d = e.outerHTML().match(/\s\d+?\)/);
+	d = e.outerHTML.match(/\s\d+?\)/);
 	if (d !== null) g = d[0].replace(")", "").replace(" ", "");
 	if (g >= 0) {
-		var h = e.parent().parent().parent().attr("id") === "monsterpane";
+		var h = e.parentNode.parentNode.parentNode.id === "monsterpane";
 		c = h ? MON_EFF_TOP : SELF_EFF_TOP;
-		f = (h ? MON_EFF_LEFT : SELF_EFF_LEFT) + FIRST_EFF * a;
+		f = (h ? MON_EFF_LEFT : SELF_EFF_LEFT) + FIRST_EFF * x;
 		var b = "<div style='position:absolute;";
 		if (h) {
 			if (_settings.isMonstersEffectsWarnColor) {
@@ -791,17 +800,17 @@ function createDurationBadge(a) {
 			} else b += "background-color:#EFEEDC;";
 		}
 		b += "font-size:11px;font-weight:bold;font-family:arial,helvetica,sans-serif;line-height:12px;text-align:center;width:20px;height:12px;border-style:solid;border-width:1px;border-color:#5C0D11;overflow:hidden;top:" + c + "px;left:" + f + "px;cursor:default;'>" + g + "</div>";
-		e.after(b);
+		e.parentNode.innerHTML += b;
 	}
 }
 function showBattleEndStats() {
-	$("#togpane_log").children().before("<div class='ui-state-default ui-corner-bottom' style='padding:10px;margin-bottom:10px;text-align:left'>" + getBattleEndStatsHtml() + "</div>");
+	var battleLog = document.getElementById("togpane_log");
+	battleLog.innerHTML = "<div class='ui-state-default ui-corner-bottom' style='padding:10px;margin-bottom:10px;text-align:left'>" + getBattleEndStatsHtml() + "</div>" + battleLog.innerHTML;
 }
 function showMonsterNumber() {
 	var targets = document.querySelectorAll('.btmi'), i = targets.length;
-	while (i --> 0) targets[i].parentNode.appendChild(document.createElement('div')).innerHTML = (i+1)%10;
-	var style = '';
-	style += '.btmi {display:none;} .btmi + div {height:25px; font-size:1.6em; font-family:HentaiVerse; color:black; padding-top:0.4em;}';
+	while (i-- > 0) targets[i].parentNode.appendChild(document.createElement('div')).innerHTML = (i+1)%10;
+	var style = '.btmi {display:none;} .btmi + div {height:25px; font-size:1.6em; font-family:HentaiVerse; color:black; padding-top:0.4em;}';
 	var style2 = document.createElement('style');
 	style2.innerHTML = style;
 	document.head.appendChild(style2);
