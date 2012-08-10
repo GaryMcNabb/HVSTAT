@@ -2522,7 +2522,7 @@ function getReportShrineHtml() {
 			+ '<tr><td style="padding-left:10px">Attributes: ' + _shrine.artifactStat + ' (' + b + '% chance)</td></tr>'
 			+ '<tr><td style="padding-left:10px">Hath: ' + _shrine.artifactHathTotal + ' (' + a + '% chance; ' + e + ' Hath per Artifact)</td></tr>'
 			+ '<tr><td style="padding-left:10px">Crystals: ' + _shrine.artifactCrystal + ' (' + h + '% chance)</td></tr>'
-			+ '<tr><td style="padding-left:10px">Energy Drinks: ' + _shrine.artifactItem + ' (' + f + "% chance)</td></tr>";
+			+ '<tr><td style="padding-left:10px">Energy Drinks: ' + _shrine.artifactItem + ' (' + f + '% chance)</td></tr>'
 			+ '<tr><td ><b>Trophies:</b> ' + _shrine.trophyArray.length + ' traded</td></tr>';
 		var b = _shrine.trophyArray.length;
 		while (b--)
@@ -5813,7 +5813,7 @@ function StartBattleAlerts () {
 	$('#arenaform img[onclick*="arenaform"]').each(function () {
 		var g = $(this);
 		var oldOnClick = g.attr("onclick");
-		var newOnClick = 'if(confirm("Are you sure you want to start this challenge on ' + diff + ' difficulty, with set number: ' + _charss.set; + '?\\n';
+		var newOnClick = 'if(confirm("Are you sure you want to start this challenge on ' + diff + ' difficulty, with set number: ' + _charss.set + '?\\n';
 		if (_settings.StartAlertHP > sHP) newOnClick += '\\n - HP is only '+ sHP+ '%';
 		if (_settings.StartAlertMP > sMP) newOnClick += '\\n - MP is only '+ sMP+ '%';
 		if (_settings.StartAlertSP > sSP) newOnClick += '\\n - SP is only '+ sSP+ '%';
