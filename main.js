@@ -32,7 +32,7 @@ var HVStat = {};
 
 // functions for reading old monster database
 // finally to be obsolete
-HVStat.migration = {}
+HVStat.migration = {};
 HVStat.migration.monsterClassFromCode = function (code) {
 	var monsterClassTable = {
 		"Arthropod": "1",
@@ -223,6 +223,7 @@ HVStat.Monster = {
 	maxHp: null,
 	currentHp: null,
 	// from monster pane
+	currentHpRate: null,
 	currentMpRate: null,
 	previousMpRate: null,
 	hasSpiritPoint: null,
@@ -235,6 +236,37 @@ HVStat.Monster = {
 	scannedInfo: null,
 	// for popup
 	index: -1
+};
+// functions for collecting monster information
+HVStat.getCurrentHpRateAtMonster = function (index) {
+	var v, bar;
+	try {
+		bar = $("#" + getMonsterElementId(index) + " div.btm5 img.chb2").eq(0);
+		v = bar.width() / 120;
+	} catch (e) {
+		v = NaN;
+	}
+	return v;
+};
+HVStat.getCurrentMpRateAtMonster = function (index) {
+	var v, bar;
+	try {
+		bar = $("#" + getMonsterElementId(index) + " div.btm5 img.chb2").eq(1);
+		v = bar.width() / 120;
+	} catch (e) {
+		v = NaN;
+	}
+	return v;
+};
+HVStat.getCurrentSpRateAtMonster = function (index) {
+	var v, bar;
+	try {
+		bar = $("#" + getMonsterElementId(index) + " div.btm5 img.chb2").eq(2);
+		v = bar.width() / 120;
+	} catch (e) {
+		v = NaN;
+	}
+	return v;
 };
 // functions for rendering
 HVStat.getDateTimeString = function (date) {
@@ -1303,8 +1335,10 @@ function collectRoundInfo() {
 		var t74 = TimeCounter(1);
 		var i = _round.monsters.length;
 		while (i--) {
+			_round.monstersV2[i].currentHpRate = HVStat.getCurrentHpRateAtMonster(i);
+			_round.monstersV2[i].currentMpRate = HVStat.getCurrentMpRateAtMonster(i);
 			var e = $("#" + getMonsterElementId(i)).children().eq(2).children();
-			if (e.filter(".btm5").length > 2) {
+			if (e.filter("div.btm5").length > 2) {
 				_round.monsters[i].hasspbar = true;
 				_round.monstersV2[i].hasSpiritPoint = true;
 			}
@@ -1312,7 +1346,7 @@ function collectRoundInfo() {
 				var spbar = e.eq(2);
 				// get current SP percent
 				_round.monsters[i].sp1 = spbar.children().eq(0).children("img").eq(1).width() / 120;
-				_round.monstersV2[i].currentSpRate = spbar.children().eq(0).children("img").eq(1).width() / 120;
+				_round.monstersV2[i].currentSpRate = HVStat.getCurrentSpRateAtMonster(i);
 			}
 		}
 		_ltc.changedMHits[1] += TimeCounter(0, t74);
