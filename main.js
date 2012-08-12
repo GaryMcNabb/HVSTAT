@@ -238,35 +238,30 @@ HVStat.Monster = {
 	index: -1
 };
 // functions for collecting monster information
-HVStat.getCurrentHpRateAtMonster = function (index) {
-	var v, bar;
+HVStat.getCurrentBarRateAtMonster = function (monsterIndex, barIndex) {
+	var MAX_WIDTH = 120;
+	var v, bar, style;
 	try {
-		bar = $("#" + getMonsterElementId(index) + " div.btm5 img.chb2").eq(0);
-		v = bar.width() / 120;
+		bar = $("#" + getMonsterElementId(monsterIndex) + " div.btm5 img.chb2").eq(barIndex);
+		try {
+			style = bar.attr("style");
+			v = Number(/width:\s*?(\d+?)px/i.exec(style)[1]) / MAX_WIDTH;
+		} catch (e) {
+			v = bar.width() / MAX_WIDTH;
+		}
 	} catch (e) {
 		v = NaN;
 	}
 	return v;
+}
+HVStat.getCurrentHpRateAtMonster = function (index) {
+	return HVStat.getCurrentBarRateAtMonster(index, 0);
 };
 HVStat.getCurrentMpRateAtMonster = function (index) {
-	var v, bar;
-	try {
-		bar = $("#" + getMonsterElementId(index) + " div.btm5 img.chb2").eq(1);
-		v = bar.width() / 120;
-	} catch (e) {
-		v = NaN;
-	}
-	return v;
+	return HVStat.getCurrentBarRateAtMonster(index, 1);
 };
 HVStat.getCurrentSpRateAtMonster = function (index) {
-	var v, bar;
-	try {
-		bar = $("#" + getMonsterElementId(index) + " div.btm5 img.chb2").eq(2);
-		v = bar.width() / 120;
-	} catch (e) {
-		v = NaN;
-	}
-	return v;
+	return HVStat.getCurrentBarRateAtMonster(index, 2);
 };
 // functions for rendering
 HVStat.getDateTimeString = function (date) {
@@ -312,6 +307,7 @@ HVStat.renderMonsterPopup = function (monster) {
 		return str;
 	};
 	var i, len, skill;
+	var lastScan, lastScanString;
 	var si = monster.scannedInfo;
 	var html = '<table cellspacing="0" cellpadding="0" style="width:100%">'
 		+ '<tr class="monname"><td colspan="2"><b>' + monster.name + '</b></td></tr>'
@@ -346,21 +342,21 @@ HVStat.renderMonsterPopup = function (monster) {
 		html += '</td></tr>';
 	}
 	if (si) {
-		var now = (new Date()).getTime();
-		var lastScan = new Date();
-		var lastScanString;
-		if (si.registrationDate) {
-			lastScan.setTime(si.registrationDate);
-			lastScanString = HVStat.getDateTimeString(lastScan);
-		} else {
-			lastScanString = "Never";
-		}
 		html += '<tr><td>Weak against:</td><td>' + (si.weakAgainst ? si.weakAgainst : "?") + '</td></tr>'
 			+ '<tr><td>Resistant to:</td><td>' + (si.resistantTo ? si.resistantTo : "?") + '</td></tr>'
 			+ '<tr><td>Impervious to:</td><td>' + (si.imperviousTo ? si.imperviousTo : "?") + '</td></tr>'
-			+ '<tr><td>Effects when scanned:</td><td>' + (si.effectsWhenScanned ? si.effectsWhenScanned : "?") + '</td></tr>'
-			+ '<tr><td>Last Scan:</td><td>' + lastScanString + '</td></tr>'
-			+ '<tr><td></td><td>' + HVStat.getElapsedFrom(lastScan) + ' ago</td></tr>';
+			+ '<tr><td>Effects when scanned:</td><td>' + (si.effectsWhenScanned ? si.effectsWhenScanned : "?") + '</td></tr>';
+		if (si.registrationDate) {
+			lastScan = new Date();
+			lastScan.setTime(si.registrationDate);
+			lastScanString = HVStat.getDateTimeString(lastScan);
+		}
+	} else {
+		lastScanString = "Never";
+	}
+	html += '<tr><td>Last Scan:</td><td>' + lastScanString + '</td></tr>';
+	if (si && si.registrationDate) {
+		html += '<tr><td></td><td>' + HVStat.getElapsedFrom(lastScan) + ' ago</td></tr>';
 	}
 	html += '</table>';
 	return html;
@@ -1664,6 +1660,11 @@ function collectRoundInfo() {
 						var milliseconds21 = TimeCounter(1);
 						var j = _round.monsters.length;
 						while (j--) {
+// 							var skillMatch = /([^\.]{1,30}) (uses|casts) (.+?)<\/td/.exec(sel);
+// 								if (_round.monstersV2[j].currentSpRate >= _round.monstersV2[j].previousSpRate) {
+// 									
+// 								} else {
+// 								}
 							if (sel.match(/[^\.]{1,30} (uses|casts) /i)[0].replace(" uses ","").replace(" casts ","") === _round.monsters[j].name) {
 								var mid = parseInt(_round.monsters[j].id);
 								var stype = c.match(/[a-z]{1,10} damage/i)[0].replace(" damage","");
