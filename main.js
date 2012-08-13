@@ -28,7 +28,13 @@
 // - Modify showMonsterStats()
 
 // Package
-var HVStat = {};
+var HVStat = {
+	IDBTransaction: null,
+	indexedDB: null,
+	idb: null,
+	monstersStore: null,
+	monsterSkillsStore: null
+};
 
 // functions for reading old monster database
 // finally to be obsolete
@@ -214,7 +220,19 @@ HVStat.MonsterScannedInfo = {
 	meleeAttack: null,
 	weakAgainst: null,
 	resistantTo: null,
-	imperviousTo: null
+	imperviousTo: null,
+	defence: {
+		clashing: null,
+		slashing: null,
+		pierceing: null,
+		fire: null,
+		elec: null,
+		cold: null,
+		wind: null,
+		holy: null,
+		dark: null,
+		soul: null
+	}
 };
 HVStat.Monster = {
 	// from battle log
@@ -361,6 +379,97 @@ HVStat.renderMonsterPopup = function (monster) {
 	html += '</table>';
 	return html;
 };
+// functions related to IndexedDB
+HVStat.deleteIndexedDB = function () {
+	var reqDelete = HVStat.indexedDB.deleteDatabase("HVStat");
+	reqDelete.onsuccess = function (event) {
+		console.log("deleteIndexedDB: onsuccess");
+	};
+	reqDelete.onerror = function (event) {
+		console.log("deleteIndexedDB: onerror");
+	};
+	reqDelete.onblocked = function (event) {
+		console.log("deleteIndexedDB: onblocked");
+	};
+}
+HVStat.maintainObjectStores = function (transaction) {
+	var store;
+	// Monsters
+	try {
+		store = HVStat.idb.createObjectStore("Monsters", { keyPath: "id" });
+	} catch (e) {
+		console.log(e.message + "\n" + e.stack);
+	}
+	store = transaction.objectStore("Monsters");
+	try {
+		store.deleteIndex("id");
+	} catch (e) {
+		console.log(e.message + "\n" + e.stack);
+	}
+	try {
+		store.createIndex("ix_id", "id", { unique: true });
+	} catch (e) {
+		console.log(e.message + "\n" + e.stack);
+	}
+	// MonsterSkills
+	try {
+		store = HVStat.idb.createObjectStore("MonsterSkills", { keyPath: "id" });
+	} catch (e) {
+		console.log(e.message + "\n" + e.stack);
+	}
+	store = transaction.objectStore("MonsterSkills");
+	try {
+		store.deleteIndex("id");
+	} catch (e) {
+		console.log(e.message + "\n" + e.stack);
+	}
+	try {
+		store.createIndex("ix_id", "id", { unique: false });
+	} catch (e) {
+		console.log(e.message + "\n" + e.stack);
+	}
+};
+// initialize
+(function () {
+	var idbVersion = 0.4;
+	HVStat.indexedDB = window.indexedDB || window.webkitIndexedDB || window.mozIndexedDB;
+	HVStat.IDBTransaction = window.IDBTransaction || window.webkitIDBTransaction;
+	var reqOpen = HVStat.indexedDB.open("HVStat", idbVersion);
+	reqOpen.onerror = function (event) {
+		console.log("open: error");
+		console.log(e.message + "\n" + e.stack);
+	};
+	reqOpen.onsuccess = function (event) {
+		HVStat.idb = reqOpen.result;
+		// for Chrome
+		try {
+			var reqVersion = HVStat.idb.setVersion(idbVersion);
+			reqVersion.onerror = function (event) {
+				console.log("setVersion: error");
+				console.log(e.message + "\n" + e.stack);
+			};
+			reqVersion.onsuccess = function (event) {
+				HVStat.maintainObjectStores(event.target.transaction);
+			};
+		} catch (e) {
+			console.log(e.message + "\n" + e.stack);
+		}
+	};
+	// for Firefox
+	reqOpen.onupgradeneeded = function (event) {
+		console.log("onupgradeneeded");
+		HVStat.idb = reqOpen.result;
+		HVStat.maintainObjectStores(event.target.transaction);
+	};
+
+	// test
+// 	var transaction = HVStat.idb.transaction(["Monsters", "MonsterSkills"], "readwrite");
+// 	HVStat.monstersStore = transaction.objectStore("MonstersStore");
+// 	HVStat.monsterSkillsStore = transaction.objectStore("MonsterSkillsStore");
+// 
+// 	console.log("HVStat.monstersStore: " + HVStat.monstersStore);
+// 	console.log("HVStat.monsterSkillsStore: " + HVStat.monsterSkillsStore);
+})();
 
 // === GLOBAL VARIABLES
 var millisecondsAll = TimeCounter(1);
