@@ -4,72 +4,74 @@
 // @description      Collects data, analyzes statistics, and enhances the interface of the HentaiVerse
 // @include          http://hentaiverse.org/*
 // @author           Various (http://forums.e-hentai.org/index.php?showtopic=50962)
-// @version          5.4.1.12
+// @version          5.4.1.13
 // @require          https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js
 // @require          https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.21/jquery-ui.min.js
 // @resource         jQueryUICSS http://www.starfleetplatoon.com/~cmal/HVSTAT/jqueryui.css
 // ==/UserScript==
 
-// === GLOBAL VARIABLES
-var millisecondsAll = TimeCounter(1);
-VERSION = "5.4.1.12";
-SAVE_STATS = true;
-MAX_MID = 33;
-SELF_EFF_TOP = 34;
-SELF_EFF_LEFT = 8;
-MON_EFF_TOP = -3;
-MON_EFF_LEFT = 5;
-FIRST_EFF = 33;
-HV_OVERVIEW = "HVOverview";
-HV_STATS = "HVStats";
-HV_PROF = "HVProf";
-HV_REWARDS = "HVRewards";
-HV_SHRINE = "HVShrine";
-HV_DROPS = "HVDrops";
-HV_SETTINGS = "HVSettings";
-HV_ROUND = "HVRound";
-HV_ALERT = "critAlert";
-HV_ALERTMP = "critAlertMP";
-HV_ALERTSP = "critAlertSP";
-HV_ALERTOC = "fullAlertOC";
-HV_EQUIP = "inventoryAlert";
-HV_DBASE = "HVMonsterDatabase";
-HV_COLL = "HVCollectData";
-HV_LTC = "HVLoadTimeCounters";
-HV_CHSS = "HVCharacterSettingsandStats";
-HV_TAGS = "HVTags";
-HOURLY = 0;
-ARENA = 1;
-GRINDFEST = 2;
-ITEM_WORLD = 3;
-CRYSFEST = 4;
-ISBATTLE = false;
-ISCHROME = false;
-_overview = null;
-_stats = null;
-_profs = null;
-_rewards = null;
-_shrine = null;
-_drops = null;
-_settings = null;
-_round = null;
-_backup = [null, null, null, null, null, null];
-_database = null;
-_collectdata = null;
-_charss = null;
-_ltc = null;
-_tags = null;
-_isMenuInitComplete = false;
-_equips = 0;
-_lastEquipName = "";
-_artifacts = 0;
-_lastArtName = "";
-_tokenDrops = [0, 0, 0];
-
-// === EMBEDDED IMAGES
-I_HVLOGO = "data:image/gif;base64,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";
-I_HEALTHPOT = "data:image/gif;base64,R0lGODlhHgAgAOYAAPbt9ho9IwArCAArAAARAAhGCAgrCBFXERFGETR7NAgRCEaDRmmvacrkyvb/9uTt5BFXCDR7KxFGCBpXERpGEQgrABFXACtpGleVRhpXCE+nNBppABFGACt7ERErCDSMETR7GiuMABpXACt7CBpGCCtpETR7ETRpGkanETR7CCtpCE+MK4OvaafTjHKnT5XKcjR7ACtpAAgRAE+MGkZ7GnLBKytXAE+MEUZ7EU+MAHLBEcHklWCnAHKnK57bRq/bcnKnEZXKK57BT5XBGvb/28HkRnKMEa/TI9PtcuT2lfb2r9vTI/bt2wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACwAAAAAHgAgAAAH/4AzJioZhRsbEBkqiykmHSUrLhggKzMjLgwuLj0zLkJBKDc0H6QzpjNAQDcrP0o/QT89NURESUhFQR89PkeqMx83wagoOTk1SklBRz5BSERKSEdLRSMpNUW4KCY0JiZAoDdArUlAR83PRUfqQSU94UhJRZwzOTpHOjw6SURCQ0FBSoj80KFjSI8UHlwgAdIjCTIf+OwdGeJDiZIeQYA4+wGER6oZHCokeCakRyto6bAVcRgriBCBKFLkCKbigAEELwImmdHQIpKfKocYRBaER4gbKFCokGAARA8UP569WCHkVjp///4lSdILhQYgSpkucKWhBhJX4XQU+elw64+1Rf90hEpqAoGBkbR+oBAy0B7bgLR2HFmbMRyKDggITMjp4FkNHkPS+RgCpMgPh9CCYKPM48aGAgYuPHWxg0i6rTUgCvFpMt7gXp0RK1hAZMeLr0PO/vCBKwkAB0mCrY1chPKNEQgqRKDl4EE0h0UAE/mNJEcMfeaQCKkBJIWEChmE7KsVPR4RB+gBPPtx41jvJK9mkBiQAYhZZOUrMjmPvvFkaEc4RMsLFAwAASrNJOGDQ0I58xsRDzARREVI6HBDD+K1gIAAEsyAglpcrfSPgw9stVAr2OxQEgorQMChh9/cAuJltChRQw03AJRMRevNIIEABwZTGRL+tLWDgsUAwVL/Ribt90JyEJASzkrFRYcMEhlFhsRkK7G31wsBVBDlB6gUUUsqVWF2SxBCAeFDjT8IUVcFFkipj0CQvYZNEDrEGMt957GAgAx1AhPEPj00hM1E+WgGj0Wv+HBWCwEYkMFRN1S0Qw47MBHPLTFctuYR8JQay3clhFOZEiVN95MrMBBFWUGfrLUQBxkkmkNuSrjEBBMrsdoDNEAYkQMPMwFRkDkiiFBERwEmk4SnAPW6GkfB3ICDTB59ZMMQHkWHJS0++MDEDjq04gMQOeAwww0wwJBDKjfMUENRh9r4w68auZJuMtaZQkOxqahygwk35CBECy7c0EIDLWjwQwuJ/hDLCw0qmADCCfVmu20gADs=";
-I_MANAPOT = "data:image/gif;base64,R0lGODlhHgAgAOYAACMRGiMIGkYrRmlPafbT9ox7jGkrcvbT/5V7p0YrYD0aYBEIGq+ewWlPjD0acisaRkYrcntXuCMRRsq47QgAGkYrgysRchEARisaYIx7wZ6M0yMRYNvT9j0jpyMaRhEAYCMRcisacmBPpysag089pxEAexEIRisalSMaYAgARhEIYAgAYGBXuAAATwAARgAAGggIYAgIRhERPQgIGisrafb2/z1GaT1PjCMrRmlyjLjB05Wnnmlyaaeeg1dPPfbt5MGvp9uVeysaGoxyctPBwdvT0/b29gAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACwAAAAAHgAgAAAH/4AQGBImhTIyMSYSiw8YKBsVIiQhFRAeIiwiIg0QIggFNgkONKQQphADAwkVDD8MBQwNOUZGRURABTQNOz2qEDQJwag2AgI5P0UFPTsFREY/RD1BQB4POUC4NhgOGBgDoAkDrUUDPc3PQD3qBRsN4URFQJwQAjw9PD48RUYIQwUFP4ww4MFjSIMHKUQQGdCgCLId+Oz1GLLjx48GBQY4YzDARyoIFF6ceIagQSto6bABcRirAAKBNh4ICCYBhosVGQIWgdDQIpGfKocYRFbAB44ENmxISOEiRAMbDJ5lqIDgVjp///4VKdLLxo0BSpl2cHUjBxFX4XgA+elwK4O1QP94hEqKYYWLkbQY2EAw0B7bgLR09FibMZwNFCteqMhZ41kOH0PS7RgyAAgDh9AKYKPsI4EMFy5APBWhw0i6rTkgIvBpMt7gXp0Rt+hgREeGr0POMtiBq8iBGkWCrY0MhHICD4lH0KrBIZpDIICN/CYiAIA+c0QQ5BiA8IUJBPtqQY9npIb5A88YJDjWu8grCBe8DzCLbHxFAuXNN54MrYdDWhl88EIMqDRTxA4OCeXMb0ZwQEABFRHBQwINgKeBXSlAYINaXK30z4IcbLVQK9joUJINFcTgQoY2fHMLh5fR8kMOOSQAUDIVpQcBUwQGUxkR/rSlw4HFDMBSRibhl0H/YjGQEs5KxUGHDBEZRUbEZCupt1cGJQxYSmW1pFIVZrcUINQAO8jIAAJ1vTCDk/oIBNlr2BTAg4ux0FdeBIm9CUwB+zTQEDYT5aMZPBa9ssNZGpTggglHJVCRDgLoQEA8twBwWZk9wONpLCm8sEE4lf1QknQ/uSIEUZQV9MlaC1FggqAC5PaDSwQQsJKpDUAzgAEC+DDTAAWZs8ACQHTkXzJFXArQratxFEwCCsjk0UcBDOERdFTSssMOBOjAQys7DCCAAhAkIIQQAqSSAAQ5FAXojAzkqpEr4yZTnSkO/JqKKglgkIAACGggQgIaTKDBDQxoICgDsSQgAQYhWPDuBLTVBgIAOw==";
+/* ========== GLOBAL VARIABLES ========== */
+var millisecondsAll = TimeCounter(1),
+VERSION = "5.4.1.13",
+SAVE_STATS = true,
+MAX_MID = 33,
+SELF_EFF_TOP = 34,
+SELF_EFF_LEFT = 8,
+MON_EFF_TOP = -3,
+MON_EFF_LEFT = 5,
+FIRST_EFF = 33,
+HV_OVERVIEW = "HVOverview",
+HV_STATS = "HVStats",
+HV_PROF = "HVProf",
+HV_REWARDS = "HVRewards",
+HV_SHRINE = "HVShrine",
+HV_DROPS = "HVDrops",
+HV_SETTINGS = "HVSettings",
+HV_ROUND = "HVRound",
+HV_ALERT = "critAlert",
+HV_ALERTMP = "critAlertMP",
+HV_ALERTSP = "critAlertSP",
+HV_ALERTOC = "fullAlertOC",
+HV_EQUIP = "inventoryAlert",
+HV_DBASE = "HVMonsterDatabase",
+HV_COLL = "HVCollectData",
+HV_LTC = "HVLoadTimeCounters",
+HV_CHSS = "HVCharacterSettingsandStats",
+HV_TAGS = "HVTags",
+HOURLY = 0,
+ARENA = 1,
+GRINDFEST = 2,
+ITEM_WORLD = 3,
+CRYSFEST = 4,
+ISBATTLE = false,
+ISBATTLEOVER = false,
+ISCHROME = false,
+ISHVFONT = false,
+ISCHARPAGE = false,
+_overview = null,
+_stats = null,
+_profs = null,
+_rewards = null,
+_shrine = null,
+_drops = null,
+_settings = null,
+_round = null,
+_backup = [null, null, null, null, null, null],
+_database = null,
+_collectdata = null,
+_charss = null,
+_ltc = null,
+_tags = null,
+_isMenuInitComplete = false,
+_equips = 0,
+_lastEquipName = "",
+_artifacts = 0,
+_lastArtName = "",
+_tokenDrops = [0, 0, 0],
+/* ========== EMBEDDED IMAGES ========== */
+I_HVLOGO = "data:image/gif;base64,R0lGODlhlgBuAMQAAO/r3uXc0NzOwtK/tMiwpr+hmLWTiquEfKJ2b5lnYoVKRo9YVHIsKnw7OFUAAF8PDmgdHAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACwAAAAAlgBuAAAF/yAgjmRpnmiqrmzrvnAsz3Rt33iu73zv/8CgcEgsGo/IpHLJbDqf0Kh0Sq1ar9isdsvter/gsFgqIJQQiADAgBgADug4mgA3lwpyNEDARtgBAXEFJXUicHl+JX15B3t9fyQCiGgDgQgCI2gGIniImzAECg4PaiIGDg17owINDq6vEAatDgglCa+vCKe4DAEDEK8PJAuuabO4EIMjrLi4us29JAcPza4PBdQOf66pt80PtTIHxSMM2gDE4WWYZ7QkAQRuIgIHA6NmAcQLIgMFop8CmKkjwO4Eq0bwCM67B0gfCQQKMA0g8CeAAWDbUImAJ+/GOFIACGgMMKoUAnftwv+JEJmKxKl9CyGIaEWAgcwADxKcDLezhUiUL5c5kHliVgmaI7it1JhDVC2kPUWczJUJ5VIGKUm4mqlNJIFTBKJOJZfiJ0+rALYWVTsCqQilIXEpKEVDwKgCIx+AlIqqzUO0JB1kTSoYANIGDSCkEtu3IwqzfFWmLWzCKAmaYae2FAkBgbIbJ6kRyIc26l/JAMx9ujoCb0ukP80wRv2YrEisnJhWZss1FK7NunHgREWA2l6+DeRsOpk8jgGRD/C5MZc8ATVlbhFHRq68tlXqCKw7+HyUt+Fzb5lylnOA7gxio4GhHjsqDQD64NQUAMbgUz5gqHzmFkXb3YdLft4V9B//N+SVB1Nb6E0GHC4LFFQXbgMcN0YADDwYwykWMlFQiBuS+IJjY6So4oostujiizDGKOOMNNZo441OTERRPCiUsSNFJCb045BE7uiGkEOegCQkGxXpJJFKDuneO0SiyEIA3rzSkgn0kTUCAQBWI2YwaYA55mpfNlOCmWO2CdcIgWTzSgLe/QZKmFqi0KVVWLo5Zn59tokbCT+9AmeWfo7ZUZxiEmVCoXm2EGg1W7bTTDhsJkqmGpm2ySSkhXWqaTMwMdqmlXE1U6kKvom5alWXrvTkk3QVaQAxcq2pJgB4JjNrkaUMAIcCcjZD56OUwhBAAQsU+ypfsQYhgDmvWAgq/z/ZJDBlDQYU64qjhCYrA33PGhhtCc0wyUIzBVDrgIfXrnDMK+ouhIsAGVZjJajBvUCuntXQNhm9MaRb6HHxqjCvK/W+wQs/1Rwbrqoz/HvCngKnWzAuZuBqVcIpLBxhCe460Ai0sCBL8bh2XhzwCaRO0qBWHKvybZq4sCByvXbdC6e3KPJb7goWc/myCYkKTBjB6LzyCcgo7HzCOK8MirIrEi+1cgxFW+oMzIKiSjPTPau3q8LV1FvyyT8jo+vWMHT917ljH72CxiJ4bAbUa+EdSTMkdumY0BW3TLWbGdcMg99l78P3bn6PcLiYpJSN9cQtc91yyWMmzvQLkXtcxv/ZIadtAucvi5IyzpnHbaflbXrO8Maf2/zu4+VFbnubpOCFS0eEs5znAIiILPvILeju8cI6my4NMpP4hafEwWseqdF0Lz374ooLNWbzuq+tAn2OVu/69V5ThTQviLXvfvto6t60mOD77H21KsAuD78e+tv63F9b36gqhK7u3Y90USMVIR62gpIdi18mYoHcYBXAAiaKgALcXgk8ljN5AY5kuGBbCnZxs1S9on8vkEX7suaS9zUATW1x4fswWBT3oQp2o2CB6lzRvwC8L4Lv+CEA7GE/HM2PG0CEk7uSeAMSotBGPXuACFfAoXcNYRdMlNECGpDFEnCoi0184o22ZcT/MprxjGhMoxrXyMY2uvGNcIyjHOdIRxqQ8QRSisSvnoQJH+3RSC3w4x8BuYxBEgmMeCQGDPF4ILpMY1TI2MQjIfmtmcFJZKP6zCQpGYsZBOAAYQJXAtXHDEoOZROlNOUrLHlEUypgHpj0UydlQAAOOo1VjXyDtxI1y02q0hoo2KWmQOJLTc1SBvTApChzR44lDRJOhiRAAvBkwC8ZsluuGIQz/5iDmlRjkRALxh2HsCe02FEPT6ii207AQYHhriwIBKD67iCnZNDgnTtQ5y1LYDkNsc48LHgnDpUWgB2iApH/pIwQAoAnf7azTgBdAT6dh4JNSjEG+OQBqCTTzztu/3QSYhNoNcY5j5IxAJEfRYTYbIAfuiBKaSb8EytjqtD0OeCVLcAPOBnppmv8gKEBHI41xskvuZAUd0Kt3Qp+QSGSam1McwkCpEBCH5jSNBgzTego0Scpg55UojIlgkHTICd/vs1QoIhnK0exUhUg6gFtzagP+vlSsHbwBVAjTTN22gISjoKvcvWBLcVpV7TilXQD4JxPbeBX5Gk1CQIQplWfGlFc3hWHEHDqEKdoAoPClaeGRcKezKqy0PqEdI11wFdHyJAUIEq1oK3sEAZ62t/I0H0K+APUUrtYE0xOMTJEnQMWCarb4rZhNuAgaUubKAQ91iViYuFaTUmbov7JPmZzrWBhe4pdzEU0taplhw9/iYuZWfcb3f0BrpaZggEYt33pJYF73YcCFb4vIgBIwHv32wAFWHK+743vD4jI1zoWITEGdsJXEszgBjv4wRCOsIQnTOEKW/jCGM6whjfM4Q57+MMiCAEAOw==",
+I_HEALTHPOT = "data:image/gif;base64,R0lGODlhHgAgAOYAAPbt9ho9IwArCAArAAARAAhGCAgrCBFXERFGETR7NAgRCEaDRmmvacrkyvb/9uTt5BFXCDR7KxFGCBpXERpGEQgrABFXACtpGleVRhpXCE+nNBppABFGACt7ERErCDSMETR7GiuMABpXACt7CBpGCCtpETR7ETRpGkanETR7CCtpCE+MK4OvaafTjHKnT5XKcjR7ACtpAAgRAE+MGkZ7GnLBKytXAE+MEUZ7EU+MAHLBEcHklWCnAHKnK57bRq/bcnKnEZXKK57BT5XBGvb/28HkRnKMEa/TI9PtcuT2lfb2r9vTI/bt2wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACwAAAAAHgAgAAAH/4AzJioZhRsbEBkqiykmHSUrLhggKzMjLgwuLj0zLkJBKDc0H6QzpjNAQDcrP0o/QT89NURESUhFQR89PkeqMx83wagoOTk1SklBRz5BSERKSEdLRSMpNUW4KCY0JiZAoDdArUlAR83PRUfqQSU94UhJRZwzOTpHOjw6SURCQ0FBSoj80KFjSI8UHlwgAdIjCTIf+OwdGeJDiZIeQYA4+wGER6oZHCokeCakRyto6bAVcRgriBCBKFLkCKbigAEELwImmdHQIpKfKocYRBaER4gbKFCokGAARA8UP569WCHkVjp///4lSdILhQYgSpkucKWhBhJX4XQU+elw64+1Rf90hEpqAoGBkbR+oBAy0B7bgLR2HFmbMRyKDggITMjp4FkNHkPS+RgCpMgPh9CCYKPM48aGAgYuPHWxg0i6rTUgCvFpMt7gXp0RK1hAZMeLr0PO/vCBKwkAB0mCrY1chPKNEQgqRKDl4EE0h0UAE/mNJEcMfeaQCKkBJIWEChmE7KsVPR4RB+gBPPtx41jvJK9mkBiQAYhZZOUrMjmPvvFkaEc4RMsLFAwAASrNJOGDQ0I58xsRDzARREVI6HBDD+K1gIAAEsyAglpcrfSPgw9stVAr2OxQEgorQMChh9/cAuJltChRQw03AJRMRevNIIEABwZTGRL+tLWDgsUAwVL/Ribt90JyEJASzkrFRYcMEhlFhsRkK7G31wsBVBDlB6gUUUsqVWF2SxBCAeFDjT8IUVcFFkipj0CQvYZNEDrEGMt957GAgAx1AhPEPj00hM1E+WgGj0Wv+HBWCwEYkMFRN1S0Qw47MBHPLTFctuYR8JQay3clhFOZEiVN95MrMBBFWUGfrLUQBxkkmkNuSrjEBBMrsdoDNEAYkQMPMwFRkDkiiFBERwEmk4SnAPW6GkfB3ICDTB59ZMMQHkWHJS0++MDEDjq04gMQOeAwww0wwJBDKjfMUENRh9r4w68auZJuMtaZQkOxqahygwk35CBECy7c0EIDLWjwQwuJ/hDLCw0qmADCCfVmu20gADs=",
+I_MANAPOT = "data:image/gif;base64,R0lGODlhHgAgAOYAACMRGiMIGkYrRmlPafbT9ox7jGkrcvbT/5V7p0YrYD0aYBEIGq+ewWlPjD0acisaRkYrcntXuCMRRsq47QgAGkYrgysRchEARisaYIx7wZ6M0yMRYNvT9j0jpyMaRhEAYCMRcisacmBPpysag089pxEAexEIRisalSMaYAgARhEIYAgAYGBXuAAATwAARgAAGggIYAgIRhERPQgIGisrafb2/z1GaT1PjCMrRmlyjLjB05Wnnmlyaaeeg1dPPfbt5MGvp9uVeysaGoxyctPBwdvT0/b29gAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACwAAAAAHgAgAAAH/4AQGBImhTIyMSYSiw8YKBsVIiQhFRAeIiwiIg0QIggFNgkONKQQphADAwkVDD8MBQwNOUZGRURABTQNOz2qEDQJwag2AgI5P0UFPTsFREY/RD1BQB4POUC4NhgOGBgDoAkDrUUDPc3PQD3qBRsN4URFQJwQAjw9PD48RUYIQwUFP4ww4MFjSIMHKUQQGdCgCLId+Oz1GLLjx48GBQY4YzDARyoIFF6ceIagQSto6bABcRirAAKBNh4ICCYBhosVGQIWgdDQIpGfKocYRFbAB44ENmxISOEiRAMbDJ5lqIDgVjp///4VKdLLxo0BSpl2cHUjBxFX4XgA+elwK4O1QP94hEqKYYWLkbQY2EAw0B7bgLR09FibMZwNFCteqMhZ41kOH0PS7RgyAAgDh9AKYKPsI4EMFy5APBWhw0i6rTkgIvBpMt7gXp0Rt+hgREeGr0POMtiBq8iBGkWCrY0MhHICD4lH0KrBIZpDIICN/CYiAIA+c0QQ5BiA8IUJBPtqQY9npIb5A88YJDjWu8grCBe8DzCLbHxFAuXNN54MrYdDWhl88EIMqDRTxA4OCeXMb0ZwQEABFRHBQwINgKeBXSlAYINaXK30z4IcbLVQK9joUJINFcTgQoY2fHMLh5fR8kMOOSQAUDIVpQcBUwQGUxkR/rSlw4HFDMBSRibhl0H/YjGQEs5KxUGHDBEZRUbEZCupt1cGJQxYSmW1pFIVZrcUINQAO8jIAAJ1vTCDk/oIBNlr2BTAg4ux0FdeBIm9CUwB+zTQEDYT5aMZPBa9ssNZGpTggglHJVCRDgLoQEA8twBwWZk9wONpLCm8sEE4lf1QknQ/uSIEUZQV9MlaC1FggqAC5PaDSwQQsJKpDUAzgAEC+DDTAAWZs8ACQHTkXzJFXArQratxFEwCCsjk0UcBDOERdFTSssMOBOjAQys7DCCAAhAkIIQQAqSSAAQ5FAXojAzkqpEr4yZTnSkO/JqKKglgkIAACGggQgIaTKDBDQxoICgDsSQgAQYhWPDuBLTVBgIAOw==",
 I_SPIRITPOT = "data:image/gif;base64,R0lGODlhHgAgAOYAACsACFcRI//k9tvTlcq4Rvbkla+MEdOvI6eMK+TBRu3Tcv/tr8GVGv/2255yAIxpEcGVK4xyNNO4cnJPAO2vI6dyEXJPEYxPAMqVT08rAK9yK4xPEREIAGk0CIxPGns0AMGVcmkrAKdPEXs0CGk0EadyT9OnjEYaAGkrCIxPK3s0EYM0EVcaAEYaCGkrEad7aXs0GmkaAEYRACsRCIM0Gv/k21caCGkrGpVXRrh7aSsIAHsrGkYaEUYRCFcaEVcRCHs0KysAABEAAEYICCsICFcREUYREXs0NBEICINGRuTKyv/29u3k5AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACwAAAAAHgAgAAAH/4AeKig2hRkZLTYoiyMqJC4pJTgwKR4dJS8lJRoeJRgQDxs0FqQeph4VFRspEgsSEBIaCA0NBQoJEBYaBAeqHhYbwagPFxcICwUQBwQQCg0LCgcUCR0jCAm4Dyo0KioVoBsVrQUVB83PCQfqEC4a4QoFCZweFwYHBg4GBQ0YDBAQCxpIMGCAgYYRQ0ooqKChADIC+OwdYEBgwQINECo4k1DBQSoPMnQceYZBQyto6bAlcBgLAgaBD0ZcCIaCBxEjIAIW8NDQooKfKhkYRAbBwYQNDx6g6EEEhoYHEp6BSIHhVjp///4VKNDrQYQKSpkmcRUBgQJX4Qwk+Olwq4S1Cf8MhEqqwgiRkbQkPMAw0B7bgLQGHFibMdwDEkaE+Mi55BkCBwzSEWBQIYEEh9AgYKPsYEOGGURuPC0xoEG6rQggYvBpMt7gXp0RA0jSYACIrwzOSiCAq4CAJQWCrY2cgPKGDkZ0AKG1hEk0hwkAN/it4EIIfeYUYEBQYUQPHTYw7KsVPV6DJegFPJOw4VjvAq88/OBgo4JZZOUr1jiPvvFkaAc4RAsIRXDQAirNFECAQ0I581sDTNQAQUUKGLCBBuKZYAQSPXjwgFpcrfSPg0xstVAr2AxQ0gMptMChh9/cAuJltCyAAAIbAJRMRet50AMSBwZTmQL+tDWAgsVUwFL/RibtB0JyLZASzkrFRYeMAhlFpsBkK7G3FwgB6BClBagkUEsqVWF2CwRCVUBAjRJgUJcOJ0ipj0CQvYYNBAbEGMt95+VgRBB1AgPBPho0hM1E+WgGj0WvEHCWCQEQYcNRG1Q0wAUD1BDPLSFctuYB8JQay3cuhFPZAiVN95MrHxBFWUGfrLWQDDYkekFuC7hUQw0rsaoBNBWIcIEDM1VQkDkssJBARwEmU4CnAPW6GkfBbLCCTB59FAMDHkWHJS0EEFDDAAa0QkAFF6zgwQYffHBBKht4gEBRh9oowa8auZJuMtaZQkOxqaiygQobXICBCSVsYIISJkQggQmJShDLCwYoqADDDvVmu20gADs=";
 I_CHANNELING = "data:image/gif;base64,R0lGODlhHgAgAOYAAEYjNBEAESMRIzQjNEY0RgAAERERIzQ0VyMjNEZGVyM0RjRGV09yjHKVryNGV3KvyityjE+v00+VrwAaI3LT7U9yeyuVp0/K03Lt9gARERFPTytychErKyNXV0+vryNGRnLT00+MjIz29jRXV3Kvr6f//4zT0yM0NKft7bj//zRGRk9pabjt7cr//4yvr0ZXV3KMjK/T08rt7Wl7e4OVlae4uMrb20/t23Lt25Xt26f/7YPKuLj/7a/t2yNXRsr/7U+ngzRXRtv/7XKvjCtGNE9pV9Pt22CMaSM0I4yvjEZXRoOeg6e4p7jKuGl7YP//5CsRETQjI0Y0NHtpabi4uKenp4ODg3t7e2lpaVdXV0ZGRjQ0NCMjIxEREQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACwAAAAAHgAgAAAH/4AjHx0VhSEwiEuKS1cziDAhkZIhhR0bFRshOzs5KCw/P0KhNVY1SS4pJSKrIjk4ICAeHpghsCI6OjygPzEvTExNGySqrBivFBYRPpkmOLe5Py0/My9WT1Y0G8SrON2xHhwjITk5IiU6ny0yKytUVjYyHSisIt04Fx4bBh/jziWeLFq4+FDNShMjPnZse3XPw4kCHEJ0u+WJRwsYJ1RkuUIjxokQOlYZA3HjggQOBU54mIgCBQ9dLzhs2aKECJYTK+bVw3ChJLgMH0g405EihS4XTrJgQZKxChYVIVRhwADiwgULHDL4AFGOKA8WMIKc2IJlBhIVTbSc+LBDxNSqEf8sIMjQAcQqXCxmfNiiRYsKK1acEjmBYAEJVxcixJ1b9y6PITL5+tUyZSkSLgIyaIBl1eQJunZFtBxxgoCUmVxOdNFChAuXKAYm1Kp6NWvd0D1kSpGiZcsJAVqyvB4gQMCED7Rr0yUBwtkOAwMAmB6LGXPxLgYMcHggK0IILhkcPICVowIHLgOiuB6wpUvx69gN7PgGgUsXB7Bw5JhgQABmBAagh4AA7l3n2nyJbQDebSCEkB121vm3hX0BBNBFfLVYtcFcm4FAAgcPPkigawjY10WFXBhQAWcQMOYBCStkJ2OFFxbnmo0BdvGBCbC0GF4DG/wmowEXWhhAhAIcSSTpEcw1yEEXJzCgwAQCDFlAkfEVZ0CFBmSgBAywhMDBkTMgQOWQWxpQgIUnundhBl6uMJ+YGXBwwgEDohmAmgVcGcCa2HWRgRYrMEfnCRUokGd2ezLap599/pmBFE4MsUMIn/GzwqInNtpFAV70WaSkSKxQC6YZnBAkmmluCeqjFT7axQuanMSBCipcGGKanT4aaZ8GnODEETuQ8IEgCRB44bLLxuprn15wMEMRRwDxQAj5KIols70+mwFEHxQxLAncWeBAiVDoyuaovoYKEQfiVuDBtRB0MCCzkVZYoRf89hutTEocIYEEgQAAOw==";
 
@@ -86,102 +88,111 @@ if (navigator.userAgent.indexOf('Chrome') > -1) ISCHROME = true;
 loadSettingsObject();
 loadLTCObject();
 
+if (_settings.isShowHighlight) setLogCSS();
+
 function evDomLoad(){
-	if (!ISCHROME && !cssInserted()) {
-		GM_addStyle(GM_getResourceText("jQueryUICSS"));
-		cssAdded();
-	}
-	var a = localStorage.getItem(HV_EQUIP);
-	var c = (a === null) ? false : JSON.parse(a);
+	var doc = document,
+		docSearch = doc.location.search,
+		timer = 0,
+		invAlert = localStorage.getItem(HV_EQUIP),
+		invFull = (invAlert === null) ? false : JSON.parse(invAlert);
 	
+	if (doc.getElementsByClassName('fd10')[0].textContent !== "Health points") ISHVFONT = true;
+	if (doc.getElementById('pattrform')) ISCHARPAGE = true;
+	if (doc.getElementsByClassName('btcp').length > 0) ISBATTLEOVER = true;
+	if (!ISCHROME && !doc.getElementById('cssdiv')) {
+		GM_addStyle(GM_getResourceText("jQueryUICSS"));
+		var a = doc.createElement("div");
+		a.setAttribute("id", "cssdiv");
+		a.setAttribute("style", "visibility:hidden");
+		doc.documentElement.insertBefore(a);
+	}
 	if (_settings.isChangePageTitle && document.title === "The HentaiVerse") {
-		var t = TimeCounter(1);
+		timer = TimeCounter(1);
 		document.title = _settings.customPageTitle;
 		_ltc.hidetitle[0]++;
-		_ltc.hidetitle[1] += (TimeCounter(0, t));
+		_ltc.hidetitle[1] += (TimeCounter(0, timer));
 	}
-	if (document.getElementById("togpane_log")) ISBATTLE = true;
+	if (doc.getElementById("togpane_log")) ISBATTLE = true;
 	if (ISBATTLE) {
+		collectRoundInfo();
 		if (_settings.isShowMonsterNumber) showMonsterNumber();
 		if (_settings.isMainEffectsAlertSelf) AlertEffectsSelf();
 		if (_settings.isMainEffectsAlertMonsters) AlertEffectsMonsters();
-		collectRoundInfo();
+		if (_settings.isShowHighlight) {
+			timer = TimeCounter(1);
+			highlightLogText();
+			_ltc.highlightLogText[0]++;
+			_ltc.highlightLogText[1] += (TimeCounter(0, timer));
+		}
 		if (_settings.warnMode[_round.battleType]) {
-			var t2 = TimeCounter(1);
+			timer = TimeCounter(1);
 			healthWarning();
 			_ltc.healthWarning[0]++;
-			_ltc.healthWarning[1] += (TimeCounter(0, t2));
+			_ltc.healthWarning[1] += (TimeCounter(0, timer));
 		}
 		if ((_round !== null) && (_round.currRound > 0)) {
-			var t3 = TimeCounter(1);
+			timer = TimeCounter(1);
 			showRoundCounter();
 			_ltc.showRoundCounter[0]++;
-			_ltc.showRoundCounter[1] += (TimeCounter(0, t3));
+			_ltc.showRoundCounter[1] += (TimeCounter(0, timer));
 		}
 		displayPowerupBox();
 		if (_settings.isShowDivider) {
-			var t4 = TimeCounter(1);
+			timer = TimeCounter(1);
 			addBattleLogDividers();
 			_ltc.addBattleLogDividers[0]++;
-			_ltc.addBattleLogDividers[1] += (TimeCounter(0, t4));
-		}
-		if (_settings.isShowHighlight) {
-			var t5 = TimeCounter(1);
-			highlightLogText();
-			_ltc.highlightLogText[0]++;
-			_ltc.highlightLogText[1] += (TimeCounter(0, t5));
+			_ltc.addBattleLogDividers[1] += (TimeCounter(0, timer));
 		}
 		if (_settings.isShowSelfDuration) {
-			var t7 = TimeCounter(1);
+			timer = TimeCounter(1);
 			showSelfEffectsDuration();
 			_ltc.showSelfEffectsDuration[0]++;
-			_ltc.showSelfEffectsDuration[1] += (TimeCounter(0, t7));
+			_ltc.showSelfEffectsDuration[1] += (TimeCounter(0, timer));
 		}
 		if ((_round !== null) && (_round.monsters.length > 0)){
-			var t6 = TimeCounter(1);
+			timer = TimeCounter(1);
 			showMonsterStats();
 			_ltc.showMonsterStats[0]++;
-			_ltc.showMonsterStats[1] += (TimeCounter(0, t6));
+			_ltc.showMonsterStats[1] += (TimeCounter(0, timer));
 		}
-		if (isBattleOver()) {
+		if (ISBATTLEOVER) {
 			if (_settings.isShowEndStats) {
-				var t8 = TimeCounter(1);
+				timer = TimeCounter(1);
 				showBattleEndStats();
-				_ltc.showBattleEndStats[1] += (TimeCounter(0, t8));
+				_ltc.showBattleEndStats[1] += (TimeCounter(0, timer));
 			}
 			saveStats();
 			_round.reset();
 		}
 		if (_settings.isShowStatsPopup) {
-			var t45 = TimeCounter(1);
+			timer = TimeCounter(1);
 			MonsterPopup();
 			_ltc.monsterpopup[0]++;
-			_ltc.monsterpopup[1] += TimeCounter(0, t45);
+			_ltc.monsterpopup[1] += TimeCounter(0, timer);
 		}
 		if (_settings.isShowScanButton || _settings.isShowSkillButton || _settings.isEnableScanHotkey || _settings.isEnableSkillHotkey) {
-			var t46 = TimeCounter(1);
+			timer = TimeCounter(1);
 			Scanbutton();
 			_ltc.showscanbutton[0]++;
-			_ltc.showscanbutton[1] += TimeCounter(0, t46);
+			_ltc.showscanbutton[1] += TimeCounter(0, timer);
 		}
 	} else {
 		if (!ISBATTLE && (_round !== null)) _round.reset();
-		else if (_settings.isColumnInventory && isItemInventoryPage()) initItemsView();
-		else if (isCharacterPage()) collectCurrentProfsData();
-		else if (isShrinePage()) {
-			if (_settings.isTrackShrine)
-				captureShrine();
-			if (ISCHROME)
-				window.document.onkeydown = null;	// workaround to make enable SPACE key
+		else if (_settings.isColumnInventory && docSearch === "?s=Character&ss=it") initItemsView();
+		else if (ISCHARPAGE) collectCurrentProfsData();
+		else if (docSearch === "?s=Bazaar&ss=ss") {
+			if (_settings.isTrackShrine) captureShrine();
+			if (ISCHROME) window.document.onkeydown = null;	// workaround to make enable SPACE key
 		}
 	}
 	if (_settings.isShowSidebarProfs) {
-		var t9 = TimeCounter(1);
+		timer = TimeCounter(1);
 		showSidebarProfs();
 		_ltc.showSidebarProfs[0]++;
-		_ltc.showSidebarProfs[1] += (TimeCounter(0, t9));
+		_ltc.showSidebarProfs[1] += (TimeCounter(0, timer));
 	}
-	if (c) inventoryWarning();
+	if (invFull) inventoryWarning();
 	initUI();
 	
 	if (ISBATTLE) {
@@ -217,76 +228,80 @@ function evDomLoad(){
 		_ltc.isbattle[0]++;
 		_ltc.isbattle[1] += TimeCounter(0, millisecondsAll);
 	} else {
-		if (isEquipmentInventoryPage() && _settings.isShowTags[0]) {
-			var t47 = TimeCounter(1);
+		if (docSearch === "?s=Character&ss=eq" && _settings.isShowTags[0]) {
+			timer = TimeCounter(1);
 			TaggingItems(false);
 			_ltc.taggingitems[0]++;
-			_ltc.taggingitems[1] += TimeCounter(0, t47);
+			_ltc.taggingitems[1] += TimeCounter(0, timer);
 		}
-		if (isAllInventoryPage() && _settings.isShowTags[5]) {
-			var t47 = TimeCounter(1);
+		if (docSearch === "?s=Character&ss=in" && _settings.isShowTags[5]) {
+			timer = TimeCounter(1);
 			TaggingItems(true);
 			_ltc.taggingitems[0]++;
-			_ltc.taggingitems[1] += TimeCounter(0, t47);
+			_ltc.taggingitems[1] += TimeCounter(0, timer);
 		}
-		if (isShopPage() && _settings.isShowTags[1]) {
-			var t48 = TimeCounter(1);
+		if (docSearch.indexOf("?s=Bazaar&ss=es") > -1 && _settings.isShowTags[1]) {
+			timer = TimeCounter(1);
 			TaggingItems(false);
 			_ltc.taggingitems[0]++;
-			_ltc.taggingitems[1] += TimeCounter(0, t48);
+			_ltc.taggingitems[1] += TimeCounter(0, timer);
 		}
-		if (isItemWorldPage() && _settings.isShowTags[2]) {
-			var t49 = TimeCounter(1);
+		if (docSearch.indexOf("?s=Battle&ss=iw") > -1 && _settings.isShowTags[2]) {
+			timer = TimeCounter(1);
 			TaggingItems(false);
 			_ltc.taggingitems[0]++;
-			_ltc.taggingitems[1] += TimeCounter(0, t49);
+			_ltc.taggingitems[1] += TimeCounter(0, timer);
 		}
-		if (isMoogleWrite() && _settings.isShowTags[3]) {
-			var t50 = TimeCounter(1);
+		if (docSearch.indexOf("?s=Bazaar&ss=mm&filter=Write") > -1 && _settings.isShowTags[3]) {
+			timer = TimeCounter(1);
 			$("#mailform #leftpane").children().eq(3).children().eq(1).click(TaggingItems);
 			_ltc.taggingitems[0]++;
-			_ltc.taggingitems[1] += TimeCounter(0, t50);
+			_ltc.taggingitems[1] += TimeCounter(0, timer);
 		}
-		if (isForgePage() && _settings.isShowTags[4]) {
-			var t51 = TimeCounter(1);
+		if (docSearch.indexOf("?s=Bazaar&ss=fr") > -1 && _settings.isShowTags[4]) {
+			timer = TimeCounter(1);
 			TaggingItems(false);
-			if (_settings.isDisableForgeHotKeys) {
-				document.onkeypress = null;
-			}
+			if (_settings.isDisableForgeHotKeys) document.onkeypress = null;
 			_ltc.taggingitems[0]++;
-			_ltc.taggingitems[1] += TimeCounter(0, t51);
+			_ltc.taggingitems[1] += TimeCounter(0, timer);
 		}
 		if (_settings.isRememberSkillsTypes) {
 			loadCollectdataObject();
-			if (_collectdata.skillmid.length > 3) {
-				SaveToDatabase(2);
-			}
+			if (_collectdata.skillmid.length > 3) SaveToDatabase(2);
 		}
-		if ((_settings.isStartAlert || _settings.isShowEquippedSet) && !isHVFontEngine()) {
-			var t52 = TimeCounter(1);
+		if ((_settings.isStartAlert || _settings.isShowEquippedSet) && !ISHVFONT) {
+			timer = TimeCounter(1);
 			FindSettingsStats();
 			_ltc.startalerts[0]++;
-			_ltc.startalerts[1] += TimeCounter(0, t52);
+			_ltc.startalerts[1] += TimeCounter(0, timer);
 		}
-		if (_settings.isStartAlert && !isHVFontEngine()) {
-			var t53 = TimeCounter(1);
+		if (_settings.isStartAlert && !ISHVFONT) {
+			timer = TimeCounter(1);
 			StartBattleAlerts();
 			_ltc.startalerts[0]++;
-			_ltc.startalerts[1] += TimeCounter(0, t53);
+			_ltc.startalerts[1] += TimeCounter(0, timer);
 		}
 	}
-	if (!isHVFontEngine() && _settings.isShowEquippedSet) {
-		var t54 = TimeCounter(1);
+	if (!ISHVFONT && _settings.isShowEquippedSet) {
+		timer = TimeCounter(1);
 		SetDisplay();
 		_ltc.showset[0]++;
-		_ltc.showset[1] += TimeCounter(0, t54);
+		_ltc.showset[1] += TimeCounter(0, timer);
 	}
 	_ltc.main[0]++;
 	_ltc.main[1] += TimeCounter(0, millisecondsAll);
 	_ltc.save();
 }
-function highlightLogText() {
-	var bTD="#togpane_log tr > td + td + td[title*=", bCSS = "";
+
+/* =====
+ setLogCSS
+ Creates the CSS used to color the Battlelog.
+ It uses complex selectors, so be careful!
+===== */
+function setLogCSS() {
+	var bTD = "#togpane_log tr > td + td + td[title*=",
+		bCSS = "";
+		
 	if (_settings.isAltHighlight){
 		bCSS = bTD+ "'gains the effect'], "+ bTD+ "'penetrated'], "+ bTD+ "'stun'], "+ bTD+ "'ripened soul']"
 		+ "{color:#800080}"
@@ -312,7 +327,6 @@ function highlightLogText() {
 		+ bTD+ "'uses']"
 		+ "{color:orange}";
 	}
-	
 	bCSS += bTD+ "'you crit'], "+ bTD+ "'crits'], "+ bTD+ "'blasts'],"+ bTD+ "'unleash']"
 	+ "{font-weight:bold}"
 	+ bTD+ "'you cast'], "+ bTD+ "'explodes for']"
@@ -335,147 +349,191 @@ function highlightLogText() {
 	+ "{color:#C97600}";
 	
 	GM_addStyle(bCSS);
-	var array = document.getElementById('togpane_log').getElementsByTagName('tr');
-	var i = array.length;
+}
+/* =====
+ highlightLogText
+ Copies the text of each Battle Log entry into a title element.
+ This is because CSS cannot currently select text nodes.
+===== */
+function highlightLogText() {
+	var logRows = document.getElementById('togpane_log').getElementsByTagName('tr'),
+		i = logRows.length,
+		currRow = null;
+
 	while (i--) {
-		var b = array[i].lastChild;
-		b.title = b.textContent.toLowerCase();
+		currRow = logRows[i].lastChild;
+		currRow.title = currRow.textContent.toLowerCase();
 	}
 }
+/* =====
+ addBattleLogDividers
+ Adds a divider between Battle Log rounds.
+===== */
 function addBattleLogDividers() {
-	var previousTurn = null, array = document.getElementById('togpane_log').getElementsByTagName('tr'), i = array.length;
+	var doc = document,
+		logRows = doc.getElementById('togpane_log').getElementsByTagName('tr'),
+		i = logRows.length,
+		prevTurn = null,
+		currTurn = null,
+		parent = null,
+		divider = null;
+	
 	while (i--) {
-		var currentTurn = array[i].firstChild.innerHTML;
-    if (!isNaN(parseInt(currentTurn))) {
-      if (previousTurn && previousTurn !== currentTurn) {
-        var tr = document.createElement('tr');
-        tr.innerHTML = "<td colspan='3'><hr style='border:0; height:1px; background-color:#666666; color:#666666' /></td>";
-        var parent = array[i].firstChild.parentNode;
-        parent.parentNode.insertBefore(tr, parent.nextSibling);
-      }
-      previousTurn = currentTurn;
-    }
-  }
-}
-function showRoundCounter() {
-	var b = "";
-	var c = _round.currRound;
-	var a = _round.maxRound;
-	b = a > 0 ? c + "/" + a : "#" + c;
-  div = document.createElement('div');
-  div.setAttribute('style', 'font-size:18px;font-weight:bold;font-family:arial,helvetica,sans-serif;text-align:right;position:absolute;top:6px;right:17px;');
-  div.innerHTML = "<div style='" + (c === a - 1 ? "color:orange;'>" : c === a ? "color:red;'>" : "'>") + b + "</div>";
-  document.getElementById('battleform').children[0].appendChild(div);
-}
-function displayPowerupBox() {
-	var a = document.getElementsByClassName("btp");
-	var c = document.createElement("div");
-	c.setAttribute("style", "position:absolute;top:7px;right:5px;background-color:#EFEEDC;width:30px;height:32px;border-style:double;border-width:2px;border-color:#555555;");
-	var e = document.getElementById("ikey_p");
-	if (e === null) c.innerHTML = "<span style='font-size:16px;font-weight:bold;font-family:arial,helvetica,sans-serif;text-align:center;line-height:32px;cursor:default'>P</span>";
-	else {
-		var b = e.getAttribute("onmouseover").match(/set_infopane_item\('.+?'/img)[0].substring(18);
-		c.setAttribute("onmouseover", e.getAttribute("onmouseover"));
-		c.setAttribute("onmouseout", e.getAttribute("onmouseout"));
-		c.setAttribute("onclick", 'var e = createEvent("Events"); e.initEvent("keydown", true, true); e.altKey = false; e.ctrlKey = false; e.shiftKey = false; e.metaKey = false; e.keyCode = 80; document.dispatchEvent(e);');
-		if (b.match(/health/i)) c.innerHTML = "<img class='PowerupGemIcon' src='"+ I_HEALTHPOT+ "' id='healthgem'>";
-		else if (b.match(/mana/i)) c.innerHTML = "<img class='PowerupGemIcon' src='"+ I_MANAPOT+ "' id='managem'>";
-		else if (b.match(/spirit/i)) c.innerHTML = "<img class='PowerupGemIcon' src='"+ I_SPIRITPOT+ "' id='spiritgem'>";
-		else if (b.match(/mystic/i)) c.innerHTML = "<img class='PowerupGemIcon' src='"+ I_CHANNELING+ "' id='channelgem'>";
+		currTurn = logRows[i].firstChild.innerHTML;
+		if (!isNaN(parseInt(currTurn))) {
+			if (prevTurn && prevTurn !== currTurn) {
+				divider = doc.createElement('tr');
+				divider.innerHTML = "<td colspan='3'><hr style='border:0; height:1px; background-color:#666666; color:#666666' /></td>";
+				parent = logRows[i].firstChild.parentNode;
+				parent.parentNode.insertBefore(divider, parent.nextSibling);
+			}
+			prevTurn = currTurn;
+		}
 	}
-	a[0].appendChild(c);
 }
+/* =====
+ showRoundCounter
+ Adds a Round counter to the Battle screen.
+===== */
+function showRoundCounter() {
+	var doc = document,
+		curRound = _round.currRound,
+		maxRound = _round.maxRound,
+		dispRound = maxRound > 0 ? curRound + "/" + maxRound : "#" + curRound,
+		div = doc.createElement('div');
+	
+	div.setAttribute('style', 'font-size:18px;font-weight:bold;font-family:arial,helvetica,sans-serif;text-align:right;position:absolute;top:6px;right:17px;');
+	div.innerHTML = "<div style='" + (curRound === maxRound - 1 ? "color:orange;'>" : curRound === maxRound ? "color:red;'>" : "'>") + dispRound + "</div>";
+	doc.getElementById('battleform').children[0].appendChild(div);
+}
+/* =====
+ displayPowerupBox
+ Adds a Powerup box to the Battle screen.
+ Creates a shortcut to the powerup if one is available.
+===== */
+function displayPowerupBox() {
+	var doc = document,
+		battleMenu = doc.getElementsByClassName("btp"),
+		powerBox = doc.createElement("div");
+		powerup = doc.getElementById("ikey_p");
+	
+	powerBox.setAttribute("style", "position:absolute;top:7px;right:5px;background-color:#EFEEDC;width:30px;height:32px;border-style:double;border-width:2px;border-color:#555555;");
+	if (powerup === null) powerBox.innerHTML = "<span style='font-size:16px;font-weight:bold;font-family:arial,helvetica,sans-serif;text-align:center;line-height:32px;cursor:default'>P</span>";
+	else {
+		var powerInfo = powerup.getAttribute("onmouseover");
+		powerBox.setAttribute("onmouseover", powerInfo);
+		powerBox.setAttribute("onmouseout", powerup.getAttribute("onmouseout"));
+		powerBox.setAttribute("onclick", 'var e = createEvent("Events"); e.initEvent("keydown", true, true); e.altKey = false; e.ctrlKey = false; e.shiftKey = false; e.metaKey = false; e.keyCode = 80; document.dispatchEvent(e);');
+		if (powerInfo.indexOf('Health') > -1) powerBox.innerHTML = "<img class='PowerupGemIcon' src='"+ I_HEALTHPOT+ "' id='healthgem'>";
+		else if (powerInfo.indexOf('Mana') > -1) powerBox.innerHTML = "<img class='PowerupGemIcon' src='"+ I_MANAPOT+ "' id='managem'>";
+		else if (powerInfo.indexOf('Spirit') > -1) powerBox.innerHTML = "<img class='PowerupGemIcon' src='"+ I_SPIRITPOT+ "' id='spiritgem'>";
+		else if (powerInfo.indexOf('Mystic') > -1) powerBox.innerHTML = "<img class='PowerupGemIcon' src='"+ I_CHANNELING+ "' id='channelgem'>";
+	}
+	battleMenu[0].appendChild(powerBox);
+}
+/* =====
+ showMonsterStats
+ Displays monsters HP, MP, SP.
+ If the monster has been scanned, extra stats like weaknesses and resistances are displayed.
+===== */
 function showMonsterStats() {
 	if (!(_settings.isShowMonsterHP || _settings.isShowMonsterMP || _settings.isShowMonsterSP || _settings.isShowMonsterElements || _settings.isShowMonsterDuration || _settings.isShowStatsPopup)) return;
-	var a = new ElementalStats();
-	var monPane = document.getElementById('monsterpane');
-	var array = monPane.getElementsByClassName('btm1');
-	var i = array.length;
-	while(i--){
-		var u = array[i];
-		var monInfo = _round.monsters[i];
+	var monElem = new ElementalStats(),
+		monPane = document.getElementById('monsterpane'),
+		monList = monPane.getElementsByClassName('btm1'),
+		i = monList.length,
+		timer = 0,
+		timer1 = 0
+		monCurrent = null,
+		monNameDiv = null,
+		monInfo = null,
+		monHP = null,
+		monMP = null,
+		monSP = null;
+	
+	while (i--){
+		monCurrent = monList[i];
+		monInfo = _round.monsters[i];
 		if (monInfo === undefined) continue;
-		var k = u.children[1].children[0];
-		var s = k.children.length;
-		var e = u.children[2].children[0];
-		var h = u.children[2].children[1];
-		var sp = u.children[2].children[2];
+		monNameDiv = monCurrent.children[1].children[0]
+		monHP = monCurrent.children[2].children[0];
+		monMP = monCurrent.children[2].children[1];
+		monSP = monCurrent.children[2].children[2];
 		
-		if (e.innerHTML.indexOf('bardead') > -1){
+		if (monHP.innerHTML.indexOf('bardead') > -1){
 			monInfo.currHp = 0;
 			continue;
 		};
 		if (_settings.isShowMonsterHP || _settings.isShowMonsterHPPercent || _settings.isShowStatsPopup) {
-			var t31 = TimeCounter(1);
-			var l = monInfo.maxHp;
-			var o = 0;
-			var g = "";
-			var b = e.getElementsByTagName("img")[1].getAttribute("style").slice(6,-2) / 120;
-			if (_settings.isShowMonsterHPPercent) g = (b * 100).toFixed(2) + "%"
+			timer = TimeCounter(1);
+			var maxHP = monInfo.maxHp,
+				adjHP = 0,
+				dispHP = "",
+				partHP = monHP.getElementsByTagName("img")[1].getAttribute("style").slice(6,-2) / 120;
+			if (_settings.isShowMonsterHPPercent) dispHP = (partHP * 100).toFixed(2) + "%"
 			else {
-				o = Math.floor(b * l);
-				g = (o > 0 ? o : 1) + " / " + l;
+				adjHP = Math.floor(partHP * maxHP);
+				dispHP = (adjHP > 0 ? adjHP : 1) + " / " + maxHP;
 			}
-			var r = "<div style='position:absolute;z-index:1074;top:-1px;font-size:8pt;font-family:arial,helvetica,sans-serif;font-weight:bolder;color:yellow;width:120px;text-align:center'>" + g + "</div>";
-			e.innerHTML += r;
+			monHP.innerHTML += "<div style='position:absolute;z-index:1074;top:-1px;font-size:8pt;font-family:arial,helvetica,sans-serif;font-weight:bolder;color:yellow;width:120px;text-align:center'>" + dispHP + "</div>";
 			_ltc.showhp[0]++;
-			_ltc.showhp[1] += TimeCounter(0, t31);
+			_ltc.showhp[1] += TimeCounter(0, timer);
 		}
 		if (_settings.isShowMonsterMP || _settings.isShowStatsPopup) {
-			var t32 = TimeCounter(1);
-			var v = h.getElementsByTagName("img")[1].getAttribute("style").slice(6,-2) / 120;
-			var f = (v * 100).toFixed(1);
-			var j = "<div style='position:absolute;z-index:1074;top:11px;font-size:8pt;font-family:arial,helvetica,sans-serif;font-weight:bolder;color:yellow;width:120px;text-align:center'>" + f + "%</div>";
-			h.innerHTML += j;
+			timer = TimeCounter(1);
+			var adjMP = ((monMP.getElementsByTagName("img")[1].getAttribute("style").slice(6,-2) / 120) * 100).toFixed(1);
+			monMP.innerHTML += "<div style='position:absolute;z-index:1074;top:11px;font-size:8pt;font-family:arial,helvetica,sans-serif;font-weight:bolder;color:yellow;width:120px;text-align:center'>" 
+				+ adjMP
+				+ "%</div>";
 			_ltc.showmp[0]++;
-			_ltc.showmp[1] += TimeCounter(0, t32);
+			_ltc.showmp[1] += TimeCounter(0, timer);
 		}
-		if (sp && (_settings.isShowMonsterSP || _settings.isShowStatsPopup)) {
-			var t62 = TimeCounter(1);
-			var sppart = sp.getElementsByTagName("img")[1].getAttribute("style").slice(6,-2) / 120;
-			var perc = (sppart * 100).toFixed(1);
-			var sptext = "<div style='position:absolute;z-index:1074;top:23px;font-size:8pt;font-family:arial,helvetica,sans-serif;font-weight:bolder;color:yellow;width:120px;text-align:center'>" + perc + "%</div>";
-			sp.innerHTML += sptext;
+		if (monSP && (_settings.isShowMonsterSP || _settings.isShowStatsPopup)) {
+			timer = TimeCounter(1);
+			monSP.innerHTML += "<div style='position:absolute;z-index:1074;top:23px;font-size:8pt;font-family:arial,helvetica,sans-serif;font-weight:bolder;color:yellow;width:120px;text-align:center'>" 
+				+ ((monSP.getElementsByTagName("img")[1].getAttribute("style").slice(6,-2) / 120) * 100).toFixed(1) 
+				+ "%</div>";
 			_ltc.showsp[0]++;
-			_ltc.showsp[1] += TimeCounter(0, t62);
+			_ltc.showsp[1] += TimeCounter(0, timer);
 		}
 		if (_settings.isShowStatsPopup) {
-			var t45 = TimeCounter(1);
-			o = Math.floor(b * l);
-			monInfo.currHp = o;
-			monInfo.currmp = v;
+			timer = TimeCounter(1);
+			monInfo.currHp = adjHP > 0 ? adjHP : Math.floor(partHP * maxHP);
+			monInfo.currmp = adjMP;
 			_round.save();
-			_ltc.monsterpopup[1] += TimeCounter(0, t45);
+			_ltc.monsterpopup[1] += TimeCounter(0, timer);
 		}
-		var t33 = TimeCounter(1);
+		timer = TimeCounter(1);
+		/* CLEANUP MARKER */
 		if (_settings.isShowMonsterElements && (monInfo.id < 1000 || _settings.isShowElemHvstatStyle)) {
-			var t;
-			getMonsterElementsById(a, monInfo.id);
-			var d = a.majWeak === "-" ? "" : "[<span style='color:#005826'>" + a.majWeak + "</span>";
-				d += a.minWeak === "-" ? "" : ";<span style='color:#3CB878'>" + a.minWeak + "</span>";
-				d += a.resist === "-" ? "" : ";<span style='color:red'>" + a.resist + "</span>";
-				d += a.imperv === "-" ? "" : ";<span style='color:black'>" + a.imperv + "</span>]";
-			if (_settings.isShowElemHvstatStyle) {
+			getMonsterElementsById(monElem, monInfo.id);
+			var t = "",
+				d = (monElem.majWeak === "-" ? "" : "[<span style='color:#005826'>" + monElem.majWeak + "</span>")
+				+ (monElem.minWeak === "-" ? "" : ";<span style='color:#3CB878'>" + monElem.minWeak + "</span>")
+				+ (monElem.resist === "-" ? "" : ";<span style='color:red'>" + monElem.resist + "</span>")
+				+ (monElem.imperv === "-" ? "" : ";<span style='color:black'>" + monElem.imperv + "</span>]");
 			
-				var milliseconds2 = TimeCounter(1);
-				var kk = k.children[0];
-				var kkl = kk.innerHTML.length;
-				var mclass = "";
-				var mpl = "";
-				var mweak = "";
-				var mresist = "";
-				var mimperv = "";
-				var mskilltype = "";
-				var mskillspell = "";
-				var mskilltype2 = "";
-				var mskillspell2 = "";
-				var mskilltype3 = "";
-				var mskillspell3 = "";
-				var mspirittype = "";
-				var mspiritsksp = "";
-				var mattack = "";
-				var allm = 0;
-				var allm1 = 0;
+			if (_settings.isShowElemHvstatStyle) {
+				timer1 = TimeCounter(1);
+				var monName = monNameDiv.children[0],
+					monNameLength = monName.innerHTML.length,
+					mclass = "",
+					mpl = "",
+					mweak = "",
+					mresist = "",
+					mimperv = "",
+					mskilltype = "",
+					mskillspell = "",
+					mskilltype2 = "",
+					mskillspell2 = "",
+					mskilltype3 = "",
+					mskillspell3 = "",
+					mspirittype = "",
+					mspiritsksp = "",
+					mattack = "",
+					allm = 0,
+					allm1 = 0;
+				
 				mclass = monInfo.mclass;
 				allm += 2;
 				if (_settings.isShowPLHvstatStyle) {
@@ -504,11 +562,12 @@ function showMonsterStats() {
 								allm -= 7;
 							}
 						} else {
-							var mskillspellarray = sk.split("0");
-							var mskilltypearray = String(MElemNum(monInfo.mskilltype, 1)).split(", ");
-							var sk34 = sk.replace("0","").search(/(3|4)/);
-							var other1 = 0;
-							var other2 = 0;
+							var mskillspellarray = sk.split("0"),
+								mskilltypearray = String(MElemNum(monInfo.mskilltype, 1)).split(", "),
+								sk34 = sk.replace("0","").search(/(3|4)/),
+								other1 = 0,
+								other2 = 0;
+							
 							if (sk.length === 3) {
 								if (sk34 >= 0) {
 									other = sk34 > 0 ? 0 : 1;
@@ -684,22 +743,21 @@ function showMonsterStats() {
 					mresist = mresist.replace(", Void", "").replace("Void", "");
 					mimperv = mimperv.replace(", Void", "").replace("Void", "");
 				}
-				// Disabling text resizing until it can be implemented with less suck - GaryMcNabb
-				/*
+
 				if (_settings.ResizeMonsterInfo){
-					var maxchar = (12 - kkl) * (kkl <= 12 ? 0.7 : 1.4) + 46;
+					var maxchar = (12 - monNameLength) * (monNameLength <= 12 ? 0.7 : 1.4) + 46;
 					allm1 = allm + mclass.length + mskillspell.length + mskilltype.length + mimperv.length + mresist.length + mweak.length + mattack.length + String(mpl).length + mskillspell2.length + mskilltype2.length + mskillspell3.length + mskilltype3.length + mspiritsksp.length + mspirittype.length;
 					if (allm1 > maxchar) {
-						if (kkl > 12 && !isHVFontEngine()) {
-							kk.css("font-size", 12);
-							kk.css("font-weight", "bold")
+						if (monNameLength > 12 && !ISHVFONT) {
+							monName.css("font-size", 12);
+							monName.css("font-weight", "bold")
 						}
-						if (kkl >= 17 && !isHVFontEngine()) kk.html(kk.html().slice(0,15) + "...");
-						kkl = kk.html().length;
-						if (kkl <= 5) maxchar =  (12 - kkl)*1.9 + 46;
-						else if (kkl <= 12) maxchar =  (12 - kkl)*1.95 + 46;
-						else if (kkl < 17) maxchar =  (17 - kkl)*0.8 + 46;
-						else maxchar =  (18 - kkl)*1.2 + 46;
+						if (monNameLength >= 17 && !ISHVFONT) monName.html(monName.html().slice(0,15) + "...");
+						monNameLength = monName.html().length;
+						if (monNameLength <= 5) maxchar =  (12 - monNameLength)*1.9 + 46;
+						else if (monNameLength <= 12) maxchar =  (12 - monNameLength)*1.95 + 46;
+						else if (monNameLength < 17) maxchar =  (17 - monNameLength)*0.8 + 46;
+						else maxchar =  (18 - monNameLength)*1.2 + 46;
 					}
 					if (allm1 > maxchar) {
 						mimperv = mimperv.replace(/\s/g, "");
@@ -803,7 +861,7 @@ function showMonsterStats() {
 						mweak = mweak.replace("Fi", "F").replace("Co", "C").replace("El", "E").replace("Wi", "W").replace("Ho", "H").replace("Da", "D").replace("So", "S").replace("Eem", "Elem");
 					}
 				}
-				*/
+
 				if (mclass !== "0" && mclass !== "undefined" && mclass !== "unde" && mclass !== "und") {
 					d = "";
 					if (_settings.isShowClassHvstatStyle){
@@ -834,24 +892,24 @@ function showMonsterStats() {
 					}
 				} else d = "[<span style='color:blue;font-weight:bold'>NEW</span>]";
 				_ltc.isShowElemHvstatStyle[0]++;
-				_ltc.isShowElemHvstatStyle[1] += TimeCounter(0, milliseconds2);
+				_ltc.isShowElemHvstatStyle[1] += TimeCounter(0, timer1);
 			}
-			if ( s > 1 ) {
+			if (ISHVFONT) {
 				t = "<div style='cursor:default;position:relative;top:-2px;left:2px;padding:0 1px;margin-left:0px;white-space:nowrap'>" + d + "</span></div>";
-				k.innerHTML += t;
+				monNameDiv.innerHTML += t;
 			} else {
 				t = "<div style='font-family:arial;font-size:7pt;font-style:normal;font-weight:bold;display:inline;cursor:default;padding:0 1px;margin-left:1px;white-space:nowrap'>" + d + "</span></div>";
-				k.children[0].innerHTML += t;
-				k.children[0].style.whiteSpace = "nowrap";
+				monNameDiv.children[0].innerHTML += t;
+				monNameDiv.children[0].style.whiteSpace = "nowrap";
 			}
 		}
 		_ltc.showelem[0]++;
-		_ltc.showelem[1] += TimeCounter(0, t33);
+		_ltc.showelem[1] += TimeCounter(0, timer);
 		if (_settings.isShowMonsterDuration) {
-			var t2 = TimeCounter(1);
-			showMonsterEffectsDuration(u);
+			timer = TimeCounter(1);
+			showMonsterEffectsDuration(monCurrent);
 			_ltc.showMonsterEffectsDuration[0]++;
-			_ltc.showMonsterEffectsDuration[1] += TimeCounter(0, t2);
+			_ltc.showMonsterEffectsDuration[1] += TimeCounter(0, timer);
 		}
 	}
 	_ltc.save();
@@ -950,7 +1008,7 @@ function healthWarning() {
 		document.getElementById("quickbar").style.backgroundColor = bmp > imp ? "blue" : "darkblue";
 	else if ((bsp <= gsp) && _settings.isHighlightQC)
 		document.getElementById("quickbar").style.backgroundColor = bsp > isp ? "lime" : "green";
-	if (!isBattleOver() && _settings.isShowPopup && (b <= h) && (!f || _settings.isNagHP)) {
+	if (!ISBATTLEOVER && _settings.isShowPopup && (b <= h) && (!f || _settings.isNagHP)) {
 		var sec1 = TimeCounter(1);
 		alert("Your health is dangerously low!");
 		_ltc.healthWarning[1] -= TimeCounter(0, sec1);
@@ -959,7 +1017,7 @@ function healthWarning() {
 		f = true;
 		localStorage.setItem(HV_ALERT, JSON.stringify(f));
 	}
-	if (!isBattleOver() && _settings.isShowPopup && (bmp <= hmp) && (!fmp || _settings.isNagMP)) {
+	if (!ISBATTLEOVER && _settings.isShowPopup && (bmp <= hmp) && (!fmp || _settings.isNagMP)) {
 		var sec1 = TimeCounter(1);
 		alert("Your mana is dangerously low!");
 		_ltc.healthWarning[1] -= TimeCounter(0, sec1);
@@ -968,7 +1026,7 @@ function healthWarning() {
 		fmp = true;
 		localStorage.setItem(HV_ALERTMP, JSON.stringify(fmp));
 	}
-	if (!isBattleOver() && _settings.isShowPopup && (bsp <= hsp) && (!fsp || _settings.isNagSP)) {
+	if (!ISBATTLEOVER && _settings.isShowPopup && (bsp <= hsp) && (!fsp || _settings.isNagSP)) {
 		var sec1 = TimeCounter(1);
 		alert("Your spirit is dangerously low!");
 		_ltc.healthWarning[1] -= TimeCounter(0, sec1);
@@ -977,7 +1035,7 @@ function healthWarning() {
 		fsp = true;
 		localStorage.setItem(HV_ALERTSP, JSON.stringify(fsp));
 	}
-	if (!isBattleOver() && _settings.isAlertOverchargeFull && overchargeRate >= 1.0 && !overchargeAlertAlreadyShown) {
+	if (!ISBATTLEOVER && _settings.isAlertOverchargeFull && overchargeRate >= 1.0 && !overchargeAlertAlreadyShown) {
 		var sec1 = TimeCounter(1);
 		alert("Your overcharge is full.");
 		overchargeAlertAlreadyShown = true;
@@ -994,7 +1052,7 @@ function healthWarning() {
 		localStorage.removeItem(HV_ALERTOC);
 }
 function collectCurrentProfsData() {
-	if (!isCharacterPage() || isHVFontEngine()) return;
+	if (!ISCHARPAGE || ISHVFONT) return;
 	loadProfsObject();
 	var c = $(".eqm").children().eq(0).children().eq(1).children();
 	var b = _profs.weapProfTotals.length;
@@ -3070,18 +3128,7 @@ function captureShrine() {
 	}
 	return;
 }
-function isBattleOver() { return ($("#battleform .btcp").length > 0); }
-function isItemInventoryPage() { return document.location.href.match(/s=character&ss=it/i); }
-function isAllInventoryPage() { return document.location.href.match(/s=Character&ss=in/i); }
-function isEquipmentInventoryPage() { return document.location.href.match(/s=Character&ss=eq/i); }
-function isItemWorldPage() { return document.location.href.match(/s=Battle&ss=iw/i); }
-function isMoogleWrite() { return document.location.href.match(/s=Bazaar&ss=mm&filter=Write/i); }
-function isCharacterPage() { return document.getElementById("pattrform"); }
-function isHentaiVerse() { return ($(".stuffbox").length); }
-function isShopPage() { return document.location.href.match(/s=Bazaar&ss=es/i); }
-function isForgePage() { return document.location.href.match(/s=Bazaar&ss=fr/i); }
-function isShrinePage() { return document.location.href.match(/s=Bazaar&ss=ss/i); }
-function isHVFontEngine() { return !$(".clb .cbl .fd10").eq(0).text().match(/Health points/i); }
+
 function loadOverviewObject() {
 	if (_overview !== null) return;
 	_overview = new HVCacheOverview();
@@ -3330,10 +3377,12 @@ function getRelativeTime(b) {
 }
 if (ISCHROME) {	//=== Clones a few GreaseMonkey functions for Chrome Users.
 	unsafeWindow = window;
-	function GM_addStyle(a) {
-		var b = document.createElement("style");
-		b.textContent = a;
-		document.getElementsByTagName("head")[0].appendChild(b);
+	function GM_addStyle(styleCSS) {
+		var doc = document,
+		newStyle = doc.createElement("style");
+		
+		newStyle.textContent = styleCSS;
+		doc.documentElement.insertBefore(newStyle);
 	}
 	function GM_getValue(b, a) {
 		var c = localStorage.getItem(b);
@@ -3345,14 +3394,6 @@ if (ISCHROME) {	//=== Clones a few GreaseMonkey functions for Chrome Users.
 	function GM_setValue(a, b) { localStorage.setItem(a, b); }
 	function GM_getResourceText(a) {}
 }
-function cssAdded() {
-	var a = document.createElement("div");
-	a.setAttribute("id", "cssdiv");
-	a.setAttribute("style", "visibility:hidden");
-	$("body").append(a);
-	return;
-}
-function cssInserted(){ return ($("#cssdiv").length > 0); }
 function HVResetTracking() {
 	_overview.reset();
 	_stats.reset();
@@ -5415,7 +5456,7 @@ function MonsterPopup() {
 		maxhp = q.maxHp;
 		currhp = q.currHp;
 		if (currhp === null || currhp === undefined || isNaN(currhp) || currhp === 0) continue;
-		currmp = (q.currmp * 100).toFixed(2);
+		currmp = q.currmp;
 		if (currmp === null || currmp === undefined || isNaN(currmp)) currmp = 0;
 		currsp = (q.sp2 * 100).toFixed(2);
 
