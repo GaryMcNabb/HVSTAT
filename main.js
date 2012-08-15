@@ -43,7 +43,8 @@ ARENA = 1;
 GRINDFEST = 2;
 ITEM_WORLD = 3;
 CRYSFEST = 4;
-ISBATTLE = 0;
+ISBATTLE = false;
+ISCHROME = false;
 _overview = null;
 _stats = null;
 _profs = null;
@@ -81,11 +82,12 @@ Array.prototype.init = function (b) {
 	while (a--) this[a] = b;
 };
 
+if (navigator.userAgent.indexOf('Chrome') > -1) ISCHROME = true;
 loadSettingsObject();
 loadLTCObject();
 
 function evDomLoad(){
-	if (!browserIsChrome() && !cssInserted()) {
+	if (!ISCHROME && !cssInserted()) {
 		GM_addStyle(GM_getResourceText("jQueryUICSS"));
 		cssAdded();
 	}
@@ -98,7 +100,7 @@ function evDomLoad(){
 		_ltc.hidetitle[0]++;
 		_ltc.hidetitle[1] += (TimeCounter(0, t));
 	}
-	if (document.getElementById("togpane_log")) ISBATTLE = 1;
+	if (document.getElementById("togpane_log")) ISBATTLE = true;
 	if (ISBATTLE) {
 		if (_settings.isShowMonsterNumber) showMonsterNumber();
 		if (_settings.isMainEffectsAlertSelf) AlertEffectsSelf();
@@ -169,7 +171,7 @@ function evDomLoad(){
 		else if (isShrinePage()) {
 			if (_settings.isTrackShrine)
 				captureShrine();
-			if (browserIsChrome())
+			if (ISCHROME)
 				window.document.onkeydown = null;	// workaround to make enable SPACE key
 		}
 	}
@@ -1963,7 +1965,7 @@ function getReportOverviewHtml() {
 		else E = K + " days, " + Math.floor((v / 60) - (K * 24)) + " hours, " + (v % 60).toFixed() + " mins";
 		var e = f.toLocaleString();
 		var z = r.toLocaleString();
-		if (browserIsChrome()) {
+		if (ISCHROME) {
 			e = f.toLocaleDateString() + " " + f.toLocaleTimeString();
 			z = r.toLocaleDateString() + " " + r.toLocaleTimeString();
 		}
@@ -2126,7 +2128,7 @@ function getReportStatsHtml() {
 		var forall = _stats.forbidSpells[1] + _stats.forbidSpells[3];
 		var offhand = _stats.aOffhands[0] + _stats.aOffhands[2];
 		var offhanddam = _stats.aOffhands[1] + _stats.aOffhands[3];
-		if (browserIsChrome()) dst1 = dst.toLocaleDateString() + " " + dst.toLocaleTimeString();
+		if (ISCHROME) dst1 = dst.toLocaleDateString() + " " + dst.toLocaleTimeString();
 		c += '<tr><td colspan="2"><b>Rounds tracked:</b> ' + _stats.rounds + ' <b>Since: </b>' + dst1 + '</td></tr><tr><td colspan="2"><b>Monsters killed:</b> ' + _stats.kills + '</td></tr><tr><td colspan="2"><b>Offensive Statistics:</b></td></tr><tr><td style="padding-left:10px"><b>Physical:</b></td><td style="padding-left:10px"><b>Magical:</b></td></tr><tr><td style="padding-left:20px">Accuracy: ' + (_stats.aAttempts === 0 ? 0 : (f / _stats.aAttempts * 100).toFixed(2)) + '%</td><td style="padding-left:20px">Accuracy: ' + (h === 0 ? 0 : (g / h * 100).toFixed(2)) + '%</td></tr><tr><td style="padding-left:20px">Crit chance: ' + (f === 0 ? 0 : (_stats.aHits[1] / f * 100).toFixed(2)) + '%</td><td style="padding-left:20px">Crit chance: ' + (e === 0 ? 0 : (_stats.sHits[1] / e * 100).toFixed(2)) + '%</td></tr><tr><td style="padding-left:20px">Overwhelming Strikes chance: ' + (f === 0 ? 0 : (_stats.overStrikes / f * 100).toFixed(2)) + '%</td></tr><tr><td style="padding-left:20px">Counter chance on block/parry: ' + (bp === 0 ? 0 : (_stats.aCounters[0]*100/bp).toFixed(2)) + '%</td></tr><tr><td style="padding-left:30px">Number of counters in turn:</td></tr>';
 		c +=  '<tr><td colspan="2" style="padding-left:30px">One - ' + (c1 === 0 ? 0 : (c1*100/call).toFixed(2)) + '% | Two - ' + (_stats.aCounters[2] === 0 ? 0 : (_stats.aCounters[2]*100/call).toFixed(2)) + '% | Three - ' + (_stats.aCounters[3] === 0 ? 0 :(_stats.aCounters[3]*100/call).toFixed(2));
 		c += '%</td></tr>';
@@ -2271,7 +2273,7 @@ function initUI() {
 }
 function initMainMenu() {
 	if (_isMenuInitComplete) return;
-	var b = "[STAT] HentaiVerse Statistics, Tracking, and Analysis Tool v." + VERSION + (browserIsChrome() ? " (Chrome Edition)" : "");
+	var b = "[STAT] HentaiVerse Statistics, Tracking, and Analysis Tool v." + VERSION + (ISCHROME ? " (Chrome Edition)" : "");
 	var c = document.createElement("div");
 	$(c).addClass("_mainMenu").css("text-align", "left");
 	var a = '<div id="tabs"><ul>'
@@ -2348,12 +2350,12 @@ function initStatsPane() {
 			if (_backup[i].datesave !== 0) {
 				nd.setTime( _backup[i].datesave);
 				ds[i] = nd.toLocaleString();
-				if (browserIsChrome()) ds[i] = nd.toLocaleDateString() + " " + nd.toLocaleTimeString();
+				if (ISCHROME) ds[i] = nd.toLocaleDateString() + " " + nd.toLocaleTimeString();
 			}
 			if (_backup[i].datestart !== 0) {
 				nd.setTime( _backup[i].datestart);
 				d[i] = nd.toLocaleString();
-				if (browserIsChrome()) d[i] = nd.toLocaleDateString() + " " + nd.toLocaleTimeString();
+				if (ISCHROME) d[i] = nd.toLocaleDateString() + " " + nd.toLocaleTimeString();
 			}
 			
 		}
@@ -3326,8 +3328,7 @@ function getRelativeTime(b) {
 	if (c < (48 * 60 * 60)) return "1 day ago";
 	return (parseInt(c / 86400)).toString() + " days ago";
 }
-function browserIsChrome(){ return /Chrome/i.test(navigator.userAgent); }
-if (browserIsChrome()) {	//=== Clones a few GreaseMonkey functions for Chrome Users.
+if (ISCHROME) {	//=== Clones a few GreaseMonkey functions for Chrome Users.
 	unsafeWindow = window;
 	function GM_addStyle(a) {
 		var b = document.createElement("style");
@@ -5109,7 +5110,7 @@ function Scanbutton() {
 	var n = mkeymax;
 	var num = 0;
 	var a = $("#mainpane");
-	var ischromeSTAT = browserIsChrome();
+	var ischromeSTAT = ISCHROME;
 	document.addEventListener('keydown', function(a) {
 		var key = a.keyCode ? a.keyCode : a.which;
 		if (_settings.isEnableScanHotkey) {
@@ -5394,7 +5395,7 @@ function MonsterPopup() {
 		else {
 			dst.setTime(datescan);
 			dst1 = dst.toLocaleString();
-			if (browserIsChrome()) dst1 = dst.toLocaleDateString() + " " + dst.toLocaleTimeString();
+			if (ISCHROME) dst1 = dst.toLocaleDateString() + " " + dst.toLocaleTimeString();
 		}
 		var d = ((k - datescan) / (60 * 60 * 1000));
 		var E = "";
@@ -5754,6 +5755,6 @@ function getMonsterElementId(n) {
 	if (!(0 <= n && n <= 9)) throw new Error("n must be 0 to 9");
 	return ids[n];
 }
-if (browserIsChrome())
+if (ISCHROME)
 	document.addEventListener( "DOMContentLoaded", evDomLoad, false );
 else evDomLoad();
