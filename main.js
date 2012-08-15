@@ -4,7 +4,7 @@
 // @description      Collects data, analyzes statistics, and enhances the interface of the HentaiVerse
 // @include          http://hentaiverse.org/*
 // @author           Various (http://forums.e-hentai.org/index.php?showtopic=50962)
-// @version          5.4.1.11
+// @version          5.4.1.12
 // @require          https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js
 // @require          https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.21/jquery-ui.min.js
 // @resource         jQueryUICSS http://www.starfleetplatoon.com/~cmal/HVSTAT/jqueryui.css
@@ -12,7 +12,7 @@
 
 // === GLOBAL VARIABLES
 var millisecondsAll = TimeCounter(1);
-VERSION = "5.4.1.11";
+VERSION = "5.4.1.12";
 SAVE_STATS = true;
 MAX_MID = 33;
 SELF_EFF_TOP = 34;
@@ -284,58 +284,60 @@ function evDomLoad(){
 	_ltc.save();
 }
 function highlightLogText() {
+	var bTD="#togpane_log tr > td + td + td[title*=", bCSS = "";
+	if (_settings.isAltHighlight){
+		bCSS = bTD+ "'gains the effect'], "+ bTD+ "'penetrated'], "+ bTD+ "'stun'], "+ bTD+ "'ripened soul']"
+		+ "{color:#800080}"
+		+ bTD+ "'proficiency']"
+		+ "{color:#BA9E1C}";
+		+ bTD+ "'you resist'], "+ bTD+ "'you dodge'], "+ bTD+ "'you evade'], "+ bTD+ "'you block'], "+ bTD+ "'you parry'], "+ bTD+ "'misses'][title*='against you']"
+		+ "{color:#555}"
+		+ bTD+ "'misses its mark'][title^='your']"
+		+ "{color:orange}"
+		+ bTD+ "'uses']"
+		+ "{color:blue}";
+	} else {
+		bCSS = bTD+ "'you hit'], "+ bTD+ "'you crit'], "+ bTD+ "'you counter'], "+ bTD+ "'your offhand hit'], "+ bTD+ "'your offhand crit'], "+ bTD+ "'unleash']"
+		+ "{color:blue}"
+		+ bTD+ "'procs the effect']"
+		+ "{color:#800080}"
+		+ bTD+ "'hits']:not([title*='hits you']), "+ bTD+ "'blasts'], "+ bTD+ "'crits']:not([title*='crits you'])"
+		+ "{color:teal}"
+		+ bTD+ "'you resist'], "+ bTD+ "'you dodge'], "+ bTD+ "'you evade'], "+ bTD+ "'you block'], "+ bTD+ "'you parry'], "+ bTD+ "'misses'][title*='against you'], "+ bTD+ "'misses its mark'][title^='your']"
+		+ "{color:#999}"
+		+ bTD+ "'you gain']:not([title*='drained'])"
+		+ "{color:#BA9E1C}"
+		+ bTD+ "'uses']"
+		+ "{color:orange}";
+	}
+	
+	bCSS += bTD+ "'you crit'], "+ bTD+ "'crits'], "+ bTD+ "'blasts'],"+ bTD+ "'unleash']"
+	+ "{font-weight:bold}"
+	+ bTD+ "'you cast'], "+ bTD+ "'explodes for']"
+	+ "{color:teal}"
+	+ bTD+ "'bleeding wound hits'], "+ bTD+ "'spreading poison hits'], "+ bTD+ "'your spike shield hits'], "+ bTD+ "'searing skin hits'], "+ bTD+ "'burning soul hits']"
+	+ "{color:#800080}"
+	+ bTD+ "'restores'], "+ bTD+ "'you are healed'], "+ bTD+ "'recovered'], "+ bTD+ "'hostile spell is drained'], "+ bTD+ "'you drain'], "+ bTD+ "'ether theft drains'], "+ bTD+ "'lifestream drains']"
+	+ "{color:green}"
+	+ bTD+ "'enough mp']"
+	+ "{color:#F77}"
+	+ bTD+ "'its you for']:not([title*='its you for 1 '])"
+	+ "{color:red}"
+	+ bTD+ "'its you for 1 ']"
+	+ "{color:#999}"
+	+ bTD+ "'casts']"
+	+ "{color:#0016B8}"
+	+ bTD+ "'powerup']"
+	+ "{color:#F0F}"
+	+ bTD+ "'charging soul'], "+ bTD+ "'your spirit shield absorbs']"
+	+ "{color:#C97600}";
+	
+	GM_addStyle(bCSS);
 	var array = document.getElementById('togpane_log').getElementsByTagName('tr');
 	var i = array.length;
 	while (i--) {
 		var b = array[i].lastChild;
-		var a = b.innerHTML.toLowerCase();
-		if (a.indexOf('you crit')>-1 || a.indexOf('crits')>-1 || a.indexOf('blasts')>-1 || a.indexOf('unleash')>-1)
-			b.style.fontWeight = "bold";
-		if (a.indexOf('you hit')>-1 || a.indexOf('you crit')>-1 || a.indexOf('you counter')>-1 || a.indexOf('your offhand hit')>-1 || a.indexOf('your offhand crit')>-1 || a.indexOf('unleash')>-1)
-			b.style.color = !_settings.isAltHighlight ? "blue" : "black";
-		else if (a.indexOf('you cast')>-1 || a.indexOf('explodes for')>-1)
-			b.style.color = "teal";
-		else if ((a.indexOf('hits')>-1 || a.indexOf('blasts')>-1 || a.indexOf('crits')>-1 ) && !a.indexOf('hits you ')>-1 && !a.indexOf('crits you ')>-1 && !a.indexOf('bleeding wound hits')>-1 && !a.indexOf('spreading poison hits')>-1 && !a.indexOf('your spike shield hits')>-1 && !a.indexOf('searing skin hits')>-1 && !a.indexOf('burning soul hits')>-1)
-			b.style.color = !_settings.isAltHighlight ? "teal" : "black";
-		else if (a.indexOf('procs the effect')>-1 && !_settings.isAltHighlight)
-			b.style.color = "#800080";
-		else if (a.indexOf('bleeding wound hits')>-1 || a.indexOf('spreading poison hits')>-1 || a.indexOf('your spike shield hits')>-1 || a.indexOf('searing skin hits')>-1 || a.indexOf('burning soul hits')>-1 && !a.indexOf('has expired')> -1)
-			b.style.color = "#800080";
-		else if (a.indexOf('you resist')>-1 || a.indexOf('you dodge')>-1 || a.indexOf('you evade')>-1 || a.indexOf('you block')>-1 ||a.indexOf('you parry')>-1 ||(a.indexOf('misses')>-1 && a.indexOf('against you')>-1))
-			b.style.color = !_settings.isAltHighlight ? "#999999" : "#555555";
-		else if (a.indexOf('restores')>-1 || a.indexOf('you are healed')>-1 || a.indexOf('recovered')>-1)
-			b.style.color = "green";
-		else if (a.indexOf('you gain')>-1 && !a.indexOf('drained')>-1 && !_settings.isAltHighlight)
-			b.style.color = "#ba9e1c";
-		else if (a.indexOf('hostile spell is drained')>-1 || a.indexOf('you drain')>-1 || a.indexOf('ether theft drains')>-1 || a.indexOf('lifestream drains')>-1)
-			b.style.color = "green";
-		else if (a.indexOf('enough mp')>-1)
-			b.style.color = "#ff7777";
-		else if ((a.indexOf('hits you for ')>-1 || a.indexOf('crits you for ')>-1) && !a.indexOf('hits you for 1 ')>-1 && !a.indexOf('crits you for 1 ')>-1)
-			b.style.color = "red";
-		else if (a.indexOf('hits you for 1 ')>-1 || a.indexOf('crits you for 1 ')>-1)
-			b.style.color = "#999999";
-		else if (a.indexOf('Your attack misses its mark')>-1)
-			b.style.color = !_settings.isAltHighlight ? "#999999" : "orange";
-		else if (a.indexOf('Your spell misses its mark')>-1)
-			b.style.color = !_settings.isAltHighlight ? "#999999" : "orange";
-		else if (a.indexOf('casts')>-1)
-			b.style.color = "#0016b8";
-		else if (a.indexOf('uses')>-1)
-			b.style.color = !_settings.isAltHighlight ? "orange" : "blue";
-		else if (a.indexOf('powerup')>-1)
-			b.style.color = "#ff00ff";
-		else if (a.indexOf('charging soul')>-1)
-			b.style.color = "#C97600";
-		else if (a.indexOf('your spirit shield absorbs')>-1)
-			b.style.color = "#C97600";
-			
-		if (_settings.isAltHighlight) {
-			if (a.indexOf('gains the effect ')>-1 && (a.indexOf('penetrated')>-1 || a.indexOf('stun')>-1 || a.indexOf('ripened soul')>-1))
-				b.style.color = "#800080";
-			else if (a.indexOf('proficiency')>-1)
-				b.style.color = "#ba9e1c";
-		}
+		b.title = b.textContent.toLowerCase();
 	}
 }
 function addBattleLogDividers() {
