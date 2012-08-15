@@ -306,7 +306,7 @@ function setLogCSS() {
 		bCSS = bTD+ "'gains the effect'], "+ bTD+ "'penetrated'], "+ bTD+ "'stun'], "+ bTD+ "'ripened soul']"
 		+ "{color:#800080}"
 		+ bTD+ "'proficiency']"
-		+ "{color:#BA9E1C}";
+		+ "{color:#BA9E1C}"
 		+ bTD+ "'you resist'], "+ bTD+ "'you dodge'], "+ bTD+ "'you evade'], "+ bTD+ "'you block'], "+ bTD+ "'you parry'], "+ bTD+ "'misses'][title*='against you']"
 		+ "{color:#555}"
 		+ bTD+ "'misses its mark'][title^='your']"
