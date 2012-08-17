@@ -49,33 +49,239 @@ var HVStat = {
 	dummy: null
 };
 
+// basic class modules
+
+HVStat.Keyword = function (id, name, abbrNames) {
+	var _id = String(id);
+	var _name = String(name);
+	var i, _abbrNames = [];
+	if (abbrNames !== undefined) {
+		if (abbrNames instanceof(Array)) {
+			for (i in abbrNames) {
+				_abbrNames[i] = String(abbrNames[i]);
+			}
+		} else {
+			_abbrNames[0] = String(abbrNames);
+		}
+	}
+	return {
+		get id() { return _id; },
+		get name() { return _name; },
+		toString: function (abbrLevel) {
+			// if abbrLevel is not set or 0 then return name else return abbreviated name
+			abbrLevel = Number(abbrLevel);
+			if (isNaN(abbrLevel) || abbrLevel < 0) {
+				abbrLevel = 0;
+			} else if (abbrLevel >= _abbrNames.length) {
+				abbrLevel = _abbrNames.length;
+			}
+			return (abbrLevel === 0) ? _name : _abbrNames[abbrLevel - 1];
+		}
+	};
+}
+
+HVStat.MonsterClass = function () {
+	if (arguments.callee._singletonInstance) {
+		return arguments.callee._singletonInstance;
+	}
+	arguments.callee._singletonInstance = this;
+
+	var kw = HVStat.Keyword;
+	var keywords = [
+		new kw("ARTHROPOD", "Arthropod", ["Arth", "Art"]),
+		new kw("AVION", "Avion", ["Avio", "Avi"]),
+		new kw("BEAST", "Beast", ["Beas", "Bea"]),
+		new kw("CELESTIAL", "Celestial", ["Cele", "Cel"]),
+		new kw("DAIMON", "Daimon", ["Daim", "Dai"]),
+		new kw("DRAGONKIN", "Dragonkin", ["Drag", "Dra"]),
+		new kw("ELEMENTAL", "Elemental", ["Elem", "Ele"]),
+		new kw("GIANT", "Giant", ["Gian", "Gia"]),
+		new kw("HUMANOID", "Humanoid", ["Huma", "Hum"]),
+		new kw("MECHANOID", "Mechanoid", ["Mech", "Mec"]),
+		new kw("REPTILIAN", "Reptilian", ["Rept", "Rep"]),
+		new kw("SPRITE", "Sprite", ["Spri", "Spr"]),
+		new kw("UNDEAD", "Undead", ["Unde", "Und"]),
+		new kw("COMMON", "Common", ["Comm", "Com"]),
+		new kw("UNCOMMON", "Uncommon", ["Unco", "Unc"]),
+		new kw("RARE", "Rare", ["Rare", "Rar"]),
+		new kw("LEGENDARY", "Legendary", ["Lege", "Leg"]),
+		new kw("ULTIMATE", "Ultimate", ["Ulti", "Ult"])
+	];
+	var i, _keyword;
+	for (i in keywords) {
+		_keyword = keywords[i];
+		this[_keyword.id] = _keyword;
+	}
+	return this;
+}
+
+HVStat.SkillType = function () {
+	if (arguments.callee._singletonInstance) {
+		return arguments.callee._singletonInstance;
+	}
+	arguments.callee._singletonInstance = this;
+
+	var kw = HVStat.Keyword;
+	var keywords = [
+		new kw("MANA", "Mana", [""]),
+		new kw("SPIRIT", "Spirit", ["Spirit", "S"])
+	];
+	var i, _keyword;
+	for (i in keywords) {
+		_keyword = keywords[i];
+		this[_keyword.id] = _keyword;
+	}
+	return this;
+};
+
+HVStat.AttackType = function () {
+	if (arguments.callee._singletonInstance) {
+		return arguments.callee._singletonInstance;
+	}
+	arguments.callee._singletonInstance = this;
+
+	var kw = HVStat.Keyword;
+	var keywords = [
+		new kw("PHYSICAL", "Physical", ["Phys", "Ph", "P"]),
+		new kw("MAGICAL", "Magical", ["Mag", "Ma", "M"])
+	];
+	var i, _keyword;
+	for (i in keywords) {
+		_keyword = keywords[i];
+		this[_keyword.id] = _keyword;
+	}
+	return this;
+};
+
+HVStat.DamageType = function () {
+	if (arguments.callee._singletonInstance) {
+		return arguments.callee._singletonInstance;
+	}
+	arguments.callee._singletonInstance = this;
+
+	var kw = HVStat.Keyword;
+	var keywords = [
+		new kw("CRUSHING", "Crushing", ["Crush", "Cr"]),
+		new kw("SLASHING", "Slashing", ["Slash", "Sl"]),
+		new kw("PIERCING", "Piercing", ["Pierc", "Pi"]),
+		new kw("FIRE", "Fire", ["Fir", "Fi", "F"]),
+		new kw("COLD", "Cold", ["Col", "Co", "C"]),
+		new kw("ELEC", "Elec", ["Elc", "El", "E"]),
+		new kw("WIND", "Wind", ["Win", "Wi", "W"]),
+		new kw("HOLY", "Holy", ["Hol", "Ho", "H"]),
+		new kw("DARK", "Dark", ["Dar", "Da", "D"]),
+		new kw("SOUL", "Soul", ["Sou", "So", "S"]),
+		new kw("VOID", "Void", ["Voi", "Vo", "V"])
+	];
+	var i, _keyword;
+	for (i in keywords) {
+		_keyword = keywords[i];
+		this[_keyword.id] = _keyword;
+	}
+	return this;
+};
+
+HVStat.GenericDamageType = function () {
+	if (arguments.callee._singletonInstance) {
+		return arguments.callee._singletonInstance;
+	}
+	arguments.callee._singletonInstance = this;
+
+	var kw = HVStat.Keyword;
+	var keywords = [
+		new kw("PHYSICAL", "Physical", ["Phys", "Ph"]),
+		new kw("ELEMENTAL", "Elemental", ["Elem", "El"])
+	];
+	var i, _keyword;
+	for (i in keywords) {
+		_keyword = keywords[i];
+		this[_keyword.id] = _keyword;
+	}
+	return this;
+};
+
+HVStat.DefenceLevel = function () {
+	if (arguments.callee._singletonInstance) {
+		return arguments.callee._singletonInstance;
+	}
+	arguments.callee._singletonInstance = this;
+
+	var kw = HVStat.Keyword;
+	var keywords = [
+		new kw("WEAK", "Weak"),
+		new kw("AVERAGE", "Average"),
+		new kw("RESISTANT", "Resistant"),
+		new kw("IMPERVIOUS", "Impervious")
+	];
+	var i, _keyword;
+	for (i in keywords) {
+		_keyword = keywords[i];
+		this[_keyword.id] = _keyword;
+	}
+	return this;
+};
+
+HVStat.Debuff = function () {
+	if (arguments.callee._singletonInstance) {
+		return arguments.callee._singletonInstance;
+	}
+	arguments.callee._singletonInstance = this;
+
+	var kw = HVStat.Keyword;
+	var keywords = [
+		new kw("IMPERILED", "Imperiled"),
+		new kw("DEEP_BURNS", "Deep Burns"),
+		new kw("TURBULENT_AIR", "Turbulent Air"),
+		new kw("FREEZING_LIMBS", "Freezing Limbs"),
+		new kw("SEARING_SKIN", "Searing Skin"),
+		new kw("BREACHED_DEFENSE", "Breached Defense"),
+		new kw("BLUNTED_ATTACK", "Blunted Attack")
+	];
+	var i, _keyword;
+	for (i in keywords) {
+		_keyword = keywords[i];
+		this[_keyword.id] = _keyword;
+	}
+	return this;
+};
+
+// initialize singletons
+(function () {
+	HVStat.monsterClass = new HVStat.MonsterClass();
+	HVStat.skillType = new HVStat.SkillType();
+	HVStat.attackType = new HVStat.AttackType();
+	HVStat.damageType = new HVStat.DamageType();
+	HVStat.genericDamageType = new HVStat.GenericDamageType();
+	HVStat.defenceLevel = new HVStat.DefenceLevel();
+	HVStat.debuff = new HVStat.Debuff();
+})();
+
 // functions for reading old monster database
 // finally to be obsolete
 HVStat.migration = {};
 HVStat.migration.monsterClassFromCode = function (code) {
-	var monsterClassTable = {
-		"Arthropod": "1",
-		"Avion":     "2",
-		"Beast":     "3",
-		"Celestial": "4",
-		"Daimon":    "5",
-		"Dragonkin": "6",
-		"Elemental": "7",
-		"Giant":     "8",
-		"Humanoid":  "9",
-		"Mechanoid": "10",
-		"Reptilian": "11",
-		"Sprite":    "12",
-		"Undead":    "13",
-		"Common":    "31",
-		"Uncommon":  "32",
-		"Rare":      "33",
-		"Legendary": "34",
-		"Ultimate":  "35"
-	};
 	code = String(code);
-	var key;
-	var found = false;
+	var monsterClassTable = {
+		ARTHROPOD:	"1",
+		AVION:		"2",
+		BEAST:		"3",
+		CELESTIAL:	"4",
+		DAIMON:		"5",
+		DRAGONKIN:	"6",
+		ELEMENTAL:	"7",
+		GIANT:		"8",
+		HUMANOID:	"9",
+		MECHANOID:	"10",
+		REPTILIAN:	"11",
+		SPRITE:		"12",
+		UNDEAD:		"13",
+		COMMON:		"31",
+		UNCOMMON:	"32",
+		RARE:		"33",
+		LEGENDARY:	"34",
+		ULTIMATE:	"35"
+	};
+	var key, found = false;
 	for (key in monsterClassTable) {
 		if (monsterClassTable[key] === code) {
 			found = true;
@@ -83,70 +289,74 @@ HVStat.migration.monsterClassFromCode = function (code) {
 		}
 	}
 	if (found) {
-		return key;
+		return HVStat.monsterClass[key];
 	} else {
-		return "Unknown";
+		return null;
 	}
 };
+
 HVStat.migration.skillTypeFromCode = function (code) {
 	code = String(code);
-	var str;
+	var st = HVStat.skillType;
 	switch (code) {
 	case "1":
-		str = "Magical";
-		break;
 	case "2":
-		str = "Physical";
-		break;
-	case "3": // Spirit Skill
-		str = "Magical";
-		break;
-	case "4": // Spirit Skill
-		str = "Physical";
-		break;
+		return st.MANA;
+	case "3":
+	case "4":
+		return st.SPIRIT;
 	default:
-		str = "?";
+		return null;
 	}
-	return str;
 };
-HVStat.migration.damageTypeFromCode = function (code) {
-	var damageTypeTable = {
-		"Nothing":  "99",
-		"Crushing": "52",
-		"Slashing": "51",
-		"Piercing": "53",
-		"Fire":     "61",
-		"Cold":     "62",
-		"Elec":     "63",
-		"Wind":     "64",
-		"Holy":     "71",
-		"Dark":     "72",
-		"Soul":     "73",
-		"Void":     "74"
-	};
+
+HVStat.migration.attackTypeFromCode = function (code) {
 	code = String(code);
-	var str = "";
+	var at = HVStat.attackType;
+	switch (code) {
+	case "1":
+	case "3":
+		return at.MAGICAL;
+	case "2":
+	case "4":
+		return at.PHYSICAL;
+	default:
+		return null;
+	}
+};
+
+HVStat.migration.damageTypeFromCode = function (code) {
+	code = String(code);
+	var damageTypeTable = {
+		CRUSHING:	"52",
+		SLASHING:	"51",
+		PIERCING:	"53",
+		FIRE:		"61",
+		COLD:		"62",
+		ELEC:		"63",
+		WIND:		"64",
+		HOLY:		"71",
+		DARK:		"72",
+		SOUL:		"73",
+		VOID:		"74"
+	};
+	var array = [];
 	for (var i = 0; i < code.length; i += 2) {
 		var partialCode = code.substring(i, i + 2);
-		var key;
-		var found = false;
+		var key, found = false;
 		for (key in damageTypeTable) {
 			if (damageTypeTable[key] === partialCode) {
 				found = true;
 				break;
 			}
 		}
-		if (str.length > 0) {
-			str += ", ";
-		}
 		if (found) {
-			str += key;
-		} else {
-			str += "?";
+			array.push(HVStat.damageType[key]);
 		}
 	}
-	return str;
+	return array;
 };
+
 HVStat.migration.getMonsterInfo = function (monster, monsterId) {
 	var i = Number(monsterId);
 	if (isNaN(i)) {
@@ -156,7 +366,7 @@ HVStat.migration.getMonsterInfo = function (monster, monsterId) {
 	var damageCode, manaSkill1DamageCode, manaSkill2DamageCode, spiritSkillDamageCode;
 	var skill;
 	if (_database.mclass[i]) {
-		monster.scanInfo = Object.create(HVStat.MonsterScanInfoVO);
+		monster.scanInfo = new HVStat.MonsterScanInfoVO();
 		var si = monster.scanInfo;
 		si.id = monster.id;
 		si.lastScanDate = _database.datescan[i];
@@ -177,7 +387,7 @@ HVStat.migration.getMonsterInfo = function (monster, monsterId) {
 		spiritSkillCode = skillCode.substring(2, 3);
 		damageCode = String(_database.mskilltype[i]);
 		if (manaSkill1Code.length) {
-			monster.manaSkills[0] = Object.create(HVStat.MonsterSkillVO);
+			monster.manaSkills[0] = new HVStat.MonsterSkillVO();
 			skill = monster.manaSkills[0];
 			skill.id = monster.id;
 			skill.name = null;
@@ -187,7 +397,7 @@ HVStat.migration.getMonsterInfo = function (monster, monsterId) {
 			skill.lastUsedDate = null;
 		}
 		if (manaSkill2Code.length && manaSkill2Code !== "0") {
-			monster.manaSkills[1] = Object.create(HVStat.MonsterSkillVO);
+			monster.manaSkills[1] = new HVStat.MonsterSkillVO();
 			skill = monster.manaSkills[1];
 			skill.id = monster.id;
 			skill.name = null;
@@ -198,7 +408,7 @@ HVStat.migration.getMonsterInfo = function (monster, monsterId) {
 		}
 		if (spiritSkillCode.length) {
 			monster.spiritSkills = [];
-			monster.spiritSkills[0] = Object.create(HVStat.MonsterSkillVO);
+			monster.spiritSkills[0] = new HVStat.MonsterSkillVO();
 			skill = monster.spiritSkills[0];
 			skill.id = monster.id;
 			skill.name = null;
@@ -215,57 +425,74 @@ HVStat.migration.getMonsterInfo = function (monster, monsterId) {
 		}
 	}
 };
+
 // Value Objects
-HVStat.MonsterSkillVO = {
-	id: null,
-	name: null,
-	type: null,
-	damageType: null,
-	lastUsedDate: null
+
+HVStat.MonsterSkillVO = function () {
+	return {
+		id: null,
+		name: null,
+		type: null,
+		damageType: null,
+		lastUsedDate: null
+	};
 };
-HVStat.MonsterScanInfoVO = {
-	id: null,
-	name: null,
-	lastScanDate: null,
-	trainer: null,
-	monsterClass: null,
-	powerLevel: null,
-	meleeAttack: null,
-	defenceLevel: {
-		CLASHING: null,
-		SLASHING: null,
-		PIERCING: null,
-		FIRE: null,
-		ELEC: null,
-		COLD: null,
-		WIND: null,
-		HOLY: null,
-		DARK: null,
-		SOUL: null
-	},
-	debuffsAffected: []
+
+HVStat.DefenceLevelVO = function () {
+	return {
+		CLASHING: "AVERAGE",
+		SLASHING: "AVERAGE",
+		PIERCING: "AVERAGE",
+		FIRE: "AVERAGE",
+		ELEC: "AVERAGE",
+		COLD: "AVERAGE",
+		WIND: "AVERAGE",
+		HOLY: "AVERAGE",
+		DARK: "AVERAGE",
+		SOUL: "AVERAGE",
+		VOID: "AVERAGE"
+	};
 };
-HVStat.MonsterVO = {
-	// from battle log
-	id: null,
-	name: null,
-	maxHp: null,
-	currHp: null,
-	// from monster pane
-	hasSpiritPoint: null,
-	currHpRate: null,
-	currMpRate: null,
-	currSpRate: null,
-	prevMpRate: null,
-	prevSpRate: null,
-	// from battle log when scanning
-	scanInfo: null,
-	// from battle log when used and hit
-	skills: [],
-	// for popup
-	index: -1
+
+HVStat.MonsterScanInfoVO = function () {
+	return {
+		id: null,
+		lastScanDate: null,
+		name: null,
+		monsterClass: null,
+		powerLevel: null,
+		trainer: null,
+		meleeAttack: null,
+		defenceLevel: new HVStat.DefenceLevelVO(),
+		debuffsAffected: []
+	};
 };
+
+HVStat.MonsterVO = function () {
+	return {
+		// from battle log
+		id: null,
+		name: null,
+		maxHp: null,
+		currHp: null,
+		// from monster pane
+		hasSpiritPoint: null,
+		currHpRate: null,
+		currMpRate: null,
+		currSpRate: null,
+		prevMpRate: null,
+		prevSpRate: null,
+		// from battle log when scanning
+		scanInfo: null,
+		// from battle log when used and hit
+		skills: [],
+		// for popup
+		index: -1
+	};
+};
+
 // functions for collecting monster information
+
 HVStat.getcurrBarRateAtMonster = function (monsterIndex, barIndex) {
 	var MAX_WIDTH = 120;
 	var v, bar, style;
@@ -282,16 +509,21 @@ HVStat.getcurrBarRateAtMonster = function (monsterIndex, barIndex) {
 	}
 	return v;
 };
+
 HVStat.getcurrHpRateAtMonster = function (index) {
 	return HVStat.getcurrBarRateAtMonster(index, 0);
 };
+
 HVStat.getcurrMpRateAtMonster = function (index) {
 	return HVStat.getcurrBarRateAtMonster(index, 1);
 };
+
 HVStat.getcurrSpRateAtMonster = function (index) {
 	return HVStat.getcurrBarRateAtMonster(index, 2);
 };
+
 // functions for rendering
+
 HVStat.getDateTimeString = function (date) {
 	if (browserIsChrome()) {
 		// see http://code.google.com/p/chromium/issues/detail?id=3607
@@ -300,6 +532,7 @@ HVStat.getDateTimeString = function (date) {
 		return date.toDateString() + " " + date.toTimeString();
 	}
 };
+
 HVStat.getElapsedFrom = function (date) {
 	if (!date) return "";
 	var mins = 0, hours = 0, days = 0;
@@ -322,6 +555,7 @@ HVStat.getElapsedFrom = function (date) {
 	}
 	return str;
 };
+
 HVStat.renderMonsterPopup = function (monster) {
 	var formatSkill = function (skill) {
 		var str = (skill.type ? skill.type : "?") + "-"
@@ -389,186 +623,7 @@ HVStat.renderMonsterPopup = function (monster) {
 	html += '</table>';
 	return html;
 };
-// class modules
-HVStat.Keyword = function (id, name, abbrNames) {
-	var _id = String(id);
-	var _name = String(name);
-	var i, _abbrNames = [];
-	if (abbrNames !== undefined) {
-		if (abbrNames instanceof(Array)) {
-			for (i in abbrNames) {
-				_abbrNames[i] = String(abbrNames[i]);
-			}
-		} else {
-			_abbrNames[0] = String(abbrNames);
-		}
-	}
-	return {
-		get id() { return _id; },
-		get name() { return _name; },
-		toString: function (abbrLevel) {
-			// if abbrLevel is not set or 0 then return name else return abbreviated name
-			abbrLevel = Number(abbrLevel);
-			if (isNaN(abbrLevel) || abbrLevel < 0) {
-				abbrLevel = 0;
-			} else if (abbrLevel >= _abbrNames.length) {
-				abbrLevel = _abbrNames.length;
-			}
-			return (abbrLevel === 0) ? _name : _abbrNames[abbrLevel - 1];
-		}
-	};
-}
-HVStat.MonsterClass = function () {
-	if (arguments.callee._singletonInstance) {
-		return arguments.callee._singletonInstance;
-	}
-	arguments.callee._singletonInstance = this;
 
-	var keywords = [
-		new HVStat.Keyword("ARTHROPOD", "Arthropod", ["Arth", "Art"]),
-		new HVStat.Keyword("AVION", "Avion", ["Avio", "Avi"]),
-		new HVStat.Keyword("BEAST", "Beast", ["Beas", "Bea"]),
-		new HVStat.Keyword("CELESTIAL", "Celestial", ["Cele", "Cel"]),
-		new HVStat.Keyword("DAIMON", "Daimon", ["Daim", "Dai"]),
-		new HVStat.Keyword("DRAGONKIN", "Dragonkin", ["Drag", "Dra"]),
-		new HVStat.Keyword("ELEMENTAL", "Elemental", ["Elem", "Ele"]),
-		new HVStat.Keyword("GIANT", "Giant", ["Gian", "Gia"]),
-		new HVStat.Keyword("HUMANOID", "Humanoid", ["Huma", "Hum"]),
-		new HVStat.Keyword("MECHANOID", "Mechanoid", ["Mech", "Mec"]),
-		new HVStat.Keyword("REPTILIAN", "Reptilian", ["Rept", "Rep"]),
-		new HVStat.Keyword("SPRITE", "Sprite", ["Spri", "Spr"]),
-		new HVStat.Keyword("UNDEAD", "Undead", ["Unde", "Und"]),
-		new HVStat.Keyword("COMMON", "Common", ["Comm", "Com"]),
-		new HVStat.Keyword("UNCOMMON", "Uncommon", ["Unco", "Unc"]),
-		new HVStat.Keyword("RARE", "Rare", ["Rare", "Rar"]),
-		new HVStat.Keyword("LEGENDARY", "Legendary", ["Lege", "Leg"]),
-		new HVStat.Keyword("ULTIMATE", "Ultimate", ["Ulti", "Ult"])
-	];
-	var i, _keyword;
-	for (i in keywords) {
-		_keyword = keywords[i];
-		this[_keyword.id] = _keyword;
-	}
-	return this;
-}
-HVStat.SkillType = function () {
-	if (arguments.callee._singletonInstance) {
-		return arguments.callee._singletonInstance;
-	}
-	arguments.callee._singletonInstance = this;
-
-	var keywords = [
-		new HVStat.Keyword("MANA", "Mana", [""]),
-		new HVStat.Keyword("SPIRIT", "Spirit", ["Spirit", "S"])
-	];
-	var i, _keyword;
-	for (i in keywords) {
-		_keyword = keywords[i];
-		this[_keyword.id] = _keyword;
-	}
-	return this;
-};
-HVStat.AttackType = function () {
-	if (arguments.callee._singletonInstance) {
-		return arguments.callee._singletonInstance;
-	}
-	arguments.callee._singletonInstance = this;
-
-	var keywords = [
-		new HVStat.Keyword("PHYSICAL", "Physical", ["Phys", "Ph", "P"]),
-		new HVStat.Keyword("MAGICAL", "Magical", ["Mag", "Ma", "M"])
-	];
-	var i, _keyword;
-	for (i in keywords) {
-		_keyword = keywords[i];
-		this[_keyword.id] = _keyword;
-	}
-	return this;
-};
-HVStat.DamageType = function () {
-	if (arguments.callee._singletonInstance) {
-		return arguments.callee._singletonInstance;
-	}
-	arguments.callee._singletonInstance = this;
-
-	var keywords = [
-		new HVStat.Keyword("CRUSHING", "Crushing", ["Crush", "Cr"]),
-		new HVStat.Keyword("SLASHING", "Slashing", ["Slash", "Sl"]),
-		new HVStat.Keyword("PIERCING", "Piercing", ["Pierc", "Pi"]),
-		new HVStat.Keyword("FIRE", "Fire", ["Fir", "Fi", "F"]),
-		new HVStat.Keyword("COLD", "Cold", ["Col", "Co", "C"]),
-		new HVStat.Keyword("ELEC", "Elec", ["Elc", "El", "E"]),
-		new HVStat.Keyword("WIND", "Wind", ["Win", "Wi", "W"]),
-		new HVStat.Keyword("HOLY", "Holy", ["Hol", "Ho", "H"]),
-		new HVStat.Keyword("DARK", "Dark", ["Dar", "Da", "D"]),
-		new HVStat.Keyword("SOUL", "Soul", ["Sou", "So", "S"]),
-		new HVStat.Keyword("VOID", "Void", ["Voi", "Vo", "V"])
-	];
-	var i, _keyword;
-	for (i in keywords) {
-		_keyword = keywords[i];
-		this[_keyword.id] = _keyword;
-	}
-	return this;
-};
-HVStat.GenericDamageType = function () {
-	if (arguments.callee._singletonInstance) {
-		return arguments.callee._singletonInstance;
-	}
-	arguments.callee._singletonInstance = this;
-
-	var keywords = [
-		new HVStat.Keyword("PHYSICAL", "Physical", ["Phys", "Ph"]),
-		new HVStat.Keyword("ELEMENTAL", "Elemental", ["Elem", "El"])
-	];
-	var i, _keyword;
-	for (i in keywords) {
-		_keyword = keywords[i];
-		this[_keyword.id] = _keyword;
-	}
-	return this;
-};
-HVStat.DefenceLevel = function () {
-	if (arguments.callee._singletonInstance) {
-		return arguments.callee._singletonInstance;
-	}
-	arguments.callee._singletonInstance = this;
-
-	var keywords = [
-		new HVStat.Keyword("WEAK", "Weak"),
-		new HVStat.Keyword("AVERAGE", "Average"),
-		new HVStat.Keyword("RESISTANT", "Resistant"),
-		new HVStat.Keyword("IMPERVIOUS", "Impervious")
-	];
-	var i, _keyword;
-	for (i in keywords) {
-		_keyword = keywords[i];
-		this[_keyword.id] = _keyword;
-	}
-	return this;
-};
-HVStat.Debuff = function () {
-	if (arguments.callee._singletonInstance) {
-		return arguments.callee._singletonInstance;
-	}
-	arguments.callee._singletonInstance = this;
-
-	var keywords = [
-		new HVStat.Keyword("IMPERILED", "Imperiled"),
-		new HVStat.Keyword("DEEP_BURNS", "Deep Burns"),
-		new HVStat.Keyword("TURBULENT_AIR", "Turbulent Air"),
-		new HVStat.Keyword("FREEZING_LIMBS", "Freezing Limbs"),
-		new HVStat.Keyword("SEARING_SKIN", "Searing Skin"),
-		new HVStat.Keyword("BREACHED_DEFENSE", "Breached Defense"),
-		new HVStat.Keyword("BLUNTED_ATTACK", "Blunted Attack")
-	];
-	var i, _keyword;
-	for (i in keywords) {
-		_keyword = keywords[i];
-		this[_keyword.id] = _keyword;
-	}
-	return this;
-};
 HVStat.MonsterSkill = function (vo) {
 	var _name = vo.name || null;
 	var _lastUsedDate = new Date(vo.lastUsedDate) || null;
@@ -593,7 +648,7 @@ HVStat.MonsterSkill = function (vo) {
 		get attackType() { return _attackType; },
 		get damageType() { return _damageType; },
 		get valueObject() {
-			var vo = Object.create(HVStat.MonsterSkillVO);
+			var vo = new HVStat.MonsterSkillVO();
 			vo.name = _name;
 			vo.lastUsedDate = _lastUsedDate.toISOString();
 			vo.skillType = (_skillType ? _skillType.id : null);
@@ -606,17 +661,18 @@ HVStat.MonsterSkill = function (vo) {
 		}
 	};
 };
+
 HVStat.MonsterScanInfo = function (vo) {
-	var _powerLevel;
-	var _trainer;
 	var _lastScanDate;
 	var _monsterClass;
+	var _powerLevel;
+	var _trainer;
 	var _meleeAttack;
 	var _defenceLevel = {};
 	var _debuffsAffected = [];
-	var _weak = [];
-	var _resistant = [];
-	var _impervious = [];
+	var _defWeak = [];
+	var _defResistant = [];
+	var _defImpervious = [];
 	var damageTypeId, debuffId;
 
 	_powerLevel = vo.powerLevel || null;
@@ -631,24 +687,26 @@ HVStat.MonsterScanInfo = function (vo) {
 	for (damageTypeId in _defenceLevel) {
 		switch (_defenceLevel[damageTypeId]) {
 		case HVStat.defenceLevel.WEAK:
-			_weak.push(HVStat.damageType[damageTypeId]);
+			_defWeak.push(HVStat.damageType[damageTypeId]);
 			break;
 		case HVStat.defenceLevel.RESISTANT:
-			_resistant.push(HVStat.damageType[damageTypeId]);
+			_defResistant.push(HVStat.damageType[damageTypeId]);
 			break;
 		case HVStat.defenceLevel.IMPERVIOUS:
-			_impervious.push(HVStat.damageType[damageTypeId]);
+			_defImpervious.push(HVStat.damageType[damageTypeId]);
 			break;
 		}
 	}
-	_debuffsAffected = vo.debuffsAffected || []; // TODO
+	for (var i in vo.debuffsAffected) {
+		_debuffsAffected.push(HVStat.defenceLevel[vo.debuffsAffected[i]]);
+	}
 
 	// another constructor
 	var fromBattle = function (index, scanning) {
 		var reOfficial = /Monster Class:.*?<\/td><td.*?>(Common|Uncommon|Rare|Legendary|Ultimate)/;
 		var reCustom = /Monster Class:.*?<\/td><td.*?>([A-Za-z]+), Power Level (\d+).*?<\/td/;
-		var weak, resistant, impervious;
-		var vo = Object.create(HVStat.MonsterScanInfoVO);
+		var defWeak, defResistant, defImpervious;
+		var vo = new HVStat.MonsterScanInfoVO();
 		var r, array;
 		vo.lastScanDate = (new Date()).toISOString();
 		r = /Monster Trainer:.*?<\/td><td.*?>(.+?)<\/td/.exec(scanning);
@@ -668,30 +726,34 @@ HVStat.MonsterScanInfo = function (vo) {
 		}
 		r = /Melee Attack:.*?<\/td><td.*?>(.+?)<\/td/.exec(scanning);
 		vo.meleeAttack = r && r[1] || null;
-
-		vo.defenceLevel = {};
 		r = /Weak against:.*?<\/td><td.*?>(.+?)<\/td/.exec(scanning);
-		weak = r && r[1] || null;
-		if (weak) {
-			array = weak.toUpperCase.split(", ");
+		defWeak = r && r[1] || null;
+		if (defWeak) {
+			array = defWeak.toUpperCase.split(", ");
 			array.forEach(function (element, index, array) {
-				vo.defenceLevel[element] = HVStat.defenceLevel.WEAK.id;
+				if (element !== "NOTHING") {
+					vo.defenceLevel[element] = HVStat.defenceLevel.WEAK.id;
+				}
 			});
 		}
 		r = /Resistant to:.*?<\/td><td.*?>(.+?)<\/td/.exec(scanning);
-		resistant = r && r[1] || null;
-		if (resistant) {
-			array = resistant.toUpperCase.split(", ");
+		defResistant = r && r[1] || null;
+		if (defResistant) {
+			array = defResistant.toUpperCase.split(", ");
 			array.forEach(function (element, index, array) {
-				vo.defenceLevel[element] = HVStat.defenceLevel.RESISTANT.id;
+				if (element !== "NOTHING") {
+					vo.defenceLevel[element] = HVStat.defenceLevel.RESISTANT.id;
+				}
 			});
 		}
 		r = /Impervious to:.*?<\/td><td.*?>(.+?)<\/td/.exec(scanning);
-		impervious = r && r[1] || null;
-		if (impervious) {
-			array = impervious.toUpperCase.split(", ");
+		defImpervious = r && r[1] || null;
+		if (defImpervious) {
+			array = defImpervious.toUpperCase.split(", ");
 			array.forEach(function (element, index, array) {
-				vo.defenceLevel[element] = HVStat.defenceLevel.IMPERVIOUS.id;
+				if (element !== "NOTHING") {
+					vo.defenceLevel[element] = HVStat.defenceLevel.IMPERVIOUS.id;
+				}
 			});
 		}
 		vo.debuffsAffected = [];
@@ -710,10 +772,9 @@ HVStat.MonsterScanInfo = function (vo) {
 
 	return {
 		get lastScanDate() { return _lastScanDate; },
-		get debuffsAffected() { return _debuffsAffected; },
-		get trainer() { return _trainer; },
 		get monsterClass() { return _monsterClass; },
 		get powerLevel() { return _powerLevel; },
+		get trainer() { return _trainer; },
 		get meleeAttack() { return _meleeAttack; },
 		get defenceLevel() {
 			var i, dl = {};
@@ -722,22 +783,29 @@ HVStat.MonsterScanInfo = function (vo) {
 			}
 			return dl;
 		},
-		get weakAgainst() { return _weakAgainst.concat(); },
-		get resistantTo() { return _resistantTo.concat(); },
-		get imperviousTo() { return _imperviousTo.concat(); },
+		get debuffsAffected() { return _debuffsAffected.concat(); },
+		get defWeak() { return _defWeak.concat(); },
+		get defResistant() { return _defResistant.concat(); },
+		get defImpervious() { return _defImpervious.concat(); },
 		get valueObject() {
-			var vo = Object.create(HVStat.MonsterScanInfoVO);
-			vo.lastScanDate = _lastScanDate;
-			vo.debuffsAffected = []; // TODO
-			vo.trainer = _trainer;
+			var i;
+			var vo = new HVStat.MonsterScanInfoVO();
+			vo.lastScanDate = _lastScanDate.toISOString();
 			vo.monsterClass = (_monsterClass ? _monsterClass.id : null);
 			vo.powerLevel = _powerLevel;
+			vo.trainer = _trainer;
 			vo.meleeAttack = (_meleeAttack ? _meleeAttack.id : null);
-			vo.defenceLevel = {}; // TODO
+			for (i in _defenceLevel) {
+				vo.defenceLevel[i] = _defenceLevel[i].id;
+			}
+			for (i in _debuffsAffected) {
+				vo.debuffsAffected[i] = _debuffsAffected[i].id;
+			}
 			return vo;
 		}
 	};
-},
+};
+
 HVStat.Monster = function (index) {
 	// private variables
 	var _domElementIds = [
@@ -869,8 +937,10 @@ HVStat.Monster = function (index) {
 		renderPopup: function () {
 		}
 	};
-}
+};
+
 // functions related to IndexedDB
+
 HVStat.deleteIndexedDB = function () {
 	var reqDelete = HVStat.indexedDB.deleteDatabase("HVStat");
 	reqDelete.onsuccess = function (event) {
@@ -882,23 +952,27 @@ HVStat.deleteIndexedDB = function () {
 	reqDelete.onblocked = function (event) {
 		console.log("deleteIndexedDB: blocked");
 	};
-}
-HVStat.maintainObjectStores = function (transaction) {
+};
+
+HVStat.maintainObjectStores = function (event) {
+	var idb = event.target.source;
+	var tx = event.target.transaction;
+	var oldVer = event.oldVersion;
+	var newVer = event.newVersion;
 	var store;
-	// Monsters => obsolete
-	try {
-		HVStat.idb.deleteObjectStore("Monsters");
-	} catch (e) {
-		console.log(e.message + "\n" + e.stack);
-	}
 
 	// MonsterScanInfo
 	try {
-		store = HVStat.idb.createObjectStore("MonsterScanInfo", { keyPath: "id" });
+		idb.deleteObjectStore("MonsterScanInfo");
 	} catch (e) {
 		console.log(e.message + "\n" + e.stack);
 	}
-	store = transaction.objectStore("MonsterScanInfo");
+	try {
+		store = idb.createObjectStore("MonsterScanInfo", { keyPath: "id" });
+	} catch (e) {
+		console.log(e.message + "\n" + e.stack);
+	}
+	store = tx.objectStore("MonsterScanInfo");
 	try {
 		store.deleteIndex("ix_id");
 	} catch (e) {
@@ -922,11 +996,16 @@ HVStat.maintainObjectStores = function (transaction) {
 
 	// MonsterSkills
 	try {
-		store = HVStat.idb.createObjectStore("MonsterSkills", { keyPath: "id" });
+		idb.deleteObjectStore("MonsterSkills");
 	} catch (e) {
 		console.log(e.message + "\n" + e.stack);
 	}
-	store = transaction.objectStore("MonsterSkills");
+	try {
+		store = idb.createObjectStore("MonsterSkills", { keyPath: "id" });
+	} catch (e) {
+		console.log(e.message + "\n" + e.stack);
+	}
+	store = tx.objectStore("MonsterSkills");
 	try {
 		store.deleteIndex("ix_id");
 	} catch (e) {
@@ -937,69 +1016,128 @@ HVStat.maintainObjectStores = function (transaction) {
 	} catch (e) {
 		console.log(e.message + "\n" + e.stack);
 	}
+
+	// Example
+// 	try {
+// 		idb.deleteObjectStore("Monsters");
+// 	} catch (e) {
+// 		console.log(e.message + "\n" + e.stack);
+// 	}
+// 	try {
+// 		store = idb.createObjectStore("Monsters", { keyPath: "mid" });
+// 	} catch (e) {
+// 		console.log(e.message + "\n" + e.stack);
+// 	}
+// 	store = tx.objectStore("Monsters");
+// 	try {
+// 		store.createIndex("ix_id", "id", { unique: false });
+// 	} catch (e) {
+// 		console.log(e.message + "\n" + e.stack);
+// 	}
 };
-HVStat.openIndexedDB = function (deferrdFunction) {
-	var idbVersion = "0.5";
+
+HVStat.openIndexedDB = function (callback) {
+	var errorMessage;
 	HVStat.indexedDB = window.indexedDB || window.webkitIndexedDB || window.mozIndexedDB;
 	HVStat.IDBTransaction = window.IDBTransaction || window.webkitIDBTransaction;
+
+	var idbVersion = 1; // must be an integer
 	var reqOpen = HVStat.indexedDB.open("HVStat", idbVersion);
 	reqOpen.onerror = function (event) {
-		console.log("open: error");
+		errorMessage = "Database open error: " + event.target.errorCode;
+		alert(errorMessage);
+		console.log(errorMessage);
+	};
+	// latest W3C draft (Firefox supports)
+	reqOpen.onupgradeneeded = function (event) {
+		HVStat.maintainObjectStores(event);
+		// subsequently onsuccess event handler is called automatically
 	};
 	reqOpen.onsuccess = function (event) {
-		HVStat.idb = reqOpen.result;
-		// for Chrome ('setVersion' style will soon be obsolete)
-		if (HVStat.idb.version === idbVersion) {
-			deferrdFunction(event);
+		var idb = HVStat.idb = reqOpen.result;
+		if (Number(idb.version) === idbVersion) {
+			// always come here if Firefox
+			callback(event);
 		} else {
-			// upgrade database
-			try {
-				var reqVersion = HVStat.idb.setVersion(idbVersion);
-				reqVersion.onerror = function (event) {
-					console.log("setVersion: error");
-				};
-				reqVersion.onsuccess = function (event) {
-					HVStat.maintainObjectStores(event.target.transaction);
-					var transaction = reqVersion.result;
-					transaction.oncomplete = deferrdFunction;
-				};
-			} catch (e) {
-				console.log(e.message + "\n" + e.stack);
-			}
+			// for Chrome ('setVersion' style will soon be obsolete)
+			var reqVersion = idb.setVersion(idbVersion);
+			reqVersion.onerror = function (event) {
+				errorMessage = "Database setVersion error: " + event.target.errorCode;
+				alert(errorMessage);
+				console.log(errorMessage);
+			};
+			reqVersion.onsuccess = function (event) {
+				HVStat.maintainObjectStores(event);
+				var tx = reqVersion.result;
+				tx.oncomplete = callback;
+			};
 		}
-	};
-	// for Firefox (not tested)
-	reqOpen.onupgradeneeded = function (event) {
-		console.log("onupgradeneeded");
-		HVStat.idb = reqOpen.result;
-		HVStat.maintainObjectStores(event.target.transaction);
-		deferrdFunction(event);
 	};
 };
 
-// initialize
-(function () {
-	HVStat.monsterClass = new HVStat.MonsterClass();
-	HVStat.skillType = new HVStat.SkillType();
-	HVStat.attackType = new HVStat.AttackType();
-	HVStat.damageType = new HVStat.DamageType();
-	HVStat.genericDamageType = new HVStat.GenericDamageType();
-	HVStat.defenceLevel = new HVStat.DefenceLevel();
-	HVStat.debuff = new HVStat.Debuff();
+HVStat.migration.createMonsterScanInfoVOFromOldDb = function (oldDb, index) {
+	if (!oldDb.mclass[index]) return null;
 
-	// test
-// 	var aSkill = new HVStat.MonsterSkill({
-// 		name: "skill-name",
-// 		lastUsedDate: new Date(),
-// 		skillType: "SPIRIT",
-// 		attackType: "MAGICAL",
-// 		damageType: "SOUL"
-// 	});
-// 	console.log(aSkill.toString());
-// 	console.log(aSkill.toString(1));
-// 	console.log(aSkill.toString(2));
-// 	console.log(aSkill.toString(3));
-})();
+	var i, v, vo = new HVStat.MonsterScanInfoVO();
+	// id
+	vo.id = Number(index);
+	// lastScanDate
+	v = new Date(oldDb.datescan[index]);
+	vo.lastScanDate = v ? v.toISOString() : null;
+	// name
+	vo.name = null;
+	// monsterClass
+	v = HVStat.migration.monsterClassFromCode(oldDb.mclass[index]);
+	vo.monsterClass = v ? v.id : null;
+	// powerLevel
+	v = oldDb.mpl[index];
+	vo.powerLevel = (!isNaN(v) && v !== 0) ? Number(v) : null;
+	// trainer
+	vo.trainer = null;
+	// meleeAttack
+	v = HVStat.migration.damageTypeFromCode(oldDb.mattack[index]);
+	vo.meleeAttack = v[0] ? v[0].id : null;
+	// defenceLevel
+	vo.defenceLevel = new HVStat.DefenceLevelVO();
+	v = HVStat.migration.damageTypeFromCode(oldDb.mweak[index]);
+	for (i in v) {
+		vo.defenceLevel[v[i].id] = HVStat.defenceLevel.WEAK.id;
+	}
+	v = HVStat.migration.damageTypeFromCode(oldDb.mresist[index]);
+	for (i in v) {
+		vo.defenceLevel[v[i].id] = HVStat.defenceLevel.RESISTANT.id;
+	}
+	v = HVStat.migration.damageTypeFromCode(oldDb.mimperv[index]);
+	for (i in v) {
+		vo.defenceLevel[v[i].id] = HVStat.defenceLevel.IMPERVIOUS.id;
+	}
+	// debuffsAffected
+	vo.debuffsAffected = [];
+	return vo;
+};
+
+HVStat.migration.migrateMonsterScanInfo = function () {
+	loadDatabaseObject();
+	var tx = HVStat.idb.transaction(["MonsterScanInfo"], "readwrite");
+	var store = tx.objectStore("MonsterScanInfo");
+	var i, len = _database.mclass.length;
+	console.log("length = " + len);
+	var vo, reqPut;
+	for (i = 0; i < len; i++) {
+		if (_database.mclass[i]) {
+			vo = HVStat.migration.createMonsterScanInfoVOFromOldDb(_database, i);
+			if (vo) {
+				reqPut = store.put(vo);
+				reqPut.onsuccess = function (event) {
+					console.log("put success");
+				};
+				reqPut.onerror = function (event) {
+					console.log("put error");
+				};
+			}
+		}
+	}
+}
 
 // === GLOBAL VARIABLES
 var millisecondsAll = TimeCounter(1);
@@ -1066,11 +1204,12 @@ I_CHANNELING = "data:image/gif;base64,R0lGODlhHgAgAOYAAEYjNBEAESMRIzQjNEY0RgAAER
 jQuery.fn.outerHTML = function () {
 	return $("<div>").append(this.eq(0).clone()).html();
 };
-Array.prototype.init = function (b) {
-	if (b === undefined) b = 0;
-	var a = this.length;
-	while (a--) this[a] = b;
-};
+// This is evil.
+// Array.prototype.init = function (b) {
+// 	if (b === undefined) b = 0;
+// 	var a = this.length;
+// 	while (a--) this[a] = b;
+// };
 
 loadSettingsObject();
 loadLTCObject();
@@ -1086,6 +1225,15 @@ if (_settings.isHideHVLogo){
 	_ltc.hidelogo[0]++;
 	_ltc.hidelogo[1] += (TimeCounter(0, t));
 }
+
+// migrate monster database
+(function () {
+	loadDatabaseObject();
+	HVStat.openIndexedDB(function (event) {
+		HVStat.migration.migrateMonsterScanInfo();
+//		HVStat.migration.migrateMonsterSkills(); // TODO
+	});
+})();
 
 function evDomLoad(){
 	if (!browserIsChrome() && !cssInserted()) {
@@ -1103,15 +1251,11 @@ function evDomLoad(){
 	}
 	if (document.getElementById("togpane_log")) ISBATTLE = 1;
 	if (ISBATTLE) {
-		// TODO: open IndexedDB
-		// probably whole of this block to be deferred call
 		HVStat.openIndexedDB(function (event) {
-			var transaction = HVStat.idb.transaction(["MonsterScanInfo", "MonsterSkills"], "readwrite");
-			HVStat.monsterScanInfoStore = transaction.objectStore("MonsterScanInfo");
-			HVStat.monsterSkillsStore = transaction.objectStore("MonsterSkills");
-
-			console.log("HVStat.monsterScanInfoStore: " + HVStat.monsterScanInfoStore);
-			console.log("HVStat.monsterSkillsStore: " + HVStat.monsterSkillsStore);
+//			var tx = HVStat.idb.transaction(["MonsterScanInfo", "MonsterSkills"], "readwrite");
+			var tx = HVStat.idb.transaction(["MonsterScanInfo", "MonsterSkills"]);
+			HVStat.monsterScanInfoStore = tx.objectStore("MonsterScanInfo");
+			HVStat.monsterSkillsStore = tx.objectStore("MonsterSkills");
 
 			if (_settings.isShowMonsterNumber) showMonsterNumber();
 			if (_settings.isMainEffectsAlertSelf) AlertEffectsSelf();
@@ -2168,7 +2312,7 @@ function collectRoundInfo() {
 // 				}
 // 				if (scannedMonsterIndex >= 0) {
 // 					var monsterV2 = _round.monstersV2[scannedMonsterIndex];
-// 					monsterV2.scanInfo = Object.create(HVStat.MonsterScanInfoVO);
+// 					monsterV2.scanInfo = new HVStat.MonsterScanInfoVO();
 // 					var si = monsterV2.scanInfo;
 // 					si.id = monsterV2.id;
 // 					si.lastScanDate = new Date();
@@ -4582,7 +4726,7 @@ function HVCacheDrops() {
 		"[Featherweight Shard]", " "
 	];
 	this.itemQtyArry = new Array(this.itemArry.length);
-	this.itemQtyArry.init(0);
+//	this.itemQtyArry.init(0);
 	this.itemDrop = 0;
 	this.eqArray = [];
 	this.eqDrop = 0;
