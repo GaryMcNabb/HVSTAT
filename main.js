@@ -440,7 +440,7 @@ HVStat.MonsterSkillVO = function () {
 
 HVStat.DefenceLevelVO = function () {
 	return {
-		CLASHING: "AVERAGE",
+		CRUSHING: "AVERAGE",
 		SLASHING: "AVERAGE",
 		PIERCING: "AVERAGE",
 		FIRE: "AVERAGE",
