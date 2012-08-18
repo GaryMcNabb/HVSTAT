@@ -155,17 +155,6 @@ HVStat.DamageType = (function () {
 		keyword = keywords[i];
 		DamageType[keyword.id] = keyword;
 	}
-
-	// public static method
-	DamageType.fromString = function (s) {
-		for (var i in keywords) {
-			if (s.toUpper() === keywords[i].id) {
-				return keyword;
-			}
-		}
-		return null;
-	};
-
 	return DamageType;
 }());
 
@@ -368,24 +357,13 @@ HVStat.MonsterScanInfoVO = function () {
 
 HVStat.MonsterVO = function () {
 	return {
-		// from battle log
 		id: null,
 		name: null,
 		maxHp: null,
-		currHp: null,
-		// from monster pane
-		hasSpiritPoint: null,
-		currHpRate: null,
-		currMpRate: null,
-		currSpRate: null,
 		prevMpRate: null,
 		prevSpRate: null,
-		// from battle log when scanning
 		scanInfo: null,
-		// from battle log when used and hit
 		skills: [],
-		// for popup
-		index: -1
 	};
 };
 
@@ -471,7 +449,7 @@ HVStat.MonsterSkill = (function () {
 		}
 		r = / (.+?) damage/.exec(damaged);
 		if (r && r.length >= 2) {
-			vo.damageType = HVStat.DamageType.fromString(r[1]).id;
+//			vo.damageType = HVStat.DamageType.fromString(r[1]).id;
 		}
 		vo.lastUsedDate = new Date();
 		return new MonsterSkill(vo);
@@ -642,41 +620,485 @@ HVStat.Monster = (function () {
 		if (isNaN(index) || index < 0 || _domElementIds.length <= index) {
 			throw new Error("invalid index");
 		}
+
 		var _index = index;
-		var _healthBars = $("#" + _domElementIds[_index] + " div.btm5");
-		var _isDead = _healthBars.eq(0).filter("img.chb2").length === 0;
+		var _baseDomElement = $("#" + _domElementIds[_index]);
+		var _healthBars = $("div.btm5", _baseDomElement);
+		var _isDead = $("img.chb2", _healthBars).eq(0).length === 0;
+
 		var _id;
 		var _name;
 		var _maxHp;
 		var _currHp;
-		var _currHpRate;
-		var _currMpRate;
-		var _currSpRate;
 		var _prevMpRate;
 		var _prevSpRate;
-		var _hasSpiritPoint;
 		var _scanInfo;
 		var _skills = [];
 
-		// private instance method
-		currBarRate = function (barIndex) {
-			var v, style, bar = _healthBars.eq(barIndex).filter("img.chb2");
+		var currBarRate = function (barIndex) {
+			var v, style, bar = $("img.chb2", _healthBars.eq(barIndex));
 			if (!bar) {
 				v = 0;
 			} else {
 				style = bar.attr("style");
 				r = /width:\s*?(\d+?)px/i.exec(style);
 				if (r && r.length >= 2) {
-					v = Number() /  _maxBarWidth;
+					v = Number(r[1]) / _maxBarWidth;
 				} else {
 					v = bar.width() / _maxBarWidth;
 				}
 			}
 			return v;
 		};
-		_renderStats = function () {
-			
-		},
+
+		var _currHpRate = currBarRate(0);
+		var _currMpRate = currBarRate(1);
+		var _currSpRate = currBarRate(2);
+		var _hasSpiritPoint = _healthBars.length > 2;
+
+		var _renderStats = function () {
+			//----------------------------------------
+			if (_isDead) return;
+
+			if (!(_settings.isShowMonsterHP || _settings.isShowMonsterMP || _settings.isShowMonsterSP || _settings.isShowMonsterElements || _settings.isShowMonsterDuration || _settings.isShowStatsPopup)) return;
+			var a = new ElementalStats();
+			var hpIndicator = "";
+			var mpIndicator = "";
+			var spIndicator = "";
+			var html;
+
+		var u = _baseDomElement;
+		if (u === undefined || u.height() >= 100) return;
+
+		var k = u.children().eq(1).children().eq(0);
+		var s = k.children().length > 1;
+		var e = u.children().eq(2).children().eq(0);
+		var h = u.children().eq(2).children().eq(1);
+		var sp = u.children().eq(2).children().eq(2);
+		if (_settings.isShowMonsterHP || _settings.isShowMonsterHPPercent || _settings.isShowStatsPopup) {
+			if (_settings.isShowMonsterHPPercent) {
+				hpIndicator = (_currHpRate * 100).toFixed(2) + "%"
+			} else {
+				hpIndicator = Math.floor(_currHpRate * _maxHp) + " / " + _maxHp;
+			}
+			html = "<div style='position:absolute;z-index:1074;top:-1px;font-size:8pt;font-family:arial,helvetica,sans-serif;font-weight:bolder;color:yellow;width:120px;text-align:center'>" + hpIndicator + "</div>";
+			e.after(html);
+		}
+		if (_settings.isShowMonsterMP || _settings.isShowStatsPopup) {
+			mpIndicator = (_currMpRate * 100).toFixed(1);
+			html = "<div style='position:absolute;z-index:1074;top:11px;font-size:8pt;font-family:arial,helvetica,sans-serif;font-weight:bolder;color:yellow;width:120px;text-align:center'>" + mpIndicator + "%</div>";
+			h.after(html);
+		}
+		if (_hasSpiritPoint && (_settings.isShowMonsterSP || _settings.isShowStatsPopup)) {
+			spIndicator = (_currSpRate * 100).toFixed(1);
+			html = "<div style='position:absolute;z-index:1074;top:23px;font-size:8pt;font-family:arial,helvetica,sans-serif;font-weight:bolder;color:yellow;width:120px;text-align:center'>" + spIndicator + "%</div>";
+			sp.after(html);
+		}
+		return;
+// 		if (_settings.isShowStatsPopup) {
+// 			o = Math.floor(b * l);
+// 			monInfo.currHp = o;
+// 			monInfo.currmp = v;
+// 			_round.save();
+// 		}
+		if (_settings.isShowMonsterElements && !m && (monInfo.id < 1000 || _settings.isShowElemHvstatStyle)) {
+			var t;
+			getMonsterElementsById(a, monInfo.id);
+			var d = a.majWeak === "-" ? "" : "[<span style='color:#005826'>" + a.majWeak + "</span>";
+				d += a.minWeak === "-" ? "" : ";<span style='color:#3CB878'>" + a.minWeak + "</span>";
+				d += a.resist === "-" ? "" : ";<span style='color:red'>" + a.resist + "</span>";
+				d += a.imperv === "-" ? "" : ";<span style='color:black'>" + a.imperv + "</span>]";
+			if (_settings.isShowElemHvstatStyle) {
+				var kk = k.children().eq(0);
+				var kkl = kk.html().length;
+				var mclass = "";
+				var mpl = "";
+				var mweak = "";
+				var mresist = "";
+				var mimperv = "";
+				var mskilltype = "";
+				var mskillspell = "";
+				var mskilltype2 = "";
+				var mskillspell2 = "";
+				var mskilltype3 = "";
+				var mskillspell3 = "";
+				var mspirittype = "";
+				var mspiritsksp = "";
+				var mattack = "";
+				var allm = 0;
+				var allm1 = 0;
+				mclass = monInfo.mclass;
+				allm += 2;
+				if (_settings.isShowPLHvstatStyle) {
+					mpl = monInfo.mpl;
+					if (mpl !== 0) allm += 2;
+				}
+				if (_settings.isShowWeakHvstatStyle) {
+					mweak = MElemNum(monInfo.mweak, 1);
+					allm += 2;
+				}
+				if (_settings.isShowResHvstatStyle) {
+					mresist = MElemNum(monInfo.mresist, 1);
+					mimperv = MElemNum(monInfo.mimperv, 1);
+					allm += _settings.isShowWeakHvstatStyle ? 2 : 3;
+				}
+				if (_settings.isShowAttackHvstatStyle) {
+					if (monInfo.mskillspell !== undefined) {
+						var sk = String(monInfo.mskillspell);
+						if (sk.length === 1 || sk.match("9")) {
+							if (monInfo.mskillspell < 3 || sk.match("9")) {
+								mskilltype = MElemNum(monInfo.mskilltype, 1);
+								mskillspell = MElemNum(monInfo.mskillspell, 1);
+							} else {
+								mspirittype = MElemNum(monInfo.mskilltype, 1);
+								mspiritsksp = MElemNum(monInfo.mskillspell, 1);
+								allm -= 7;
+							}
+						} else {
+							var mskillspellarray = sk.split("0");
+							var mskilltypearray = String(MElemNum(monInfo.mskilltype, 1)).split(", ");
+							var sk34 = sk.replace("0","").search(/(3|4)/);
+							var other1 = 0;
+							var other2 = 0;
+							if (sk.length === 3) {
+								if (sk34 >= 0) {
+									other = sk34 > 0 ? 0 : 1;
+									mspirittype = mskilltypearray[sk34];
+									mspiritsksp = MElemNum(parseInt(mskillspellarray[sk34]), 1);
+									mskillspell = MElemNum(parseInt(mskillspellarray[other1]), 1);
+									mskilltype = mskilltypearray[other1];
+								} else {
+									mskillspell = MElemNum(parseInt(mskillspellarray[0]), 1);
+									mskilltype = mskilltypearray[0];
+									mskillspell2 = MElemNum(parseInt(mskillspellarray[1]), 1);
+									mskilltype2 = mskilltypearray[1];
+								}
+								allm += 2;
+								if (mskillspell === mskillspell2) {
+									mskillspell2 = "";
+									mskilltype = mskilltype + ", " + mskilltype2;
+									mskilltype2 = "";
+									allm -= 2;
+								} else if (mskilltype === mskilltype2) {
+									mskillspell = mskillspell + ", " + mskillspell2;
+									mskillspell2 = "";
+									mskilltype2 = "";
+									allm -= 2;
+								}
+							} else if (sk.length === 5) {
+								if (sk34 >= 0) {
+									other1 = sk34 > 0 ? 0 : 1;
+									other2 = sk34 > 1 ? 1 : 2;
+									mspirittype = mskilltypearray[sk34];
+									mspiritsksp = MElemNum(parseInt(mskillspellarray[sk34]), 1);
+									mskillspell = MElemNum(parseInt(mskillspellarray[other1]), 1);
+									mskilltype = mskilltypearray[other1];
+									mskillspell2 = MElemNum(parseInt(mskillspellarray[other2]), 1);
+									mskilltype2 = mskilltypearray[other2];
+								} else {
+									mskillspell = MElemNum(parseInt(mskillspellarray[0]), 1);
+									mskilltype = mskilltypearray[0];
+									mskillspell2 = MElemNum(parseInt(mskillspellarray[1]), 1);
+									mskilltype2 = mskilltypearray[1];
+									mskillspell3 = MElemNum(parseInt(mskillspellarray[2]), 1);
+									mskilltype3 = mskilltypearray[2];
+								}
+								allm += 4;
+								if (mskillspell === mskillspell2) {
+									mskillspell2 = "";
+									mskilltype = mskilltype + ", " + mskilltype2;
+									mskilltype2 = "";
+									allm -= 2;
+								} else if (mskillspell === mskillspell3) {
+									mskillspell3 = "";
+									mskilltype = mskilltype + ", " + mskilltype3;
+									mskilltype3 = "";
+									allm -= 2;
+								} else if (mskillspell2 === mskillspell3) {
+									mskillspell3 = "";
+									mskilltype2 = mskilltype2 + ", " + mskilltype3;
+									mskilltype3 = "";
+									allm -= 2;
+								} else if (mskilltype === mskilltype2) {
+									mskillspell = mskillspell + ", " + mskillspell2;
+									mskillspell2 = "";
+									mskilltype2 = "";
+									allm -= 2;
+								} else if (mskilltype === mskilltype3) {
+									mskillspell = mskillspell + ", " + mskillspell3;
+									mskillspell3 = "";
+									mskilltype3 = "";
+									allm -= 2;
+								} else if (mskilltype2 === mskilltype3) {
+									mskillspell2 = mskillspell2 + ", " + mskillspell3;
+									mskillspell3 = "";
+									mskilltype3 = "";
+									allm -= 2;
+								}
+							}
+						}
+					}
+					mattack = MElemNum(monInfo.mattack, 1);
+					allm += 4;
+				}
+				if (mpl === undefined || mpl === null) {
+					mpl = 0;
+					allm -= 2;
+				}
+				if (mskillspell === undefined || mskillspell === null || mskillspell === 0 || mskillspell === "0"){
+					mskillspell = "";
+					allm -= 1;
+				}
+				if (mskilltype === undefined || mskilltype === null || mskilltype === 0 || mskilltype === "0"){
+					mskilltype = "";
+					allm -= 1;
+				}
+				if (mclass !== undefined) mclass = mclass > 30 ? "-" : MClassNum(mclass, 1);
+						
+				mclass = String(mclass);
+				mweak = String(mweak);
+				mresist = String(mresist);
+				mimperv = String(mimperv);
+				mskilltype = String(mskilltype);
+				mskillspell = String(mskillspell);
+				mskilltype2 = String(mskilltype2);
+				mskillspell2 = String(mskillspell2);
+				mskilltype3 = String(mskilltype3);
+				mskillspell3 = String(mskillspell3);
+				mspirittype = String(mspirittype);
+				mspiritsksp = String(mspiritsksp);
+				mattack = String(mattack);
+				if (_settings.ResizeMonsterInfo){
+					if (_settings.HideThisResHvstatStyle[0] || _settings.HideThisResHvstatStyle[1] || _settings.HideThisResHvstatStyle[2]) {
+						mweak = mweak.replace(", Phys", "Slash, Crush, Pierc").replace("?Phys", "Slash, Crush, Pierc").replace("Phys", "Slash, Crush, Pierc");
+						mresist = mresist.replace(", Phys", "Slash, Crush, Pierc").replace("?Phys", "Slash, Crush, Pierc").replace("Phys", "Slash, Crush, Pierc");
+						mimperv = mimperv.replace(", Phys", "Slash, Crush, Pierc").replace("?Phys", "Slash, Crush, Pierc").replace("Phys", "Slash, Crush, Pierc");
+					}
+					if (_settings.HideThisResHvstatStyle[3] || _settings.HideThisResHvstatStyle[4] || _settings.HideThisResHvstatStyle[5] || _settings.HideThisResHvstatStyle[6]) {
+						mweak = mweak.replace(", Elem", "Fire, Cold, Elec, Wind").replace("?Elem", "Fire, Cold, Elec, Wind").replace("Elem", "Fire, Cold, Elec, Wind");
+						mresist = mresist.replace(", Elem", "Fire, Cold, Elec, Wind").replace("?Elem", "Fire, Cold, Elec, Wind").replace("Elem", "Fire, Cold, Elec, Wind");
+						mimperv = mimperv.replace(", Elem", "Fire, Cold, Elec, Wind").replace("?Elem", "Fire, Cold, Elec, Wind").replace("Elem", "Fire, Cold, Elec, Wind");
+					}
+					if (_settings.HideThisResHvstatStyle[0]) {
+						mweak = mweak.replace(", Slashing", "").replace(", Slash", "").replace("Slashing", "").replace("Slash", "");
+						mresist = mresist.replace(", Slashing", "").replace(", Slash", "").replace("Slashing", "").replace("Slash", "");
+						mimperv = mimperv.replace(", Slashing", "").replace(", Slash", "").replace("Slashing", "").replace("Slash", "");
+					}
+					if (_settings.HideThisResHvstatStyle[1]) {
+						mweak = mweak.replace(", Crushing", "").replace(", Crush", "").replace("Crushing", "").replace("Crush", "");
+						mresist = mresist.replace(", Crushing", "").replace(", Crush", "").replace("Crushing", "").replace("Crush", "");
+						mimperv = mimperv.replace(", Crushing", "").replace(", Crush", "").replace("Crushing", "").replace("Crush", "");
+					}
+					if (_settings.HideThisResHvstatStyle[2]) {
+						mweak = mweak.replace(", Piercing", "").replace(", Pierc", "").replace("Piercing", "").replace("Pierc", "");
+						mresist = mresist.replace(", Piercing", "").replace(", Pierc", "").replace("Piercing", "").replace("Pierc", "");
+						mimperv = mimperv.replace(", Piercing", "").replace(", Pierc", "").replace("Piercing", "").replace("Pierc", "");
+					}
+					if (_settings.HideThisResHvstatStyle[3]) {
+						mweak = mweak.replace(", Fire", "").replace("Fire", "");
+						mresist = mresist.replace(", Fire", "").replace("Fire", "");
+						mimperv = mimperv.replace(", Fire", "").replace("Fire", "");
+					}
+					if (_settings.HideThisResHvstatStyle[4]) {
+						mweak = mweak.replace(", Cold", "").replace("Cold", "");
+						mresist = mresist.replace(", Cold", "").replace("Cold", "");
+						mimperv = mimperv.replace(", Cold", "").replace("Cold", "");
+					}
+					if (_settings.HideThisResHvstatStyle[5]) {
+						mweak = mweak.replace(", Elec", "").replace("Elec", "");
+						mresist = mresist.replace(", Elec", "").replace("Elec", "");
+						mimperv = mimperv.replace(", Elec", "").replace("Elec", "");
+					}
+					if (_settings.HideThisResHvstatStyle[6]) {
+						mweak = mweak.replace(", Wind", "").replace("Wind", "");
+						mresist = mresist.replace(", Wind", "").replace("Wind", "");
+						mimperv = mimperv.replace(", Wind", "").replace("Wind", "");
+					}
+					if (_settings.HideThisResHvstatStyle[7]) {
+						mweak = mweak.replace(", Holy", "").replace("Holy", "");
+						mresist = mresist.replace(", Holy", "").replace("Holy", "");
+						mimperv = mimperv.replace(", Holy", "").replace("Holy", "");
+					}
+					if (_settings.HideThisResHvstatStyle[8]) {
+						mweak = mweak.replace(", Dark", "").replace("Dark", "");
+						mresist = mresist.replace(", Dark", "").replace("Dark", "");
+						mimperv = mimperv.replace(", Dark", "").replace("Dark", "");
+					}
+					if (_settings.HideThisResHvstatStyle[9]) {
+						mweak = mweak.replace(", Soul", "").replace("Soul", "");
+						mresist = mresist.replace(", Soul", "").replace("Soul", "");
+						mimperv = mimperv.replace(", Soul", "").replace("Soul", "");
+					}
+					if (_settings.HideThisResHvstatStyle[10]) {
+						mweak = mweak.replace(", Void", "").replace("Void", "");
+						mresist = mresist.replace(", Void", "").replace("Void", "");
+						mimperv = mimperv.replace(", Void", "").replace("Void", "");
+					}
+				
+					var maxchar = (12 - kkl) * (kkl <= 12 ? 0.7 : 1.4) + 46;
+					allm1 = allm + mclass.length + mskillspell.length + mskilltype.length + mimperv.length + mresist.length + mweak.length + mattack.length + String(mpl).length + mskillspell2.length + mskilltype2.length + mskillspell3.length + mskilltype3.length + mspiritsksp.length + mspirittype.length;
+					if (allm1 > maxchar) {
+						if (kkl > 12 && !isHVFontEngine()) {
+							kk.css("font-size", 12);
+							kk.css("font-weight", "bold")
+						}
+						if (kkl >= 17 && !isHVFontEngine()) kk.html(kk.html().slice(0,15) + "...");
+						kkl = kk.html().length;
+						if (kkl <= 5) maxchar =  (12 - kkl)*1.9 + 46;
+						else if (kkl <= 12) maxchar =  (12 - kkl)*1.95 + 46;
+						else if (kkl < 17) maxchar =  (17 - kkl)*0.8 + 46;
+						else maxchar =  (18 - kkl)*1.2 + 46;
+					}
+					if (allm1 > maxchar) {
+						mimperv = mimperv.replace(/\s/g, "");
+						mresist = mresist.replace(/\s/g, "");
+						mweak = mweak.replace(/\s/g, "");
+						mskilltype = mskilltype.replace(/\s/g, "");
+						mskilltype2 = mskilltype2.replace(/\s/g, "");
+						mskillspell = mskillspell.replace(/\s/g, "");
+						mskillspell2 = mskillspell2.replace(/\s/g, "");
+						allm1 = allm + mclass.length + mskillspell.length + mskilltype.length + mimperv.length + mresist.length + mweak.length + mattack.length + String(mpl).length + mskillspell2.length + mskilltype2.length + mskillspell3.length + mskilltype3.length + mspiritsksp.length + mspirittype.length;
+					}
+					if (allm1 > maxchar) {
+						mskilltype = mskilltype.replace("Slash", "Sl").replace("Crush", "Cr").replace("Pierc", "Pi");
+						mskilltype2 = mskilltype2.replace("Slash", "Sl").replace("Crush", "Cr").replace("Pierc", "Pi");
+						mskilltype3 = mskilltype3.replace("Slash", "Sl").replace("Crush", "Cr").replace("Pierc", "Pi");
+						mspirittype = mspirittype.replace("Slash", "Sl").replace("Crush", "Cr").replace("Pierc", "Pi");
+						mspiritsksp = mspiritsksp.replace("Spirit:", "S:");
+						mattack = mattack.replace("Slash", "Sl").replace("Crush", "Cr").replace("Pierc", "Pi");
+						allm1 = allm + mclass.length + mskillspell.length + mskilltype.length + mimperv.length + mresist.length + mweak.length + mattack.length + String(mpl).length + mskillspell2.length + mskilltype2.length + mskillspell3.length + mskilltype3.length + mspiritsksp.length + mspirittype.length;
+					}
+					if (allm1 > maxchar) {
+						mimperv = mimperv.replace("Slash", "Sl").replace("Crush", "Cr").replace("Pierc", "Pi");
+						mresist = mresist.replace("Slash", "Sl").replace("Crush", "Cr").replace("Pierc", "Pi");
+						allm1 = allm + mclass.length + mskillspell.length + mskilltype.length + mimperv.length + mresist.length + mweak.length + mattack.length + String(mpl).length + mskillspell2.length + mskilltype2.length + mskillspell3.length + mskilltype3.length + mspiritsksp.length + mspirittype.length;
+					}
+					if (allm1 > maxchar) {
+						mweak = mweak.replace("Slash", "Sl").replace("Crush", "Cr").replace("Pierc", "Pi");
+						mspiritsksp = mspiritsksp.replace("S:", "");
+						allm1 = allm + mclass.length + mskillspell.length + mskilltype.length + mimperv.length + mresist.length + mweak.length + mattack.length + String(mpl).length + mskillspell2.length + mskilltype2.length + mskillspell3.length + mskilltype3.length + mspiritsksp.length + mspirittype.length;
+					}
+					if (allm1 > maxchar) {
+						mclass = mclass.slice(0, 4);
+						allm1 = allm + mclass.length + mskillspell.length + mskilltype.length + mimperv.length + mresist.length + mweak.length + mattack.length + String(mpl).length + mskillspell2.length + mskilltype2.length + mskillspell3.length + mskilltype3.length + mspiritsksp.length + mspirittype.length;
+					}
+					if (allm1 > maxchar) {
+						mclass = mclass.slice(0, 3);
+						allm1 = allm + mclass.length + mskillspell.length + mskilltype.length + mimperv.length + mresist.length + mweak.length + mattack.length + String(mpl).length + mskillspell2.length + mskilltype2.length + mskillspell3.length + mskilltype3.length + mspiritsksp.length + mspirittype.length;
+					}
+					if (allm1 > maxchar) {
+						mskilltype = mskilltype.replace("Fire", "Fir").replace("Cold", "Col").replace("Elec", "Ele").replace("Wind", "Win").replace("Holy", "Hol").replace("Dark", "Dar").replace("Soul", "Sou").replace("Slash", "Sl").replace("Crush", "Cr").replace("Pierc", "Pi");
+						mskilltype2 = mskilltype2.replace("Fire", "Fir").replace("Cold", "Col").replace("Elec", "Ele").replace("Wind", "Win").replace("Holy", "Hol").replace("Dark", "Dar").replace("Soul", "Sou").replace("Slash", "Sl").replace("Crush", "Cr").replace("Pierc", "Pi");
+						mskilltype3 = mskilltype3.replace("Fire", "Fir").replace("Cold", "Col").replace("Elec", "Ele").replace("Wind", "Win").replace("Holy", "Hol").replace("Dark", "Dar").replace("Soul", "Sou").replace("Slash", "Sl").replace("Crush", "Cr").replace("Pierc", "Pi");
+						mspirittype = mspirittype.replace("Fire", "Fir").replace("Cold", "Col").replace("Elec", "Ele").replace("Wind", "Win").replace("Holy", "Hol").replace("Dark", "Dar").replace("Soul", "Sou").replace("Slash", "Sl").replace("Crush", "Cr").replace("Pierc", "Pi");
+						mattack = mattack.replace("Fire", "Fir").replace("Cold", "Col").replace("Elec", "Ele").replace("Wind", "Win").replace("Holy", "Hol").replace("Dark", "Dar").replace("Soul", "Sou").replace("Slash", "Sl").replace("Crush", "Cr").replace("Pierc", "Pi");
+						allm1 = allm + mclass.length + mskillspell.length + mskilltype.length + mimperv.length + mresist.length + mweak.length + mattack.length + String(mpl).length + mskillspell2.length + mskilltype2.length + mskillspell3.length + mskilltype3.length + mspiritsksp.length + mspirittype.length;
+					}
+					if (allm1 > maxchar) {
+						mresist = mresist.replace("Fire", "Fir").replace("Cold", "Col").replace("Elec", "Ele").replace("Wind", "Win").replace("Holy", "Hol").replace("Dark", "Dar").replace("Soul", "Sou").replace("Slash", "Sl").replace("Crush", "Cr").replace("Pierc", "Pi");
+						mimperv = mimperv.replace("Fire", "Fir").replace("Cold", "Col").replace("Elec", "Ele").replace("Wind", "Win").replace("Holy", "Hol").replace("Dark", "Dar").replace("Soul", "Sou").replace("Slash", "Sl").replace("Crush", "Cr").replace("Pierc", "Pi");
+						allm1 = allm + mclass.length + mskillspell.length + mskilltype.length + mimperv.length + mresist.length + mweak.length + mattack.length + String(mpl).length + mskillspell2.length + mskilltype2.length + mskillspell3.length + mskilltype3.length + mspiritsksp.length + mspirittype.length;
+					}
+					if (allm1 > maxchar) {
+						mweak = mweak.replace("Fire", "Fir").replace("Cold", "Col").replace("Elec", "Ele").replace("Wind", "Win").replace("Holy", "Hol").replace("Dark", "Dar").replace("Soul", "Sou").replace("Slash", "Sl").replace("Crush", "Cr").replace("Pierc", "Pi");
+						allm1 = allm + mclass.length + mskillspell.length + mskilltype.length + mimperv.length + mresist.length + mweak.length + mattack.length + String(mpl).length + mskillspell2.length + mskilltype2.length + mskillspell3.length + mskilltype3.length + mspiritsksp.length + mspirittype.length;
+					}
+					if (allm1 > maxchar) {
+						mskillspell = mskillspell.replace("Mag", "Ma").replace("Phys", "Ph");
+						mskillspell2 = mskillspell2.replace("Mag", "Ma").replace("Phys", "Ph");
+						mskillspell3 = mskillspell3.replace("Mag", "Ma").replace("Phys", "Ph");
+						mspiritsksp = mspiritsksp.replace("Mag", "Ma").replace("Phys", "Ph");
+						allm1 = allm + mclass.length + mskillspell.length + mskilltype.length + mimperv.length + mresist.length + mweak.length + mattack.length + String(mpl).length + mskillspell2.length + mskilltype2.length + mskillspell3.length + mskilltype3.length + mspiritsksp.length + mspirittype.length;
+					}
+					if (allm1 > maxchar) {
+						mattack = mattack.replace("Fir", "Fi").replace("Col", "Co").replace("Ele", "El").replace("Win", "Wi").replace("Hol", "Ho").replace("Dar", "Da").replace("Sou", "So").replace("Elm", "Elem");
+						mskilltype = mskilltype.replace("Fir", "Fi").replace("Col", "Co").replace("Ele", "El").replace("Win", "Wi").replace("Hol", "Ho").replace("Dar", "Da").replace("Sou", "So").replace("Elm", "Elem");
+						mskilltype2 = mskilltype2.replace("Fir", "Fi").replace("Col", "Co").replace("Ele", "El").replace("Win", "Wi").replace("Hol", "Ho").replace("Dar", "Da").replace("Sou", "So").replace("Elm", "Elem");
+						mskilltype3 = mskilltype3.replace("Fir", "Fi").replace("Col", "Co").replace("Ele", "El").replace("Win", "Wi").replace("Hol", "Ho").replace("Dar", "Da").replace("Sou", "So").replace("Elm", "Elem");
+						mspirittype = mspirittype.replace("Fir", "Fi").replace("Col", "Co").replace("Ele", "El").replace("Win", "Wi").replace("Hol", "Ho").replace("Dar", "Da").replace("Sou", "So").replace("Elm", "Elem");
+						allm1 = allm + mclass.length + mskillspell.length + mskilltype.length + mimperv.length + mresist.length + mweak.length + mattack.length + String(mpl).length + mskillspell2.length + mskilltype2.length + mskillspell3.length + mskilltype3.length + mspiritsksp.length + mspirittype.length;
+					}
+					if (allm1 > maxchar) {
+						mresist = mresist.replace("Fir", "Fi").replace("Col", "Co").replace("Ele", "El").replace("Win", "Wi").replace("Hol", "Ho").replace("Dar", "Da").replace("Sou", "So").replace("Elm", "Elem");
+						mimperv = mimperv.replace("Fir", "Fi").replace("Col", "Co").replace("Ele", "El").replace("Win", "Wi").replace("Hol", "Ho").replace("Dar", "Da").replace("Sou", "So").replace("Elm", "Elem");
+						allm1 = allm + mclass.length + mskillspell.length + mskilltype.length + mimperv.length + mresist.length + mweak.length + mattack.length + String(mpl).length + mskillspell2.length + mskilltype2.length + mskillspell3.length + mskilltype3.length + mspiritsksp.length + mspirittype.length;
+					}
+					if (allm1 > maxchar) {
+						mweak = mweak.replace("Fir", "Fi").replace("Col", "Co").replace("Ele", "El").replace("Win", "Wi").replace("Hol", "Ho").replace("Dar", "Da").replace("Sou", "So").replace("Elm", "Elem");
+						allm1 = allm + mclass.length + mskillspell.length + mskilltype.length + mimperv.length + mresist.length + mweak.length + mattack.length + String(mpl).length + mskillspell2.length + mskilltype2.length + mskillspell3.length + mskilltype3.length + mspiritsksp.length + mspirittype.length;
+					}
+					if (allm1 > maxchar) {
+						mattack = mattack.replace("Fi", "F").replace("Co", "C").replace("El", "E").replace("Wi", "W").replace("Ho", "H").replace("Da", "D").replace("So", "S").replace("Eem", "Elem");
+						mskilltype = mskilltype.replace("Fi", "F").replace("Co", "C").replace("El", "E").replace("Wi", "W").replace("Ho", "H").replace("Da", "D").replace("So", "S").replace("Eem", "Elem");
+						mskilltype2 = mskilltype2.replace("Fi", "F").replace("Co", "C").replace("El", "E").replace("Wi", "W").replace("Ho", "H").replace("Da", "D").replace("So", "S").replace("Eem", "Elem");
+						mskilltype3 = mskilltype3.replace("Fi", "F").replace("Co", "C").replace("El", "E").replace("Wi", "W").replace("Ho", "H").replace("Da", "D").replace("So", "S").replace("Eem", "Elem");
+						mspirittype = mspirittype.replace("Fi", "F").replace("Co", "C").replace("El", "E").replace("Wi", "W").replace("Ho", "H").replace("Da", "D").replace("So", "S").replace("Eem", "Elem");
+						allm1 = allm + mclass.length + mskillspell.length + mskilltype.length + mimperv.length + mresist.length + mweak.length + mattack.length + String(mpl).length + mskillspell2.length + mskilltype2.length + mskillspell3.length + mskilltype3.length + mspiritsksp.length + mspirittype.length;
+					}
+					if (allm1 > maxchar) {
+						mskillspell = mskillspell.replace("Ma", "M").replace("Ph", "P");
+						mskillspell2 = mskillspell2.replace("Ma", "M").replace("Ph", "P");
+						mskillspell3 = mskillspell3.replace("Ma", "M").replace("Ph", "P");
+						mspiritsksp = mspiritsksp.replace("Ma", "M").replace("Ph", "P");
+						allm1 = allm + mclass.length + mskillspell.length + mskilltype.length + mimperv.length + mresist.length + mweak.length + mattack.length + String(mpl).length + mskillspell2.length + mskilltype2.length + mskillspell3.length + mskilltype3.length + mspiritsksp.length + mspirittype.length;
+					}
+					if (allm1 > maxchar) {
+						mresist = mresist.replace("Fi", "F").replace("Co", "C").replace("El", "E").replace("Wi", "W").replace("Ho", "H").replace("Da", "D").replace("So", "S").replace("Eem", "Elem");
+						mimperv = mimperv.replace("Fi", "F").replace("Co", "C").replace("El", "E").replace("Wi", "W").replace("Ho", "H").replace("Da", "D").replace("So", "S").replace("Eem", "Elem");
+						allm1 = allm + mclass.length + mskillspell.length + mskilltype.length + mimperv.length + mresist.length + mweak.length + mattack.length + String(mpl).length + mskillspell2.length + mskilltype2.length + mskillspell3.length + mskilltype3.length + mspiritsksp.length + mspirittype.length;
+					}
+					if (allm1 > maxchar) {
+						mweak = mweak.replace("Fi", "F").replace("Co", "C").replace("El", "E").replace("Wi", "W").replace("Ho", "H").replace("Da", "D").replace("So", "S").replace("Eem", "Elem");
+					}
+				}
+				if (mclass !== "0" && mclass !== "undefined" && mclass !== "unde" && mclass !== "und") {
+					d = "";
+					if (_settings.isShowClassHvstatStyle){
+						d = "{<span style='color:blue'>" + mclass;
+						d += _settings.isShowPLHvstatStyle ? ", " + mpl + "+</span>}" : "</span>}";
+					} else if (_settings.isShowPLHvstatStyle) d = "{<span style='color:blue'>" + mpl + "+</span>}";
+					if (_settings.isShowWeakHvstatStyle) {
+						d += mweak === "0" ? "" : "[<span style='color:#3CB878'>" + mweak + "</span>";
+						if (!_settings.isShowResHvstatStyle) d += "]";
+					}
+					if (_settings.isShowResHvstatStyle) {
+						if (!_settings.isShowWeakHvstatStyle) d += "[";
+						d += mresist === "-" ? "" : "|<span style='color:#FF3300'>" + mresist + "</span>";
+						d += mimperv === "-" ? "" : "|<b><u><span style='color:#990000'>" + mimperv + "</span></u></b>";
+						d += "]";
+					}
+					if (_settings.isShowAttackHvstatStyle) {
+						d += mattack === "0" ? "(" : "(<span style='color:black'>" + mattack + "</span>";
+						d += mskillspell === "" ? "" : ";<span style='color:blue'>" + mskillspell + "</span>";
+						d += mskilltype === "" ? "" : "-<span style='color:blue'>" + mskilltype + "</span>";
+						d += mskillspell2 === "" ? "" : "|<span style='color:blue'>" + mskillspell2 + "</span>";
+						d += mskilltype2 === "" ? "" : "-<span style='color:blue'>" + mskilltype2 + "</span>";
+						d += mskillspell3 === "" ? "" : "|<span style='color:blue'>" + mskillspell3 + "</span>";
+						d += mskilltype3 === "" ? "" : "-<span style='color:blue'>" + mskilltype3 + "</span>";
+						d += mspiritsksp === "" ? "" : "|<span style='color:red'>" + mspiritsksp + "</span>";
+						d += mspirittype === "" ? "" : "-<span style='color:red'>" + mspirittype + "</span>";
+						d += ")";
+					}
+				} else d = "[<span style='color:blue;font-weight:bold'>NEW</span>]";
+				_ltc.isShowElemHvstatStyle[0]++;
+				_ltc.isShowElemHvstatStyle[1] += TimeCounter(0, milliseconds2);
+			}
+			if (s) {
+				t = "<div style='cursor:default;position:relative;top:-2px;left:2px;padding:0 1px;margin-left:0px;white-space:nowrap'>" + d + "</span></div>";
+				k.after(t);
+			} else {
+				t = "<div style='font-family:arial;font-size:7pt;font-style:normal;font-weight:bold;display:inline;cursor:default;padding:0 1px;margin-left:1px;white-space:nowrap'>" + d + "</span></div>";
+				var p = k.children().eq(0);
+				var c = p.html();
+				p.html(c + t);
+				p.css("white-space", "nowrap");
+			}
+		}
+		if (_settings.isShowMonsterDuration) {
+			showMonsterEffectsDuration(u);
+		}
+			//----------------------------------------
+		};
 
 // 		var formatSkill = function (skill) {
 // 			var str = (skill.type ? skill.type : "?") + "-"
@@ -689,11 +1111,6 @@ HVStat.Monster = (function () {
 // 			}
 // 			return str;
 // 		};
-
-		_currHpRate = currBarRate(0);
-		_currMpRate = currBarRate(1);
-		_currSpRate = currBarRate(2);
-		_hasSpiritPoint = _healthBars.length > 2;
 
 		return {
 			get id() { return _id; },
@@ -708,30 +1125,19 @@ HVStat.Monster = (function () {
 			get scanInfo() { return _scanInfo; },
 			get skills() { return _skills },
 			get valueObject() {
-				var skillVOs = [];
+				var vo = new HVStat.MonsterVO();
+				vo.id = _id;
+				vo.name = _name;
+				vo.maxHp = _maxHp;
+				vo.prevMpRate = _currMpRate;
+				vo.prevSpRate = _currSpRate;
+				vo.scanInfo = _scanInfo ? _scanInfo.valueObject : null;
 				_skills.forEach(function (element, index, array) {
-					skillVOs.push(element.valueObject);
+					vo.skills.push(element.valueObject);
 				});
-				return {
-					id: _id,
-					name: _name,
-					maxHp: _maxHp,
-					currHp: _currHp,
-					currHpRate: _currHpRate,
-					currMpRate: _currMpRate,
-					currSpRate: _currSpRate,
-					prevMpRate: _prevMpRate,
-					prevSpRate: _prevSpRate,
-					scanInfo: _scanInfo ? _scanInfo.valueObject : null,
-					skills: skillVOs,
-				};
+				return vo;
 			},
-			get domElementId() {
-				if (isNaN(_index)) {
-					throw new Error("invalid _index");
-				}
-				return _domElementIds[_index];
-			},
+			get domElementId() { return _domElementIds[_index]; },
 
 			set id(id) { _id = id; },
 			set name(name) { _name = name; },
@@ -770,6 +1176,18 @@ HVStat.Monster = (function () {
 					// update last used date
 				}
 			},
+			setFromValueObject: function (valueObject) {
+				var vo = valueObject;
+				_id = vo.id;
+				_name = vo.name;
+				_maxHp = vo.maxHp;
+				_prevMpRate = vo.prevMpRate;
+				_prevSpRate = vo.prevSpRate;
+				_scanInfo = vo.scanInfo ? new HVStat.MonsterScanInfo(vo.scanInfo) : null;
+				vo.skills.forEach(function (element, index, array) {
+					_skills.push(new HVStat.MonsterSkill(element));
+				});
+			},
 			getFromDB: function (transaction, callback) {
 				if (!_id) return;
 				var tx = transaction;
@@ -781,11 +1199,10 @@ HVStat.Monster = (function () {
 						console.log("get from MonsterScanInfo: not found: id = " + _id);
 					} else {
 						console.log("get from MonsterScanInfo: success: id = " + _id);
-						_scanInfo = HVStat.MonsterScanInfo(event.target.result);
+						_scanInfo = new HVStat.MonsterScanInfo(event.target.result);
 						if (callback) {
 							callback(event);
 						}
-						_renderStats();
 					}
 				};
 				reqGet.onerror = function (event) {
@@ -1341,6 +1758,10 @@ function displayPowerupBox() {
 	a.after(c);
 }
 function showMonsterStats() {
+	HVStat.monsters.forEach(function (element, index, array) {
+		element.renderStats();
+	});
+	return; // for replace
 	if (!(_settings.isShowMonsterHP || _settings.isShowMonsterMP || _settings.isShowMonsterSP || _settings.isShowMonsterElements || _settings.isShowMonsterDuration || _settings.isShowStatsPopup)) return;
 	var a = new ElementalStats();
 	$("#monsterpane > div").each(function (n) {
@@ -1393,7 +1814,7 @@ function showMonsterStats() {
 			o = Math.floor(b * l);
 			monInfo.currHp = o;
 			monInfo.currmp = v;
-			_round.save();
+//			_round.save();
 			_ltc.monsterpopup[1] += TimeCounter(0, t45);
 		}
 		var t33 = TimeCounter(1);
@@ -2008,16 +2429,19 @@ function collectRoundInfo() {
 	var c = "";
 	var d;
 	var b = false;
+	// create monster objects
+	$("#monsterpane > div").each(function (index) {
+		HVStat.monsters.push(new HVStat.Monster(index));
+	});
 	loadRoundObject();
 	if (_settings.isRememberSkillsTypes) loadCollectdataObject();
 	if (_settings.isTrackItems) loadDropsObject();
 	if (_settings.isTrackRewards) loadRewardsObject();
 	if (!_round.isLoaded) {
 		// create monster objects
-		$("#monsterpane > div").each(function (index) {
+		$("#monsterpane > div").each(function () {
 			var monster = new HVMonster();
 			_round.monsters.push(monster);
-			HVStat.monsters.push(new HVStat.Monster(index)); // NEW
 		});
 	}
 	if (_settings.isSpellsSkillsDifference || _settings.isShowStatsPopup) {
@@ -2064,7 +2488,7 @@ function collectRoundInfo() {
 				if (_settings.isShowElemHvstatStyle) {
 					var t43 = TimeCounter(1);
 					loadDatabaseObject();
-					HVStat.monsters[index].getFromDB(HVStat.transaction); // NEW
+					HVStat.monsters[index].getFromDB(HVStat.transaction, RoundSave);
 					h.mclass = _database.mclass[mid];
 					h.mpl = _database.mpl[mid];
 					h.mattack = _database.mattack[mid];
@@ -2112,7 +2536,7 @@ function collectRoundInfo() {
 			} else if (c.match(/CrysFest/)) {
 				_round.battleType = CRYSFEST;
 			}
-			_round.save();
+//			_round.save();
 		}
 		if (g.html() !== e) {
 			return false;
@@ -2626,16 +3050,24 @@ function collectRoundInfo() {
 		while (i--) {
 			if (_round.monsters[i].hasspbar) {
 				_round.monsters[i].sp2 = _round.monsters[i].sp1;
-//				_round.monstersV2[i].prevSpRate = _round.monstersV2[i].currSpRate;
 			}
 		}
 		_ltc.changedMHits[1] += TimeCounter(0, t74);
 	}
-	_round.save();
+	RoundSave();
 	_ltc.collectRoundInfo[0]++;
 	_ltc.collectRoundInfo[1] += TimeCounter(0, milliseconds1);
 	_ltc.save();
 }
+
+function RoundSave() {
+	_round.monstersV2 = [];
+	HVStat.monsters.forEach(function (element, index, array) {
+		_round.monstersV2[index] = element.valueObject;
+	});
+	_round.save();
+}
+
 function saveStats() {
 	var milliseconds1 = TimeCounter(1);
 	if (!SAVE_STATS) return;
@@ -4107,6 +4539,9 @@ function loadRoundObject() {
 	if (_round !== null) return;
 	_round = new HVRound();
 	_round.load();
+	_round.monstersV2.forEach(function (element, index, array) {
+		HVStat.monsters[index].setFromValueObject(element);
+	});
 }
 function getMonsterElementsById(a, b) {
 	switch (b) {
@@ -4387,7 +4822,7 @@ function HVRound() {
 	this.save = function () { saveToStorage(this, HV_ROUND); };
 	this.reset = function () { deleteFromStorage(HV_ROUND); };
 	this.cloneFrom = clone;
-//	this.monstersV2 = [];	// TODO: finally replace monsters
+	this.monstersV2 = [];	// TODO: finally replace monsters
 	this.monsters = [];
 	this.currRound = 0;
 	this.maxRound = 0;
