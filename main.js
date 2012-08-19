@@ -105,7 +105,7 @@ function evDomLoad(){
 		var a = doc.createElement("div");
 		a.setAttribute("id", "cssdiv");
 		a.setAttribute("style", "visibility:hidden");
-		doc.documentElement.insertBefore(a);
+		doc.documentElement.appendChild(a);
 	}
 	if (_settings.isChangePageTitle && document.title === "The HentaiVerse") {
 		timer = TimeCounter(1);
@@ -423,7 +423,8 @@ function displayPowerupBox() {
 		var powerInfo = powerup.getAttribute("onmouseover");
 		powerBox.setAttribute("onmouseover", powerInfo);
 		powerBox.setAttribute("onmouseout", powerup.getAttribute("onmouseout"));
-		powerBox.setAttribute("onclick", 'var e = createEvent("Events"); e.initEvent("keydown", true, true); e.altKey = false; e.ctrlKey = false; e.shiftKey = false; e.metaKey = false; e.keyCode = 80; document.dispatchEvent(e);');
+		//powerBox.setAttribute("onclick", 'var e=createEvent("Events");e.initEvent("keydown",true,true);e.altKey=false;e.ctrlKey=false;e.shiftKey=false;e.metaKey=false;e.keyCode=80;document.dispatchEvent(e);');
+		powerBox.setAttribute("onclick", 'document.getElementById("ckey_items").onclick();document.getElementById("ikey_p").onclick();document.getElementById("ikey_p").onclick();');
 		if (powerInfo.indexOf('Health') > -1) powerBox.innerHTML = "<img class='PowerupGemIcon' src='"+ I_HEALTHPOT+ "' id='healthgem'>";
 		else if (powerInfo.indexOf('Mana') > -1) powerBox.innerHTML = "<img class='PowerupGemIcon' src='"+ I_MANAPOT+ "' id='managem'>";
 		else if (powerInfo.indexOf('Spirit') > -1) powerBox.innerHTML = "<img class='PowerupGemIcon' src='"+ I_SPIRITPOT+ "' id='spiritgem'>";
@@ -1100,7 +1101,7 @@ function showSidebarProfs() {
 }
 function isProfTotalsRecorded() {
 	loadProfsObject();
-	return _profs.weapProfTotals[0] > 0;
+	return _profs.weapProfTotals.length > 0;
 }
 function inventoryWarning() {
 	var d = 4;
