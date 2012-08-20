@@ -50,7 +50,7 @@ HVStat.Keyword = function (id, name, abbrNames) {
 	var i, _abbrNames = [];
 	if (abbrNames !== undefined) {
 		if (abbrNames instanceof Array) {
-			for (i in abbrNames) {
+			for (i = 0; i < abbrNames.length; i++) {
 				_abbrNames[i] = String(abbrNames[i]);
 			}
 		} else {
@@ -96,8 +96,8 @@ HVStat.MonsterClass = (function () {
 		new kw("LEGENDARY", "Legendary", ["Lege", "Leg"]),
 		new kw("ULTIMATE", "Ultimate", ["Ulti", "Ult"])
 	];
-	var i, keyword;
-	for (i in keywords) {
+	var i, keyword, len = keywords.length;
+	for (i = 0; i < len; i++) {
 		keyword = keywords[i];
 		MonsterClass[keyword.id] = keyword;
 	}
@@ -111,8 +111,8 @@ HVStat.SkillType = (function () {
 		new kw("MANA", "Mana", [""]),
 		new kw("SPIRIT", "Spirit", ["Spirit", "S"])
 	];
-	var i, keyword;
-	for (i in keywords) {
+	var i, keyword, len = keywords.length;
+	for (i = 0; i < len; i++) {
 		keyword = keywords[i];
 		SkillType[keyword.id] = keyword;
 	}
@@ -126,8 +126,8 @@ HVStat.AttackType = (function () {
 		new kw("PHYSICAL", "Physical", ["Phys", "Ph", "P"]),
 		new kw("MAGICAL", "Magical", ["Mag", "Ma", "M"])
 	];
-	var i, keyword;
-	for (i in keywords) {
+	var i, keyword, len = keywords.length;
+	for (i = 0; i < len; i++) {
 		keyword = keywords[i];
 		AttackType[keyword.id] = keyword;
 	}
@@ -150,8 +150,8 @@ HVStat.DamageType = (function () {
 		new kw("SOUL", "Soul", ["Sou", "So", "S"]),
 		new kw("VOID", "Void", ["Voi", "Vo", "V"])
 	];
-	var i, keyword;
-	for (i in keywords) {
+	var i, keyword, len = keywords.length;
+	for (i = 0; i < len; i++) {
 		keyword = keywords[i];
 		DamageType[keyword.id] = keyword;
 	}
@@ -165,8 +165,8 @@ HVStat.GenericDamageType = (function () {
 		new kw("PHYSICAL", "Physical", ["Phys", "Ph"]),
 		new kw("ELEMENTAL", "Elemental", ["Elem", "El"])
 	];
-	var i, keyword;
-	for (i in keywords) {
+	var i, keyword, len = keywords.length;
+	for (i = 0; i < len; i++) {
 		keyword = keywords[i];
 		GenericDamageType[keyword.id] = keyword;
 	}
@@ -182,8 +182,8 @@ HVStat.DefenceLevel = (function () {
 		new kw("RESISTANT", "Resistant"),
 		new kw("IMPERVIOUS", "Impervious")
 	];
-	var i, keyword;
-	for (i in keywords) {
+	var i, keyword, len = keywords.length;
+	for (i = 0; i < len; i++) {
 		keyword = keywords[i];
 		DefenceLevel[keyword.id] = keyword;
 	}
@@ -202,13 +202,15 @@ HVStat.Debuff = (function () {
 		new kw("BREACHED_DEFENSE", "Breached Defense"),
 		new kw("BLUNTED_ATTACK", "Blunted Attack")
 	];
-	var i, keyword;
-	for (i in keywords) {
+	var i, keyword, len = keywords.length;
+	for (i = 0; i < len; i++) {
 		keyword = keywords[i];
 		Debuff[keyword.id] = keyword;
 	}
 	return Debuff;
 }());
+
+HVStat.delimiter = new HVStat.Keyword("DELIMITER", ", ", [","]);
 
 // Value Objects
 
@@ -334,22 +336,26 @@ HVStat.MonsterSkill = (function () {
 	// public static method
 	MonsterSkill.fromBattle = function (used, damaged) {
 		var vo = new HVStat.MonsterSkillVO();
-		// TODO
 		r = / (uses|casts) ([^\.]+?)/.exec(used);
-		if (r && r.length >= 3) {
-			switch (r[1]) {
-			case "uses":
-				vo.attackType = HVStat.AttackType.PHYSICAL.id;
-				break;
-			case "casts":
-				vo.attackType = HVStat.AttackType.MAGICAL.id;
-				break;
-			}
+		if (!r || r.length < 3) {
+			return null;
+		}
+		switch (r[1]) {
+		case "uses":
+			vo.attackType = HVStat.AttackType.PHYSICAL.id;
+			break;
+		case "casts":
+			vo.attackType = HVStat.AttackType.MAGICAL.id;
+			break;
+		default:
+			vo.attackType = null;
 		}
 		r = / (.+?) damage/.exec(damaged);
-		if (r && r.length >= 2) {
-//			vo.damageType = HVStat.DamageType.fromString(r[1]).id;
+		if (!r || r.length < 2) {
+			return null;
 		}
+		// TODO
+//		vo.damageType = HVStat.DamageType.fromString(r[1]).id;
 		vo.lastUsedDate = new Date();
 		return new MonsterSkill(vo);
 	};
@@ -416,7 +422,7 @@ HVStat.MonsterScanInfo = (function () {
 			get defResistant() { return _defResistant.concat(); },
 			get defImpervious() { return _defImpervious.concat(); },
 			get valueObject() {
-				var i;
+				var i, len;
 				var vo = new HVStat.MonsterScanInfoVO();
 				vo.lastScanDate = _lastScanDate.toISOString();
 				vo.monsterClass = (_monsterClass ? _monsterClass.id : null);
@@ -426,7 +432,8 @@ HVStat.MonsterScanInfo = (function () {
 				for (i in _defenceLevel) {
 					vo.defenceLevel[i] = _defenceLevel[i].id;
 				}
-				for (i in _debuffsAffected) {
+				len = _debuffsAffected.length;
+				for (i = 0; i < len; i++) {
 					vo.debuffsAffected[i] = _debuffsAffected[i].id;
 				}
 				return vo;
@@ -530,7 +537,6 @@ HVStat.Monster = (function () {
 		var _id;
 		var _name;
 		var _maxHp;
-		var _currHp;
 		var _prevMpRate;
 		var _prevSpRate;
 		var _scanInfo;
@@ -542,7 +548,7 @@ HVStat.Monster = (function () {
 				v = 0;
 			} else {
 				style = bar.attr("style");
-				r = /width:\s*?(\d+?)px/i.exec(style);
+				r = /width\s*?:\s*?(\d+?)px/i.exec(style);
 				if (r && r.length >= 2) {
 					v = Number(r[1]) / _maxBarWidth;
 				} else {
@@ -556,7 +562,9 @@ HVStat.Monster = (function () {
 		var _currMpRate = currBarRate(1);
 		var _currSpRate = currBarRate(2);
 		var _hasSpiritPoint = _healthBars.length > 2;
-
+		var _currHp = function () {
+			return Math.ceil(_currHpRate * _maxHp);
+		};
 		var _waitingDBResponse = function () {
 			return _waitingGetResponseOfMonsterScanInfo || _waitingGetResponseOfMonsterSkills;
 		};
@@ -583,7 +591,7 @@ HVStat.Monster = (function () {
 				if (_settings.showMonsterHPPercent) {
 					hpIndicator = (_currHpRate * 100).toFixed(2) + "%"
 				} else {
-					hpIndicator = Math.ceil(_currHpRate * _maxHp) + " / " + _maxHp;
+					hpIndicator = _currHp() + " / " + _maxHp
 				}
 				html = "<div style='position:absolute;z-index:1074;top:-1px;font-size:8pt;font-family:arial,helvetica,sans-serif;font-weight:bolder;color:yellow;width:120px;text-align:center'>" + hpIndicator + "</div>";
 				e.after(html);
@@ -1042,7 +1050,7 @@ HVStat.Monster = (function () {
 			var html = '<table cellspacing="0" cellpadding="0" style="width:100%">'
 				+ '<tr class="monname"><td colspan="2"><b>' + _name + '</b></td></tr>'
 				+ '<tr><td>ID: </td><td>' + _id + '</td></tr>'
-				+ '<tr><td>Health: </td><td>' + _currHp + ' / ' + _maxHp + '</td></tr>'
+				+ '<tr><td>Health: </td><td>' + _currHp() + ' / ' + _maxHp + '</td></tr>'
 				+ '<tr><td>Mana: </td><td>' + (_currMpRate * 100).toFixed(2) + '%</td></tr>';
 			if (_hasSpiritPoint) {
 				html += '<tr><td>Spirit: </td><td>' + (_currSpRate * 100).toFixed(2) + '%</td></tr>';
@@ -1073,7 +1081,7 @@ HVStat.Monster = (function () {
 // 			}
 			if (existsScanInfo) {
 				html += '<tr><td>Weak against:</td><td>' + _scanInfo.defWeak.join(", ") + '</td></tr>'
-					+ '<tr><td>Resistant to:</td><td>' + _scanInfo.defResistantTo.join(", ") + '</td></tr>'
+					+ '<tr><td>Resistant to:</td><td>' + _scanInfo.defResistant.join(", ") + '</td></tr>'
 					+ '<tr><td>Impervious to:</td><td>' + _scanInfo.defImpervious.join(", ") + '</td></tr>'
 					+ '<tr><td>Debuffs affected:</td><td>' + _scanInfo.debuffsAffected.join(", ") + '</td></tr>';
 				if (_scanInfo.lastScanDate) {
@@ -1106,7 +1114,7 @@ HVStat.Monster = (function () {
 			get id() { return _id; },
 			get name() { return _name; },
 			get maxHp() { return _maxHp; },
-			get currHp() { return _currHp; },
+			get currHp() { return _currHp(); },
 			get currHpRate() { return _currHpRate; },
 			get currMpRate() { return _currMpRate; },
 			get currSpRate() { return _currSpRate; },
@@ -1132,7 +1140,6 @@ HVStat.Monster = (function () {
 			set id(id) { _id = id; },
 			set name(name) { _name = name; },
 			set maxHp(maxHp) { _maxHp = maxHp; },
-			set currHp(currHp) { _currHp = currHp; },
 
 			// public instance methods
 			fetchStartingLog: function (html) {
@@ -1213,11 +1220,7 @@ HVStat.Monster = (function () {
 				}
 			},
 			renderPopup: function () {
-				if (!_waitingDBResponse()) {
-					renderPopup();
-				} else {
-					setTimeout(arguments.callee, 10);
-				}
+				return _renderPopup();
 			}
 		};
 	};
@@ -1250,11 +1253,14 @@ HVStat.deleteIndexedDB = function () {
 };
 
 HVStat.maintainObjectStores = function (event) {
-	var idb = event.target.source;
+//	var idb = event.target.source;  // does not work with Firefox
+	var idb = HVStat.idb;
 	var tx = event.target.transaction;
 	var oldVer = event.oldVersion;
 	var newVer = event.newVersion;
 	var store;
+	console.log("maintainObjectStores: idb = [" + idb + "]");
+	console.log("maintainObjectStores: tx = [" + tx + "]");
 
 	// MonsterScanInfo
 // 	try {
@@ -1327,6 +1333,8 @@ HVStat.openIndexedDB = function (callback) {
 	};
 	// latest W3C draft (Firefox supports)
 	reqOpen.onupgradeneeded = function (event) {
+		console.log("onupgradeneeded");
+		HVStat.idb = reqOpen.result;
 		HVStat.maintainObjectStores(event);
 		// subsequently onsuccess event handler is called automatically
 	};
@@ -1457,7 +1465,7 @@ HVStat.migration.createMonsterScanInfoVOFromOldDB = function (oldDB, index) {
 	if (!oldDB.mclass[index])
 		return null;
 
-	var i, v, vo = new HVStat.MonsterScanInfoVO();
+	var i, len, v, vo = new HVStat.MonsterScanInfoVO();
 	// id
 	vo.id = Number(index);
 	// lastScanDate
@@ -1480,15 +1488,18 @@ HVStat.migration.createMonsterScanInfoVOFromOldDB = function (oldDB, index) {
 	// defenceLevel
 	vo.defenceLevel = new HVStat.DefenceLevelVO();
 	v = HVStat.migration.damageTypeFromCode(oldDB.mweak[index]);
-	for (i in v) {
+	len = v.length;
+	for (i = 0; i < len; i++) {
 		vo.defenceLevel[v[i].id] = HVStat.DefenceLevel.WEAK.id;
 	}
 	v = HVStat.migration.damageTypeFromCode(oldDB.mresist[index]);
-	for (i in v) {
+	len = v.length;
+	for (i = 0; i < len; i++) {
 		vo.defenceLevel[v[i].id] = HVStat.DefenceLevel.RESISTANT.id;
 	}
 	v = HVStat.migration.damageTypeFromCode(oldDB.mimperv[index]);
-	for (i in v) {
+	len = v.length;
+	for (i = 0; i < len; i++) {
 		vo.defenceLevel[v[i].id] = HVStat.DefenceLevel.IMPERVIOUS.id;
 	}
 	// debuffsAffected
@@ -1540,7 +1551,79 @@ HVStat.migration.migrateMonsterScanInfo = function () {
 	}
 };
 
+HVStat.migration.createMonsterSkillVOsFromOldDB = function (oldDB, index) {
+	if (!oldDB.mskillspell[index])
+		return [];
+
+	var v, vo, voArray = [];
+	var code, codes = String(oldDB.mskillspell[index]);
+	var damageTypes, damageTypeCodes = String(oldDB.mskilltype[index]);
+	var damageTypeIndex = 0;
+
+	for (i = 0; i < codes.length; i++) {
+		code = codes.substring(i, i + 1);
+		damageTypes = HVStat.migration.damageTypeFromCode(damageTypeCodes);
+		if (code !== "0") {
+			vo = new HVStat.MonsterSkillVO();
+			vo.id = Number(index);
+			v = HVStat.migration.skillTypeFromCode(code);
+			vo.skillType = v ? v.id : null;
+			v = HVStat.migration.attackTypeFromCode(code);
+			vo.attackType = v ? v.id : null;
+			v = damageTypes[damageTypeIndex];
+			vo.damageType = v ? v.id : null;
+			vo.lastUsedDate = null;
+
+			voArray.push(vo);
+			damageTypeIndex++;
+		}
+	}
+	return voArray;
+};
+
 HVStat.migration.migrateMonsterSkills = function () {
+	var tx = HVStat.idb.transaction(["MonsterSkills"], "readwrite");
+	var store = tx.objectStore("MonsterSkills");
+	var i, j;
+	var len = _database.mskilltype.length;
+	var successCount = 0;
+	var errorCount = 0;
+	var lastIndex, voArray, reqPut;
+	var report = function () {
+		alert("Migration of the monster skill data has completed.\n" + successCount + " success(es), " + errorCount + " error(s)");
+	}
+	// prescan
+	for (i = 0; i < len; i++) {
+		if (_database.mskilltype[i]) {
+			lastIndex = i;
+		}
+	}
+	// migrate
+	for (i = 0; i < len; i++) {
+		if (_database.mskilltype[i]) {
+			voArray = HVStat.migration.createMonsterSkillVOsFromOldDB(_database, i);
+			for (j = 0; j < voArray.length; j++) {
+				reqPut = store.put(voArray[j]);
+				if (i < lastIndex || j < voArray.length - 1) {
+					reqPut.onsuccess = function (event) {
+						successCount++;
+					};
+					reqPut.onerror = function (event) {
+						errorCount++;
+					};
+				} else {
+					reqPut.onsuccess = function (event) {
+						successCount++;
+						report();
+					};
+					reqPut.onerror = function (event) {
+						errorCount++;
+						report();
+					};
+				}
+			}
+		}
+	}
 };
 
 HVStat.migration.migrateDatabase = function () {
@@ -1706,7 +1789,8 @@ function onAfterDBOpened() {
 		}
 		if (_settings.isShowStatsPopup) {
 			var t45 = TimeCounter(1);
-			MonsterPopup();
+//			MonsterPopup();
+			MonsterPopup2();
 			_ltc.monsterpopup[0]++;
 			_ltc.monsterpopup[1] += TimeCounter(0, t45);
 		}
@@ -2473,6 +2557,7 @@ function showMonsterNumber() {
 	document.head.appendChild(style2);
 }
 function healthWarning() {
+	var r, reWidth = /width\s*?:\s*?(\d+?)px/i;
 	var barFrameWidth = 120;
 	var c = document.getElementsByTagName("img")[2];
 //	var e = document.getElementsByTagName("img")[3];
@@ -2482,10 +2567,14 @@ function healthWarning() {
 //	var esp = document.getElementsByTagName("img")[9];
 	var elemOCBar = document.getElementsByTagName("img")[11];
 //	var elemOCFrame = document.getElementsByTagName("img")[12];
-	var b = c.width / barFrameWidth;
-	var bmp = cmp.width / barFrameWidth;
-	var bsp = csp.width / barFrameWidth;
-	var overchargeRate = elemOCBar.width / barFrameWidth;
+	r = reWidth.exec(c.getAttribute("style"));
+	var b = (r && r.length >= 2 ? r[1] : c.width) / barFrameWidth;
+	r = reWidth.exec(cmp.getAttribute("style"));
+	var bmp = (r && r.length >= 2 ? r[1] : cmp.width) / barFrameWidth;
+	r = reWidth.exec(csp.getAttribute("style"));
+	var bsp = (r && r.length >= 2 ? r[1] : csp.width) / barFrameWidth;
+	r = reWidth.exec(elemOCBar.getAttribute("style"));
+	var overchargeRate = (r && r.length >= 2 ? r[1] : elemOCBar.width) / barFrameWidth;
 	var d = localStorage.getItem(HV_ALERT);
 	var dmp = localStorage.getItem(HV_ALERTMP);
 	var dsp = localStorage.getItem(HV_ALERTSP);
@@ -2639,9 +2728,12 @@ function collectRoundInfo() {
 		HVStat.monsters.push(new HVStat.Monster(index));
 	});
 	loadRoundObject();
-	if (_settings.isRememberSkillsTypes) loadCollectdataObject();
-	if (_settings.isTrackItems) loadDropsObject();
-	if (_settings.isTrackRewards) loadRewardsObject();
+	if (_settings.isRememberSkillsTypes)
+		loadCollectdataObject();
+	if (_settings.isTrackItems)
+		loadDropsObject();
+	if (_settings.isTrackRewards)
+		loadRewardsObject();
 	if (!_round.isLoaded) {
 		// create monster objects
 		$("#monsterpane > div").each(function () {
@@ -2649,22 +2741,22 @@ function collectRoundInfo() {
 			_round.monsters.push(monster);
 		});
 	}
-	if (_settings.isSpellsSkillsDifference || _settings.isShowStatsPopup) {
-		var t74 = TimeCounter(1);
-		var i = _round.monsters.length;
-		while (i--) {
-			var e = $("#" + HVStat.Monster.getDomElementId(i)).children().eq(2).children();
-			if (e.filter("div.btm5").length > 2) {
-				_round.monsters[i].hasspbar = true;
-			}
-			if (_round.monsters[i].hasspbar) {
-				var spbar = e.eq(2);
-				// get current SP percent
-				_round.monsters[i].sp1 = spbar.children().eq(0).children("img").eq(1).width() / 120;
-			}
-		}
-		_ltc.changedMHits[1] += TimeCounter(0, t74);
-	}
+// 	if (_settings.isSpellsSkillsDifference || _settings.isShowStatsPopup) {
+// 		var t74 = TimeCounter(1);
+// 		var i = _round.monsters.length;
+// 		while (i--) {
+// 			var e = $("#" + HVStat.Monster.getDomElementId(i)).children().eq(2).children();
+// 			if (e.filter("div.btm5").length > 2) {
+// 				_round.monsters[i].hasspbar = true;
+// 			}
+// 			if (_round.monsters[i].hasspbar) {
+// 				var spbar = e.eq(2);
+// 				// get current SP percent
+// 				_round.monsters[i].sp1 = spbar.children().eq(0).children("img").eq(1).width() / 120;
+// 			}
+// 		}
+// 		_ltc.changedMHits[1] += TimeCounter(0, t74);
+// 	}
 	var index = _round.monsters.length - 1;
 	$("#togpane_log td:first-child").each(function (j) {
 		var g = $(this);
@@ -2684,25 +2776,25 @@ function collectRoundInfo() {
 		if (!_round.isLoaded) {
 			if (c.match(/HP=/)) {
 				HVStat.monsters[index].fetchStartingLog(c);
-				var h = _round.monsters[index];
-				h.maxHp = parseInt(c.match(/HP=\d+(\.)?[0-9]+?$/)[0].replace("HP=", ""));
-				h.currHp = h.maxHp;
-				var mid = parseInt(c.match(/MID=\d+?\s/)[0].replace("MID=", ""));
-				h.id = mid;
-				h.name = c.match(/\([^\.\)]{0,30}\) LV/i)[0].replace("(", "").replace(")", "").replace(" LV", "");
+// 				var h = _round.monsters[index];
+// 				h.maxHp = parseInt(c.match(/HP=\d+(\.)?[0-9]+?$/)[0].replace("HP=", ""));
+// 				h.currHp = h.maxHp;
+// 				var mid = parseInt(c.match(/MID=\d+?\s/)[0].replace("MID=", ""));
+// 				h.id = mid;
+// 				h.name = c.match(/\([^\.\)]{0,30}\) LV/i)[0].replace("(", "").replace(")", "").replace(" LV", "");
 				if (_settings.showMonsterInfoFromDB) {
 					var t43 = TimeCounter(1);
-					loadDatabaseObject();
+// 					loadDatabaseObject();
 					HVStat.monsters[index].getFromDB(HVStat.transaction, RoundSave);
-					h.mclass = _database.mclass[mid];
-					h.mpl = _database.mpl[mid];
-					h.mattack = _database.mattack[mid];
-					h.mweak = _database.mweak[mid];
-					h.mresist = _database.mresist[mid];
-					h.mimperv = _database.mimperv[mid];
-					h.mskilltype = _database.mskilltype[mid];
-					h.mskillspell = _database.mskillspell[mid];
-					h.datescan = _database.datescan[mid];
+// 					h.mclass = _database.mclass[mid];
+// 					h.mpl = _database.mpl[mid];
+// 					h.mattack = _database.mattack[mid];
+// 					h.mweak = _database.mweak[mid];
+// 					h.mresist = _database.mresist[mid];
+// 					h.mimperv = _database.mimperv[mid];
+// 					h.mskilltype = _database.mskilltype[mid];
+// 					h.mskillspell = _database.mskillspell[mid];
+// 					h.datescan = _database.datescan[mid];
 					_ltc.showMonsterInfoFromDB[1] += TimeCounter(0, t43);
 				}
 				if (_settings.isTrackItems) {
@@ -3871,16 +3963,24 @@ function getMonsterStatsHtml() {
 	var h = "";
 	h += '<div>';
 	h += '<h1>Database Management</h1>';
-	h += '<h2>Database Migration</h2>';
+	h += '<h2>Delete Database</h2>';
+	h += '<input type="button" id="deleteDatabase" value="Delete database" />';
+	h += '<h3>Delete Monster Scanning Data</h3>';
+	h += '<input type="button" id="deleteMonsterScanInfo" value="Delete monster scanning data" />';
+	h += '<h3>Delete Monster Skill Data</h3>';
+	h += '<input type="button" id="deleteMonsterSkills" value="Delete monster skill data" />';
+	h += '<h2>Migration</h2>';
+	h += '<h3>Migrate to New Database</h3>';
 	h += '<div>';
 	h += '<p>HVSTAT will now use the new database. You can migrate your old database into the new database.</p>';
-	h += '<input type="button" id="migrateDatabase" value="Migrate the database" />';
+	h += '<input type="button" id="migrateDatabase" value="Migrate database" />';
 	h += '</div>';
+	h += '<h3>Delete Old Database</h3>';
 	h += '<div>';
 	h += '<p>Currently your old database occupies <span style="font-weight: bold;">'
-		+ (oldDatabaseSize / 1024 / 1024).toFixed(1)
+		+ (oldDatabaseSize / 1024 / 1024 * (browserIsChrome() ? 2 : 1)).toFixed(1)
 		+ '</span> MB on the local storage. In order to free up space for other HV scripts, delete the old database after migration.</p>';
-	h += '<input type="button" id="deleteOldDatabase" value="Delete the old database" />';
+	h += '<input type="button" id="deleteOldDatabase" value="Delete old database" />';
 	h += '</div>';
 	return h;
 }
@@ -4486,7 +4586,7 @@ function initSettingsPane() {
 	$("input[name=isShowMonsterNumber]").click(saveSettings);
 	$("._startdatabase").click(function (){ if (confirm("Write original bestiary monsters into database?")) StartDatabase(); })
 	$("._assumemonsterstats").click(function (){ if (confirm("Write assumed stats based on custom monsters classes into database?")) AssumeResistances(); })
-	$("._minimizedatabase").click(function (){ if (confirm("Minimize Size of Monsters Database?")) MinimalizeDatabaseSize(); })
+//	$("._minimizedatabase").click(function (){ if (confirm("Minimize Size of Monsters Database?")) MinimalizeDatabaseSize(); })
 	$("._resetSettings").click(function (){ if (confirm("Reset Settings to default?")) _settings.reset(); })
 	$("._resetAll").click(function (){ if (confirm("Reset All Tracking data?")) HVResetTracking(); })
 	$("._masterReset").click(function (){ if (confirm("This will delete ALL HV data saved in localStorage.\nAre you sure you want to do this?")) HVMasterReset(); })
@@ -6234,28 +6334,6 @@ function StartDatabase() {
 	if (ISBATTLE) _ltc.isbattle[1] -= TimeCounter(0, sec);
 	_ltc.save();
 }
-function MinimalizeDatabaseSize() {
-	loadDatabaseObject();
-	var mid = 0;
-	while (_database.mclass[mid] !== undefined) {
-		_database.mclass[mid] = _database.mclass[mid] === null ? 0 : _database.mclass[mid] = MClassNum(_database.mclass[mid], 0);
-		_database.mattack[mid] = MElemNum(_database.mattack[mid], 0);
-		_database.mweak[mid] = MElemNum(_database.mweak[mid], 0);
-		_database.mresist[mid] = MElemNum(_database.mresist[mid], 0);
-		_database.mimperv[mid] = MElemNum(_database.mimperv[mid], 0);
-		_database.mskilltype[mid] = MElemNum(_database.mskilltype[mid], 0);
-		if (_database.mskillspell[mid] === null) _database.mskillspell[mid] = 0;
-		else if (String(_database.mskillspell[mid]).match(/ma/i)) _database.mskillspell[mid] = 1;
-		else if (String(_database.mskillspell[mid]).match(/ph/i)) _database.mskillspell[mid] = 2;
-		if (_database.mpl[mid] === null) _database.mpl[mid] = 0;
-		if (mid === 10) alert("It is working 10");
-		if (mid === 100) alert("It is working 100");
-		if (mid === 1000) alert("It is working 1000");
-		mid++;
-	}
-	_database.save();
-	alert("Done");
-}
 function MElemNum(a, b) {
 	if (a === null || a === 0) {
 		a = 0;
@@ -7152,23 +7230,25 @@ function MonsterPopup2() {
 	var delay = _settings.monsterPopupDelay;
 	var popupLeftOffset = _settings.isMonsterPopupPlacement ? 955 : 300;
 	var elemMonsterPane = $("#monsterpane");
-	loadRoundObject();
-	var i = _round.monstersV2.length;
-	while (i--) {
-		var monsterElementId = HVStat.Monster.getDomElementId(i);
-		$("#" + monsterElementId).bind('mouseover', {index: i}, function (event) {
+	var monsterPaneHeight = elemMonsterPane.height();
+//	loadRoundObject();
+	var i, len = HVStat.monsters.length;
+	var monster;
+	for (i = 0; i < len; i++) {
+		$("#" + HVStat.monsters[i].domElementId).bind('mouseover', {index: i}, function (event) {
 			var index = event.data.index;
 			var popupHeight = 280;
-			var popupTopOffset = elemMonsterPane.offset().top + index * ((elemMonsterPane.height() - popupHeight) / 9);
+			var popupTopOffset = elemMonsterPane.offset().top + index * ((monsterPaneHeight - popupHeight) / 9);
+			var html;
 			popup.style.left = popupLeftOffset + "px";
 			popup.style.width = "270px";
 			popup.style.height = String(popupHeight) + "px";
-			var html = HVStat.renderMonsterPopup(_round.monstersV2[index]);
+			html = HVStat.monsters[index].renderPopup();
 			setTimeoutByledalej1 = setTimeout('document.getElementById("popup_box").style.top = ' + popupTopOffset + ' + "px"', delay);
 			setTimeoutByledalej2 = setTimeout("document.getElementById('popup_box').innerHTML = '" + html + "'", delay);
 			setTimeoutByledalej3 = setTimeout('document.getElementById("popup_box").style.visibility = "visible"', delay);
 		});
-		$("#" + monsterElementId).bind('mouseout', function () {
+		$("#" + HVStat.monsters[i].domElementId).bind('mouseout', function () {
 			setTimeout('document.getElementById("popup_box").style.visibility = "hidden"', delay);
 			clearTimeout(window.setTimeoutByledalej1);
 			clearTimeout(window.setTimeoutByledalej2);
@@ -7262,11 +7342,11 @@ function AlertEffectsSelf() {
 			"Protection", "Hastened", "Shadow Veil", "Regen", "Absorbing Ward",
 			"Spark of Life", "Channeling", "Arcane Focus", "Heartseeker", "Spirit Shield"
 		];
-		var n = effectNames.length;
-		while (n--) {
-			if (_settings.isEffectsAlertSelf[n]
-					&& allinfo[0].match(effectNames[n])
-					&& allinfo[2] === _settings.EffectsAlertSelfRounds[n]) {
+		var i, len = effectNames.length;
+		for (i = 0; i < len; i++) {
+			if (_settings.isEffectsAlertSelf[i]
+					&& allinfo[0].match(effectNames[i])
+					&& allinfo[2] === _settings.EffectsAlertSelfRounds[i]) {
 				var sec1 = TimeCounter(1);
 				alert(allinfo[0] + " is expiring");
 				_ltc.main[1] -= TimeCounter(0, sec1);
@@ -7288,11 +7368,11 @@ function AlertEffectsMonsters() {
 			"Imperiled", "Blinded", "Silenced", "Nerfed", "Magically Snared",
 			"Lifestream", "Coalesced Mana"
 		];
-		var n = effectNames.length;
-		while (n--) {
-			if (_settings.isEffectsAlertMonsters[n]
-					&& allinfo[0].match(effectNames[n])
-					&& allinfo[2] === _settings.EffectsAlertMonstersRounds[n]) {
+		var i, len = effectNames.length;
+		for (i = 0; i < len; i++) {
+			if (_settings.isEffectsAlertMonsters[i]
+					&& allinfo[0].match(effectNames[i])
+					&& allinfo[2] === _settings.EffectsAlertMonstersRounds[i]) {
 				var monnum = $(this).parent().parent().attr("id").replace("mkey_", "");
 				var sec1 = TimeCounter(1);
 				alert(allinfo[0] + '\n on monster number "' + monnum + '" is expiring');
@@ -7345,7 +7425,8 @@ function TaggingItems(clean) {
 		} else if (/Heavy/i.test(equipType)) {
 			equipTypeIdx = 6;
 		}
-		if (equipTypeIdx < 0) throw new Exception("unexpected equipment type");
+		if (equipTypeIdx < 0)
+			throw new Exception("unexpected equipment type");
 		var idArray = equipTagArrayTable[equipTypeIdx].id;
 		var valueArray = equipTagArrayTable[equipTypeIdx].value;
 		var idCleanArray = equipTagArrayTable[equipTypeIdx].idClean;
@@ -7422,11 +7503,6 @@ function TaggingItems(clean) {
 			_tags.save();
 		}
 	}
-}
-function ShrineButton() {
-	$("#item_pane.cspp div[id$=item_pane]").each(function() {
-		$(this).bind("click");
-	});
 }
 
 if (browserIsChrome())
