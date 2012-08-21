@@ -4,7 +4,7 @@
 // @description      Collects data, analyzes statistics, and enhances the interface of the HentaiVerse
 // @include          http://hentaiverse.org/*
 // @author           Various (http://forums.e-hentai.org/index.php?showtopic=50962)
-// @version          5.4.1.14
+// @version          5.4.1.15
 // @require          https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js
 // @require          https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.21/jquery-ui.min.js
 // @resource         jQueryUICSS http://www.starfleetplatoon.com/~cmal/HVSTAT/jqueryui.css
@@ -12,7 +12,7 @@
 
 /* ========== GLOBAL VARIABLES ========== */
 var millisecondsAll = TimeCounter(1),
-VERSION = "5.4.1.13",
+VERSION = "5.4.1.15",
 SAVE_STATS = true,
 MAX_MID = 33,
 SELF_EFF_TOP = 34,
@@ -131,13 +131,13 @@ function evDomLoad(){
 			_ltc.healthWarning[0]++;
 			_ltc.healthWarning[1] += (TimeCounter(0, timer));
 		}
-		if ((_round !== null) && (_round.currRound > 0)) {
+		if ((_round !== null) && (_round.currRound > 0) && _settings.isShowRoundCounter) {
 			timer = TimeCounter(1);
 			showRoundCounter();
 			_ltc.showRoundCounter[0]++;
 			_ltc.showRoundCounter[1] += (TimeCounter(0, timer));
 		}
-		displayPowerupBox();
+		if (_settings.isShowPowerupBox) displayPowerupBox();
 		if (_settings.isShowDivider) {
 			timer = TimeCounter(1);
 			addBattleLogDividers();
@@ -2567,6 +2567,8 @@ function initSettingsPane() {
 		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isAlertGem" /></td><td colspan="2">Alert on Powerup drops</td></tr>'
 		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isAlertOverchargeFull" /></td><td colspan="2">Alert when Overcharge is full</td></tr>'
 		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isShowMonsterNumber"></td><td colspan="2">Show Numbers intead of letters next to monsters.</td></tr>'
+		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isShowRoundCounter"></td><td colspan="2">Show Round Counter.</td></tr>'
+		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isShowPowerupBox"></td><td colspan="2">Show Powerup Box.</td></tr>'
 		+ '<tr><td colspan="2" style="padding-left:10px">Display Monster Stats:</td></tr>'
 		+ '<tr><td align="center" style="width:5px;padding-left:20px"><input type="checkbox" name="isShowMonsterHP" /></td><td colspan="2">Show monster HP (<span style="color:red">Estimated</span>)</td><td align="center" style="width:120px">' + t25 + ' ms (' + (t25*100/t0).toFixed(1) + '%)</td></tr>'
 		+ '<tr><td align="center" style="width:5px;padding-left:40px"><input type="checkbox" name="isShowMonsterHPPercent" /></td><td colspan="2" style="padding-left:10px">Show monster HP in percentage</td></tr>'
@@ -2666,6 +2668,8 @@ function initSettingsPane() {
 	}
 //isShowMonsterNumber stolen from HV Lite, and added by Ilirith
 	if (_settings.isShowMonsterNumber) $("input[name=isShowMonsterNumber]").attr("checked", "checked");
+	if (_settings.isShowRoundCounter) $("input[name=isShowRoundCounter]").attr("checked", "checked");
+	if (_settings.isShowPowerupBox) $("input[name=isShowPowerupBox]").attr("checked", "checked");
 	if (_settings.isShowMonsterHP) $("input[name=isShowMonsterHP]").attr("checked", "checked");
 	if (_settings.isShowMonsterHPPercent) $("input[name=isShowMonsterHPPercent]").attr("checked", "checked");
 	if (_settings.isShowMonsterMP) $("input[name=isShowMonsterMP]").attr("checked", "checked");
@@ -2902,6 +2906,8 @@ function initSettingsPane() {
 	$("input[name=isNagSP]").click(saveSettings);
 	$("input[name=isShowPopup]").click(saveSettings);
 	$("input[name=isShowMonsterNumber]").click(saveSettings);
+	$("input[name=isShowPowerupBox]").click(saveSettings);
+	$("input[name=isShowRoundCounter]").click(saveSettings);
 	$("._startdatabase").click(function (){ if (confirm("Write original bestiary monsters into database?")) StartDatabase(); })
 	$("._assumemonsterstats").click(function (){ if (confirm("Write assumed stats based on custom monsters classes into database?")) AssumeResistances(); })
 	$("._minimizedatabase").click(function (){ if (confirm("Minimize Size of Monsters Database?")) MinimalizeDatabaseSize(); })
@@ -3056,6 +3062,8 @@ function saveSettings() {
 	_settings.isShowPopup = $("input[name=isShowPopup]").get(0).checked;
 	_settings.monsterPopupDelay = $("input[name=monsterPopupDelay]").get(0).value;
 	_settings.isShowMonsterNumber = $("input[name=isShowMonsterNumber]").get(0).checked;
+	_settings.isShowPowerupBox = $("input[name=isShowPowerupBox]").get(0).checked;
+	_settings.isShowRoundCounter = $("input[name=isShowRoundCounter]").get(0).checked;
 	_settings.save();
 }
 function reminderAndSaveSettings() {
@@ -3778,6 +3786,8 @@ function HVSettings() {
 	//0-equipment page, 1-shop, 2-itemworld, 3-moogle, 4-forge
 	this.isShowTags = [false, false, false, false, false, false];
 	this.isShowMonsterNumber = false;
+	this.isShowPowerupBox = false;
+	this.isShowRoundCounter = false;
 }
 function HVMonster() {
 	this.id = 0;
