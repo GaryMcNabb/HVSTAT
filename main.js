@@ -4,7 +4,7 @@
 // @description      Collects data, analyzes statistics, and enhances the interface of the HentaiVerse
 // @include          http://hentaiverse.org/*
 // @author           Various (http://forums.e-hentai.org/index.php?showtopic=50962)
-// @version          5.4.1.13
+// @version          5.4.1.14
 // @require          https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js
 // @require          https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.21/jquery-ui.min.js
 // @resource         jQueryUICSS http://www.starfleetplatoon.com/~cmal/HVSTAT/jqueryui.css
@@ -87,8 +87,7 @@ Array.prototype.init = function (b) {
 if (navigator.userAgent.indexOf('Chrome') > -1) ISCHROME = true;
 loadSettingsObject();
 loadLTCObject();
-
-if (_settings.isShowHighlight) setLogCSS();
+evDomLoad();
 
 function evDomLoad(){
 	var doc = document,
@@ -121,6 +120,7 @@ function evDomLoad(){
 		if (_settings.isMainEffectsAlertMonsters) AlertEffectsMonsters();
 		if (_settings.isShowHighlight) {
 			timer = TimeCounter(1);
+			setLogCSS();
 			highlightLogText();
 			_ltc.highlightLogText[0]++;
 			_ltc.highlightLogText[1] += (TimeCounter(0, timer));
@@ -299,7 +299,7 @@ function evDomLoad(){
  It uses complex selectors, so be careful!
 ===== */
 function setLogCSS() {
-	var bTD = "#togpane_log tr > td + td + td[title*=",
+	var bTD = "td[title*=",
 		bCSS = "";
 		
 	if (_settings.isAltHighlight){
@@ -5797,6 +5797,3 @@ function getMonsterElementId(n) {
 	if (!(0 <= n && n <= 9)) throw new Error("n must be 0 to 9");
 	return ids[n];
 }
-if (ISCHROME)
-	document.addEventListener( "DOMContentLoaded", evDomLoad, false );
-else evDomLoad();
