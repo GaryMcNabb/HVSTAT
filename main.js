@@ -42,6 +42,10 @@ var HVStat = {
 	dummy: null
 };
 
+HV_SETTINGS = "HVSettings";
+_settings = null;
+loadSettingsObject();
+
 // basic class modules
 
 HVStat.Keyword = function (id, name, abbrNames) {
@@ -364,6 +368,50 @@ HVStat.MonsterSkill = (function () {
 }());
 
 HVStat.MonsterScanInfo = (function () {
+	// private static variable
+	var _mappingToSettingsHideSpecificDamageType = [
+		HVStat.DamageType.CRUSHING,
+		HVStat.DamageType.SLASHING,
+		HVStat.DamageType.PIERCING,
+		HVStat.DamageType.FIRE,
+		HVStat.DamageType.COLD,
+		HVStat.DamageType.ELEC,
+		HVStat.DamageType.WIND,
+		HVStat.DamageType.HOLY,
+		HVStat.DamageType.DARK,
+		HVStat.DamageType.SOUL,
+		HVStat.DamageType.VOID
+	];
+	var _damageTypeGeneralizingTable = [
+		{
+			generic: HVStat.GenericDamageType.PHYSICAL,
+			elements: [
+				HVStat.DamageType.CRUSHING,
+				HVStat.DamageType.SLASHING,
+				HVStat.DamageType.PIERCING
+			]
+		},
+		{
+			generic: HVStat.GenericDamageType.ELEMENTAL,
+			elements: [
+				HVStat.DamageType.FIRE,
+				HVStat.DamageType.COLD,
+				HVStat.DamageType.ELEC,
+				HVStat.DamageType.WIND
+			]
+		}
+	];
+
+	var _damageTypesToBeHidden = [];
+	(function () {
+		var i, len = _mappingToSettingsHideSpecificDamageType.length;
+		for (i = 0; i < len; i++) {
+			if (_settings.hideSpecificDamageType[i]) {
+				_damageTypesToBeHidden.push(_mappingToSettingsHideSpecificDamageType[i]);
+			}
+		}
+	})();
+
 	// constructor
 	function MonsterScanInfo(vo) {
 		var _lastScanDate;
@@ -404,6 +452,48 @@ HVStat.MonsterScanInfo = (function () {
 			_debuffsAffected.push(HVStat.DefenceLevel[vo.debuffsAffected[i]]);
 		}
 
+		// private instancce method
+		var _hideDamageTypes = function (source) {
+			var i, j;
+			var damageTypes = source.concat();
+			for (i = 0; i < _damageTypesToBeHidden.length; i++) {
+				for (j = damageTypes.length - 1; j >= 0; j--) {
+					if (damageTypes[j] === _damageTypesToBeHidden[i]) {
+						damageTypes.splice(j, 1);
+					}
+				}
+			}
+			return damageTypes;
+		}
+
+		var _generalizeDamageTypes = function (source, damageTypes) {
+			damageTypes = source.concat();
+			var i, lenTable, indices;
+			var j, lenTableElem, index;
+
+			lenTable = _damageTypeGeneralizingTable.length;
+			for (i = 0; i < _damageTypeGeneralizingTable.length; i++) {
+				indices = [];
+				lenTableElem = _damageTypeGeneralizingTable[i].elements.length
+				for (j = 0; j < lenTableElem; j++) {
+					index = damageTypes.indexOf(_damageTypeGeneralizingTable[i].elements[j]);
+					if (index >= 0) {
+						indices.push(index);
+					}
+				}
+				if (indices.length === lenTableElem) {
+					for (j = lenTableElem - 1; j >= 0; j--) {
+						if (j > 0) {
+							damageTypes.splice(indices[j], 1);
+						} else {
+							damageTypes[j] = _damageTypeGeneralizingTable[i].generic;
+						}
+					}
+				}
+			}
+			return damageTypes;
+		};
+
 		return {
 			get lastScanDate() { return _lastScanDate; },
 			get monsterClass() { return _monsterClass; },
@@ -418,9 +508,21 @@ HVStat.MonsterScanInfo = (function () {
 				return dl;
 			},
 			get debuffsAffected() { return _debuffsAffected.concat(); },
-			get defWeak() { return _defWeak.concat(); },
-			get defResistant() { return _defResistant.concat(); },
-			get defImpervious() { return _defImpervious.concat(); },
+			get defWeak() {
+				var damageTypes = _hideDamageTypes(_defWeak);
+				damageTypes = _generalizeDamageTypes(damageTypes);
+				return damageTypes;
+			},
+			get defResistant() {
+				var damageTypes = _hideDamageTypes(_defResistant);
+				damageTypes = _generalizeDamageTypes(damageTypes);
+				return damageTypes;
+			},
+			get defImpervious() {
+				var damageTypes = _hideDamageTypes(_defImpervious);
+				damageTypes = _generalizeDamageTypes(damageTypes);
+				return damageTypes;
+			},
 			get valueObject() {
 				var i, len;
 				var vo = new HVStat.MonsterScanInfoVO();
@@ -528,8 +630,8 @@ HVStat.Monster = (function () {
 		}
 
 		var _index = index;
-		var _baseDomElement = $("#" + _domElementIds[_index]);
-		var _healthBars = $("div.btm5", _baseDomElement);
+		var _baseElement = $("#" + _domElementIds[_index]);
+		var _healthBars = $("div.btm5", _baseElement);
 		var _isDead = $("img.chb2", _healthBars.eq(0)).length === 0;
 		var _waitingGetResponseOfMonsterScanInfo = false;
 		var _waitingGetResponseOfMonsterSkills = false;
@@ -581,12 +683,11 @@ HVStat.Monster = (function () {
 			var spIndicator = "";
 			var html;
 
-			var u = _baseDomElement;
-			var k = u.children().eq(1).children().eq(0);
-			var s = k.children().length > 1;
-			var e = u.children().eq(2).children().eq(0);
-			var h = u.children().eq(2).children().eq(1);
-			var sp = u.children().eq(2).children().eq(2);
+			var nameFrameElement = _baseElement.children().eq(1).children().eq(0);
+			var usingHVFont = nameFrameElement.children().length > 1;
+			var hpBarBaseElement = _baseElement.children().eq(2).children().eq(0);
+			var mpBarBaseElement = _baseElement.children().eq(2).children().eq(1);
+			var spBarBaseElement = _baseElement.children().eq(2).children().eq(2);
 			if (_settings.showMonsterHP || _settings.showMonsterHPPercent) {
 				if (_settings.showMonsterHPPercent) {
 					hpIndicator = (_currHpRate * 100).toFixed(2) + "%"
@@ -594,64 +695,48 @@ HVStat.Monster = (function () {
 					hpIndicator = _currHp() + " / " + _maxHp
 				}
 				html = "<div style='position:absolute;z-index:1074;top:-1px;font-size:8pt;font-family:arial,helvetica,sans-serif;font-weight:bolder;color:yellow;width:120px;text-align:center'>" + hpIndicator + "</div>";
-				e.after(html);
+				hpBarBaseElement.after(html);
 			}
 			if (_settings.showMonsterMP) {
 				mpIndicator = (_currMpRate * 100).toFixed(1);
 				html = "<div style='position:absolute;z-index:1074;top:11px;font-size:8pt;font-family:arial,helvetica,sans-serif;font-weight:bolder;color:yellow;width:120px;text-align:center'>" + mpIndicator + "%</div>";
-				h.after(html);
+				mpBarBaseElement.after(html);
 			}
 			if (_hasSpiritPoint && _settings.showMonsterSP) {
 				spIndicator = (_currSpRate * 100).toFixed(1);
 				html = "<div style='position:absolute;z-index:1074;top:23px;font-size:8pt;font-family:arial,helvetica,sans-serif;font-weight:bolder;color:yellow;width:120px;text-align:center'>" + spIndicator + "%</div>";
-				sp.after(html);
+				spBarBaseElement.after(html);
 			}
 
 		if (_settings.showMonsterDefence && (_id < 1000 || _settings.showMonsterInfoFromDB)) {
-			var t;
-			var a = new ElementalStats();
-			getMonsterElementsById(a, _id);
-			var d = a.majWeak === "-" ? "" : "[<span style='color:#005826'>" + a.majWeak + "</span>";
-				d += a.minWeak === "-" ? "" : ";<span style='color:#3CB878'>" + a.minWeak + "</span>";
-				d += a.resist === "-" ? "" : ";<span style='color:red'>" + a.resist + "</span>";
-				d += a.imperv === "-" ? "" : ";<span style='color:black'>" + a.imperv + "</span>]";
+// 			var a = new ElementalStats();
+// 			getMonsterElementsById(a, _id);
+// 			var d = a.majWeak === "-" ? "" : "[<span style='color:#005826'>" + a.majWeak + "</span>";
+// 				d += a.minWeak === "-" ? "" : ";<span style='color:#3CB878'>" + a.minWeak + "</span>";
+// 				d += a.resist === "-" ? "" : ";<span style='color:red'>" + a.resist + "</span>";
+// 				d += a.imperv === "-" ? "" : ";<span style='color:black'>" + a.imperv + "</span>]";
 			if (_settings.showMonsterInfoFromDB) {
 				var milliseconds2 = TimeCounter(1);
-				var kk = k.children().eq(0);
-				var kkl = kk.html().length;
-				var mclass = "";
-				var mpl = "";
-				var mweak = "";
-				var mresist = "";
-				var mimperv = "";
-				var mskilltype = "";
-				var mskillspell = "";
-				var mskilltype2 = "";
-				var mskillspell2 = "";
-				var mskilltype3 = "";
-				var mskillspell3 = "";
-				var mspirittype = "";
-				var mspiritsksp = "";
-				var mattack = "";
+				var nameElement = nameFrameElement.children().eq(0);
+				var nameLength = nameElement.html().length;
 				var allm = 0;
 				var allm1 = 0;
-// 				if (_settings.showMonsterClassFromDB) {
-// 					mclass = monInfo.mclass;
-// 					allm += 2;
-// 				}
-// 				if (_settings.showMonsterPowerLevelFromDB) {
-// 					mpl = monInfo.mpl;
-// 					if (mpl !== 0) allm += 2;
-// 				}
-// 				if (_settings.showMonsterWeaknessesFromDB) {
+				if (_settings.showMonsterClassFromDB) {
+					allm += 2;
+				}
+				if (_settings.showMonsterPowerLevelFromDB) {
+					if (_scanInfo.powerlevel)
+						allm += 2;
+				}
+				if (_settings.showMonsterWeaknessesFromDB) {
 // 					mweak = MElemNum(monInfo.mweak, 1);
-// 					allm += 2;
-// 				}
-// 				if (_settings.showMonsterResistancesFromDB) {
+					allm += 2;
+				}
+				if (_settings.showMonsterResistancesFromDB) {
 // 					mresist = MElemNum(monInfo.mresist, 1);
 // 					mimperv = MElemNum(monInfo.mimperv, 1);
-// 					allm += _settings.showMonsterWeaknessesFromDB ? 2 : 3;
-// 				}
+					allm += _settings.showMonsterWeaknessesFromDB ? 2 : 3;
+				}
 // 				if (_settings.showMonsterAttackTypeFromDB) {
 // 					if (monInfo.mskillspell !== undefined) {
 // 						var sk = String(monInfo.mskillspell);
@@ -751,117 +836,27 @@ HVStat.Monster = (function () {
 // 					mattack = MElemNum(monInfo.mattack, 1);
 // 					allm += 4;
 // 				}
-// 				if (mpl === undefined || mpl === null) {
-// 					mpl = 0;
-// 					allm -= 2;
-// 				}
-// 				if (mskillspell === undefined || mskillspell === null || mskillspell === 0 || mskillspell === "0"){
-// 					mskillspell = "";
-// 					allm -= 1;
-// 				}
-// 				if (mskilltype === undefined || mskilltype === null || mskilltype === 0 || mskilltype === "0"){
-// 					mskilltype = "";
-// 					allm -= 1;
-// 				}
-// 				if (mclass !== undefined) mclass = mclass > 30 ? "-" : MClassNum(mclass, 1);
-// 						
-// 				mclass = String(mclass);
-// 				mweak = String(mweak);
-// 				mresist = String(mresist);
-// 				mimperv = String(mimperv);
-// 				mskilltype = String(mskilltype);
-// 				mskillspell = String(mskillspell);
-// 				mskilltype2 = String(mskilltype2);
-// 				mskillspell2 = String(mskillspell2);
-// 				mskilltype3 = String(mskilltype3);
-// 				mskillspell3 = String(mskillspell3);
-// 				mspirittype = String(mspirittype);
-// 				mspiritsksp = String(mspiritsksp);
-// 				mattack = String(mattack);
+// 				if (mclass !== undefined)
+// 					mclass = mclass > 30 ? "-" : MClassNum(mclass, 1);
+
 // 				if (_settings.ResizeMonsterInfo){
-// 					if (_settings.HideThisResHvstatStyle[0] || _settings.HideThisResHvstatStyle[1] || _settings.HideThisResHvstatStyle[2]) {
-// 						mweak = mweak.replace(", Phys", "Slash, Crush, Pierc").replace("?Phys", "Slash, Crush, Pierc").replace("Phys", "Slash, Crush, Pierc");
-// 						mresist = mresist.replace(", Phys", "Slash, Crush, Pierc").replace("?Phys", "Slash, Crush, Pierc").replace("Phys", "Slash, Crush, Pierc");
-// 						mimperv = mimperv.replace(", Phys", "Slash, Crush, Pierc").replace("?Phys", "Slash, Crush, Pierc").replace("Phys", "Slash, Crush, Pierc");
-// 					}
-// 					if (_settings.HideThisResHvstatStyle[3] || _settings.HideThisResHvstatStyle[4] || _settings.HideThisResHvstatStyle[5] || _settings.HideThisResHvstatStyle[6]) {
-// 						mweak = mweak.replace(", Elem", "Fire, Cold, Elec, Wind").replace("?Elem", "Fire, Cold, Elec, Wind").replace("Elem", "Fire, Cold, Elec, Wind");
-// 						mresist = mresist.replace(", Elem", "Fire, Cold, Elec, Wind").replace("?Elem", "Fire, Cold, Elec, Wind").replace("Elem", "Fire, Cold, Elec, Wind");
-// 						mimperv = mimperv.replace(", Elem", "Fire, Cold, Elec, Wind").replace("?Elem", "Fire, Cold, Elec, Wind").replace("Elem", "Fire, Cold, Elec, Wind");
-// 					}
-// 					if (_settings.HideThisResHvstatStyle[0]) {
-// 						mweak = mweak.replace(", Slashing", "").replace(", Slash", "").replace("Slashing", "").replace("Slash", "");
-// 						mresist = mresist.replace(", Slashing", "").replace(", Slash", "").replace("Slashing", "").replace("Slash", "");
-// 						mimperv = mimperv.replace(", Slashing", "").replace(", Slash", "").replace("Slashing", "").replace("Slash", "");
-// 					}
-// 					if (_settings.HideThisResHvstatStyle[1]) {
-// 						mweak = mweak.replace(", Crushing", "").replace(", Crush", "").replace("Crushing", "").replace("Crush", "");
-// 						mresist = mresist.replace(", Crushing", "").replace(", Crush", "").replace("Crushing", "").replace("Crush", "");
-// 						mimperv = mimperv.replace(", Crushing", "").replace(", Crush", "").replace("Crushing", "").replace("Crush", "");
-// 					}
-// 					if (_settings.HideThisResHvstatStyle[2]) {
-// 						mweak = mweak.replace(", Piercing", "").replace(", Pierc", "").replace("Piercing", "").replace("Pierc", "");
-// 						mresist = mresist.replace(", Piercing", "").replace(", Pierc", "").replace("Piercing", "").replace("Pierc", "");
-// 						mimperv = mimperv.replace(", Piercing", "").replace(", Pierc", "").replace("Piercing", "").replace("Pierc", "");
-// 					}
-// 					if (_settings.HideThisResHvstatStyle[3]) {
-// 						mweak = mweak.replace(", Fire", "").replace("Fire", "");
-// 						mresist = mresist.replace(", Fire", "").replace("Fire", "");
-// 						mimperv = mimperv.replace(", Fire", "").replace("Fire", "");
-// 					}
-// 					if (_settings.HideThisResHvstatStyle[4]) {
-// 						mweak = mweak.replace(", Cold", "").replace("Cold", "");
-// 						mresist = mresist.replace(", Cold", "").replace("Cold", "");
-// 						mimperv = mimperv.replace(", Cold", "").replace("Cold", "");
-// 					}
-// 					if (_settings.HideThisResHvstatStyle[5]) {
-// 						mweak = mweak.replace(", Elec", "").replace("Elec", "");
-// 						mresist = mresist.replace(", Elec", "").replace("Elec", "");
-// 						mimperv = mimperv.replace(", Elec", "").replace("Elec", "");
-// 					}
-// 					if (_settings.HideThisResHvstatStyle[6]) {
-// 						mweak = mweak.replace(", Wind", "").replace("Wind", "");
-// 						mresist = mresist.replace(", Wind", "").replace("Wind", "");
-// 						mimperv = mimperv.replace(", Wind", "").replace("Wind", "");
-// 					}
-// 					if (_settings.HideThisResHvstatStyle[7]) {
-// 						mweak = mweak.replace(", Holy", "").replace("Holy", "");
-// 						mresist = mresist.replace(", Holy", "").replace("Holy", "");
-// 						mimperv = mimperv.replace(", Holy", "").replace("Holy", "");
-// 					}
-// 					if (_settings.HideThisResHvstatStyle[8]) {
-// 						mweak = mweak.replace(", Dark", "").replace("Dark", "");
-// 						mresist = mresist.replace(", Dark", "").replace("Dark", "");
-// 						mimperv = mimperv.replace(", Dark", "").replace("Dark", "");
-// 					}
-// 					if (_settings.HideThisResHvstatStyle[9]) {
-// 						mweak = mweak.replace(", Soul", "").replace("Soul", "");
-// 						mresist = mresist.replace(", Soul", "").replace("Soul", "");
-// 						mimperv = mimperv.replace(", Soul", "").replace("Soul", "");
-// 					}
-// 					if (_settings.HideThisResHvstatStyle[10]) {
-// 						mweak = mweak.replace(", Void", "").replace("Void", "");
-// 						mresist = mresist.replace(", Void", "").replace("Void", "");
-// 						mimperv = mimperv.replace(", Void", "").replace("Void", "");
-// 					}
-// 				
-// 					var maxchar = (12 - kkl) * (kkl <= 12 ? 0.7 : 1.4) + 46;
+// 					var maxchar = (12 - nameLength) * (nameLength <= 12 ? 0.7 : 1.4) + 46;
 // 					allm1 = allm + mclass.length + mskillspell.length + mskilltype.length + mimperv.length + mresist.length + mweak.length + mattack.length + String(mpl).length + mskillspell2.length + mskilltype2.length + mskillspell3.length + mskilltype3.length + mspiritsksp.length + mspirittype.length;
 // 					if (allm1 > maxchar) {
-// 						if (kkl > 12 && !isHVFontEngine()) {
-// 							kk.css("font-size", 12);
-// 							kk.css("font-weight", "bold")
+// 						if (nameLength > 12 && !isHVFontEngine()) {
+// 							nameElement.css("font-size", 12);
+// 							nameElement.css("font-weight", "bold")
 // 						}
-// 						if (kkl >= 17 && !isHVFontEngine()) kk.html(kk.html().slice(0,15) + "...");
-// 						kkl = kk.html().length;
-// 						if (kkl <= 5)
-// 							maxchar = (12 - kkl) * 1.9 + 46;
-// 						else if (kkl <= 12)
-// 							maxchar = (12 - kkl) * 1.95 + 46;
-// 						else if (kkl < 17)
-// 							maxchar = (17 - kkl) * 0.8 + 46;
+// 						if (nameLength >= 17 && !isHVFontEngine()) nameElement.html(nameElement.html().slice(0,15) + "...");
+// 						nameLength = nameElement.html().length;
+// 						if (nameLength <= 5)
+// 							maxchar = (12 - nameLength) * 1.9 + 46;
+// 						else if (nameLength <= 12)
+// 							maxchar = (12 - nameLength) * 1.95 + 46;
+// 						else if (nameLength < 17)
+// 							maxchar = (17 - nameLength) * 0.8 + 46;
 // 						else
-// 							maxchar = (18 - kkl) * 1.2 + 46;
+// 							maxchar = (18 - nameLength) * 1.2 + 46;
 // 					}
 // 					if (allm1 > maxchar) {
 // 						mimperv = mimperv.replace(/\s/g, "");
@@ -1027,19 +1022,19 @@ HVStat.Monster = (function () {
 				_ltc.showMonsterInfoFromDB[0]++;
 				_ltc.showMonsterInfoFromDB[1] += TimeCounter(0, milliseconds2);
 			}
-			if (s) {
-				t = "<div style='cursor:default;position:relative;top:-2px;left:2px;padding:0 1px;margin-left:0px;white-space:nowrap'>" + d + "</span></div>";
-				k.after(t);
+			if (usingHVFont) {
+				html = "<div style='cursor:default;position:relative;top:-2px;left:2px;padding:0 1px;margin-left:0px;white-space:nowrap'>" + d + "</span></div>";
+				nameFrameElement.after(html);
 			} else {
-				t = "<div style='font-family:arial;font-size:7pt;font-style:normal;font-weight:bold;display:inline;cursor:default;padding:0 1px;margin-left:1px;white-space:nowrap'>" + d + "</span></div>";
-				var p = k.children().eq(0);
+				html = "<div style='font-family:arial;font-size:7pt;font-style:normal;font-weight:bold;display:inline;cursor:default;padding:0 1px;margin-left:1px;white-space:nowrap'>" + d + "</span></div>";
+				var p = nameFrameElement.children().eq(0);
 				var c = p.html();
-				p.html(c + t);
+				p.html(c + html);
 				p.css("white-space", "nowrap");
 			}
 		}
 		if (_settings.isShowMonsterDuration) {
-			showMonsterEffectsDuration(u);
+			showMonsterEffectsDuration(_baseElement);
 		}
 			//----------------------------------------
 		};
@@ -1080,10 +1075,10 @@ HVStat.Monster = (function () {
 // 				html += '</td></tr>';
 // 			}
 			if (existsScanInfo) {
-				html += '<tr><td>Weak against:</td><td>' + _scanInfo.defWeak.join(", ") + '</td></tr>'
-					+ '<tr><td>Resistant to:</td><td>' + _scanInfo.defResistant.join(", ") + '</td></tr>'
-					+ '<tr><td>Impervious to:</td><td>' + _scanInfo.defImpervious.join(", ") + '</td></tr>'
-					+ '<tr><td>Debuffs affected:</td><td>' + _scanInfo.debuffsAffected.join(", ") + '</td></tr>';
+				html += '<tr><td>Weak against:</td><td>' + (_scanInfo.defWeak.length > 0 ? _scanInfo.defWeak.join(", ") : "-") + '</td></tr>'
+					+ '<tr><td>Resistant to:</td><td>' + (_scanInfo.defResistant.length > 0 ? _scanInfo.defResistant.join(", ") : "-") + '</td></tr>'
+					+ '<tr><td>Impervious to:</td><td>' + (_scanInfo.defImpervious.length > 0 ? _scanInfo.defImpervious.join(", ") : "-") + '</td></tr>'
+					+ '<tr><td>Debuffs affected:</td><td>' + (_scanInfo.debuffsAffected.length > 0 ? _scanInfo.debuffsAffected.join(", ") : "-") + '</td></tr>';
 				if (_scanInfo.lastScanDate) {
 					lastScanString = HVStat.getDateTimeString(_scanInfo.lastScanDate);
 				}
@@ -1633,7 +1628,8 @@ HVStat.migration.migrateDatabase = function () {
 };
 
 HVStat.migration.deleteOldDatabase = function () {
-	alert("Not yet implemented.");
+	localStorage.removeItem("HVMonsterDatabase");
+	alert("Your old monster database has been deleted.");
 };
 
 /* ========== GLOBAL VARIABLES ========== */
@@ -1652,7 +1648,6 @@ HV_PROF = "HVProf";
 HV_REWARDS = "HVRewards";
 HV_SHRINE = "HVShrine";
 HV_DROPS = "HVDrops";
-HV_SETTINGS = "HVSettings";
 HV_ROUND = "HVRound";
 HV_ALERT = "critAlert";
 HV_ALERTMP = "critAlertMP";
@@ -1676,7 +1671,6 @@ _profs = null;
 _rewards = null;
 _shrine = null;
 _drops = null;
-_settings = null;
 _round = null;
 _backup = [null, null, null, null, null, null];
 _database = null;
@@ -1702,7 +1696,6 @@ jQuery.fn.outerHTML = function () {
 	return $("<div>").append(this.eq(0).clone()).html();
 };
 
-loadSettingsObject();
 loadLTCObject();
 
 //-- Hide Logo ASAP to avoid flashing in Chrome.
@@ -2036,466 +2029,6 @@ function displayPowerupBox() {
 function showMonsterStats() {
 	HVStat.monsters.forEach(function (element, index, array) {
 		element.renderStats();
-	});
-	return;
-	if (!(_settings.showMonsterHP || _settings.showMonsterMP || _settings.showMonsterSP || _settings.showMonsterDefence || _settings.isShowMonsterDuration || _settings.isShowStatsPopup)) return;
-	var a = new ElementalStats();
-	$("#monsterpane > div").each(function (n) {
-		var u = $(this);
-		if (u === undefined || u.height() >= 100) return;
-		var monInfo = _round.monsters[n];
-		if (monInfo === undefined) return;
-		var k = u.children().eq(1).children().eq(0);
-		var s = k.children().length > 1;
-		var e = u.children().eq(2).children().eq(0);
-		var h = u.children().eq(2).children().eq(1);
-		var sp = u.children().eq(2).children().eq(2);
-		var m = e.html().match(/bardead/i);
-		if ((_settings.showMonsterHP || _settings.showMonsterHPPercent || _settings.isShowStatsPopup) && !m) {
-			var t31 = TimeCounter(1);
-			var l = monInfo.maxHp;
-			var o = 0;
-			var g = "";
-			var b = e[0].getElementsByTagName("img")[1].getAttribute("style").slice(6,-2) / 120;
-			if (_settings.showMonsterHPPercent) g = (b * 100).toFixed(2) + "%"
-			else {
-				o = Math.floor(b * l);
-				g = o + " / " + l;
-			}
-			var r = "<div style='position:absolute;z-index:1074;top:-1px;font-size:8pt;font-family:arial,helvetica,sans-serif;font-weight:bolder;color:yellow;width:120px;text-align:center'>" + g + "</div>";
-			e.after(r);
-			_ltc.showhp[0]++;
-			_ltc.showhp[1] += TimeCounter(0, t31);
-		}
-		if ((_settings.showMonsterMP || _settings.isShowStatsPopup) && !m) {
-			var t32 = TimeCounter(1);
-			var v = h[0].getElementsByTagName("img")[1].getAttribute("style").slice(6,-2) / 120;
-			var f = (v * 100).toFixed(1);
-			var j = "<div style='position:absolute;z-index:1074;top:11px;font-size:8pt;font-family:arial,helvetica,sans-serif;font-weight:bolder;color:yellow;width:120px;text-align:center'>" + f + "%</div>";
-			h.after(j);
-			_ltc.showmp[0]++;
-			_ltc.showmp[1] += TimeCounter(0, t32);
-		}
-		if ((_settings.showMonsterSP || _settings.isShowStatsPopup) && !m && sp.length > 0) {
-			var t62 = TimeCounter(1);
-			var sppart = sp[0].getElementsByTagName("img")[1].getAttribute("style").slice(6,-2) / 120;
-			var perc = (sppart * 100).toFixed(1);
-			var sptext = "<div style='position:absolute;z-index:1074;top:23px;font-size:8pt;font-family:arial,helvetica,sans-serif;font-weight:bolder;color:yellow;width:120px;text-align:center'>" + perc + "%</div>";
-			sp.after(sptext);
-			_ltc.showsp[0]++;
-			_ltc.showsp[1] += TimeCounter(0, t62);
-		}
-		if (_settings.isShowStatsPopup) {
-			var t45 = TimeCounter(1);
-			o = Math.floor(b * l);
-			monInfo.currHp = o;
-			monInfo.currmp = v;
-//			_round.save();
-			_ltc.monsterpopup[1] += TimeCounter(0, t45);
-		}
-		var t33 = TimeCounter(1);
-		if (_settings.showMonsterDefence && !m && (monInfo.id < 1000 || _settings.showMonsterInfoFromDB)) {
-			var t;
-			getMonsterElementsById(a, monInfo.id);
-			var d = a.majWeak === "-" ? "" : "[<span style='color:#005826'>" + a.majWeak + "</span>";
-				d += a.minWeak === "-" ? "" : ";<span style='color:#3CB878'>" + a.minWeak + "</span>";
-				d += a.resist === "-" ? "" : ";<span style='color:red'>" + a.resist + "</span>";
-				d += a.imperv === "-" ? "" : ";<span style='color:black'>" + a.imperv + "</span>]";
-			if (_settings.showMonsterInfoFromDB) {
-				var milliseconds2 = TimeCounter(1);
-				var kk = k.children().eq(0);
-				var kkl = kk.html().length;
-				var mclass = "";
-				var mpl = "";
-				var mweak = "";
-				var mresist = "";
-				var mimperv = "";
-				var mskilltype = "";
-				var mskillspell = "";
-				var mskilltype2 = "";
-				var mskillspell2 = "";
-				var mskilltype3 = "";
-				var mskillspell3 = "";
-				var mspirittype = "";
-				var mspiritsksp = "";
-				var mattack = "";
-				var allm = 0;
-				var allm1 = 0;
-				mclass = monInfo.mclass;
-				allm += 2;
-				if (_settings.showMonsterPowerLevelFromDB) {
-					mpl = monInfo.mpl;
-					if (mpl !== 0) allm += 2;
-				}
-				if (_settings.showMonsterWeaknessesFromDB) {
-					mweak = MElemNum(monInfo.mweak, 1);
-					allm += 2;
-				}
-				if (_settings.showMonsterResistancesFromDB) {
-					mresist = MElemNum(monInfo.mresist, 1);
-					mimperv = MElemNum(monInfo.mimperv, 1);
-					allm += _settings.showMonsterWeaknessesFromDB ? 2 : 3;
-				}
-				if (_settings.showMonsterAttackTypeFromDB) {
-					if (monInfo.mskillspell !== undefined) {
-						var sk = String(monInfo.mskillspell);
-						if (sk.length === 1 || sk.match("9")) {
-							if (monInfo.mskillspell < 3 || sk.match("9")) {
-								mskilltype = MElemNum(monInfo.mskilltype, 1);
-								mskillspell = MElemNum(monInfo.mskillspell, 1);
-							} else {
-								mspirittype = MElemNum(monInfo.mskilltype, 1);
-								mspiritsksp = MElemNum(monInfo.mskillspell, 1);
-								allm -= 7;
-							}
-						} else {
-							var mskillspellarray = sk.split("0");
-							var mskilltypearray = String(MElemNum(monInfo.mskilltype, 1)).split(", ");
-							var sk34 = sk.replace("0","").search(/(3|4)/);
-							var other1 = 0;
-							var other2 = 0;
-							if (sk.length === 3) {
-								if (sk34 >= 0) {
-									other = sk34 > 0 ? 0 : 1;
-									mspirittype = mskilltypearray[sk34];
-									mspiritsksp = MElemNum(parseInt(mskillspellarray[sk34]), 1);
-									mskillspell = MElemNum(parseInt(mskillspellarray[other1]), 1);
-									mskilltype = mskilltypearray[other1];
-								} else {
-									mskillspell = MElemNum(parseInt(mskillspellarray[0]), 1);
-									mskilltype = mskilltypearray[0];
-									mskillspell2 = MElemNum(parseInt(mskillspellarray[1]), 1);
-									mskilltype2 = mskilltypearray[1];
-								}
-								allm += 2;
-								if (mskillspell === mskillspell2) {
-									mskillspell2 = "";
-									mskilltype = mskilltype + ", " + mskilltype2;
-									mskilltype2 = "";
-									allm -= 2;
-								} else if (mskilltype === mskilltype2) {
-									mskillspell = mskillspell + ", " + mskillspell2;
-									mskillspell2 = "";
-									mskilltype2 = "";
-									allm -= 2;
-								}
-							} else if (sk.length === 5) {
-								if (sk34 >= 0) {
-									other1 = sk34 > 0 ? 0 : 1;
-									other2 = sk34 > 1 ? 1 : 2;
-									mspirittype = mskilltypearray[sk34];
-									mspiritsksp = MElemNum(parseInt(mskillspellarray[sk34]), 1);
-									mskillspell = MElemNum(parseInt(mskillspellarray[other1]), 1);
-									mskilltype = mskilltypearray[other1];
-									mskillspell2 = MElemNum(parseInt(mskillspellarray[other2]), 1);
-									mskilltype2 = mskilltypearray[other2];
-								} else {
-									mskillspell = MElemNum(parseInt(mskillspellarray[0]), 1);
-									mskilltype = mskilltypearray[0];
-									mskillspell2 = MElemNum(parseInt(mskillspellarray[1]), 1);
-									mskilltype2 = mskilltypearray[1];
-									mskillspell3 = MElemNum(parseInt(mskillspellarray[2]), 1);
-									mskilltype3 = mskilltypearray[2];
-								}
-								allm += 4;
-								if (mskillspell === mskillspell2) {
-									mskillspell2 = "";
-									mskilltype = mskilltype + ", " + mskilltype2;
-									mskilltype2 = "";
-									allm -= 2;
-								} else if (mskillspell === mskillspell3) {
-									mskillspell3 = "";
-									mskilltype = mskilltype + ", " + mskilltype3;
-									mskilltype3 = "";
-									allm -= 2;
-								} else if (mskillspell2 === mskillspell3) {
-									mskillspell3 = "";
-									mskilltype2 = mskilltype2 + ", " + mskilltype3;
-									mskilltype3 = "";
-									allm -= 2;
-								} else if (mskilltype === mskilltype2) {
-									mskillspell = mskillspell + ", " + mskillspell2;
-									mskillspell2 = "";
-									mskilltype2 = "";
-									allm -= 2;
-								} else if (mskilltype === mskilltype3) {
-									mskillspell = mskillspell + ", " + mskillspell3;
-									mskillspell3 = "";
-									mskilltype3 = "";
-									allm -= 2;
-								} else if (mskilltype2 === mskilltype3) {
-									mskillspell2 = mskillspell2 + ", " + mskillspell3;
-									mskillspell3 = "";
-									mskilltype3 = "";
-									allm -= 2;
-								}
-							}
-						}
-					}
-					mattack = MElemNum(monInfo.mattack, 1);
-					allm += 4;
-				}
-				if (mpl === undefined || mpl === null) {
-					mpl = 0;
-					allm -= 2;
-				}
-				if (mskillspell === undefined || mskillspell === null || mskillspell === 0 || mskillspell === "0"){
-					mskillspell = "";
-					allm -= 1;
-				}
-				if (mskilltype === undefined || mskilltype === null || mskilltype === 0 || mskilltype === "0"){
-					mskilltype = "";
-					allm -= 1;
-				}
-				if (mclass !== undefined) mclass = mclass > 30 ? "-" : MClassNum(mclass, 1);
-						
-				mclass = String(mclass);
-				mweak = String(mweak);
-				mresist = String(mresist);
-				mimperv = String(mimperv);
-				mskilltype = String(mskilltype);
-				mskillspell = String(mskillspell);
-				mskilltype2 = String(mskilltype2);
-				mskillspell2 = String(mskillspell2);
-				mskilltype3 = String(mskilltype3);
-				mskillspell3 = String(mskillspell3);
-				mspirittype = String(mspirittype);
-				mspiritsksp = String(mspiritsksp);
-				mattack = String(mattack);
-				if (_settings.ResizeMonsterInfo){
-					if (_settings.HideThisResHvstatStyle[0] || _settings.HideThisResHvstatStyle[1] || _settings.HideThisResHvstatStyle[2]) {
-						mweak = mweak.replace(", Phys", "Slash, Crush, Pierc").replace("?Phys", "Slash, Crush, Pierc").replace("Phys", "Slash, Crush, Pierc");
-						mresist = mresist.replace(", Phys", "Slash, Crush, Pierc").replace("?Phys", "Slash, Crush, Pierc").replace("Phys", "Slash, Crush, Pierc");
-						mimperv = mimperv.replace(", Phys", "Slash, Crush, Pierc").replace("?Phys", "Slash, Crush, Pierc").replace("Phys", "Slash, Crush, Pierc");
-					}
-					if (_settings.HideThisResHvstatStyle[3] || _settings.HideThisResHvstatStyle[4] || _settings.HideThisResHvstatStyle[5] || _settings.HideThisResHvstatStyle[6]) {
-						mweak = mweak.replace(", Elem", "Fire, Cold, Elec, Wind").replace("?Elem", "Fire, Cold, Elec, Wind").replace("Elem", "Fire, Cold, Elec, Wind");
-						mresist = mresist.replace(", Elem", "Fire, Cold, Elec, Wind").replace("?Elem", "Fire, Cold, Elec, Wind").replace("Elem", "Fire, Cold, Elec, Wind");
-						mimperv = mimperv.replace(", Elem", "Fire, Cold, Elec, Wind").replace("?Elem", "Fire, Cold, Elec, Wind").replace("Elem", "Fire, Cold, Elec, Wind");
-					}
-					if (_settings.HideThisResHvstatStyle[0]) {
-						mweak = mweak.replace(", Slashing", "").replace(", Slash", "").replace("Slashing", "").replace("Slash", "");
-						mresist = mresist.replace(", Slashing", "").replace(", Slash", "").replace("Slashing", "").replace("Slash", "");
-						mimperv = mimperv.replace(", Slashing", "").replace(", Slash", "").replace("Slashing", "").replace("Slash", "");
-					}
-					if (_settings.HideThisResHvstatStyle[1]) {
-						mweak = mweak.replace(", Crushing", "").replace(", Crush", "").replace("Crushing", "").replace("Crush", "");
-						mresist = mresist.replace(", Crushing", "").replace(", Crush", "").replace("Crushing", "").replace("Crush", "");
-						mimperv = mimperv.replace(", Crushing", "").replace(", Crush", "").replace("Crushing", "").replace("Crush", "");
-					}
-					if (_settings.HideThisResHvstatStyle[2]) {
-						mweak = mweak.replace(", Piercing", "").replace(", Pierc", "").replace("Piercing", "").replace("Pierc", "");
-						mresist = mresist.replace(", Piercing", "").replace(", Pierc", "").replace("Piercing", "").replace("Pierc", "");
-						mimperv = mimperv.replace(", Piercing", "").replace(", Pierc", "").replace("Piercing", "").replace("Pierc", "");
-					}
-					if (_settings.HideThisResHvstatStyle[3]) {
-						mweak = mweak.replace(", Fire", "").replace("Fire", "");
-						mresist = mresist.replace(", Fire", "").replace("Fire", "");
-						mimperv = mimperv.replace(", Fire", "").replace("Fire", "");
-					}
-					if (_settings.HideThisResHvstatStyle[4]) {
-						mweak = mweak.replace(", Cold", "").replace("Cold", "");
-						mresist = mresist.replace(", Cold", "").replace("Cold", "");
-						mimperv = mimperv.replace(", Cold", "").replace("Cold", "");
-					}
-					if (_settings.HideThisResHvstatStyle[5]) {
-						mweak = mweak.replace(", Elec", "").replace("Elec", "");
-						mresist = mresist.replace(", Elec", "").replace("Elec", "");
-						mimperv = mimperv.replace(", Elec", "").replace("Elec", "");
-					}
-					if (_settings.HideThisResHvstatStyle[6]) {
-						mweak = mweak.replace(", Wind", "").replace("Wind", "");
-						mresist = mresist.replace(", Wind", "").replace("Wind", "");
-						mimperv = mimperv.replace(", Wind", "").replace("Wind", "");
-					}
-					if (_settings.HideThisResHvstatStyle[7]) {
-						mweak = mweak.replace(", Holy", "").replace("Holy", "");
-						mresist = mresist.replace(", Holy", "").replace("Holy", "");
-						mimperv = mimperv.replace(", Holy", "").replace("Holy", "");
-					}
-					if (_settings.HideThisResHvstatStyle[8]) {
-						mweak = mweak.replace(", Dark", "").replace("Dark", "");
-						mresist = mresist.replace(", Dark", "").replace("Dark", "");
-						mimperv = mimperv.replace(", Dark", "").replace("Dark", "");
-					}
-					if (_settings.HideThisResHvstatStyle[9]) {
-						mweak = mweak.replace(", Soul", "").replace("Soul", "");
-						mresist = mresist.replace(", Soul", "").replace("Soul", "");
-						mimperv = mimperv.replace(", Soul", "").replace("Soul", "");
-					}
-					if (_settings.HideThisResHvstatStyle[10]) {
-						mweak = mweak.replace(", Void", "").replace("Void", "");
-						mresist = mresist.replace(", Void", "").replace("Void", "");
-						mimperv = mimperv.replace(", Void", "").replace("Void", "");
-					}
-				
-					var maxchar = (12 - kkl) * (kkl <= 12 ? 0.7 : 1.4) + 46;
-					allm1 = allm + mclass.length + mskillspell.length + mskilltype.length + mimperv.length + mresist.length + mweak.length + mattack.length + String(mpl).length + mskillspell2.length + mskilltype2.length + mskillspell3.length + mskilltype3.length + mspiritsksp.length + mspirittype.length;
-					if (allm1 > maxchar) {
-						if (kkl > 12 && !isHVFontEngine()) {
-							kk.css("font-size", 12);
-							kk.css("font-weight", "bold")
-						}
-						if (kkl >= 17 && !isHVFontEngine()) kk.html(kk.html().slice(0,15) + "...");
-						kkl = kk.html().length;
-						if (kkl <= 5) maxchar =  (12 - kkl)*1.9 + 46;
-						else if (kkl <= 12) maxchar =  (12 - kkl)*1.95 + 46;
-						else if (kkl < 17) maxchar =  (17 - kkl)*0.8 + 46;
-						else maxchar =  (18 - kkl)*1.2 + 46;
-					}
-					if (allm1 > maxchar) {
-						mimperv = mimperv.replace(/\s/g, "");
-						mresist = mresist.replace(/\s/g, "");
-						mweak = mweak.replace(/\s/g, "");
-						mskilltype = mskilltype.replace(/\s/g, "");
-						mskilltype2 = mskilltype2.replace(/\s/g, "");
-						mskillspell = mskillspell.replace(/\s/g, "");
-						mskillspell2 = mskillspell2.replace(/\s/g, "");
-						allm1 = allm + mclass.length + mskillspell.length + mskilltype.length + mimperv.length + mresist.length + mweak.length + mattack.length + String(mpl).length + mskillspell2.length + mskilltype2.length + mskillspell3.length + mskilltype3.length + mspiritsksp.length + mspirittype.length;
-					}
-					if (allm1 > maxchar) {
-						mskilltype = mskilltype.replace("Slash", "Sl").replace("Crush", "Cr").replace("Pierc", "Pi");
-						mskilltype2 = mskilltype2.replace("Slash", "Sl").replace("Crush", "Cr").replace("Pierc", "Pi");
-						mskilltype3 = mskilltype3.replace("Slash", "Sl").replace("Crush", "Cr").replace("Pierc", "Pi");
-						mspirittype = mspirittype.replace("Slash", "Sl").replace("Crush", "Cr").replace("Pierc", "Pi");
-						mspiritsksp = mspiritsksp.replace("Spirit:", "S:");
-						mattack = mattack.replace("Slash", "Sl").replace("Crush", "Cr").replace("Pierc", "Pi");
-						allm1 = allm + mclass.length + mskillspell.length + mskilltype.length + mimperv.length + mresist.length + mweak.length + mattack.length + String(mpl).length + mskillspell2.length + mskilltype2.length + mskillspell3.length + mskilltype3.length + mspiritsksp.length + mspirittype.length;
-					}
-					if (allm1 > maxchar) {
-						mimperv = mimperv.replace("Slash", "Sl").replace("Crush", "Cr").replace("Pierc", "Pi");
-						mresist = mresist.replace("Slash", "Sl").replace("Crush", "Cr").replace("Pierc", "Pi");
-						allm1 = allm + mclass.length + mskillspell.length + mskilltype.length + mimperv.length + mresist.length + mweak.length + mattack.length + String(mpl).length + mskillspell2.length + mskilltype2.length + mskillspell3.length + mskilltype3.length + mspiritsksp.length + mspirittype.length;
-					}
-					if (allm1 > maxchar) {
-						mweak = mweak.replace("Slash", "Sl").replace("Crush", "Cr").replace("Pierc", "Pi");
-						mspiritsksp = mspiritsksp.replace("S:", "");
-						allm1 = allm + mclass.length + mskillspell.length + mskilltype.length + mimperv.length + mresist.length + mweak.length + mattack.length + String(mpl).length + mskillspell2.length + mskilltype2.length + mskillspell3.length + mskilltype3.length + mspiritsksp.length + mspirittype.length;
-					}
-					if (allm1 > maxchar) {
-						mclass = mclass.slice(0, 4);
-						allm1 = allm + mclass.length + mskillspell.length + mskilltype.length + mimperv.length + mresist.length + mweak.length + mattack.length + String(mpl).length + mskillspell2.length + mskilltype2.length + mskillspell3.length + mskilltype3.length + mspiritsksp.length + mspirittype.length;
-					}
-					if (allm1 > maxchar) {
-						mclass = mclass.slice(0, 3);
-						allm1 = allm + mclass.length + mskillspell.length + mskilltype.length + mimperv.length + mresist.length + mweak.length + mattack.length + String(mpl).length + mskillspell2.length + mskilltype2.length + mskillspell3.length + mskilltype3.length + mspiritsksp.length + mspirittype.length;
-					}
-					if (allm1 > maxchar) {
-						mskilltype = mskilltype.replace("Fire", "Fir").replace("Cold", "Col").replace("Elec", "Ele").replace("Wind", "Win").replace("Holy", "Hol").replace("Dark", "Dar").replace("Soul", "Sou").replace("Slash", "Sl").replace("Crush", "Cr").replace("Pierc", "Pi");
-						mskilltype2 = mskilltype2.replace("Fire", "Fir").replace("Cold", "Col").replace("Elec", "Ele").replace("Wind", "Win").replace("Holy", "Hol").replace("Dark", "Dar").replace("Soul", "Sou").replace("Slash", "Sl").replace("Crush", "Cr").replace("Pierc", "Pi");
-						mskilltype3 = mskilltype3.replace("Fire", "Fir").replace("Cold", "Col").replace("Elec", "Ele").replace("Wind", "Win").replace("Holy", "Hol").replace("Dark", "Dar").replace("Soul", "Sou").replace("Slash", "Sl").replace("Crush", "Cr").replace("Pierc", "Pi");
-						mspirittype = mspirittype.replace("Fire", "Fir").replace("Cold", "Col").replace("Elec", "Ele").replace("Wind", "Win").replace("Holy", "Hol").replace("Dark", "Dar").replace("Soul", "Sou").replace("Slash", "Sl").replace("Crush", "Cr").replace("Pierc", "Pi");
-						mattack = mattack.replace("Fire", "Fir").replace("Cold", "Col").replace("Elec", "Ele").replace("Wind", "Win").replace("Holy", "Hol").replace("Dark", "Dar").replace("Soul", "Sou").replace("Slash", "Sl").replace("Crush", "Cr").replace("Pierc", "Pi");
-						allm1 = allm + mclass.length + mskillspell.length + mskilltype.length + mimperv.length + mresist.length + mweak.length + mattack.length + String(mpl).length + mskillspell2.length + mskilltype2.length + mskillspell3.length + mskilltype3.length + mspiritsksp.length + mspirittype.length;
-					}
-					if (allm1 > maxchar) {
-						mresist = mresist.replace("Fire", "Fir").replace("Cold", "Col").replace("Elec", "Ele").replace("Wind", "Win").replace("Holy", "Hol").replace("Dark", "Dar").replace("Soul", "Sou").replace("Slash", "Sl").replace("Crush", "Cr").replace("Pierc", "Pi");
-						mimperv = mimperv.replace("Fire", "Fir").replace("Cold", "Col").replace("Elec", "Ele").replace("Wind", "Win").replace("Holy", "Hol").replace("Dark", "Dar").replace("Soul", "Sou").replace("Slash", "Sl").replace("Crush", "Cr").replace("Pierc", "Pi");
-						allm1 = allm + mclass.length + mskillspell.length + mskilltype.length + mimperv.length + mresist.length + mweak.length + mattack.length + String(mpl).length + mskillspell2.length + mskilltype2.length + mskillspell3.length + mskilltype3.length + mspiritsksp.length + mspirittype.length;
-					}
-					if (allm1 > maxchar) {
-						mweak = mweak.replace("Fire", "Fir").replace("Cold", "Col").replace("Elec", "Ele").replace("Wind", "Win").replace("Holy", "Hol").replace("Dark", "Dar").replace("Soul", "Sou").replace("Slash", "Sl").replace("Crush", "Cr").replace("Pierc", "Pi");
-						allm1 = allm + mclass.length + mskillspell.length + mskilltype.length + mimperv.length + mresist.length + mweak.length + mattack.length + String(mpl).length + mskillspell2.length + mskilltype2.length + mskillspell3.length + mskilltype3.length + mspiritsksp.length + mspirittype.length;
-					}
-					if (allm1 > maxchar) {
-						mskillspell = mskillspell.replace("Mag", "Ma").replace("Phys", "Ph");
-						mskillspell2 = mskillspell2.replace("Mag", "Ma").replace("Phys", "Ph");
-						mskillspell3 = mskillspell3.replace("Mag", "Ma").replace("Phys", "Ph");
-						mspiritsksp = mspiritsksp.replace("Mag", "Ma").replace("Phys", "Ph");
-						allm1 = allm + mclass.length + mskillspell.length + mskilltype.length + mimperv.length + mresist.length + mweak.length + mattack.length + String(mpl).length + mskillspell2.length + mskilltype2.length + mskillspell3.length + mskilltype3.length + mspiritsksp.length + mspirittype.length;
-					}
-					if (allm1 > maxchar) {
-						mattack = mattack.replace("Fir", "Fi").replace("Col", "Co").replace("Ele", "El").replace("Win", "Wi").replace("Hol", "Ho").replace("Dar", "Da").replace("Sou", "So").replace("Elm", "Elem");
-						mskilltype = mskilltype.replace("Fir", "Fi").replace("Col", "Co").replace("Ele", "El").replace("Win", "Wi").replace("Hol", "Ho").replace("Dar", "Da").replace("Sou", "So").replace("Elm", "Elem");
-						mskilltype2 = mskilltype2.replace("Fir", "Fi").replace("Col", "Co").replace("Ele", "El").replace("Win", "Wi").replace("Hol", "Ho").replace("Dar", "Da").replace("Sou", "So").replace("Elm", "Elem");
-						mskilltype3 = mskilltype3.replace("Fir", "Fi").replace("Col", "Co").replace("Ele", "El").replace("Win", "Wi").replace("Hol", "Ho").replace("Dar", "Da").replace("Sou", "So").replace("Elm", "Elem");
-						mspirittype = mspirittype.replace("Fir", "Fi").replace("Col", "Co").replace("Ele", "El").replace("Win", "Wi").replace("Hol", "Ho").replace("Dar", "Da").replace("Sou", "So").replace("Elm", "Elem");
-						allm1 = allm + mclass.length + mskillspell.length + mskilltype.length + mimperv.length + mresist.length + mweak.length + mattack.length + String(mpl).length + mskillspell2.length + mskilltype2.length + mskillspell3.length + mskilltype3.length + mspiritsksp.length + mspirittype.length;
-					}
-					if (allm1 > maxchar) {
-						mresist = mresist.replace("Fir", "Fi").replace("Col", "Co").replace("Ele", "El").replace("Win", "Wi").replace("Hol", "Ho").replace("Dar", "Da").replace("Sou", "So").replace("Elm", "Elem");
-						mimperv = mimperv.replace("Fir", "Fi").replace("Col", "Co").replace("Ele", "El").replace("Win", "Wi").replace("Hol", "Ho").replace("Dar", "Da").replace("Sou", "So").replace("Elm", "Elem");
-						allm1 = allm + mclass.length + mskillspell.length + mskilltype.length + mimperv.length + mresist.length + mweak.length + mattack.length + String(mpl).length + mskillspell2.length + mskilltype2.length + mskillspell3.length + mskilltype3.length + mspiritsksp.length + mspirittype.length;
-					}
-					if (allm1 > maxchar) {
-						mweak = mweak.replace("Fir", "Fi").replace("Col", "Co").replace("Ele", "El").replace("Win", "Wi").replace("Hol", "Ho").replace("Dar", "Da").replace("Sou", "So").replace("Elm", "Elem");
-						allm1 = allm + mclass.length + mskillspell.length + mskilltype.length + mimperv.length + mresist.length + mweak.length + mattack.length + String(mpl).length + mskillspell2.length + mskilltype2.length + mskillspell3.length + mskilltype3.length + mspiritsksp.length + mspirittype.length;
-					}
-					if (allm1 > maxchar) {
-						mattack = mattack.replace("Fi", "F").replace("Co", "C").replace("El", "E").replace("Wi", "W").replace("Ho", "H").replace("Da", "D").replace("So", "S").replace("Eem", "Elem");
-						mskilltype = mskilltype.replace("Fi", "F").replace("Co", "C").replace("El", "E").replace("Wi", "W").replace("Ho", "H").replace("Da", "D").replace("So", "S").replace("Eem", "Elem");
-						mskilltype2 = mskilltype2.replace("Fi", "F").replace("Co", "C").replace("El", "E").replace("Wi", "W").replace("Ho", "H").replace("Da", "D").replace("So", "S").replace("Eem", "Elem");
-						mskilltype3 = mskilltype3.replace("Fi", "F").replace("Co", "C").replace("El", "E").replace("Wi", "W").replace("Ho", "H").replace("Da", "D").replace("So", "S").replace("Eem", "Elem");
-						mspirittype = mspirittype.replace("Fi", "F").replace("Co", "C").replace("El", "E").replace("Wi", "W").replace("Ho", "H").replace("Da", "D").replace("So", "S").replace("Eem", "Elem");
-						allm1 = allm + mclass.length + mskillspell.length + mskilltype.length + mimperv.length + mresist.length + mweak.length + mattack.length + String(mpl).length + mskillspell2.length + mskilltype2.length + mskillspell3.length + mskilltype3.length + mspiritsksp.length + mspirittype.length;
-					}
-					if (allm1 > maxchar) {
-						mskillspell = mskillspell.replace("Ma", "M").replace("Ph", "P");
-						mskillspell2 = mskillspell2.replace("Ma", "M").replace("Ph", "P");
-						mskillspell3 = mskillspell3.replace("Ma", "M").replace("Ph", "P");
-						mspiritsksp = mspiritsksp.replace("Ma", "M").replace("Ph", "P");
-						allm1 = allm + mclass.length + mskillspell.length + mskilltype.length + mimperv.length + mresist.length + mweak.length + mattack.length + String(mpl).length + mskillspell2.length + mskilltype2.length + mskillspell3.length + mskilltype3.length + mspiritsksp.length + mspirittype.length;
-					}
-					if (allm1 > maxchar) {
-						mresist = mresist.replace("Fi", "F").replace("Co", "C").replace("El", "E").replace("Wi", "W").replace("Ho", "H").replace("Da", "D").replace("So", "S").replace("Eem", "Elem");
-						mimperv = mimperv.replace("Fi", "F").replace("Co", "C").replace("El", "E").replace("Wi", "W").replace("Ho", "H").replace("Da", "D").replace("So", "S").replace("Eem", "Elem");
-						allm1 = allm + mclass.length + mskillspell.length + mskilltype.length + mimperv.length + mresist.length + mweak.length + mattack.length + String(mpl).length + mskillspell2.length + mskilltype2.length + mskillspell3.length + mskilltype3.length + mspiritsksp.length + mspirittype.length;
-					}
-					if (allm1 > maxchar) {
-						mweak = mweak.replace("Fi", "F").replace("Co", "C").replace("El", "E").replace("Wi", "W").replace("Ho", "H").replace("Da", "D").replace("So", "S").replace("Eem", "Elem");
-					}
-				}
-				if (mclass !== "0" && mclass !== "undefined" && mclass !== "unde" && mclass !== "und") {
-					d = "";
-					if (_settings.showMonsterClassFromDB){
-						d = "{<span style='color:blue'>" + mclass;
-						d += _settings.showMonsterPowerLevelFromDB ? ", " + mpl + "+</span>}" : "</span>}";
-					} else if (_settings.showMonsterPowerLevelFromDB) d = "{<span style='color:blue'>" + mpl + "+</span>}";
-					if (_settings.showMonsterWeaknessesFromDB) {
-						d += mweak === "0" ? "" : "[<span style='color:#3CB878'>" + mweak + "</span>";
-						if (!_settings.showMonsterResistancesFromDB) d += "]";
-					}
-					if (_settings.showMonsterResistancesFromDB) {
-						if (!_settings.showMonsterWeaknessesFromDB) d += "[";
-						d += mresist === "-" ? "" : "|<span style='color:#FF3300'>" + mresist + "</span>";
-						d += mimperv === "-" ? "" : "|<b><u><span style='color:#990000'>" + mimperv + "</span></u></b>";
-						d += "]";
-					}
-					if (_settings.showMonsterAttackTypeFromDB) {
-						d += mattack === "0" ? "(" : "(<span style='color:black'>" + mattack + "</span>";
-						d += mskillspell === "" ? "" : ";<span style='color:blue'>" + mskillspell + "</span>";
-						d += mskilltype === "" ? "" : "-<span style='color:blue'>" + mskilltype + "</span>";
-						d += mskillspell2 === "" ? "" : "|<span style='color:blue'>" + mskillspell2 + "</span>";
-						d += mskilltype2 === "" ? "" : "-<span style='color:blue'>" + mskilltype2 + "</span>";
-						d += mskillspell3 === "" ? "" : "|<span style='color:blue'>" + mskillspell3 + "</span>";
-						d += mskilltype3 === "" ? "" : "-<span style='color:blue'>" + mskilltype3 + "</span>";
-						d += mspiritsksp === "" ? "" : "|<span style='color:red'>" + mspiritsksp + "</span>";
-						d += mspirittype === "" ? "" : "-<span style='color:red'>" + mspirittype + "</span>";
-						d += ")";
-					}
-				} else d = "[<span style='color:red;font-weight:bold'>NEW</span>]";
-				_ltc.showMonsterInfoFromDB[0]++;
-				_ltc.showMonsterInfoFromDB[1] += TimeCounter(0, milliseconds2);
-			}
-			if (s) {
-				t = "<div style='cursor:default;position:relative;top:-2px;left:2px;padding:0 1px;margin-left:0px;white-space:nowrap'>" + d + "</span></div>";
-				k.after(t);
-			} else {
-				t = "<div style='font-family:arial;font-size:7pt;font-style:normal;font-weight:bold;display:inline;cursor:default;padding:0 1px;margin-left:1px;white-space:nowrap'>" + d + "</span></div>";
-				var p = k.children().eq(0);
-				var c = p.html();
-				p.html(c + t);
-				p.css("white-space", "nowrap");
-			}
-		}
-		_ltc.showelem[0]++;
-		_ltc.showelem[1] += TimeCounter(0, t33);
-		if (_settings.isShowMonsterDuration) {
-			var t2 = TimeCounter(1);
-			showMonsterEffectsDuration(u);
-			_ltc.showMonsterEffectsDuration[0]++;
-			_ltc.showMonsterEffectsDuration[1] += TimeCounter(0, t2);
-		}
 	});
 	_ltc.save();
 }
@@ -4169,6 +3702,7 @@ function initMonsterStatsPane() {
 	$("#deleteOldDatabase").click(function () {
 		if (confirm("Are you really sure to delete your old monster database?"))
 			HVStat.migration.deleteOldDatabase();
+			// TODO: update Monster Stats pane
 	});
 }
 function initSettingsPane() {
@@ -4260,17 +3794,17 @@ function initSettingsPane() {
 		+ '<tr><td align="center" style="width:5px;padding-left:60px"><input type="checkbox" name="showMonsterWeaknessesFromDB" /></td><td colspan="2" style="padding-left:20px">Show monster weaknesses from database</td></tr>'
 		+ '<tr><td align="center" style="width:5px;padding-left:60px"><input type="checkbox" name="showMonsterResistancesFromDB" /></td><td colspan="2" style="padding-left:20px">Show monster resistances from database</td></tr>'
 		+ '<tr><td colspan="3" style="padding-left:85px">Hide specific weaknesses/resitances: </td></tr>'
-		+ '<tr><td align="center" style="width:5px;padding-left:65px"><input type="checkbox" name="HideThisResHvstatStyle0" /></td><td colspan="2" style="padding-left:20px">Slashing</td></tr>'
-		+ '<tr><td align="center" style="width:5px;padding-left:65px"><input type="checkbox" name="HideThisResHvstatStyle1" /></td><td colspan="2" style="padding-left:20px">Crushing</td></tr>'
-		+ '<tr><td align="center" style="width:5px;padding-left:65px"><input type="checkbox" name="HideThisResHvstatStyle2" /></td><td colspan="2" style="padding-left:20px">Piercing</td></tr>'
-		+ '<tr><td align="center" style="width:5px;padding-left:65px"><input type="checkbox" name="HideThisResHvstatStyle3" /></td><td colspan="2" style="padding-left:20px">Fire</td></tr>'
-		+ '<tr><td align="center" style="width:5px;padding-left:65px"><input type="checkbox" name="HideThisResHvstatStyle4" /></td><td colspan="2" style="padding-left:20px">Cold</td></tr>'
-		+ '<tr><td align="center" style="width:5px;padding-left:65px"><input type="checkbox" name="HideThisResHvstatStyle5" /></td><td colspan="2" style="padding-left:20px">Elec</td></tr>'
-		+ '<tr><td align="center" style="width:5px;padding-left:65px"><input type="checkbox" name="HideThisResHvstatStyle6" /></td><td colspan="2" style="padding-left:20px">Wind</td></tr>'
-		+ '<tr><td align="center" style="width:5px;padding-left:65px"><input type="checkbox" name="HideThisResHvstatStyle7" /></td><td colspan="2" style="padding-left:20px">Holy</td></tr>'
-		+ '<tr><td align="center" style="width:5px;padding-left:65px"><input type="checkbox" name="HideThisResHvstatStyle8" /></td><td colspan="2" style="padding-left:20px">Dark</td></tr>'
-		+ '<tr><td align="center" style="width:5px;padding-left:65px"><input type="checkbox" name="HideThisResHvstatStyle9" /></td><td colspan="2" style="padding-left:20px">Soul</td></tr>'
-		+ '<tr><td align="center" style="width:5px;padding-left:65px"><input type="checkbox" name="HideThisResHvstatStyle10" /></td><td colspan="2" style="padding-left:20px">Void</td></tr>'
+		+ '<tr><td align="center" style="width:5px;padding-left:65px"><input type="checkbox" name="hideSpecificDamageType0" /></td><td colspan="2" style="padding-left:20px">Crushing</td></tr>'
+		+ '<tr><td align="center" style="width:5px;padding-left:65px"><input type="checkbox" name="hideSpecificDamageType1" /></td><td colspan="2" style="padding-left:20px">Slashing</td></tr>'
+		+ '<tr><td align="center" style="width:5px;padding-left:65px"><input type="checkbox" name="hideSpecificDamageType2" /></td><td colspan="2" style="padding-left:20px">Piercing</td></tr>'
+		+ '<tr><td align="center" style="width:5px;padding-left:65px"><input type="checkbox" name="hideSpecificDamageType3" /></td><td colspan="2" style="padding-left:20px">Fire</td></tr>'
+		+ '<tr><td align="center" style="width:5px;padding-left:65px"><input type="checkbox" name="hideSpecificDamageType4" /></td><td colspan="2" style="padding-left:20px">Cold</td></tr>'
+		+ '<tr><td align="center" style="width:5px;padding-left:65px"><input type="checkbox" name="hideSpecificDamageType5" /></td><td colspan="2" style="padding-left:20px">Elec</td></tr>'
+		+ '<tr><td align="center" style="width:5px;padding-left:65px"><input type="checkbox" name="hideSpecificDamageType6" /></td><td colspan="2" style="padding-left:20px">Wind</td></tr>'
+		+ '<tr><td align="center" style="width:5px;padding-left:65px"><input type="checkbox" name="hideSpecificDamageType7" /></td><td colspan="2" style="padding-left:20px">Holy</td></tr>'
+		+ '<tr><td align="center" style="width:5px;padding-left:65px"><input type="checkbox" name="hideSpecificDamageType8" /></td><td colspan="2" style="padding-left:20px">Dark</td></tr>'
+		+ '<tr><td align="center" style="width:5px;padding-left:65px"><input type="checkbox" name="hideSpecificDamageType9" /></td><td colspan="2" style="padding-left:20px">Soul</td></tr>'
+		+ '<tr><td align="center" style="width:5px;padding-left:65px"><input type="checkbox" name="hideSpecificDamageType10" /></td><td colspan="2" style="padding-left:20px">Void</td></tr>'
 		+ '<tr><td align="center" style="width:5px;padding-left:60px"><input type="checkbox" name="ResizeMonsterInfo" /></td><td colspan="2" style="padding-left:20px">Resize Monster Info if longer than Info box</td></tr>'
 		+ '<tr><td align="center" style="width:5px;padding-left:40px"><input type="checkbox" name="isShowStatsPopup" /></td><td colspan="2" style="padding-left:10px">Show monster statistics on mouseover - delay: <input type="text" name="monsterPopupDelay" size="3" maxLength="4" style="text-align:right" />ms</td><td align="center" style="width:120px">' + t34 + ' ms (' + (t34*100/t0).toFixed(1) + '%)</td></tr>'
 		+ '<tr><td align="center" style="width:5px;padding-left:50px"><input type="checkbox" name="isMonsterPopupPlacement" /></td><td colspan="2" style="padding-left:20px">Alternative placement for mouseover popup</td></tr></tr>'
@@ -4355,17 +3889,17 @@ function initSettingsPane() {
 	if (_settings.showMonsterAttackTypeFromDB) $("input[name=showMonsterAttackTypeFromDB]").attr("checked", "checked");
 	if (_settings.showMonsterWeaknessesFromDB) $("input[name=showMonsterWeaknessesFromDB]").attr("checked", "checked");
 	if (_settings.showMonsterResistancesFromDB) $("input[name=showMonsterResistancesFromDB]").attr("checked", "checked");
-	if (_settings.HideThisResHvstatStyle[0]) $("input[name=HideThisResHvstatStyle0]").attr("checked", "checked");
-	if (_settings.HideThisResHvstatStyle[1]) $("input[name=HideThisResHvstatStyle1]").attr("checked", "checked");
-	if (_settings.HideThisResHvstatStyle[2]) $("input[name=HideThisResHvstatStyle2]").attr("checked", "checked");
-	if (_settings.HideThisResHvstatStyle[3]) $("input[name=HideThisResHvstatStyle3]").attr("checked", "checked");
-	if (_settings.HideThisResHvstatStyle[4]) $("input[name=HideThisResHvstatStyle4]").attr("checked", "checked");
-	if (_settings.HideThisResHvstatStyle[5]) $("input[name=HideThisResHvstatStyle5]").attr("checked", "checked");
-	if (_settings.HideThisResHvstatStyle[6]) $("input[name=HideThisResHvstatStyle6]").attr("checked", "checked");
-	if (_settings.HideThisResHvstatStyle[7]) $("input[name=HideThisResHvstatStyle7]").attr("checked", "checked");
-	if (_settings.HideThisResHvstatStyle[8]) $("input[name=HideThisResHvstatStyle8]").attr("checked", "checked");
-	if (_settings.HideThisResHvstatStyle[9]) $("input[name=HideThisResHvstatStyle9]").attr("checked", "checked");
-	if (_settings.HideThisResHvstatStyle[10]) 	$("input[name=HideThisResHvstatStyle10]").attr("checked", "checked");
+	if (_settings.hideSpecificDamageType[0]) $("input[name=hideSpecificDamageType0]").attr("checked", "checked");
+	if (_settings.hideSpecificDamageType[1]) $("input[name=hideSpecificDamageType1]").attr("checked", "checked");
+	if (_settings.hideSpecificDamageType[2]) $("input[name=hideSpecificDamageType2]").attr("checked", "checked");
+	if (_settings.hideSpecificDamageType[3]) $("input[name=hideSpecificDamageType3]").attr("checked", "checked");
+	if (_settings.hideSpecificDamageType[4]) $("input[name=hideSpecificDamageType4]").attr("checked", "checked");
+	if (_settings.hideSpecificDamageType[5]) $("input[name=hideSpecificDamageType5]").attr("checked", "checked");
+	if (_settings.hideSpecificDamageType[6]) $("input[name=hideSpecificDamageType6]").attr("checked", "checked");
+	if (_settings.hideSpecificDamageType[7]) $("input[name=hideSpecificDamageType7]").attr("checked", "checked");
+	if (_settings.hideSpecificDamageType[8]) $("input[name=hideSpecificDamageType8]").attr("checked", "checked");
+	if (_settings.hideSpecificDamageType[9]) $("input[name=hideSpecificDamageType9]").attr("checked", "checked");
+	if (_settings.hideSpecificDamageType[10]) 	$("input[name=hideSpecificDamageType10]").attr("checked", "checked");
 	if (_settings.ResizeMonsterInfo) $("input[name=ResizeMonsterInfo]").attr("checked", "checked");
 	if (_settings.showMonsterPowerLevelFromDB) $("input[name=showMonsterPowerLevelFromDB]").attr("checked", "checked");
 	if (_settings.showMonsterInfoFromDB) $("input[name=showMonsterInfoFromDB]").attr("checked", "checked");
@@ -4503,17 +4037,17 @@ function initSettingsPane() {
 	$("input[name=showMonsterAttackTypeFromDB]").click(saveSettings);
 	$("input[name=showMonsterWeaknessesFromDB]").click(saveSettings);
 	$("input[name=showMonsterResistancesFromDB]").click(saveSettings);
-	$("input[name=HideThisResHvstatStyle0]").click(saveSettings);
-	$("input[name=HideThisResHvstatStyle1]").click(saveSettings);
-	$("input[name=HideThisResHvstatStyle2]").click(saveSettings);
-	$("input[name=HideThisResHvstatStyle3]").click(saveSettings);
-	$("input[name=HideThisResHvstatStyle4]").click(saveSettings);
-	$("input[name=HideThisResHvstatStyle5]").click(saveSettings);
-	$("input[name=HideThisResHvstatStyle6]").click(saveSettings);
-	$("input[name=HideThisResHvstatStyle7]").click(saveSettings);
-	$("input[name=HideThisResHvstatStyle8]").click(saveSettings);
-	$("input[name=HideThisResHvstatStyle9]").click(saveSettings);
-	$("input[name=HideThisResHvstatStyle10]").click(saveSettings);
+	$("input[name=hideSpecificDamageType0]").click(saveSettings);
+	$("input[name=hideSpecificDamageType1]").click(saveSettings);
+	$("input[name=hideSpecificDamageType2]").click(saveSettings);
+	$("input[name=hideSpecificDamageType3]").click(saveSettings);
+	$("input[name=hideSpecificDamageType4]").click(saveSettings);
+	$("input[name=hideSpecificDamageType5]").click(saveSettings);
+	$("input[name=hideSpecificDamageType6]").click(saveSettings);
+	$("input[name=hideSpecificDamageType7]").click(saveSettings);
+	$("input[name=hideSpecificDamageType8]").click(saveSettings);
+	$("input[name=hideSpecificDamageType9]").click(saveSettings);
+	$("input[name=hideSpecificDamageType10]").click(saveSettings);
 	$("input[name=ResizeMonsterInfo]").click(saveSettings);
 	$("input[name=showMonsterPowerLevelFromDB]").click(saveSettings);
 	$("input[name=isShowMonsterDuration]").click(saveSettings);
@@ -4613,17 +4147,17 @@ function saveSettings() {
 	_settings.showMonsterAttackTypeFromDB = $("input[name=showMonsterAttackTypeFromDB]").get(0).checked;
 	_settings.showMonsterWeaknessesFromDB = $("input[name=showMonsterWeaknessesFromDB]").get(0).checked;
 	_settings.showMonsterResistancesFromDB = $("input[name=showMonsterResistancesFromDB]").get(0).checked;
-	_settings.HideThisResHvstatStyle[0] = $("input[name=HideThisResHvstatStyle0]").get(0).checked;
-	_settings.HideThisResHvstatStyle[1] = $("input[name=HideThisResHvstatStyle1]").get(0).checked;
-	_settings.HideThisResHvstatStyle[2] = $("input[name=HideThisResHvstatStyle2]").get(0).checked;
-	_settings.HideThisResHvstatStyle[3] = $("input[name=HideThisResHvstatStyle3]").get(0).checked;
-	_settings.HideThisResHvstatStyle[4] = $("input[name=HideThisResHvstatStyle4]").get(0).checked;
-	_settings.HideThisResHvstatStyle[5] = $("input[name=HideThisResHvstatStyle5]").get(0).checked;
-	_settings.HideThisResHvstatStyle[6] = $("input[name=HideThisResHvstatStyle6]").get(0).checked;
-	_settings.HideThisResHvstatStyle[7] = $("input[name=HideThisResHvstatStyle7]").get(0).checked;
-	_settings.HideThisResHvstatStyle[8] = $("input[name=HideThisResHvstatStyle8]").get(0).checked;
-	_settings.HideThisResHvstatStyle[9] = $("input[name=HideThisResHvstatStyle9]").get(0).checked;
-	_settings.HideThisResHvstatStyle[10] = $("input[name=HideThisResHvstatStyle10]").get(0).checked;
+	_settings.hideSpecificDamageType[0] = $("input[name=hideSpecificDamageType0]").get(0).checked;
+	_settings.hideSpecificDamageType[1] = $("input[name=hideSpecificDamageType1]").get(0).checked;
+	_settings.hideSpecificDamageType[2] = $("input[name=hideSpecificDamageType2]").get(0).checked;
+	_settings.hideSpecificDamageType[3] = $("input[name=hideSpecificDamageType3]").get(0).checked;
+	_settings.hideSpecificDamageType[4] = $("input[name=hideSpecificDamageType4]").get(0).checked;
+	_settings.hideSpecificDamageType[5] = $("input[name=hideSpecificDamageType5]").get(0).checked;
+	_settings.hideSpecificDamageType[6] = $("input[name=hideSpecificDamageType6]").get(0).checked;
+	_settings.hideSpecificDamageType[7] = $("input[name=hideSpecificDamageType7]").get(0).checked;
+	_settings.hideSpecificDamageType[8] = $("input[name=hideSpecificDamageType8]").get(0).checked;
+	_settings.hideSpecificDamageType[9] = $("input[name=hideSpecificDamageType9]").get(0).checked;
+	_settings.hideSpecificDamageType[10] = $("input[name=hideSpecificDamageType10]").get(0).checked;
 	_settings.ResizeMonsterInfo = $("input[name=ResizeMonsterInfo]").get(0).checked;
 	_settings.showMonsterPowerLevelFromDB = $("input[name=showMonsterPowerLevelFromDB]").get(0).checked;
 	_settings.isShowMonsterDuration = $("input[name=isShowMonsterDuration]").get(0).checked;
@@ -5445,7 +4979,7 @@ function HVSettings() {
 	this.showMonsterAttackTypeFromDB = false;
 	this.showMonsterWeaknessesFromDB = false;
 	this.showMonsterResistancesFromDB = false;
-	this.HideThisResHvstatStyle = [false, false, false, false, false, false, false, false, false, false, false];
+	this.hideSpecificDamageType = [false, false, false, false, false, false, false, false, false, false, false];
 	this.ResizeMonsterInfo = false;
 	this.showMonsterPowerLevelFromDB = false;
 	this.isShowMonsterDuration = true;
