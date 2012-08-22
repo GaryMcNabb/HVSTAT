@@ -494,6 +494,25 @@ HVStat.MonsterScanInfo = (function () {
 			return damageTypes;
 		};
 
+		var _filterDamageTypes = function (damageTypes, hiding, generalizing) {
+			if (hiding) {
+				damageTypes = _hideDamageTypes(damageTypes);
+			}
+			if (generalizing) {
+				damageTypes = _generalizeDamageTypes(damageTypes);
+			}
+			return damageTypes;
+		};
+
+		var _StringifyDamageTypes = function (damageTypes, abbrLevel) {
+			var damageTypeStrings = [];
+			var delimiter = HVStat.delimiter.toString(abbrLevel);
+			for (i = 0; i < damageTypes.length; i++) {
+				damageTypeStrings[i] = damageTypes[i].toString(abbrLevel);
+			}
+			return damageTypeStrings.join(delimiter);
+		};
+
 		return {
 			get lastScanDate() { return _lastScanDate; },
 			get monsterClass() { return _monsterClass; },
@@ -508,21 +527,9 @@ HVStat.MonsterScanInfo = (function () {
 				return dl;
 			},
 			get debuffsAffected() { return _debuffsAffected.concat(); },
-			get defWeak() {
-				var damageTypes = _hideDamageTypes(_defWeak);
-				damageTypes = _generalizeDamageTypes(damageTypes);
-				return damageTypes;
-			},
-			get defResistant() {
-				var damageTypes = _hideDamageTypes(_defResistant);
-				damageTypes = _generalizeDamageTypes(damageTypes);
-				return damageTypes;
-			},
-			get defImpervious() {
-				var damageTypes = _hideDamageTypes(_defImpervious);
-				damageTypes = _generalizeDamageTypes(damageTypes);
-				return damageTypes;
-			},
+			get defWeak() { return _defWeak.concat(); },
+			get defResistant() { return _defResistant.concat(); },
+			get defImpervious() { return _defImpervious.concat(); },
 			get valueObject() {
 				var i, len;
 				var vo = new HVStat.MonsterScanInfoVO();
@@ -539,6 +546,18 @@ HVStat.MonsterScanInfo = (function () {
 					vo.debuffsAffected[i] = _debuffsAffected[i].id;
 				}
 				return vo;
+			},
+			getDefWeakString: function (hiding, generalizing, abbrLevel) {
+				var damageTypes = _filterDamageTypes(_defWeak, hiding, generalizing);
+				return _StringifyDamageTypes(damageTypes, abbrLevel);
+			},
+			getDefResistantString: function (hiding, generalizing, abbrLevel) {
+				var damageTypes = _filterDamageTypes(_defResistant, hiding, generalizing);
+				return _StringifyDamageTypes(damageTypes, abbrLevel);
+			},
+			getDefImperviousString: function (hiding, generalizing, abbrLevel) {
+				var damageTypes = _filterDamageTypes(_defImpervious, hiding, generalizing);
+				return _StringifyDamageTypes(damageTypes, abbrLevel);
 			}
 		};
 	};
@@ -555,12 +574,12 @@ HVStat.MonsterScanInfo = (function () {
 		vo.trainer = r && r[1] || null;
 		r = reOfficial.exec(html);
 		if (r) {
-			vo.monsterClass = r[1] || null;
+			vo.monsterClass = r[1].toUpperCase() || null;
 			vo.powerLevel = null;
 		} else {
 			r = reCustom.exec(html);
 			if (r) {
-				vo.monsterClass = r && r[1] || null;
+				vo.monsterClass = r && r[1].toUpperCase() || null;
 				vo.powerLevel = r && r[2] || null;
 			} else {
 				alert("HVSTAT: Unknown scanning format");
@@ -568,11 +587,11 @@ HVStat.MonsterScanInfo = (function () {
 			}
 		}
 		r = /Melee Attack:.*?<\/td><td.*?>(.+?)<\/td/.exec(html);
-		vo.meleeAttack = r && r[1] || null;
+		vo.meleeAttack = r && r[1].toUpperCase() || null;
 		r = /Weak against:.*?<\/td><td.*?>(.+?)<\/td/.exec(html);
 		defWeak = r && r[1] || null;
 		if (defWeak) {
-			array = defWeak.toUpperCase.split(", ");
+			array = defWeak.toUpperCase().split(", ");
 			array.forEach(function (element, index, array) {
 				if (element !== "NOTHING") {
 					vo.defenceLevel[element] = HVStat.DefenceLevel.WEAK.id;
@@ -582,7 +601,7 @@ HVStat.MonsterScanInfo = (function () {
 		r = /Resistant to:.*?<\/td><td.*?>(.+?)<\/td/.exec(html);
 		defResistant = r && r[1] || null;
 		if (defResistant) {
-			array = defResistant.toUpperCase.split(", ");
+			array = defResistant.toUpperCase().split(", ");
 			array.forEach(function (element, index, array) {
 				if (element !== "NOTHING") {
 					vo.defenceLevel[element] = HVStat.DefenceLevel.RESISTANT.id;
@@ -592,7 +611,7 @@ HVStat.MonsterScanInfo = (function () {
 		r = /Impervious to:.*?<\/td><td.*?>(.+?)<\/td/.exec(html);
 		defImpervious = r && r[1] || null;
 		if (defImpervious) {
-			array = defImpervious.toUpperCase.split(", ");
+			array = defImpervious.toUpperCase().split(", ");
 			array.forEach(function (element, index, array) {
 				if (element !== "NOTHING") {
 					vo.defenceLevel[element] = HVStat.DefenceLevel.IMPERVIOUS.id;
@@ -671,7 +690,6 @@ HVStat.Monster = (function () {
 			return _waitingGetResponseOfMonsterScanInfo || _waitingGetResponseOfMonsterSkills;
 		};
 		var _renderStats = function () {
-			//----------------------------------------
 			if (_isDead) {
 				return;
 			}
@@ -708,259 +726,7 @@ HVStat.Monster = (function () {
 				spBarBaseElement.after(html);
 			}
 
-		if (_settings.showMonsterDefence && (_id < 1000 || _settings.showMonsterInfoFromDB)) {
-// 			var a = new ElementalStats();
-// 			getMonsterElementsById(a, _id);
-// 			var d = a.majWeak === "-" ? "" : "[<span style='color:#005826'>" + a.majWeak + "</span>";
-// 				d += a.minWeak === "-" ? "" : ";<span style='color:#3CB878'>" + a.minWeak + "</span>";
-// 				d += a.resist === "-" ? "" : ";<span style='color:red'>" + a.resist + "</span>";
-// 				d += a.imperv === "-" ? "" : ";<span style='color:black'>" + a.imperv + "</span>]";
-			if (_settings.showMonsterInfoFromDB) {
-				var milliseconds2 = TimeCounter(1);
-				var nameElement = nameFrameElement.children().eq(0);
-				var nameLength = nameElement.html().length;
-				var allm = 0;
-				var allm1 = 0;
-				if (_settings.showMonsterClassFromDB) {
-					allm += 2;
-				}
-				if (_settings.showMonsterPowerLevelFromDB) {
-					if (_scanInfo.powerlevel)
-						allm += 2;
-				}
-				if (_settings.showMonsterWeaknessesFromDB) {
-// 					mweak = MElemNum(monInfo.mweak, 1);
-					allm += 2;
-				}
-				if (_settings.showMonsterResistancesFromDB) {
-// 					mresist = MElemNum(monInfo.mresist, 1);
-// 					mimperv = MElemNum(monInfo.mimperv, 1);
-					allm += _settings.showMonsterWeaknessesFromDB ? 2 : 3;
-				}
-// 				if (_settings.showMonsterAttackTypeFromDB) {
-// 					if (monInfo.mskillspell !== undefined) {
-// 						var sk = String(monInfo.mskillspell);
-// 						if (sk.length === 1 || sk.match("9")) {
-// 							if (monInfo.mskillspell < 3 || sk.match("9")) {
-// 								mskilltype = MElemNum(monInfo.mskilltype, 1);
-// 								mskillspell = MElemNum(monInfo.mskillspell, 1);
-// 							} else {
-// 								mspirittype = MElemNum(monInfo.mskilltype, 1);
-// 								mspiritsksp = MElemNum(monInfo.mskillspell, 1);
-// 								allm -= 7;
-// 							}
-// 						} else {
-// 							var mskillspellarray = sk.split("0");
-// 							var mskilltypearray = String(MElemNum(monInfo.mskilltype, 1)).split(", ");
-// 							var sk34 = sk.replace("0","").search(/(3|4)/);
-// 							var other1 = 0;
-// 							var other2 = 0;
-// 							if (sk.length === 3) {
-// 								if (sk34 >= 0) {
-// 									other = sk34 > 0 ? 0 : 1;
-// 									mspirittype = mskilltypearray[sk34];
-// 									mspiritsksp = MElemNum(parseInt(mskillspellarray[sk34]), 1);
-// 									mskillspell = MElemNum(parseInt(mskillspellarray[other1]), 1);
-// 									mskilltype = mskilltypearray[other1];
-// 								} else {
-// 									mskillspell = MElemNum(parseInt(mskillspellarray[0]), 1);
-// 									mskilltype = mskilltypearray[0];
-// 									mskillspell2 = MElemNum(parseInt(mskillspellarray[1]), 1);
-// 									mskilltype2 = mskilltypearray[1];
-// 								}
-// 								allm += 2;
-// 								if (mskillspell === mskillspell2) {
-// 									mskillspell2 = "";
-// 									mskilltype = mskilltype + ", " + mskilltype2;
-// 									mskilltype2 = "";
-// 									allm -= 2;
-// 								} else if (mskilltype === mskilltype2) {
-// 									mskillspell = mskillspell + ", " + mskillspell2;
-// 									mskillspell2 = "";
-// 									mskilltype2 = "";
-// 									allm -= 2;
-// 								}
-// 							} else if (sk.length === 5) {
-// 								if (sk34 >= 0) {
-// 									other1 = sk34 > 0 ? 0 : 1;
-// 									other2 = sk34 > 1 ? 1 : 2;
-// 									mspirittype = mskilltypearray[sk34];
-// 									mspiritsksp = MElemNum(parseInt(mskillspellarray[sk34]), 1);
-// 									mskillspell = MElemNum(parseInt(mskillspellarray[other1]), 1);
-// 									mskilltype = mskilltypearray[other1];
-// 									mskillspell2 = MElemNum(parseInt(mskillspellarray[other2]), 1);
-// 									mskilltype2 = mskilltypearray[other2];
-// 								} else {
-// 									mskillspell = MElemNum(parseInt(mskillspellarray[0]), 1);
-// 									mskilltype = mskilltypearray[0];
-// 									mskillspell2 = MElemNum(parseInt(mskillspellarray[1]), 1);
-// 									mskilltype2 = mskilltypearray[1];
-// 									mskillspell3 = MElemNum(parseInt(mskillspellarray[2]), 1);
-// 									mskilltype3 = mskilltypearray[2];
-// 								}
-// 								allm += 4;
-// 								if (mskillspell === mskillspell2) {
-// 									mskillspell2 = "";
-// 									mskilltype = mskilltype + ", " + mskilltype2;
-// 									mskilltype2 = "";
-// 									allm -= 2;
-// 								} else if (mskillspell === mskillspell3) {
-// 									mskillspell3 = "";
-// 									mskilltype = mskilltype + ", " + mskilltype3;
-// 									mskilltype3 = "";
-// 									allm -= 2;
-// 								} else if (mskillspell2 === mskillspell3) {
-// 									mskillspell3 = "";
-// 									mskilltype2 = mskilltype2 + ", " + mskilltype3;
-// 									mskilltype3 = "";
-// 									allm -= 2;
-// 								} else if (mskilltype === mskilltype2) {
-// 									mskillspell = mskillspell + ", " + mskillspell2;
-// 									mskillspell2 = "";
-// 									mskilltype2 = "";
-// 									allm -= 2;
-// 								} else if (mskilltype === mskilltype3) {
-// 									mskillspell = mskillspell + ", " + mskillspell3;
-// 									mskillspell3 = "";
-// 									mskilltype3 = "";
-// 									allm -= 2;
-// 								} else if (mskilltype2 === mskilltype3) {
-// 									mskillspell2 = mskillspell2 + ", " + mskillspell3;
-// 									mskillspell3 = "";
-// 									mskilltype3 = "";
-// 									allm -= 2;
-// 								}
-// 							}
-// 						}
-// 					}
-// 					mattack = MElemNum(monInfo.mattack, 1);
-// 					allm += 4;
-// 				}
-// 				if (mclass !== undefined)
-// 					mclass = mclass > 30 ? "-" : MClassNum(mclass, 1);
-
-// 				if (_settings.ResizeMonsterInfo){
-// 					var maxchar = (12 - nameLength) * (nameLength <= 12 ? 0.7 : 1.4) + 46;
-// 					allm1 = allm + mclass.length + mskillspell.length + mskilltype.length + mimperv.length + mresist.length + mweak.length + mattack.length + String(mpl).length + mskillspell2.length + mskilltype2.length + mskillspell3.length + mskilltype3.length + mspiritsksp.length + mspirittype.length;
-// 					if (allm1 > maxchar) {
-// 						if (nameLength > 12 && !isHVFontEngine()) {
-// 							nameElement.css("font-size", 12);
-// 							nameElement.css("font-weight", "bold")
-// 						}
-// 						if (nameLength >= 17 && !isHVFontEngine()) nameElement.html(nameElement.html().slice(0,15) + "...");
-// 						nameLength = nameElement.html().length;
-// 						if (nameLength <= 5)
-// 							maxchar = (12 - nameLength) * 1.9 + 46;
-// 						else if (nameLength <= 12)
-// 							maxchar = (12 - nameLength) * 1.95 + 46;
-// 						else if (nameLength < 17)
-// 							maxchar = (17 - nameLength) * 0.8 + 46;
-// 						else
-// 							maxchar = (18 - nameLength) * 1.2 + 46;
-// 					}
-// 					if (allm1 > maxchar) {
-// 						mimperv = mimperv.replace(/\s/g, "");
-// 						mresist = mresist.replace(/\s/g, "");
-// 						mweak = mweak.replace(/\s/g, "");
-// 						mskilltype = mskilltype.replace(/\s/g, "");
-// 						mskilltype2 = mskilltype2.replace(/\s/g, "");
-// 						mskillspell = mskillspell.replace(/\s/g, "");
-// 						mskillspell2 = mskillspell2.replace(/\s/g, "");
-// 						allm1 = allm + mclass.length + mskillspell.length + mskilltype.length + mimperv.length + mresist.length + mweak.length + mattack.length + String(mpl).length + mskillspell2.length + mskilltype2.length + mskillspell3.length + mskilltype3.length + mspiritsksp.length + mspirittype.length;
-// 					}
-// 					if (allm1 > maxchar) {
-// 						mskilltype = mskilltype.replace("Slash", "Sl").replace("Crush", "Cr").replace("Pierc", "Pi");
-// 						mskilltype2 = mskilltype2.replace("Slash", "Sl").replace("Crush", "Cr").replace("Pierc", "Pi");
-// 						mskilltype3 = mskilltype3.replace("Slash", "Sl").replace("Crush", "Cr").replace("Pierc", "Pi");
-// 						mspirittype = mspirittype.replace("Slash", "Sl").replace("Crush", "Cr").replace("Pierc", "Pi");
-// 						mspiritsksp = mspiritsksp.replace("Spirit:", "S:");
-// 						mattack = mattack.replace("Slash", "Sl").replace("Crush", "Cr").replace("Pierc", "Pi");
-// 						allm1 = allm + mclass.length + mskillspell.length + mskilltype.length + mimperv.length + mresist.length + mweak.length + mattack.length + String(mpl).length + mskillspell2.length + mskilltype2.length + mskillspell3.length + mskilltype3.length + mspiritsksp.length + mspirittype.length;
-// 					}
-// 					if (allm1 > maxchar) {
-// 						mimperv = mimperv.replace("Slash", "Sl").replace("Crush", "Cr").replace("Pierc", "Pi");
-// 						mresist = mresist.replace("Slash", "Sl").replace("Crush", "Cr").replace("Pierc", "Pi");
-// 						allm1 = allm + mclass.length + mskillspell.length + mskilltype.length + mimperv.length + mresist.length + mweak.length + mattack.length + String(mpl).length + mskillspell2.length + mskilltype2.length + mskillspell3.length + mskilltype3.length + mspiritsksp.length + mspirittype.length;
-// 					}
-// 					if (allm1 > maxchar) {
-// 						mweak = mweak.replace("Slash", "Sl").replace("Crush", "Cr").replace("Pierc", "Pi");
-// 						mspiritsksp = mspiritsksp.replace("S:", "");
-// 						allm1 = allm + mclass.length + mskillspell.length + mskilltype.length + mimperv.length + mresist.length + mweak.length + mattack.length + String(mpl).length + mskillspell2.length + mskilltype2.length + mskillspell3.length + mskilltype3.length + mspiritsksp.length + mspirittype.length;
-// 					}
-// 					if (allm1 > maxchar) {
-// 						mclass = mclass.slice(0, 4);
-// 						allm1 = allm + mclass.length + mskillspell.length + mskilltype.length + mimperv.length + mresist.length + mweak.length + mattack.length + String(mpl).length + mskillspell2.length + mskilltype2.length + mskillspell3.length + mskilltype3.length + mspiritsksp.length + mspirittype.length;
-// 					}
-// 					if (allm1 > maxchar) {
-// 						mclass = mclass.slice(0, 3);
-// 						allm1 = allm + mclass.length + mskillspell.length + mskilltype.length + mimperv.length + mresist.length + mweak.length + mattack.length + String(mpl).length + mskillspell2.length + mskilltype2.length + mskillspell3.length + mskilltype3.length + mspiritsksp.length + mspirittype.length;
-// 					}
-// 					if (allm1 > maxchar) {
-// 						mskilltype = mskilltype.replace("Fire", "Fir").replace("Cold", "Col").replace("Elec", "Ele").replace("Wind", "Win").replace("Holy", "Hol").replace("Dark", "Dar").replace("Soul", "Sou").replace("Slash", "Sl").replace("Crush", "Cr").replace("Pierc", "Pi");
-// 						mskilltype2 = mskilltype2.replace("Fire", "Fir").replace("Cold", "Col").replace("Elec", "Ele").replace("Wind", "Win").replace("Holy", "Hol").replace("Dark", "Dar").replace("Soul", "Sou").replace("Slash", "Sl").replace("Crush", "Cr").replace("Pierc", "Pi");
-// 						mskilltype3 = mskilltype3.replace("Fire", "Fir").replace("Cold", "Col").replace("Elec", "Ele").replace("Wind", "Win").replace("Holy", "Hol").replace("Dark", "Dar").replace("Soul", "Sou").replace("Slash", "Sl").replace("Crush", "Cr").replace("Pierc", "Pi");
-// 						mspirittype = mspirittype.replace("Fire", "Fir").replace("Cold", "Col").replace("Elec", "Ele").replace("Wind", "Win").replace("Holy", "Hol").replace("Dark", "Dar").replace("Soul", "Sou").replace("Slash", "Sl").replace("Crush", "Cr").replace("Pierc", "Pi");
-// 						mattack = mattack.replace("Fire", "Fir").replace("Cold", "Col").replace("Elec", "Ele").replace("Wind", "Win").replace("Holy", "Hol").replace("Dark", "Dar").replace("Soul", "Sou").replace("Slash", "Sl").replace("Crush", "Cr").replace("Pierc", "Pi");
-// 						allm1 = allm + mclass.length + mskillspell.length + mskilltype.length + mimperv.length + mresist.length + mweak.length + mattack.length + String(mpl).length + mskillspell2.length + mskilltype2.length + mskillspell3.length + mskilltype3.length + mspiritsksp.length + mspirittype.length;
-// 					}
-// 					if (allm1 > maxchar) {
-// 						mresist = mresist.replace("Fire", "Fir").replace("Cold", "Col").replace("Elec", "Ele").replace("Wind", "Win").replace("Holy", "Hol").replace("Dark", "Dar").replace("Soul", "Sou").replace("Slash", "Sl").replace("Crush", "Cr").replace("Pierc", "Pi");
-// 						mimperv = mimperv.replace("Fire", "Fir").replace("Cold", "Col").replace("Elec", "Ele").replace("Wind", "Win").replace("Holy", "Hol").replace("Dark", "Dar").replace("Soul", "Sou").replace("Slash", "Sl").replace("Crush", "Cr").replace("Pierc", "Pi");
-// 						allm1 = allm + mclass.length + mskillspell.length + mskilltype.length + mimperv.length + mresist.length + mweak.length + mattack.length + String(mpl).length + mskillspell2.length + mskilltype2.length + mskillspell3.length + mskilltype3.length + mspiritsksp.length + mspirittype.length;
-// 					}
-// 					if (allm1 > maxchar) {
-// 						mweak = mweak.replace("Fire", "Fir").replace("Cold", "Col").replace("Elec", "Ele").replace("Wind", "Win").replace("Holy", "Hol").replace("Dark", "Dar").replace("Soul", "Sou").replace("Slash", "Sl").replace("Crush", "Cr").replace("Pierc", "Pi");
-// 						allm1 = allm + mclass.length + mskillspell.length + mskilltype.length + mimperv.length + mresist.length + mweak.length + mattack.length + String(mpl).length + mskillspell2.length + mskilltype2.length + mskillspell3.length + mskilltype3.length + mspiritsksp.length + mspirittype.length;
-// 					}
-// 					if (allm1 > maxchar) {
-// 						mskillspell = mskillspell.replace("Mag", "Ma").replace("Phys", "Ph");
-// 						mskillspell2 = mskillspell2.replace("Mag", "Ma").replace("Phys", "Ph");
-// 						mskillspell3 = mskillspell3.replace("Mag", "Ma").replace("Phys", "Ph");
-// 						mspiritsksp = mspiritsksp.replace("Mag", "Ma").replace("Phys", "Ph");
-// 						allm1 = allm + mclass.length + mskillspell.length + mskilltype.length + mimperv.length + mresist.length + mweak.length + mattack.length + String(mpl).length + mskillspell2.length + mskilltype2.length + mskillspell3.length + mskilltype3.length + mspiritsksp.length + mspirittype.length;
-// 					}
-// 					if (allm1 > maxchar) {
-// 						mattack = mattack.replace("Fir", "Fi").replace("Col", "Co").replace("Ele", "El").replace("Win", "Wi").replace("Hol", "Ho").replace("Dar", "Da").replace("Sou", "So").replace("Elm", "Elem");
-// 						mskilltype = mskilltype.replace("Fir", "Fi").replace("Col", "Co").replace("Ele", "El").replace("Win", "Wi").replace("Hol", "Ho").replace("Dar", "Da").replace("Sou", "So").replace("Elm", "Elem");
-// 						mskilltype2 = mskilltype2.replace("Fir", "Fi").replace("Col", "Co").replace("Ele", "El").replace("Win", "Wi").replace("Hol", "Ho").replace("Dar", "Da").replace("Sou", "So").replace("Elm", "Elem");
-// 						mskilltype3 = mskilltype3.replace("Fir", "Fi").replace("Col", "Co").replace("Ele", "El").replace("Win", "Wi").replace("Hol", "Ho").replace("Dar", "Da").replace("Sou", "So").replace("Elm", "Elem");
-// 						mspirittype = mspirittype.replace("Fir", "Fi").replace("Col", "Co").replace("Ele", "El").replace("Win", "Wi").replace("Hol", "Ho").replace("Dar", "Da").replace("Sou", "So").replace("Elm", "Elem");
-// 						allm1 = allm + mclass.length + mskillspell.length + mskilltype.length + mimperv.length + mresist.length + mweak.length + mattack.length + String(mpl).length + mskillspell2.length + mskilltype2.length + mskillspell3.length + mskilltype3.length + mspiritsksp.length + mspirittype.length;
-// 					}
-// 					if (allm1 > maxchar) {
-// 						mresist = mresist.replace("Fir", "Fi").replace("Col", "Co").replace("Ele", "El").replace("Win", "Wi").replace("Hol", "Ho").replace("Dar", "Da").replace("Sou", "So").replace("Elm", "Elem");
-// 						mimperv = mimperv.replace("Fir", "Fi").replace("Col", "Co").replace("Ele", "El").replace("Win", "Wi").replace("Hol", "Ho").replace("Dar", "Da").replace("Sou", "So").replace("Elm", "Elem");
-// 						allm1 = allm + mclass.length + mskillspell.length + mskilltype.length + mimperv.length + mresist.length + mweak.length + mattack.length + String(mpl).length + mskillspell2.length + mskilltype2.length + mskillspell3.length + mskilltype3.length + mspiritsksp.length + mspirittype.length;
-// 					}
-// 					if (allm1 > maxchar) {
-// 						mweak = mweak.replace("Fir", "Fi").replace("Col", "Co").replace("Ele", "El").replace("Win", "Wi").replace("Hol", "Ho").replace("Dar", "Da").replace("Sou", "So").replace("Elm", "Elem");
-// 						allm1 = allm + mclass.length + mskillspell.length + mskilltype.length + mimperv.length + mresist.length + mweak.length + mattack.length + String(mpl).length + mskillspell2.length + mskilltype2.length + mskillspell3.length + mskilltype3.length + mspiritsksp.length + mspirittype.length;
-// 					}
-// 					if (allm1 > maxchar) {
-// 						mattack = mattack.replace("Fi", "F").replace("Co", "C").replace("El", "E").replace("Wi", "W").replace("Ho", "H").replace("Da", "D").replace("So", "S").replace("Eem", "Elem");
-// 						mskilltype = mskilltype.replace("Fi", "F").replace("Co", "C").replace("El", "E").replace("Wi", "W").replace("Ho", "H").replace("Da", "D").replace("So", "S").replace("Eem", "Elem");
-// 						mskilltype2 = mskilltype2.replace("Fi", "F").replace("Co", "C").replace("El", "E").replace("Wi", "W").replace("Ho", "H").replace("Da", "D").replace("So", "S").replace("Eem", "Elem");
-// 						mskilltype3 = mskilltype3.replace("Fi", "F").replace("Co", "C").replace("El", "E").replace("Wi", "W").replace("Ho", "H").replace("Da", "D").replace("So", "S").replace("Eem", "Elem");
-// 						mspirittype = mspirittype.replace("Fi", "F").replace("Co", "C").replace("El", "E").replace("Wi", "W").replace("Ho", "H").replace("Da", "D").replace("So", "S").replace("Eem", "Elem");
-// 						allm1 = allm + mclass.length + mskillspell.length + mskilltype.length + mimperv.length + mresist.length + mweak.length + mattack.length + String(mpl).length + mskillspell2.length + mskilltype2.length + mskillspell3.length + mskilltype3.length + mspiritsksp.length + mspirittype.length;
-// 					}
-// 					if (allm1 > maxchar) {
-// 						mskillspell = mskillspell.replace("Ma", "M").replace("Ph", "P");
-// 						mskillspell2 = mskillspell2.replace("Ma", "M").replace("Ph", "P");
-// 						mskillspell3 = mskillspell3.replace("Ma", "M").replace("Ph", "P");
-// 						mspiritsksp = mspiritsksp.replace("Ma", "M").replace("Ph", "P");
-// 						allm1 = allm + mclass.length + mskillspell.length + mskilltype.length + mimperv.length + mresist.length + mweak.length + mattack.length + String(mpl).length + mskillspell2.length + mskilltype2.length + mskillspell3.length + mskilltype3.length + mspiritsksp.length + mspirittype.length;
-// 					}
-// 					if (allm1 > maxchar) {
-// 						mresist = mresist.replace("Fi", "F").replace("Co", "C").replace("El", "E").replace("Wi", "W").replace("Ho", "H").replace("Da", "D").replace("So", "S").replace("Eem", "Elem");
-// 						mimperv = mimperv.replace("Fi", "F").replace("Co", "C").replace("El", "E").replace("Wi", "W").replace("Ho", "H").replace("Da", "D").replace("So", "S").replace("Eem", "Elem");
-// 						allm1 = allm + mclass.length + mskillspell.length + mskilltype.length + mimperv.length + mresist.length + mweak.length + mattack.length + String(mpl).length + mskillspell2.length + mskilltype2.length + mskillspell3.length + mskilltype3.length + mspiritsksp.length + mspirittype.length;
-// 					}
-// 					if (allm1 > maxchar) {
-// 						mweak = mweak.replace("Fi", "F").replace("Co", "C").replace("El", "E").replace("Wi", "W").replace("Ho", "H").replace("Da", "D").replace("So", "S").replace("Eem", "Elem");
-// 					}
-// 				}
-
+			if (_settings.showMonsterDefence && (_id < 1000 || _settings.showMonsterInfoFromDB)) {
 				if (!_scanInfo || !_scanInfo.monsterClass) {
 					d = "[<span style='color:red;font-weight:bold'>NEW</span>]";
 				} else {
@@ -970,11 +736,11 @@ HVStat.Monster = (function () {
 						d += "{<span style='color:blue'>";
 					}
 					if (_settings.showMonsterClassFromDB) {
-						d += _scanInfo.monsterClass.toString();
+						d += _scanInfo.monsterClass.toString(0);
 					}
 					if (_settings.showMonsterPowerLevelFromDB && _scanInfo.powerLevel) {
 						if (_settings.showMonsterClassFromDB) {
-							d += ", ";
+							d += HVStat.delimiter.toString(0);
 						}
 						d += _scanInfo.powerLevel + "+";
 					}
@@ -988,7 +754,7 @@ HVStat.Monster = (function () {
 					}
 					if (_settings.showMonsterWeaknessesFromDB) {
 						d += "<span style='color:#3CB878'>";
-						d += (_scanInfo.defWeak.length > 0) ? _scanInfo.defWeak.join(", ") : "-";
+						d += (_scanInfo.defWeak.length > 0) ? _scanInfo.getDefWeakString(true, true, 0) : "-";
 						d += "</span>";
 					}
 					if (_settings.showMonsterResistancesFromDB) {
@@ -996,9 +762,9 @@ HVStat.Monster = (function () {
 							d += "|";
 						}
 						d += "<span style='color:#FF3300'>";
-						d += (_scanInfo.defResistant.length > 0) ? _scanInfo.defResistant.join(", ") : "-";
+						d += (_scanInfo.defResistant.length > 0) ? _scanInfo.getDefResistantString(true, true, 0) : "-";
 						d += "</span>|<b><u><span style='color:#990000'>";
-						d += (_scanInfo.defImpervious.length > 0) ? _scanInfo.defImpervious.join(", ") : "-";
+						d += (_scanInfo.defImpervious.length > 0) ? _scanInfo.getDefImperviousString(true, true, 0) : "-";
 						d += "</span></u></b>";
 					}
 					if (_settings.showMonsterWeaknessesFromDB || _settings.showMonsterResistancesFromDB) {
@@ -1018,25 +784,273 @@ HVStat.Monster = (function () {
 // 						d += mspirittype === "" ? "" : "-<span style='color:red'>" + mspirittype + "</span>";
 // 						d += ")";
 					}
+// 				var a = new ElementalStats();
+// 				getMonsterElementsById(a, _id);
+// 				var d = a.majWeak === "-" ? "" : "[<span style='color:#005826'>" + a.majWeak + "</span>";
+// 					d += a.minWeak === "-" ? "" : ";<span style='color:#3CB878'>" + a.minWeak + "</span>";
+// 					d += a.resist === "-" ? "" : ";<span style='color:red'>" + a.resist + "</span>";
+// 					d += a.imperv === "-" ? "" : ";<span style='color:black'>" + a.imperv + "</span>]";
+// 				if (_settings.showMonsterInfoFromDB) {
+// 					var milliseconds2 = TimeCounter(1);
+// 					var nameElement = nameFrameElement.children().eq(0);
+// 					var nameLength = nameElement.html().length;
+// 					var allm = 0;
+// 					var allm1 = 0;
+// 					if (_settings.showMonsterClassFromDB) {
+// 						allm += 2;
+// 					}
+// 					if (_settings.showMonsterPowerLevelFromDB) {
+// 						if (_scanInfo.powerLevel)
+// 							allm += 2;
+// 					}
+// 					if (_settings.showMonsterWeaknessesFromDB) {
+// 						mweak = MElemNum(monInfo.mweak, 1);
+// 						allm += 2;
+// 					}
+// 					if (_settings.showMonsterResistancesFromDB) {
+// 						mresist = MElemNum(monInfo.mresist, 1);
+// 						mimperv = MElemNum(monInfo.mimperv, 1);
+// 						allm += _settings.showMonsterWeaknessesFromDB ? 2 : 3;
+// 					}
+// 					if (_settings.showMonsterAttackTypeFromDB) {
+// 						if (monInfo.mskillspell !== undefined) {
+// 							var sk = String(monInfo.mskillspell);
+// 							if (sk.length === 1 || sk.match("9")) {
+// 								if (monInfo.mskillspell < 3 || sk.match("9")) {
+// 									mskilltype = MElemNum(monInfo.mskilltype, 1);
+// 									mskillspell = MElemNum(monInfo.mskillspell, 1);
+// 								} else {
+// 									mspirittype = MElemNum(monInfo.mskilltype, 1);
+// 									mspiritsksp = MElemNum(monInfo.mskillspell, 1);
+// 									allm -= 7;
+// 								}
+// 							} else {
+// 								var mskillspellarray = sk.split("0");
+// 								var mskilltypearray = String(MElemNum(monInfo.mskilltype, 1)).split(", ");
+// 								var sk34 = sk.replace("0","").search(/(3|4)/);
+// 								var other1 = 0;
+// 								var other2 = 0;
+// 								if (sk.length === 3) {
+// 									if (sk34 >= 0) {
+// 										other = sk34 > 0 ? 0 : 1;
+// 										mspirittype = mskilltypearray[sk34];
+// 										mspiritsksp = MElemNum(parseInt(mskillspellarray[sk34]), 1);
+// 										mskillspell = MElemNum(parseInt(mskillspellarray[other1]), 1);
+// 										mskilltype = mskilltypearray[other1];
+// 									} else {
+// 										mskillspell = MElemNum(parseInt(mskillspellarray[0]), 1);
+// 										mskilltype = mskilltypearray[0];
+// 										mskillspell2 = MElemNum(parseInt(mskillspellarray[1]), 1);
+// 										mskilltype2 = mskilltypearray[1];
+// 									}
+// 									allm += 2;
+// 									if (mskillspell === mskillspell2) {
+// 										mskillspell2 = "";
+// 										mskilltype = mskilltype + ", " + mskilltype2;
+// 										mskilltype2 = "";
+// 										allm -= 2;
+// 									} else if (mskilltype === mskilltype2) {
+// 										mskillspell = mskillspell + ", " + mskillspell2;
+// 										mskillspell2 = "";
+// 										mskilltype2 = "";
+// 										allm -= 2;
+// 									}
+// 								} else if (sk.length === 5) {
+// 									if (sk34 >= 0) {
+// 										other1 = sk34 > 0 ? 0 : 1;
+// 										other2 = sk34 > 1 ? 1 : 2;
+// 										mspirittype = mskilltypearray[sk34];
+// 										mspiritsksp = MElemNum(parseInt(mskillspellarray[sk34]), 1);
+// 										mskillspell = MElemNum(parseInt(mskillspellarray[other1]), 1);
+// 										mskilltype = mskilltypearray[other1];
+// 										mskillspell2 = MElemNum(parseInt(mskillspellarray[other2]), 1);
+// 										mskilltype2 = mskilltypearray[other2];
+// 									} else {
+// 										mskillspell = MElemNum(parseInt(mskillspellarray[0]), 1);
+// 										mskilltype = mskilltypearray[0];
+// 										mskillspell2 = MElemNum(parseInt(mskillspellarray[1]), 1);
+// 										mskilltype2 = mskilltypearray[1];
+// 										mskillspell3 = MElemNum(parseInt(mskillspellarray[2]), 1);
+// 										mskilltype3 = mskilltypearray[2];
+// 									}
+// 									allm += 4;
+// 									if (mskillspell === mskillspell2) {
+// 										mskillspell2 = "";
+// 										mskilltype = mskilltype + ", " + mskilltype2;
+// 										mskilltype2 = "";
+// 										allm -= 2;
+// 									} else if (mskillspell === mskillspell3) {
+// 										mskillspell3 = "";
+// 										mskilltype = mskilltype + ", " + mskilltype3;
+// 										mskilltype3 = "";
+// 										allm -= 2;
+// 									} else if (mskillspell2 === mskillspell3) {
+// 										mskillspell3 = "";
+// 										mskilltype2 = mskilltype2 + ", " + mskilltype3;
+// 										mskilltype3 = "";
+// 										allm -= 2;
+// 									} else if (mskilltype === mskilltype2) {
+// 										mskillspell = mskillspell + ", " + mskillspell2;
+// 										mskillspell2 = "";
+// 										mskilltype2 = "";
+// 										allm -= 2;
+// 									} else if (mskilltype === mskilltype3) {
+// 										mskillspell = mskillspell + ", " + mskillspell3;
+// 										mskillspell3 = "";
+// 										mskilltype3 = "";
+// 										allm -= 2;
+// 									} else if (mskilltype2 === mskilltype3) {
+// 										mskillspell2 = mskillspell2 + ", " + mskillspell3;
+// 										mskillspell3 = "";
+// 										mskilltype3 = "";
+// 										allm -= 2;
+// 									}
+// 								}
+// 							}
+// 						}
+// 						mattack = MElemNum(monInfo.mattack, 1);
+// 						allm += 4;
+// 					}
+// 					if (mclass !== undefined)
+// 						mclass = mclass > 30 ? "-" : MClassNum(mclass, 1);
+// 					if (_settings.ResizeMonsterInfo){
+// 						var maxchar = (12 - nameLength) * (nameLength <= 12 ? 0.7 : 1.4) + 46;
+// 						allm1 = allm + mclass.length + mskillspell.length + mskilltype.length + mimperv.length + mresist.length + mweak.length + mattack.length + String(mpl).length + mskillspell2.length + mskilltype2.length + mskillspell3.length + mskilltype3.length + mspiritsksp.length + mspirittype.length;
+// 						if (allm1 > maxchar) {
+// 							if (nameLength > 12 && !isHVFontEngine()) {
+// 								nameElement.css("font-size", 12);
+// 								nameElement.css("font-weight", "bold")
+// 							}
+// 							if (nameLength >= 17 && !isHVFontEngine()) nameElement.html(nameElement.html().slice(0,15) + "...");
+// 							nameLength = nameElement.html().length;
+// 							if (nameLength <= 5)
+// 								maxchar = (12 - nameLength) * 1.9 + 46;
+// 							else if (nameLength <= 12)
+// 								maxchar = (12 - nameLength) * 1.95 + 46;
+// 							else if (nameLength < 17)
+// 								maxchar = (17 - nameLength) * 0.8 + 46;
+// 							else
+// 								maxchar = (18 - nameLength) * 1.2 + 46;
+// 						}
+// 						if (allm1 > maxchar) {
+// 							mimperv = mimperv.replace(/\s/g, "");
+// 							mresist = mresist.replace(/\s/g, "");
+// 							mweak = mweak.replace(/\s/g, "");
+// 							mskilltype = mskilltype.replace(/\s/g, "");
+// 							mskilltype2 = mskilltype2.replace(/\s/g, "");
+// 							mskillspell = mskillspell.replace(/\s/g, "");
+// 							mskillspell2 = mskillspell2.replace(/\s/g, "");
+// 							allm1 = allm + mclass.length + mskillspell.length + mskilltype.length + mimperv.length + mresist.length + mweak.length + mattack.length + String(mpl).length + mskillspell2.length + mskilltype2.length + mskillspell3.length + mskilltype3.length + mspiritsksp.length + mspirittype.length;
+// 						}
+// 						if (allm1 > maxchar) {
+// 							mskilltype = mskilltype.replace("Slash", "Sl").replace("Crush", "Cr").replace("Pierc", "Pi");
+// 							mskilltype2 = mskilltype2.replace("Slash", "Sl").replace("Crush", "Cr").replace("Pierc", "Pi");
+// 							mskilltype3 = mskilltype3.replace("Slash", "Sl").replace("Crush", "Cr").replace("Pierc", "Pi");
+// 							mspirittype = mspirittype.replace("Slash", "Sl").replace("Crush", "Cr").replace("Pierc", "Pi");
+// 							mspiritsksp = mspiritsksp.replace("Spirit:", "S:");
+// 							mattack = mattack.replace("Slash", "Sl").replace("Crush", "Cr").replace("Pierc", "Pi");
+// 							allm1 = allm + mclass.length + mskillspell.length + mskilltype.length + mimperv.length + mresist.length + mweak.length + mattack.length + String(mpl).length + mskillspell2.length + mskilltype2.length + mskillspell3.length + mskilltype3.length + mspiritsksp.length + mspirittype.length;
+// 						}
+// 						if (allm1 > maxchar) {
+// 							mimperv = mimperv.replace("Slash", "Sl").replace("Crush", "Cr").replace("Pierc", "Pi");
+// 							mresist = mresist.replace("Slash", "Sl").replace("Crush", "Cr").replace("Pierc", "Pi");
+// 							allm1 = allm + mclass.length + mskillspell.length + mskilltype.length + mimperv.length + mresist.length + mweak.length + mattack.length + String(mpl).length + mskillspell2.length + mskilltype2.length + mskillspell3.length + mskilltype3.length + mspiritsksp.length + mspirittype.length;
+// 						}
+// 						if (allm1 > maxchar) {
+// 							mweak = mweak.replace("Slash", "Sl").replace("Crush", "Cr").replace("Pierc", "Pi");
+// 							mspiritsksp = mspiritsksp.replace("S:", "");
+// 							allm1 = allm + mclass.length + mskillspell.length + mskilltype.length + mimperv.length + mresist.length + mweak.length + mattack.length + String(mpl).length + mskillspell2.length + mskilltype2.length + mskillspell3.length + mskilltype3.length + mspiritsksp.length + mspirittype.length;
+// 						}
+// 						if (allm1 > maxchar) {
+// 							mclass = mclass.slice(0, 4);
+// 							allm1 = allm + mclass.length + mskillspell.length + mskilltype.length + mimperv.length + mresist.length + mweak.length + mattack.length + String(mpl).length + mskillspell2.length + mskilltype2.length + mskillspell3.length + mskilltype3.length + mspiritsksp.length + mspirittype.length;
+// 						}
+// 						if (allm1 > maxchar) {
+// 							mclass = mclass.slice(0, 3);
+// 							allm1 = allm + mclass.length + mskillspell.length + mskilltype.length + mimperv.length + mresist.length + mweak.length + mattack.length + String(mpl).length + mskillspell2.length + mskilltype2.length + mskillspell3.length + mskilltype3.length + mspiritsksp.length + mspirittype.length;
+// 						}
+// 						if (allm1 > maxchar) {
+// 							mskilltype = mskilltype.replace("Fire", "Fir").replace("Cold", "Col").replace("Elec", "Ele").replace("Wind", "Win").replace("Holy", "Hol").replace("Dark", "Dar").replace("Soul", "Sou").replace("Slash", "Sl").replace("Crush", "Cr").replace("Pierc", "Pi");
+// 							mskilltype2 = mskilltype2.replace("Fire", "Fir").replace("Cold", "Col").replace("Elec", "Ele").replace("Wind", "Win").replace("Holy", "Hol").replace("Dark", "Dar").replace("Soul", "Sou").replace("Slash", "Sl").replace("Crush", "Cr").replace("Pierc", "Pi");
+// 							mskilltype3 = mskilltype3.replace("Fire", "Fir").replace("Cold", "Col").replace("Elec", "Ele").replace("Wind", "Win").replace("Holy", "Hol").replace("Dark", "Dar").replace("Soul", "Sou").replace("Slash", "Sl").replace("Crush", "Cr").replace("Pierc", "Pi");
+// 							mspirittype = mspirittype.replace("Fire", "Fir").replace("Cold", "Col").replace("Elec", "Ele").replace("Wind", "Win").replace("Holy", "Hol").replace("Dark", "Dar").replace("Soul", "Sou").replace("Slash", "Sl").replace("Crush", "Cr").replace("Pierc", "Pi");
+// 							mattack = mattack.replace("Fire", "Fir").replace("Cold", "Col").replace("Elec", "Ele").replace("Wind", "Win").replace("Holy", "Hol").replace("Dark", "Dar").replace("Soul", "Sou").replace("Slash", "Sl").replace("Crush", "Cr").replace("Pierc", "Pi");
+// 							allm1 = allm + mclass.length + mskillspell.length + mskilltype.length + mimperv.length + mresist.length + mweak.length + mattack.length + String(mpl).length + mskillspell2.length + mskilltype2.length + mskillspell3.length + mskilltype3.length + mspiritsksp.length + mspirittype.length;
+// 						}
+// 						if (allm1 > maxchar) {
+// 							mresist = mresist.replace("Fire", "Fir").replace("Cold", "Col").replace("Elec", "Ele").replace("Wind", "Win").replace("Holy", "Hol").replace("Dark", "Dar").replace("Soul", "Sou").replace("Slash", "Sl").replace("Crush", "Cr").replace("Pierc", "Pi");
+// 							mimperv = mimperv.replace("Fire", "Fir").replace("Cold", "Col").replace("Elec", "Ele").replace("Wind", "Win").replace("Holy", "Hol").replace("Dark", "Dar").replace("Soul", "Sou").replace("Slash", "Sl").replace("Crush", "Cr").replace("Pierc", "Pi");
+// 							allm1 = allm + mclass.length + mskillspell.length + mskilltype.length + mimperv.length + mresist.length + mweak.length + mattack.length + String(mpl).length + mskillspell2.length + mskilltype2.length + mskillspell3.length + mskilltype3.length + mspiritsksp.length + mspirittype.length;
+// 						}
+// 						if (allm1 > maxchar) {
+// 							mweak = mweak.replace("Fire", "Fir").replace("Cold", "Col").replace("Elec", "Ele").replace("Wind", "Win").replace("Holy", "Hol").replace("Dark", "Dar").replace("Soul", "Sou").replace("Slash", "Sl").replace("Crush", "Cr").replace("Pierc", "Pi");
+// 							allm1 = allm + mclass.length + mskillspell.length + mskilltype.length + mimperv.length + mresist.length + mweak.length + mattack.length + String(mpl).length + mskillspell2.length + mskilltype2.length + mskillspell3.length + mskilltype3.length + mspiritsksp.length + mspirittype.length;
+// 						}
+// 						if (allm1 > maxchar) {
+// 							mskillspell = mskillspell.replace("Mag", "Ma").replace("Phys", "Ph");
+// 							mskillspell2 = mskillspell2.replace("Mag", "Ma").replace("Phys", "Ph");
+// 							mskillspell3 = mskillspell3.replace("Mag", "Ma").replace("Phys", "Ph");
+// 							mspiritsksp = mspiritsksp.replace("Mag", "Ma").replace("Phys", "Ph");
+// 							allm1 = allm + mclass.length + mskillspell.length + mskilltype.length + mimperv.length + mresist.length + mweak.length + mattack.length + String(mpl).length + mskillspell2.length + mskilltype2.length + mskillspell3.length + mskilltype3.length + mspiritsksp.length + mspirittype.length;
+// 						}
+// 						if (allm1 > maxchar) {
+// 							mattack = mattack.replace("Fir", "Fi").replace("Col", "Co").replace("Ele", "El").replace("Win", "Wi").replace("Hol", "Ho").replace("Dar", "Da").replace("Sou", "So").replace("Elm", "Elem");
+// 							mskilltype = mskilltype.replace("Fir", "Fi").replace("Col", "Co").replace("Ele", "El").replace("Win", "Wi").replace("Hol", "Ho").replace("Dar", "Da").replace("Sou", "So").replace("Elm", "Elem");
+// 							mskilltype2 = mskilltype2.replace("Fir", "Fi").replace("Col", "Co").replace("Ele", "El").replace("Win", "Wi").replace("Hol", "Ho").replace("Dar", "Da").replace("Sou", "So").replace("Elm", "Elem");
+// 							mskilltype3 = mskilltype3.replace("Fir", "Fi").replace("Col", "Co").replace("Ele", "El").replace("Win", "Wi").replace("Hol", "Ho").replace("Dar", "Da").replace("Sou", "So").replace("Elm", "Elem");
+// 							mspirittype = mspirittype.replace("Fir", "Fi").replace("Col", "Co").replace("Ele", "El").replace("Win", "Wi").replace("Hol", "Ho").replace("Dar", "Da").replace("Sou", "So").replace("Elm", "Elem");
+// 							allm1 = allm + mclass.length + mskillspell.length + mskilltype.length + mimperv.length + mresist.length + mweak.length + mattack.length + String(mpl).length + mskillspell2.length + mskilltype2.length + mskillspell3.length + mskilltype3.length + mspiritsksp.length + mspirittype.length;
+// 						}
+// 						if (allm1 > maxchar) {
+// 							mresist = mresist.replace("Fir", "Fi").replace("Col", "Co").replace("Ele", "El").replace("Win", "Wi").replace("Hol", "Ho").replace("Dar", "Da").replace("Sou", "So").replace("Elm", "Elem");
+// 							mimperv = mimperv.replace("Fir", "Fi").replace("Col", "Co").replace("Ele", "El").replace("Win", "Wi").replace("Hol", "Ho").replace("Dar", "Da").replace("Sou", "So").replace("Elm", "Elem");
+// 							allm1 = allm + mclass.length + mskillspell.length + mskilltype.length + mimperv.length + mresist.length + mweak.length + mattack.length + String(mpl).length + mskillspell2.length + mskilltype2.length + mskillspell3.length + mskilltype3.length + mspiritsksp.length + mspirittype.length;
+// 						}
+// 						if (allm1 > maxchar) {
+// 							mweak = mweak.replace("Fir", "Fi").replace("Col", "Co").replace("Ele", "El").replace("Win", "Wi").replace("Hol", "Ho").replace("Dar", "Da").replace("Sou", "So").replace("Elm", "Elem");
+// 							allm1 = allm + mclass.length + mskillspell.length + mskilltype.length + mimperv.length + mresist.length + mweak.length + mattack.length + String(mpl).length + mskillspell2.length + mskilltype2.length + mskillspell3.length + mskilltype3.length + mspiritsksp.length + mspirittype.length;
+// 						}
+// 						if (allm1 > maxchar) {
+// 							mattack = mattack.replace("Fi", "F").replace("Co", "C").replace("El", "E").replace("Wi", "W").replace("Ho", "H").replace("Da", "D").replace("So", "S").replace("Eem", "Elem");
+// 							mskilltype = mskilltype.replace("Fi", "F").replace("Co", "C").replace("El", "E").replace("Wi", "W").replace("Ho", "H").replace("Da", "D").replace("So", "S").replace("Eem", "Elem");
+// 							mskilltype2 = mskilltype2.replace("Fi", "F").replace("Co", "C").replace("El", "E").replace("Wi", "W").replace("Ho", "H").replace("Da", "D").replace("So", "S").replace("Eem", "Elem");
+// 							mskilltype3 = mskilltype3.replace("Fi", "F").replace("Co", "C").replace("El", "E").replace("Wi", "W").replace("Ho", "H").replace("Da", "D").replace("So", "S").replace("Eem", "Elem");
+// 							mspirittype = mspirittype.replace("Fi", "F").replace("Co", "C").replace("El", "E").replace("Wi", "W").replace("Ho", "H").replace("Da", "D").replace("So", "S").replace("Eem", "Elem");
+// 							allm1 = allm + mclass.length + mskillspell.length + mskilltype.length + mimperv.length + mresist.length + mweak.length + mattack.length + String(mpl).length + mskillspell2.length + mskilltype2.length + mskillspell3.length + mskilltype3.length + mspiritsksp.length + mspirittype.length;
+// 						}
+// 						if (allm1 > maxchar) {
+// 							mskillspell = mskillspell.replace("Ma", "M").replace("Ph", "P");
+// 							mskillspell2 = mskillspell2.replace("Ma", "M").replace("Ph", "P");
+// 							mskillspell3 = mskillspell3.replace("Ma", "M").replace("Ph", "P");
+// 							mspiritsksp = mspiritsksp.replace("Ma", "M").replace("Ph", "P");
+// 							allm1 = allm + mclass.length + mskillspell.length + mskilltype.length + mimperv.length + mresist.length + mweak.length + mattack.length + String(mpl).length + mskillspell2.length + mskilltype2.length + mskillspell3.length + mskilltype3.length + mspiritsksp.length + mspirittype.length;
+// 						}
+// 						if (allm1 > maxchar) {
+// 							mresist = mresist.replace("Fi", "F").replace("Co", "C").replace("El", "E").replace("Wi", "W").replace("Ho", "H").replace("Da", "D").replace("So", "S").replace("Eem", "Elem");
+// 							mimperv = mimperv.replace("Fi", "F").replace("Co", "C").replace("El", "E").replace("Wi", "W").replace("Ho", "H").replace("Da", "D").replace("So", "S").replace("Eem", "Elem");
+// 							allm1 = allm + mclass.length + mskillspell.length + mskilltype.length + mimperv.length + mresist.length + mweak.length + mattack.length + String(mpl).length + mskillspell2.length + mskilltype2.length + mskillspell3.length + mskilltype3.length + mspiritsksp.length + mspirittype.length;
+// 						}
+// 						if (allm1 > maxchar) {
+// 							mweak = mweak.replace("Fi", "F").replace("Co", "C").replace("El", "E").replace("Wi", "W").replace("Ho", "H").replace("Da", "D").replace("So", "S").replace("Eem", "Elem");
+// 						}
+// 					}
+// 					_ltc.showMonsterInfoFromDB[0]++;
+// 					_ltc.showMonsterInfoFromDB[1] += TimeCounter(0, milliseconds2);
 				}
-				_ltc.showMonsterInfoFromDB[0]++;
-				_ltc.showMonsterInfoFromDB[1] += TimeCounter(0, milliseconds2);
+				if (usingHVFont) {
+					html = "<div style='cursor:default;position:relative;top:-2px;left:2px;padding:0 1px;margin-left:0px;white-space:nowrap'>" + d + "</span></div>";
+					nameFrameElement.after(html);
+				} else {
+					html = "<div style='font-family:arial;font-size:7pt;font-style:normal;font-weight:bold;display:inline;cursor:default;padding:0 1px;margin-left:1px;white-space:nowrap'>" + d + "</span></div>";
+					var p = nameFrameElement.children().eq(0);
+					var c = p.html();
+					p.html(c + html);
+					p.css("white-space", "nowrap");
+				}
 			}
-			if (usingHVFont) {
-				html = "<div style='cursor:default;position:relative;top:-2px;left:2px;padding:0 1px;margin-left:0px;white-space:nowrap'>" + d + "</span></div>";
-				nameFrameElement.after(html);
-			} else {
-				html = "<div style='font-family:arial;font-size:7pt;font-style:normal;font-weight:bold;display:inline;cursor:default;padding:0 1px;margin-left:1px;white-space:nowrap'>" + d + "</span></div>";
-				var p = nameFrameElement.children().eq(0);
-				var c = p.html();
-				p.html(c + html);
-				p.css("white-space", "nowrap");
+			if (_settings.isShowMonsterDuration) {
+				showMonsterEffectsDuration(_baseElement);
 			}
-		}
-		if (_settings.isShowMonsterDuration) {
-			showMonsterEffectsDuration(_baseElement);
-		}
-			//----------------------------------------
 		};
 
 		var _renderPopup = function () {
@@ -1075,9 +1089,9 @@ HVStat.Monster = (function () {
 // 				html += '</td></tr>';
 // 			}
 			if (existsScanInfo) {
-				html += '<tr><td>Weak against:</td><td>' + (_scanInfo.defWeak.length > 0 ? _scanInfo.defWeak.join(", ") : "-") + '</td></tr>'
-					+ '<tr><td>Resistant to:</td><td>' + (_scanInfo.defResistant.length > 0 ? _scanInfo.defResistant.join(", ") : "-") + '</td></tr>'
-					+ '<tr><td>Impervious to:</td><td>' + (_scanInfo.defImpervious.length > 0 ? _scanInfo.defImpervious.join(", ") : "-") + '</td></tr>'
+				html += '<tr><td>Weak against:</td><td>' + (_scanInfo.defWeak.length > 0 ? _scanInfo.getDefWeakString(false, true, 0) : "-") + '</td></tr>'
+					+ '<tr><td>Resistant to:</td><td>' + (_scanInfo.defResistant.length > 0 ? _scanInfo.getDefResistantString(false, true, 0) : "-") + '</td></tr>'
+					+ '<tr><td>Impervious to:</td><td>' + (_scanInfo.defImpervious.length > 0 ? _scanInfo.getDefImperviousString(false, true, 0) : "-") + '</td></tr>'
 					+ '<tr><td>Debuffs affected:</td><td>' + (_scanInfo.debuffsAffected.length > 0 ? _scanInfo.debuffsAffected.join(", ") : "-") + '</td></tr>';
 				if (_scanInfo.lastScanDate) {
 					lastScanString = HVStat.getDateTimeString(_scanInfo.lastScanDate);
@@ -1154,8 +1168,9 @@ HVStat.Monster = (function () {
 					_maxHp = Number(r[1]);
 				}
 			},
-			fetchScanningLog: function (html) {
+			fetchScanningLog: function (html, transaction) {
 				_scanInfo = HVStat.MonsterScanInfo.fetchScanningLog(_index, html);
+				this.putScanInfoToDB(transaction);
 			},
 			setSkillFromBattle: function (used, damaged) {
 				var latest = HVStat.MonsterSkill.fromBattle(used, damaged);
@@ -1205,7 +1220,22 @@ HVStat.Monster = (function () {
 				};
 				// TODO: get MonsterSkills
 			},
-			putToDB: function () {
+			putScanInfoToDB: function (transaction) {
+				if (!_id) return;
+				var tx = transaction; 
+				var scanInfoStore = tx.objectStore("MonsterScanInfo");
+				var vo = _scanInfo.valueObject;
+				vo.id = _id;
+				vo.name = _name;
+				var reqPut = scanInfoStore.put(vo);
+				reqPut.onsuccess = function (event) {
+					console.log("putScanInfoToDB: success: id = " + _id);
+				};
+				reqPut.onerror = function (event) {
+					console.log("putScanInfoToDB: error: id = " + _id);
+				};
+			},
+			putSkillsToDB: function () {
 			},
 			renderStats: function () {
 				if (!_waitingDBResponse()) {
@@ -1319,7 +1349,7 @@ HVStat.openIndexedDB = function (callback) {
 	HVStat.indexedDB = window.indexedDB || window.webkitIndexedDB || window.mozIndexedDB;
 	HVStat.IDBTransaction = window.IDBTransaction || window.webkitIDBTransaction;
 
-	var idbVersion = 1; // must be an integer
+	var idbVersion = 1; // must be an integer (now use yyyyMMddhhmm format)
 	var reqOpen = HVStat.indexedDB.open("HVStat", idbVersion);
 	reqOpen.onerror = function (event) {
 		errorMessage = "Database open error: " + event.target.errorCode;
@@ -1730,9 +1760,12 @@ function onAfterDBOpened() {
 		ISBATTLE = 1;
 	if (ISBATTLE) {
 		HVStat.transaction = HVStat.idb.transaction(["MonsterScanInfo", "MonsterSkills"], "readwrite");
-		if (_settings.isShowMonsterNumber) showMonsterNumber();
-		if (_settings.isMainEffectsAlertSelf) AlertEffectsSelf();
-		if (_settings.isMainEffectsAlertMonsters) AlertEffectsMonsters();
+		if (_settings.isShowMonsterNumber)
+			showMonsterNumber();
+		if (_settings.isMainEffectsAlertSelf)
+			AlertEffectsSelf();
+		if (_settings.isMainEffectsAlertMonsters)
+			AlertEffectsMonsters();
 		collectRoundInfo();
 		if (_settings.warnMode[_round.battleType]) {
 			var t2 = TimeCounter(1);
@@ -1782,8 +1815,7 @@ function onAfterDBOpened() {
 		}
 		if (_settings.isShowStatsPopup) {
 			var t45 = TimeCounter(1);
-//			MonsterPopup();
-			MonsterPopup2();
+			MonsterPopup();
 			_ltc.monsterpopup[0]++;
 			_ltc.monsterpopup[1] += TimeCounter(0, t45);
 		}
@@ -2454,15 +2486,15 @@ function collectRoundInfo() {
 					var i, len, monster;
 					if (r && r.length >= 2) {
 						scanningMonsterName = r[1];
-						len = i < HVStat.monsters.length;
+						len = HVStat.monsters.length;
 						for (i = 0; i < len; i++) {
 							monster = HVStat.monsters[i];
 							if (monster.name === scanningMonsterName) {
-								monster.fetchScanningLog(c);
+								monster.fetchScanningLog(c, HVStat.transaction);
 							}
 						}
 					}
-				}());
+				})();
 			}
 // 			if (c.match(/scanning/i)) {
 // 				var milliseconds3 = TimeCounter(1);
@@ -6545,221 +6577,6 @@ function Scanbutton() {
 	}
 }
 function MonsterPopup() {
-	$('.btm1').unbind('mouseover');
-	$('.btm1').unbind('mouseout');
-	var id = 0;
-	var c = document.getElementById("popup_box");
-	var name = "";
-	var maxhp = "";
-	var currhp = "";
-	var currmp = "";
-	var currsp = "";
-	var mclass = "";
-	var mpl = "";
-	var mweak = "";
-	var mresist = "";
-	var mimperv = "";
-	var mskilltype = "";
-	var mskillspell = "";
-	var mattack = "";
-	var datescan = 0;
-	var mskilltype2 = "";
-	var mskillspell2 = "";
-	var mskilltype3 = "";
-	var mskillspell3 = "";
-	var mspirittype = "";
-	var mspiritsksp = "";
-	var delay = _settings.monsterPopupDelay;
-	var delay2 = Math.floor(delay * 0.5);
-	var placement = _settings.isMonsterPopupPlacement;
-	var leftpixels = placement ? 955 : 300;
-	var elemMonsterPane = $("#monsterpane");
-	loadRoundObject();
-	var i = _round.monsters.length;
-	while (i--) {
-		var q = _round.monsters[i];
-		mskilltype = "";
-		mskillspell = "";
-		mattack = "";
-		mskilltype2 = "";
-		mskillspell2 = "";
-		mskilltype3 = "";
-		mskillspell3 = "";
-		mspirittype = "";
-		mspiritsksp = "";
-		if (q.mweak !== undefined) mweak = MElemNum(q.mweak, 1);
-		if (q.mresist !== undefined && q.mimperv !== undefined) {
-			mresist = MElemNum(q.mresist, 1);
-			mimperv = MElemNum(q.mimperv, 1);
-		}
-		if (q.mskillspell !== undefined) {
-			mattack = MElemNum(q.mattack, 1);
-			var sk = String(q.mskillspell);
-			if (sk.length === 1 || sk.match("9")) {
-				if (q.mskillspell < 3 || sk.match("9")) {
-					mskilltype = MElemNum(q.mskilltype, 1);
-					mskillspell = MElemNum(q.mskillspell, 1);
-				} else {
-					mspirittype = MElemNum(q.mskilltype, 1);
-					mspiritsksp = MElemNum(q.mskillspell, 1);
-					allm -= 7;
-				}
-			} else {
-				var mskillspellarray = sk.split("0");
-				var mskilltypearray = String(MElemNum(q.mskilltype, 1)).split(", ");
-				var sk34 = sk.replace("0","").search(/(3|4)/);
-				var other1 = 0;
-				var other2 = 0;
-				if (sk.length === 3) {
-					if (sk34 >= 0) {
-						other1 = sk34 > 0 ? 0 : 1;
-						mspirittype = mskilltypearray[sk34];
-						mspiritsksp = MElemNum(parseInt(mskillspellarray[sk34]), 1);
-						mskillspell = MElemNum(parseInt(mskillspellarray[other1]), 1);
-						mskilltype = mskilltypearray[other1];
-					} else {
-						mskillspell = MElemNum(parseInt(mskillspellarray[0]), 1);
-						mskilltype = mskilltypearray[0];
-						mskillspell2 = MElemNum(parseInt(mskillspellarray[1]), 1);
-						mskilltype2 = mskilltypearray[1];
-					}
-				} else if (sk.length === 5) {
-					if (sk34 >= 0) {
-						other1 = sk34 > 0 ? 0 : 1;
-						other2 = sk34 > 1 ? 1 : 2;
-						mspirittype = mskilltypearray[sk34];
-						mspiritsksp = MElemNum(parseInt(mskillspellarray[sk34]), 1);
-						mskillspell = MElemNum(parseInt(mskillspellarray[other1]), 1);
-						mskilltype = mskilltypearray[other1];
-						mskillspell2 = MElemNum(parseInt(mskillspellarray[other2]), 1);
-						mskilltype2 = mskilltypearray[other2];
-					} else {
-						mskillspell = MElemNum(parseInt(mskillspellarray[0]), 1);
-						mskilltype = mskilltypearray[0];
-						mskillspell2 = MElemNum(parseInt(mskillspellarray[1]), 1);
-						mskilltype2 = mskilltypearray[1];
-						mskillspell3 = MElemNum(parseInt(mskillspellarray[2]), 1);
-						mskilltype3 = mskilltypearray[2];
-					}
-				}
-			}
-		}
-		if (q.mskilltype === null ||q.mskilltype === 0 ||q.mskilltype === "0") mskilltype = "";
-		if (q.mattack !== undefined) mattack = MElemNum(q.mattack, 1);
-		var dst = new Date();
-		var dst1 = 0;
-		datescan = q.datescan;
-		if (datescan === undefined || datescan === null || datescan === 0) {
-			datescan = dst.getTime();
-			dst1 = 1;
-		}
-		var k = dst.getTime();
-		if (dst1 === 1) dst1 = "Never";
-		else {
-			dst.setTime(datescan);
-			dst1 = dst.toLocaleString();
-			if (browserIsChrome()) dst1 = dst.toLocaleDateString() + " " + dst.toLocaleTimeString();
-		}
-		var d = ((k - datescan) / (60 * 60 * 1000));
-		var E = "";
-		var v = (60 * d).toFixed();
-		var K = Math.floor(v / (60 * 24));
-		var M = v / (60 * 24);
-		if (d < 1) {
-			E = v + " mins";
-			if (d === 0) E = "-";
-		} else E = d < 24 ? Math.floor(v / 60) + " hours, " + (v % 60).toFixed() + " mins" : K + " days, " + Math.floor((v / 60) - (K * 24)) + " hours, " + (v % 60).toFixed() + " mins";
-		mpl = q.mpl;
-		if (mpl === undefined || mpl === null || mpl === 0 || mpl === "0") mpl = "";
-		mclass = q.mclass;
-		if (mclass !== undefined) mclass = MClassNum(mclass, 1);
-		var monsterElementId = HVStat.Monster.getDomElementId(i);
-		name = q.name;
-		maxhp = q.maxHp;
-		currhp = q.currHp;
-		if (currhp === null || currhp === undefined || isNaN(currhp)) currhp = 0;
-		currmp = (q.currmp * 100).toFixed(2);
-		if (currmp === null || currmp === undefined || isNaN(currmp)) currmp = 0;
-		currsp = (q.sp2 * 100).toFixed(2);
-
-		function formatAttackType(s) {
-			if (s === undefined) {
-				return "undefined";
-			} else if (typeof(s) === "number") {
-				return s.toString();
-			}
-			f = s.replace(/Slash|Sl/g, "Slashing")
-				.replace(/Crush|Cr/g, "Crushing")
-				.replace(/Pierc|Pi/g, "Piercing")
-				.replace(/Phys|Ph/ig, "Physical")
-				.replace(/Mag|Ma/ig, "Magical")
-				.replace("?", "Presumably: ")
-				.replace("/", " or ");
-			return f;
-		}
-
-		//alert("["+mweak+"]["+mresist+"]["+mskilltype+"]["+mskillspell+"]["+mskilltype2+"]["+mskillspell2+"]["+mskilltype3+"]["+mspirittype+"]["+mattack+"]");
-		mweak = formatAttackType(mweak);
-		mresist = formatAttackType(mresist);
-		mskilltype = formatAttackType(mskilltype);
-		mskillspell = formatAttackType(mskillspell);
-		mskilltype2 = formatAttackType(mskilltype2);
-		mskillspell2 = formatAttackType(mskillspell2);
-		mskilltype3 = formatAttackType(mskilltype3);
-		mskillspell3 = formatAttackType(mskillspell3);
-		mspirittype = formatAttackType(mspirittype);
-		if (mspiritsksp === undefined) {
-			mspiritsksp = "?";
-		} else {
-			mspiritsksp = mspiritsksp.replace(/Spirit:/g, "");
-			mspiritsksp = formatAttackType(mspiritsksp);
-		}
-		mattack = formatAttackType(mattack);
-		$("#" + monsterElementId).bind('mouseover', {h:i, na:name, mhp:maxhp, chp:currhp, cmp:currmp, csp:currsp, cl:mclass, pl:mpl, at:mattack, sk:mskilltype, sksp:mskillspell, sk2:mskilltype2, sksp2:mskillspell2, sk3:mskilltype3, sksp3:mskillspell3,spty:mspirittype,spss:mspiritsksp, res:mresist, imp:mimperv, we:mweak, scd:dst1, scago:E}, function (r) {
-			var popupHeight = 220;
-			var popupTopOffset = elemMonsterPane.offset().top + (r.data.h - 1) * ((elemMonsterPane.height() - popupHeight) / 9);
-			c.style.left = leftpixels + "px";
-			setTimeoutByledalej1 = setTimeout('document.getElementById("popup_box").style.top = ' + popupTopOffset + ' + "px"', delay);
-			c.style.width = "270px";
-			c.style.height = String(popupHeight) + "px";
-			var fi = "<table></table>";
-			if (r.data.cl !== undefined && r.data.cl !== 0) {
-				fi = '<table class="info_' + r.data.h + '" cellspacing="0" cellpadding="0" style="width:100%">'
-					+ '<tr class="monname"><td colspan="2"><b>' + r.data.na + '</b></td></tr>'
-					+ '<tr><td style="width:27%">Health: </td><td>' + r.data.chp + '/' + r.data.mhp + '</td></tr>'
-					+ '<tr><td style="width:27%">Mana: </td><td>' + r.data.cmp + '%</td></tr>'
-					+ '<tr><td style="width:27%">Spirit: </td><td>' + r.data.csp + '%</td></tr>'
-					+ '<tr><td style="width:27%">Class:</td><td>' + r.data.cl + '</td></tr>'
-					+ '<tr><td style="width:27%">Power level:</td><td>' + r.data.pl + '</td></tr>'
-					+ '<tr><td style="width:27%">Attack:</td><td>' + r.data.at + '</td></tr>'
-					+ '<tr><td style="width:27%">Skill:</td><td>' + r.data.sk + '-' + r.data.sksp + (r.data.sksp2 === "" ? "" :(' | ' + r.data.sk2 + '-' + r.data.sksp2)) + (r.data.sksp3 === "" ? "" :(' | ' + r.data.sk3 + '-' + r.data.sksp3)) + '</td></tr>'
-					+ '<tr><td style="width:27%">Spirit attack:</td><td>' + (r.data.spss === "" ? "" :(r.data.spty + '-' + r.data.spss)) + '</td></tr>'
-					+ '<tr><td style="width:25%">Weak to:</td><td>' + r.data.we + '</td></tr>'
-					+ '<tr><td style="width:20%">Resistant to:</td><td>' + r.data.res + '</td></tr>'
-					+ '<tr><td style="width:25%">Impervious to:</td><td>' + r.data.imp + '</td></tr>'
-					+ '<tr><td style="width:27%">Last scan:</td><td>' + r.data.scd + '</td></tr>'
-					+ '<tr><td></td><td>' + r.data.scago + ' ago</td></tr></table>';
-			} else {
-				fi = '<table class="info_' + r.data.h + '" cellspacing="0" cellpadding="0" style="width:100%">'
-					+ '<tr class="monname"><td colspan="2"><b>' + r.data.na + '</b></td></tr>'
-					+ '<tr><td style="width:27%">Health: </td><td>' + r.data.chp + '/' + r.data.mhp + '</td></tr>'
-					+ '<tr><td style="width:27%">Mana: </td><td>' + r.data.cmp +  '%</td></tr>'
-					+ '<tr><td style="width:27%">Spirit: </td><td>' + r.data.csp + '%</td></tr>'
-					+ '<tr><td style="width:27%">Last scan:</td><td>' + r.data.scd + '</td></tr>';
-			}
-			setTimeoutByledalej2 = setTimeout("document.getElementById('popup_box').innerHTML='" + fi + "'", delay);
-			setTimeoutByledalej3 = setTimeout('document.getElementById("popup_box").style.visibility="visible"', delay);
-		});
-		$("#" + monsterElementId).bind('mouseout', function () {
-			setTimeout('document.getElementById("popup_box").style.visibility="hidden"', delay);
-			clearTimeout(window.setTimeoutByledalej1);
-			clearTimeout(window.setTimeoutByledalej2);
-			clearTimeout(window.setTimeoutByledalej3);
-		});
-	}
-}
-// TODO: finally replace MonsterPopup
-function MonsterPopup2() {
 	var popup = document.getElementById("popup_box");
 	var delay = _settings.monsterPopupDelay;
 	var popupLeftOffset = _settings.isMonsterPopupPlacement ? 955 : 300;
