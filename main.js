@@ -30,15 +30,27 @@
 
 // Package
 var HVStat = {
-	IDBTransaction: null,
-	indexedDB: null,
+	// package scope global variables
+
+	indexedDB: window.indexedDB || window.webkitIndexedDB || window.mozIndexedDB,
+	IDBTransaction: window.IDBTransaction || window.webkitIDBTransaction,
+	IDBKeyRange: window.IDBKeyRange|| window.webkitIDBKeyRange,
+	IDBCursor: window.IDBCursor || window.webkitIDBCursor,
+
+	reMonsterScanInfoTSV: /^(\d+?)\t(.*?)\t(.*?)\t(.*?)\t(\d*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)$/gm,
+	reMonsterSkillsTSV: /^(\d+?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)$/gm,
+
 	idb: null,
 	transaction: null,
+
 	monsterScanInfoStore: null,
 	monsterSkillsStore: null,
+	dataURIMonsterScanInfo: null,
+	dataURIMonsterSkills: null,
+	nRowsMonsterScanInfoTSV: 0,
+	nRowsMonsterSkillsTSV: 0,
 
-	// array contains Monster instances
-	monsters: [],
+	monsters: [],	// contains Monster instances
 
 	dummy: null
 };
@@ -219,17 +231,6 @@ HVStat.delimiter = new HVStat.Keyword("DELIMITER", ", ", [","]);
 
 // Value Objects
 
-HVStat.MonsterSkillVO = function () {
-	return {
-		id: null,
-		name: null,
-		skillType: null,
-		attackType: null,
-		damageType: null,
-		lastUsedDate: null
-	};
-};
-
 HVStat.DefenceLevelVO = function () {
 	var v = "AVERAGE";
 	return {
@@ -247,18 +248,136 @@ HVStat.DefenceLevelVO = function () {
 	};
 };
 
-HVStat.MonsterScanInfoVO = function () {
-	return {
-		id: null,
-		lastScanDate: null,
-		name: null,
-		monsterClass: null,
-		powerLevel: null,
-		trainer: null,
-		meleeAttack: null,
-		defenceLevel: new HVStat.DefenceLevelVO(),
-		debuffsAffected: []
-	};
+HVStat.MonsterScanInfoVO = function (spec) {
+	this.id = null;
+	this.lastScanDate = null;
+	this.name = null;
+	this.monsterClass = null;
+	this.powerLevel = null;
+	this.trainer = null;
+	this.meleeAttack = null;
+	this.defenceLevel = new HVStat.DefenceLevelVO();
+	this.debuffsAffected = [];
+
+	var dl;
+	var debuffs, i, debuff;
+
+	if (spec) {
+		if (Number(spec.id)) {
+			this.id = Number(spec.id);
+		}
+		if (spec.lastScanDate) {
+			this.lastScanDate = spec.lastScanDate;
+		}
+		if (spec.name) {
+			this.name = spec.name;
+		}
+		if (spec.monsterClass) {
+			this.monsterClass = spec.monsterClass.toUpperCase();
+		}
+		if (Number(spec.powerLevel)) {
+			this.powerLevel = Number(spec.powerLevel);
+		}
+		if (spec.trainer) {
+			this.trainer = spec.trainer;
+		}
+		if (spec.meleeAttack) {
+			this.meleeAttack = spec.meleeAttack.toUpperCase();
+		}
+		dl = HVStat.DefenceLevel[spec.defCrushing.toUpperCase()];
+		if (dl) {
+			this.defenceLevel.CRUSHING = dl.id;
+		}
+		dl = HVStat.DefenceLevel[spec.defSlashing.toUpperCase()];
+		if (dl) {
+			this.defenceLevel.SLASHING = dl.id;
+		}
+		dl = HVStat.DefenceLevel[spec.defPiercing.toUpperCase()];
+		if (dl) {
+			this.defenceLevel.PIERCING = dl.id;
+		}
+		dl = HVStat.DefenceLevel[spec.defFire.toUpperCase()];
+		if (dl) {
+			this.defenceLevel.FIRE = dl.id;
+		}
+		dl = HVStat.DefenceLevel[spec.defCold.toUpperCase()];
+		if (dl) {
+			this.defenceLevel.COLD = dl.id;
+		}
+		dl = HVStat.DefenceLevel[spec.defElec.toUpperCase()];
+		if (dl) {
+			this.defenceLevel.ELEC = dl.id;
+		}
+		dl = HVStat.DefenceLevel[spec.defWind.toUpperCase()];
+		if (dl) {
+			this.defenceLevel.WIND = dl.id;
+		}
+		dl = HVStat.DefenceLevel[spec.defHoly.toUpperCase()];
+		if (dl) {
+			this.defenceLevel.HOLY = dl.id;
+		}
+		dl = HVStat.DefenceLevel[spec.defDark.toUpperCase()];
+		if (dl) {
+			this.defenceLevel.DARK = dl.id;
+		}
+		dl = HVStat.DefenceLevel[spec.defSoul.toUpperCase()];
+		if (dl) {
+			this.defenceLevel.SOUL = dl.id;
+		}
+		dl = HVStat.DefenceLevel[spec.defVoid.toUpperCase()];
+		if (dl) {
+			this.defenceLevel.VOID = dl.id;
+		}
+		if (spec.debuffsAffected) {
+			debuffs = spec.debuffsAffected.replace(" ", "").split(", ");
+			for (i = 0; i < debuffs.length; i++) {
+				debuff = HVStat.Debuff[debuffs[i].toUpperCase()];
+				if (debuff) {
+					this.debuffsAffected.push(debuff.id);
+				}
+			}
+		}
+	}
+};
+
+HVStat.MonsterSkillVO = function (spec) {
+	this.id = null;
+	this.name = null;
+	this.skillType = null;
+	this.attackType = null;
+	this.damageType = null;
+	this.lastUsedDate = null;
+
+	if (spec) {
+		if (Number(spec.id)) {
+			this.id = Number(spec.id);
+		}
+		if (spec.name) {
+			this.name = spec.name;
+		}
+		if (spec.skillType) {
+			this.skillType = spec.skillType.toUpperCase();
+		}
+		if (spec.attackType) {
+			this.attackType = spec.attackType.toUpperCase();
+		}
+		if (spec.damageType) {
+			this.damageType = spec.damageType.toUpperCase();
+		}
+		if (spec.lastUsedDate) {
+			this.lastUsedDate = spec.lastUsedDate;
+		}
+	}
+	this.createKey();
+};
+HVStat.MonsterSkillVO.prototype.createKey = function () {
+	this.key = [
+		this.id,
+		(this.name !== null) ? this.name : "",	// must not be null
+		this.skillType,
+		this.attackType,
+		this.damageType
+	];
 };
 
 HVStat.MonsterVO = function () {
@@ -1043,91 +1162,78 @@ HVStat.Monster = (function () {
 // functions related to IndexedDB
 
 HVStat.deleteIndexedDB = function () {
+	// close connection
+	HVStat.transaction = null;
+	HVStat.idb = null;
+
+	// delete database
 	var reqDelete = HVStat.indexedDB.deleteDatabase("HVStat");
 	reqDelete.onsuccess = function (event) {
+		alert("Your database has been deleted.");
 		console.log("deleteIndexedDB: success");
 	};
 	reqDelete.onerror = function (event) {
+		alert("Error: Failed to delete your database");
 		console.log("deleteIndexedDB: error");
 	};
 	reqDelete.onblocked = function (event) {
+		alert("Blocked: Please wait for a while or close the browser.");
 		console.log("deleteIndexedDB: blocked");
 	};
 };
 
 HVStat.maintainObjectStores = function (event) {
+	var alertMessage = "IndexDB database operation has failed; see console log";
 //	var idb = event.target.source;  // does not work with Firefox
 	var idb = HVStat.idb;
 	var tx = event.target.transaction;
-	var oldVer = event.oldVersion;
-	var newVer = event.newVersion;
+	var oldVer = event.oldVersion;	// does not work with Chrome
+	var newVer = event.newVersion || Number(idb.version);
 	var store;
-	console.log("maintainObjectStores: idb = [" + idb + "]");
-	console.log("maintainObjectStores: tx = [" + tx + "]");
+	console.log("maintainObjectStores: old version = " + oldVer);
+	console.log("maintainObjectStores: new version = " + newVer);
 
-	// MonsterScanInfo
-// 	try {
-// 		idb.deleteObjectStore("MonsterScanInfo");
-// 	} catch (e) {
-// 		console.log(e.message + "\n" + e.stack);
-// 	}
-	try {
-		store = idb.createObjectStore("MonsterScanInfo", { keyPath: "id" });
-	} catch (e) {
-		console.log(e.message + "\n" + e.stack);
-	}
-// 	store = tx.objectStore("MonsterScanInfo");
-// 	try {
-// 		store.deleteIndex("ix_id");
-// 	} catch (e) {
-// 		console.log(e.message + "\n" + e.stack);
-// 	}
-	try {
-		store.createIndex("ix_id", "id", { unique: true });
-	} catch (e) {
-		console.log(e.message + "\n" + e.stack);
-	}
-// 	try {
-// 		store.deleteIndex("ix_name");
-// 	} catch (e) {
-// 		console.log(e.message + "\n" + e.stack);
-// 	}
-	try {
-		store.createIndex("ix_name", "name", { unique: true });
-	} catch (e) {
-		console.log(e.message + "\n" + e.stack);
-	}
+	if (newVer >= 1) {
+		// MonsterScanInfo
+		try {
+			store = idb.createObjectStore("MonsterScanInfo", { keyPath: "id", autoIncrement: false });
+		} catch (e) {
+			alert(alertMessage);
+			console.log(e.message + "\n" + e.stack);
+		}
+		try {
+			store.createIndex("ix_id", "id", { unique: true });
+		} catch (e) {
+			alert(alertMessage);
+			console.log(e.message + "\n" + e.stack);
+		}
+		try {
+			store.createIndex("ix_name", "name", { unique: true });
+		} catch (e) {
+			alert(alertMessage);
+			console.log(e.message + "\n" + e.stack);
+		}
 
-	// MonsterSkills
-// 	try {
-// 		idb.deleteObjectStore("MonsterSkills");
-// 	} catch (e) {
-// 		console.log(e.message + "\n" + e.stack);
-// 	}
-	try {
-		store = idb.createObjectStore("MonsterSkills", { keyPath: "id" });
-	} catch (e) {
-		console.log(e.message + "\n" + e.stack);
-	}
-	store = tx.objectStore("MonsterSkills");
-// 	try {
-// 		store.deleteIndex("ix_id");
-// 	} catch (e) {
-// 		console.log(e.message + "\n" + e.stack);
-// 	}
-	try {
-		store.createIndex("ix_id", "id", { unique: false });
-	} catch (e) {
-		console.log(e.message + "\n" + e.stack);
+		// MonsterSkills
+		try {
+			store = idb.createObjectStore("MonsterSkills", { keyPath: "key", autoIncrement: false });
+		} catch (e) {
+			alert(alertMessage);
+			console.log(e.message + "\n" + e.stack);
+		}
+		try {
+			store.createIndex("ix_key", "key", { unique: true });
+		} catch (e) {
+			alert(alertMessage);
+			console.log(e.message + "\n" + e.stack);
+		}
 	}
 };
 
 HVStat.openIndexedDB = function (callback) {
 	var errorMessage;
-	HVStat.indexedDB = window.indexedDB || window.webkitIndexedDB || window.mozIndexedDB;
-	HVStat.IDBTransaction = window.IDBTransaction || window.webkitIDBTransaction;
 
-	var idbVersion = 1; // must be an integer (now use yyyyMMddhhmm format)
+	var idbVersion = 1; // must be an integer
 	var reqOpen = HVStat.indexedDB.open("HVStat", idbVersion);
 	reqOpen.onerror = function (event) {
 		errorMessage = "Database open error: " + event.target.errorCode;
@@ -1166,6 +1272,360 @@ HVStat.openIndexedDB = function (callback) {
 		}
 	};
 };
+
+HVStat.deleteAllObjectsInMonsterScanInfo = function () {
+	var tx = HVStat.idb.transaction(["MonsterScanInfo"], "readwrite");
+	var store = tx.objectStore("MonsterScanInfo");
+	var range = null; // select all
+//	var direction = HVStat.IDBCursor.NEXT;
+	var count = 0;
+
+	var req = store.openCursor(range, "next");
+	req.onsuccess = function () {
+		var cursor = this.result;
+		if (cursor) {
+			cursor.delete();
+			count++;
+			cursor.continue();
+		} else {
+			alert("Your monster scanning data has been deleted.\nsuccess(es): " + count);
+		}
+	}
+	req.onerror = function () {
+		console.log('request error.');
+		alert('request error.');
+	}
+};
+
+HVStat.deleteAllObjectsInMonsterSkills = function () {
+	var tx = HVStat.idb.transaction(["MonsterSkills"], "readwrite");
+	var store = tx.objectStore("MonsterSkills");
+	var range = null; // select all
+//	var direction = HVStat.IDBCursor.NEXT;
+	var count = 0;
+
+	var req = store.openCursor(range, "next");
+	req.onsuccess = function () {
+		var cursor = this.result;
+		if (cursor) {
+			cursor.delete();
+			count++;
+			cursor.continue();
+		} else {
+			alert("Your monster skill data has been deleted.\nsuccess(es): " + count);
+		}
+	}
+	req.onerror = function () {
+		console.log('request error.');
+		alert('request error.');
+	}
+};
+
+HVStat.exportMonsterScanInfo = function (callback) {
+	var tx = HVStat.idb.transaction(["MonsterScanInfo"], "readonly");
+	var store = tx.objectStore("MonsterScanInfo");
+	var range = null; // select all
+//	var direction = HVStat.IDBCursor.NEXT;
+	var count = 0;
+	var texts = [];
+	var tab = "%09";
+	var newline = "%0A"
+	texts[0] = "ID"
+		+ tab + "LAST_SCAN_DATE"
+		+ tab + "NAME"
+		+ tab + "MONSTER_CLASS"
+		+ tab + "POWER_LEVEL"
+		+ tab + "TRAINER"
+		+ tab + "MELEE_ATTACK"
+		+ tab + "DEF_CRUSHING"
+		+ tab + "DEF_SLASHING"
+		+ tab + "DEF_PIERCING"
+		+ tab + "DEF_FIRE"
+		+ tab + "DEF_COLD"
+		+ tab + "DEF_ELEC"
+		+ tab + "DEF_WIND"
+		+ tab + "DEF_HOLY"
+		+ tab + "DEF_DARK"
+		+ tab + "DEF_SOUL"
+		+ tab + "DEF_VOID"
+		+ tab + "DEBUFFS_AFFECTED";
+
+	var req = store.openCursor(range, "next");
+	req.onsuccess = function (event) {
+		var cursor = this.result;
+		var vo;
+		var text;
+		if (cursor) {
+			vo = cursor.value;
+			count++;
+			texts[count] = vo.id
+				+ tab + (vo.lastScanDate !== null ? vo.lastScanDate : "")
+				+ tab + (vo.name !== null ? vo.name : "")
+				+ tab + (vo.monsterClass !== null ? vo.monsterClass : "")
+				+ tab + (vo.powerLevel !== null ? vo.powerLevel : "")
+				+ tab + (vo.trainer !== null ? vo.trainer : "")
+				+ tab + (vo.meleeAttack !== null ? vo.meleeAttack : "")
+				+ tab + (vo.defenceLevel && vo.defenceLevel.CRUSHING ? vo.defenceLevel.CRUSHING : "")
+				+ tab + (vo.defenceLevel && vo.defenceLevel.SLASHING ? vo.defenceLevel.SLASHING : "")
+				+ tab + (vo.defenceLevel && vo.defenceLevel.PIERCING ? vo.defenceLevel.PIERCING : "")
+				+ tab + (vo.defenceLevel && vo.defenceLevel.FIRE ? vo.defenceLevel.FIRE : "")
+				+ tab + (vo.defenceLevel && vo.defenceLevel.COLD ? vo.defenceLevel.COLD : "")
+				+ tab + (vo.defenceLevel && vo.defenceLevel.ELEC ? vo.defenceLevel.ELEC : "")
+				+ tab + (vo.defenceLevel && vo.defenceLevel.WIND ? vo.defenceLevel.WIND : "")
+				+ tab + (vo.defenceLevel && vo.defenceLevel.HOLY ? vo.defenceLevel.HOLY : "")
+				+ tab + (vo.defenceLevel && vo.defenceLevel.DARK ? vo.defenceLevel.DARK : "")
+				+ tab + (vo.defenceLevel && vo.defenceLevel.SOUL ? vo.defenceLevel.SOUL : "")
+				+ tab + (vo.defenceLevel && vo.defenceLevel.VOID ? vo.defenceLevel.VOID : "")
+				+ tab + (vo.debuffsAffected ? vo.debuffsAffected.join(", ") : "");
+			cursor.continue();
+		} else {
+			HVStat.dataURIMonsterScanInfo = "data:text/tsv;charset=utf-8," + texts.join(newline);
+			HVStat.nRowsMonsterScanInfoTSV = count;
+			if (callback instanceof Function) {
+				callback(event);
+			}
+		}
+	}
+	req.onerror = function (event) {
+		console.log('request error.');
+		alert('request error.');
+	}
+};
+
+HVStat.exportMonsterSkills = function (callback) {
+	var tx = HVStat.idb.transaction(["MonsterSkills"], "readonly");
+	var store = tx.objectStore("MonsterSkills");
+	var range = null; // select all
+	var count = 0;
+	var texts = [];
+	var tab = "%09";
+	var newline = "%0A"
+	texts[0] = "ID"
+		+ tab + "NAME"
+		+ tab + "SKILL_TYPE"
+		+ tab + "ATTACK_TYPE"
+		+ tab + "DAMAGE_TYPE"
+		+ tab + "LAST_USED_DATE";
+
+	var req = store.openCursor(range, "next");
+	req.onsuccess = function (event) {
+		var cursor = this.result;
+		var vo;
+		var text;
+		if (cursor) {
+			vo = cursor.value;
+			count++;
+			texts[count] = vo.id
+				+ tab + (vo.name !== null ? vo.name : "")
+				+ tab + (vo.skillType !== null ? vo.skillType : "")
+				+ tab + (vo.attackType !== null ? vo.attackType : "")
+				+ tab + (vo.damageType !== null ? vo.damageType : "")
+				+ tab + (vo.lastUsedDate !== null ? vo.lastUsedDate : "");
+			cursor.continue();
+		} else {
+			HVStat.dataURIMonsterSkills = "data:text/tsv;charset=utf-8," + texts.join(newline);
+			HVStat.nRowsMonsterSkillsTSV = count;
+			if (callback instanceof Function) {
+				callback(event);
+			}
+		}
+	}
+	req.onerror = function (event) {
+		console.log('request error.');
+		alert('request error.');
+	}
+};
+
+HVStat.importMonsterScanInfo = function (file, callback) {
+	var reader = new FileReader();
+	reader.onload = function (event) {
+		var contents = event.target.result;
+		var rowCount, procCount;
+		var result;
+		var tx = HVStat.idb.transaction(["MonsterScanInfo"], "readwrite");
+		var store = tx.objectStore("MonsterScanInfo");
+		var skipCount = 0;
+		var successCount = 0;
+		var errorCount = 0;
+		var voExisting, voToPut, reqPut;
+
+		var report = function () {
+//			console.log("importMonsterScanInfo: procCount = " + procCount + ", rowCount = " + rowCount);
+			if (procCount >= rowCount) {
+				alert(rowCount + " row(s) found, " + successCount + " row(s) imported, " + skipCount + " row(s) skipped, " + errorCount + " error(s)");
+			}
+		}
+
+		// prescan
+		HVStat.reMonsterScanInfoTSV.lastIndex = 0;
+		rowCount = 0;
+		while ((result = HVStat.reMonsterScanInfoTSV.exec(contents)) !== null) {
+			rowCount++;
+		}
+
+		// import
+		procCount = 0;
+		HVStat.reMonsterScanInfoTSV.lastIndex = 0;
+		while ((result = HVStat.reMonsterScanInfoTSV.exec(contents)) !== null) {
+			voToPut = new HVStat.MonsterScanInfoVO({
+				id: result[1],
+				lastScanDate: result[2],
+				name: result[3],
+				monsterClass: result[4],
+				powerLevel: result[5],
+				trainer: result[6],
+				meleeAttack: result[7],
+				defCrushing: result[8],
+				defSlashing: result[9],
+				defPiercing: result[10],
+				defFire: result[11],
+				defCold: result[12],
+				defElec: result[13],
+				defWind: result[14],
+				defHoly: result[15],
+				defDark: result[16],
+				defSoul: result[17],
+				defVoid: result[18],
+				debuffsAffected: result[19],
+			});
+			(function (voToPut) {
+				reqGet = store.get(voToPut.id);
+				reqGet.onsuccess = function (event) {
+//					console.log("importMonsterScanInfo: get: success");
+					var doPut = false;
+					if (event.target.result === undefined) {
+						doPut = true;
+					} else {
+						voExisting = event.target.result;
+						if (voExisting.lastScanDate === null || voToPut.lastScanDate >= voExisting.lastScanDate) {
+							doPut = true;
+						} else {
+							console.log("importMonsterScanInfo: voToPut.id = [" + voToPut.id + "], voExisting.id  [" + voExisting.id + "]");
+							console.log("importMonsterScanInfo: voToPut.lastScanDate = [" + voToPut.lastScanDate + "], voExisting.lastScanDate  [" + voExisting.lastScanDate + "]");
+						}
+					}
+					if (!doPut) {
+						skipCount++;
+						procCount++;
+					} else {
+						reqPut = store.put(voToPut);
+						reqPut.onsuccess = function (event) {
+//							console.log("importMonsterScanInfo: put: success");
+							successCount++;
+							procCount++;
+							report();
+						};
+						reqPut.onerror = function (event) {
+							console.log("importMonsterScanInfo: put: error");
+							errorCount++;
+							procCount++;
+							report();
+						};
+					}
+				};
+				reqGet.onerror = function (event) {
+					console.log("importMonsterScanInfo: get: error");
+					errorCount++;
+					procCount++;
+					report();
+				};
+			})(voToPut);
+		}
+	};
+	reader.onerror = function (event) {
+		alert("Failed to read file");
+	};
+	reader.readAsText(file, 'UTF-8');
+}
+
+HVStat.importMonsterSkills = function (file, callback) {
+	var reader = new FileReader();
+	reader.onload = function (event) {
+		var contents = event.target.result;
+		var rowCount, procCount;
+		var result;
+		var tx = HVStat.idb.transaction(["MonsterSkills"], "readwrite");
+		var store = tx.objectStore("MonsterSkills");
+		var skipCount = 0;
+		var successCount = 0;
+		var errorCount = 0;
+		var voExisting, voToPut, reqPut;
+
+		var report = function () {
+//			console.log("importMonsterSkills: procCount = " + procCount + ", rowCount = " + rowCount);
+			if (procCount >= rowCount) {
+				alert(rowCount + " row(s) found, " + successCount + " row(s) imported, " + skipCount + " row(s) skipped, " + errorCount + " error(s)");
+			}
+		}
+
+		// prescan
+		HVStat.reMonsterSkillsTSV.lastIndex = 0;
+		rowCount = 0;
+		while ((result = HVStat.reMonsterSkillsTSV.exec(contents)) !== null) {
+			rowCount++;
+		}
+
+		// import
+		procCount = 0;
+		HVStat.reMonsterSkillsTSV.lastIndex = 0;
+		while ((result = HVStat.reMonsterSkillsTSV.exec(contents)) !== null) {
+			voToPut = new HVStat.MonsterSkillVO({
+				id: result[1],
+				name: result[2],
+				skillType: result[3],
+				attackType: result[4],
+				damageType: result[5],
+				lastUsedDate: result[6]
+			});
+			(function (voToPut) {
+				reqGet = store.get(voToPut.id);
+				reqGet.onsuccess = function (event) {
+//					console.log("importMonsterSkills: get: success");
+					var doPut = false;
+					if (event.target.result === undefined) {
+						doPut = true;
+					} else {
+						voExisting = event.target.result;
+						if (voExisting.lastUsedDate === null || voToPut.lastUsedDate >= voExisting.lastUsedDate) {
+							doPut = true;
+						} else {
+							console.log("importMonsterSkills: voToPut.id = [" + voToPut.id + "], voExisting.id  [" + voExisting.id + "]");
+							console.log("importMonsterSkills: voToPut.lastUsedDate = [" + voToPut.lastUsedDate + "], voExisting.lastUsedDate  [" + voExisting.lastUsedDate + "]");
+						}
+					}
+					if (!doPut) {
+						skipCount++;
+						procCount++;
+					} else {
+						reqPut = store.put(voToPut);
+						reqPut.onsuccess = function (event) {
+//							console.log("importMonsterSkills: put: success");
+							successCount++;
+							procCount++;
+							report();
+						};
+						reqPut.onerror = function (event) {
+							console.log("importMonsterSkills: put: error");
+							errorCount++;
+							procCount++;
+							report();
+						};
+					}
+				};
+				reqGet.onerror = function (event) {
+					console.log("importMonsterSkills: get: error");
+					errorCount++;
+					procCount++;
+					report();
+				};
+			})(voToPut);
+		}
+	};
+	reader.onerror = function (event) {
+		alert("Failed to read file");
+	};
+	reader.readAsText(file, 'UTF-8');
+}
 
 // functions for reading old monster database
 // finally to be obsolete
@@ -1359,9 +1819,9 @@ HVStat.migration.migrateMonsterScanInfo = function () {
 };
 
 HVStat.migration.createMonsterSkillVOsFromOldDB = function (oldDB, index) {
-	if (!oldDB.mskillspell[index])
+	if (!oldDB.mskillspell[index]) {
 		return [];
-
+	}
 	var v, vo, voArray = [];
 	var code, codes = String(oldDB.mskillspell[index]);
 	var damageTypes, damageTypeCodes = String(oldDB.mskilltype[index]);
@@ -1371,15 +1831,14 @@ HVStat.migration.createMonsterSkillVOsFromOldDB = function (oldDB, index) {
 		code = codes.substring(i, i + 1);
 		damageTypes = HVStat.migration.damageTypeFromCode(damageTypeCodes);
 		if (code !== "0") {
-			vo = new HVStat.MonsterSkillVO();
-			vo.id = Number(index);
+			vo = new HVStat.MonsterSkillVO({ id: index });
 			v = HVStat.migration.skillTypeFromCode(code);
 			vo.skillType = v ? v.id : null;
 			v = HVStat.migration.attackTypeFromCode(code);
 			vo.attackType = v ? v.id : null;
 			v = damageTypes[damageTypeIndex];
 			vo.damageType = v ? v.id : null;
-			vo.lastUsedDate = null;
+			vo.createKey();
 
 			voArray.push(vo);
 			damageTypeIndex++;
@@ -3252,17 +3711,52 @@ function getMonsterStatsHtml() {
 	var oldDatabaseSize = localStorage.HVMonsterDatabase ? localStorage.HVMonsterDatabase.length : 0;
 	var h = "";
 	h += '<div>';
-	h += '<h2>Database Management</h2>';
-	h += '<h3>Delete Monster Scanning Data (IndexedDB)</h3>';
-	h += '<input type="button" id="deleteMonsterScanInfo" value="Delete monster scanning data" />';
-	h += '<h3>Delete Monster Skill Data (IndexedDB)</h3>';
-	h += '<input type="button" id="deleteMonsterSkills" value="Delete monster skill data" />';
+	h += '<h2>Export</h2>';
+	h += '<p>Monster scanning data and monster skill data can be exported as a TSV (tab-seperated-values) format text file. You can import the data using the exported file.</p>';
+	h += '<div>';
+	h += '<table><tr>';
+	h += '<td><span style="font-weight: bold;">Monster Scanning Data</span></td>';
+	h += '<td><input type="button" id="exportMonsterScanInfo" value="Export" />';
+	h += '<a id="downloadLinkMonsterScanInfo" style="visibility:hidden;" href="#">Download</a></td>';
+	h += '</tr><tr>';
+	h += '<td><span style="font-weight: bold;">Monster Skill Data</span></td>';
+	h += '<td><input type="button" id="exportMonsterSkills" value="Export" />';
+	h += '<a id="downloadLinkMonsterSkills" style="visibility:hidden;" href="#">Download</a></td>';
+	h += '</tr></table>';
+	h += '</div>';
+	h += '<h2>Import</h2>';
+	h += '<p>Exported TSV file can be imported. The contents of TSV file will be merged into the database. The row of TSV file which has older date will be skipped.</p>';
+	h += '<div>';
+	h += '<table><tr>';
+	h += '<td><span style="font-weight: bold;">Monster Scanning Data</span></td>';
+	h += '<td><input type="file" id="importMonsterScanInfo" /></td>';
+	h += '</tr><tr>';
+	h += '<td><span style="font-weight: bold;">Monster Skill Data</span></td>';
+	h += '<td><input type="file" id="importMonsterSkills" /></td>';
+	h += '</tr></table>';
+	h += '</div>';
+	h += '<h2>Delete Data</h2>';
+	h += '<p>If you want to clean the database, use this.</p>';
+	h += '<table><tr>';
+	h += '<td><span style="font-weight: bold;">Monster Scanning Data</span></td>';
+	h += '<td><input type="button" id="deleteMonsterScanInfo" value="Delete" /></td>';
+	h += '</tr><tr>';
+	h += '<td><span style="font-weight: bold;">Monster Skill Data</span></td>';
+	h += '<td><input type="button" id="deleteMonsterSkills" value="Delete" /></td>';
+	h += '</tr></table>';
+	h += '</div>';
+	h += '<h2>Delete Database</h2>';
+	h += '<div>';
+	h += '<p>If you are facing a problem with the database, and the problem can not be resolved, use this.</p>';
+	h += '<p>In order to re-create your database, reload the page. After that, you can import exported data.</p>';
+	h += '<input type="button" id="deleteDatabase" value="Delete Database" />';
+	h += '</div>';
 	h += '<h2>Migration</h2>';
 	h += '<h3>Migrate to New Database</h3>';
 	h += '<div>';
 	h += '<p>HVSTAT will now use the new IndexedDB database instead of the localStorage database. You can migrate your old database into the new database.</p>'
 	h += '<p><span style="color: red;">If you have already scanned, note that this operation will overwrite existing data on the new database.</span></p>';
-	h += '<input type="button" id="migrateDatabase" value="Migrate database" />';
+	h += '<input type="button" id="migrateDatabase" value="Migrate" />';
 	h += '</div>';
 	h += '<h3>Delete Old Database (localStorage)</h3>';
 	h += '<div>';
@@ -3270,7 +3764,7 @@ function getMonsterStatsHtml() {
 		+ (oldDatabaseSize / 1024 / 1024 * (browserIsChrome() ? 2 : 1)).toFixed(1)
 		+ '</span> MB on the localStorage. In order to free up space for other HV scripts, delete the old database after migration.</p>';
 	h += '<p><span style="color: red;"></span></p>';
-	h += '<input type="button" id="deleteOldDatabase" value="Delete old database" />';
+	h += '<input type="button" id="deleteOldDatabase" value="Delete" />';
 	h += '</div>';
 	return h;
 }
@@ -3452,14 +3946,77 @@ function initShrinePane() {
 }
 function initMonsterStatsPane() {
 	$("#pane7").html(getMonsterStatsHtml());
+	$("#importMonsterScanInfo").change(function (event) {
+		var file = event.target.files[0]; 
+		if (!file) {
+			alert("Failed to load file");
+		} else {
+			if (confirm("Are you sure to import the monster scanning data?")) {
+				HVStat.importMonsterScanInfo(file);
+			}
+		}
+	});
+	$("#importMonsterSkills").change(function (event) {
+		var file = event.target.files[0]; 
+		if (!file) {
+			alert("Failed to load file");
+		} else {
+			if (confirm("Are you sure to import the monster skill data?")) {
+				HVStat.importMonsterSkills(file);
+			}
+		}
+	});
+	$("#exportMonsterScanInfo").click(function () {
+		HVStat.exportMonsterScanInfo(function () {
+			if (HVStat.nRowsMonsterScanInfoTSV === 0) {
+				alert("There is no monster scanning data.");
+			} else {
+				var downloadLink = $("#downloadLinkMonsterScanInfo");
+				downloadLink.attr("href", HVStat.dataURIMonsterScanInfo);
+				downloadLink.attr("download", "hvstat_monster_scan.tsv");
+				downloadLink.css("visibility", "visible");
+				alert("Ready to export your monster scanning data.\nClick download link.");
+			}
+		});
+	});
+	$("#exportMonsterSkills").click(function () {
+		HVStat.exportMonsterSkills(function () {
+			var downloadLink = $("#downloadLinkMonsterSkills");
+			if (HVStat.nRowsMonsterSkillsTSV === 0) {
+				alert("There is no monster skill data.");
+			} else {
+				downloadLink.attr("href", HVStat.dataURIMonsterSkills);
+				downloadLink.attr("download", "hvstat_monster_skill.tsv");
+				downloadLink.css("visibility", "visible");
+				alert("Ready to export your monster skill data.\nClick download link.");
+			}
+		});
+	});
+	$("#deleteMonsterScanInfo").click(function () {
+		if (confirm("Are you sure to delete your monster scanning data?")) {
+			HVStat.deleteAllObjectsInMonsterScanInfo();
+		}
+	});
+	$("#deleteMonsterSkills").click(function () {
+		if (confirm("Are you sure to delete your monster skill data?")) {
+			HVStat.deleteAllObjectsInMonsterSkills();
+		}
+	});
+	$("#deleteDatabase").click(function () {
+		if (confirm("Are you really sure to delete your database?")) {
+			HVStat.deleteIndexedDB();
+		}
+	});
 	$("#migrateDatabase").click(function () {
-		if (confirm("Are you sure to migrate your monster database?"))
+		if (confirm("Are you sure to migrate your monster database?")) {
 			HVStat.migration.migrateDatabase();
+		}
 	});
 	$("#deleteOldDatabase").click(function () {
-		if (confirm("Are you really sure to delete your old monster database?"))
+		if (confirm("Are you really sure to delete your old monster database?")) {
 			HVStat.migration.deleteOldDatabase();
 			// TODO: update Monster Stats pane
+		}
 	});
 }
 function initSettingsPane() {
@@ -4155,6 +4712,9 @@ function loadRoundObject() {
 	_round.load();
 	_round.monstersV2.forEach(function (element, index, array) {
 		HVStat.monsters[index].setFromValueObject(element);
+		console.log("loadRoundObject: HVStat.monsters.length = " + HVStat.monsters.length);
+		console.log("loadRoundObject: index = " + index);
+		console.log("loadRoundObject: HVStat.monsters[index] = " + HVStat.monsters[index]);
 	});
 }
 function getMonsterElementsById(a, b) {
