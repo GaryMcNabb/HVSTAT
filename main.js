@@ -30,29 +30,24 @@
 
 // Package
 var HVStat = {
-	// package scope global variables
-
+	// package scope global constants
 	indexedDB: window.indexedDB || window.webkitIndexedDB || window.mozIndexedDB,
 	IDBTransaction: window.IDBTransaction || window.webkitIDBTransaction,
 	IDBKeyRange: window.IDBKeyRange|| window.webkitIDBKeyRange,
 	IDBCursor: window.IDBCursor || window.webkitIDBCursor,
-
 	reMonsterScanInfoTSV: /^(\d+?)\t(.*?)\t(.*?)\t(.*?)\t(\d*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)$/gm,
 	reMonsterSkillsTSV: /^(\d+?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)$/gm,
 
+	// package scope global variables
 	idb: null,
 	transaction: null,
-
 	monsterScanInfoStore: null,
 	monsterSkillsStore: null,
 	dataURIMonsterScanInfo: null,
 	dataURIMonsterSkills: null,
 	nRowsMonsterScanInfoTSV: 0,
 	nRowsMonsterSkillsTSV: 0,
-
-	monsters: [],	// contains Monster instances
-
-	dummy: null
+	monsters: []	// contains Monster instances
 };
 
 HV_SETTINGS = "HVSettings";
@@ -448,7 +443,7 @@ HVStat.MonsterSkill = (function () {
 				vo.lastUsedDate = _lastUsedDate.toISOString();
 				vo.skillType = (_skillType ? _skillType.id : null);
 				vo.attackType = (_attackType ? _attackType.id : null);
-				vo.damageType = (_damagetype ? _damagetype.id : null);
+				vo.damageType = (_damageType ? _damageType.id : null);
 				return vo;
 			},
 			toString: function (abbrLevel) {
@@ -460,10 +455,11 @@ HVStat.MonsterSkill = (function () {
 	// public static method
 	MonsterSkill.fromBattle = function (used, damaged) {
 		var vo = new HVStat.MonsterSkillVO();
-		r = / (uses|casts) ([^\.]+?)/.exec(used);
+		var r = / (uses|casts) ([^\.]+?)/.exec(used);
 		if (!r || r.length < 3) {
 			return null;
 		}
+		vo.name = r[2];
 		switch (r[1]) {
 		case "uses":
 			vo.attackType = HVStat.AttackType.PHYSICAL.id;
@@ -478,8 +474,8 @@ HVStat.MonsterSkill = (function () {
 		if (!r || r.length < 2) {
 			return null;
 		}
-		// TODO
-//		vo.damageType = HVStat.DamageType.fromString(r[1]).id;
+		var dt = HVStat.DamageType[r[1].toUpperCase()];
+		vo.damageType = dt ? dt.id : null;
 		vo.lastUsedDate = new Date();
 		return new MonsterSkill(vo);
 	};
@@ -809,6 +805,29 @@ HVStat.Monster = (function () {
 		var _waitingDBResponse = function () {
 			return _waitingForGetResponseOfMonsterScanInfo || _waitingForGetResponseOfMonsterSkills;
 		};
+		var _getManaSkills = function () {
+			var manaSkills = [];
+			var i, skill;
+			var len = _skills.length
+			for (i = 0; i < len; i++) {
+				skill = _skills[i];
+				if (skill.skillType === HVStat.SkillType.MANA) {
+					manaSkills.push(skill);
+				}
+			}
+			return manaSkills;
+		};
+		var _getSpiritSkill = function () {
+			var i, skill;
+			var len = _skills.length
+			for (i = 0; i < len; i++) {
+				skill = _skills[i];
+				if (skill.skillType === HVStat.SkillType.SPIRIT) {
+					return skill;
+				}
+			}
+			return null;
+		};
 		var _renderStats = function () {
 			if (_isDead) {
 				return;
@@ -852,7 +871,7 @@ HVStat.Monster = (function () {
 				spBarBaseElement.after(html);
 			}
 
-			if (_settings.showMonsterDefence && (_id < 1000 || _settings.showMonsterInfoFromDB)) {
+			if (_settings.showMonsterDefence && _settings.showMonsterInfoFromDB) {
 				for (abbrLevel = 0; abbrLevel < maxAbbrLevel; abbrLevel++) {
 					statsHtml = '';
 					if (!_scanInfo || !_scanInfo.monsterClass) {
@@ -874,7 +893,6 @@ HVStat.Monster = (function () {
 						if (_settings.showMonsterClassFromDB || _settings.showMonsterPowerLevelFromDB) {
 							statsHtml += '</span>}';
 						}
-
 						// weaknesses and resistances
 						if (_settings.showMonsterWeaknessesFromDB || _settings.showMonsterResistancesFromDB) {
 							statsHtml += '[';
@@ -900,18 +918,17 @@ HVStat.Monster = (function () {
 						if (_settings.showMonsterWeaknessesFromDB || _settings.showMonsterResistancesFromDB) {
 							statsHtml += "]";
 						}
-
 						// melee attack and skills
 						if (_settings.showMonsterAttackTypeFromDB) {
 							statsHtml += '(<span style="color: black;">' + _scanInfo.meleeAttack.toString(abbrLevel) + '</span>';
-// 							statsHtml += mskillspell === "" ? "" : ";<span style='color:blue'>" + mskillspell + "</span>";
-// 							statsHtml += mskilltype === "" ? "" : "-<span style='color:blue'>" + mskilltype + "</span>";
-// 							statsHtml += mskillspell2 === "" ? "" : "|<span style='color:blue'>" + mskillspell2 + "</span>";
-// 							statsHtml += mskilltype2 === "" ? "" : "-<span style='color:blue'>" + mskilltype2 + "</span>";
-// 							statsHtml += mskillspell3 === "" ? "" : "|<span style='color:blue'>" + mskillspell3 + "</span>";
-// 							statsHtml += mskilltype3 === "" ? "" : "-<span style='color:blue'>" + mskilltype3 + "</span>";
-// 							statsHtml += mspiritsksp === "" ? "" : "|<span style='color:red'>" + mspiritsksp + "</span>";
-// 							statsHtml += mspirittype === "" ? "" : "-<span style='color:red'>" + mspirittype + "</span>";
+							var manaSkills = _getManaSkills();
+							for (var i = 0; i < manaSkills.length; i++) {
+								statsHtml += "|<span style='color:blue'>" + manaSkills[i].toString(abbrLevel) + "</span>";
+							}
+							var spiritSkill = _getSpiritSkill();
+							if (spiritSkill) {
+								statsHtml += "|<span style='color:red'>" + spiritSkill.toString(abbrLevel) + "</span>";
+							}
 							statsHtml += ')';
 						}
 					}
@@ -967,22 +984,24 @@ HVStat.Monster = (function () {
 				}
 				html += '<tr><td>Melee Attack:</td><td>' + (_scanInfo.meleeAttack ? _scanInfo.meleeAttack : "") + '</td></tr>';
 			}
-// 			if (monster.manaSkills && monster.manaSkills.length > 0) {
-// 				html += '<tr><td>Mana Skills:</td><td>';
-// 				len = monster.manaSkills.length;
-// 				for (i = 0; i < len; i++) {
-// 					if (i > 0) {
-// 						html += '<br/>';
-// 					}
-// 					html += formatSkill(monster.manaSkills[i]);
-// 				}
-// 				html += '</td></tr>';
-// 			}
-// 			if (monster.spiritSkills && monster.spiritSkills.length > 0) {
-// 				html += '<tr><td>Spirit Skill:</td><td>';
-// 				html += formatSkill(monster.spiritSkills[0]);
-// 				html += '</td></tr>';
-// 			}
+			var manaSkills = _getManaSkills();
+			if (manaSkills && manaSkills.length > 0) {
+				html += '<tr><td valign="top">Skills:</td><td>';
+				len = manaSkills.length;
+				for (i = 0; i < len; i++) {
+					if (i > 0) {
+						html += '<br/>';
+					}
+					html += manaSkills[i].toString();
+				}
+				html += '</td></tr>';
+			}
+			var spiritSkill = _getSpiritSkill();
+			if (spiritSkill) {
+				html += '<tr><td>Spirit Skill:</td><td>';
+				html += spiritSkill.toString();
+				html += '</td></tr>';
+			}
 			if (existsScanInfo) {
 				html += '<tr><td>Weak against:</td><td>' + (_scanInfo.defWeak.length > 0 ? _scanInfo.getDefWeakString(false, true, 0) : "-") + '</td></tr>'
 					+ '<tr><td>Resistant to:</td><td>' + (_scanInfo.defResistant.length > 0 ? _scanInfo.getDefResistantString(false, true, 0) : "-") + '</td></tr>'
@@ -1001,18 +1020,6 @@ HVStat.Monster = (function () {
 			html += '</table>';
 			return html;
 		};
-
-// 		var formatSkill = function (skill) {
-// 			var str = (skill.type ? skill.type : "?") + "-"
-// 				+ (skill.damageType ? skill.damageType : "?");
-// 			if (skill.name) {
-// 				str += " (" + skill.name + ")";
-// 			}
-// 			if (skill.lastUsedDate) {
-// 				str += " [" + (skill.lastUsedDate) + "]";
-// 			}
-// 			return str;
-// 		};
 
 		return {
 			get id() { return _id; },
@@ -1034,9 +1041,9 @@ HVStat.Monster = (function () {
 				vo.prevMpRate = _currMpRate;
 				vo.prevSpRate = _currSpRate;
 				vo.scanInfo = _scanInfo ? _scanInfo.valueObject : null;
-				_skills.forEach(function (element, index, array) {
-					vo.skills.push(element.valueObject);
-				});
+				for (var i = 0; i < _skills.length; i++) {
+					vo.skills[i] = _skills[i].valueObject;
+				}
 				return vo;
 			},
 			get domElementId() { return _domElementIds[_index]; },
@@ -1091,11 +1098,13 @@ HVStat.Monster = (function () {
 				});
 			},
 			getFromDB: function (transaction, callback) {
-				if (!_id)
+				if (!_id) {
 					return;
+				}
 				var tx = transaction; 
 				var scanInfoStore = tx.objectStore("MonsterScanInfo");
 				var skillsStore = tx.objectStore("MonsterSkills");
+				// MonsterScanInfo
 				var reqGet = scanInfoStore.get(_id);
 				_waitingForGetResponseOfMonsterScanInfo = true;
 				reqGet.onsuccess = function (event) {
@@ -1105,22 +1114,50 @@ HVStat.Monster = (function () {
 					} else {
 						console.log("get from MonsterScanInfo: success: id = " + _id);
 						_scanInfo = new HVStat.MonsterScanInfo(event.target.result);
-						if (callback) {
-							callback(event);
-						}
 					}
 				};
 				reqGet.onerror = function (event) {
 					_waitingForGetResponseOfMonsterScanInfo = false;
 					console.log("get from MonsterScanInfo: error");
 				};
-				// TODO: get MonsterSkills
+				// MonsterSkills
+				var reqGet = skillsStore.get(_id);
+				var idx = skillsStore.index("ix_id");
+				var range = HVStat.IDBKeyRange.bound(_id, _id);
+				var reqOpen = idx.openCursor(range, "next");
+				_waitingForGetResponseOfMonsterSkills = true;
+				reqOpen.onsuccess = function(){
+					var cursor = this.result;
+					if (cursor) {
+						_skills.push(new HVStat.MonsterSkill(cursor.value));
+						console.log("get from MonsterSkills: id = " + _id);
+						cursor.continue();
+					} else {
+						_waitingForGetResponseOfMonsterSkills = false;
+						console.log("get from MonsterSkills: finished: id = " + _id);
+					}
+				}
+				reqOpen.onerror = function(){
+					_waitingForGetResponseOfMonsterSkills = false;
+					console.log('request error.');
+				}
+				var doCallback = function () {
+					if (callback instanceof Function) {
+						if (!_waitingDBResponse()) {
+							callback();
+						} else {
+							console.log("waiting");
+							setTimeout(arguments.callee, 10);
+						}
+					}
+				};
+				doCallback();
 			},
 			putScanInfoToDB: function (transaction) {
-				if (!_id)
+				if (!_id) {
 					return;
-				var tx = transaction; 
-				var scanInfoStore = tx.objectStore("MonsterScanInfo");
+				}
+				var scanInfoStore = transaction.objectStore("MonsterScanInfo");
 				var vo = _scanInfo.valueObject;
 				vo.id = _id;
 				vo.name = _name;
@@ -1132,7 +1169,25 @@ HVStat.Monster = (function () {
 					console.log("putScanInfoToDB: error: id = " + _id);
 				};
 			},
-			putSkillsToDB: function () {
+			putSkillsToDB: function (transaction) {
+				if (!_id) {
+					return;
+				}
+				var skillStore = transaction.objectStore("MonsterSkills");
+				var i;
+				var vo;
+				var reqPut;
+				for (i = 0; i < _skills.length; i++) {
+					vo = _skills.valueObject;
+					vo.id = _id;
+					reqPut = skillStore.put(vo);
+					reqPut.onsuccess = function (event) {
+						console.log("putSkillsToDB: success: id = " + _id);
+					};
+					reqPut.onerror = function (event) {
+						console.log("putSkillsToDB: error: id = " + _id);
+					};
+				}
 			},
 			renderStats: function () {
 				if (!_waitingDBResponse()) {
@@ -1227,6 +1282,12 @@ HVStat.maintainObjectStores = function (event) {
 			alert(alertMessage);
 			console.log(e.message + "\n" + e.stack);
 		}
+		try {
+			store.createIndex("ix_id", "id", { unique: false });
+		} catch (e) {
+			alert(alertMessage);
+			console.log(e.message + "\n" + e.stack);
+		}
 	}
 };
 
@@ -1277,7 +1338,6 @@ HVStat.deleteAllObjectsInMonsterScanInfo = function () {
 	var tx = HVStat.idb.transaction(["MonsterScanInfo"], "readwrite");
 	var store = tx.objectStore("MonsterScanInfo");
 	var range = null; // select all
-//	var direction = HVStat.IDBCursor.NEXT;
 	var count = 0;
 
 	var req = store.openCursor(range, "next");
@@ -1301,7 +1361,6 @@ HVStat.deleteAllObjectsInMonsterSkills = function () {
 	var tx = HVStat.idb.transaction(["MonsterSkills"], "readwrite");
 	var store = tx.objectStore("MonsterSkills");
 	var range = null; // select all
-//	var direction = HVStat.IDBCursor.NEXT;
 	var count = 0;
 
 	var req = store.openCursor(range, "next");
@@ -1325,7 +1384,6 @@ HVStat.exportMonsterScanInfo = function (callback) {
 	var tx = HVStat.idb.transaction(["MonsterScanInfo"], "readonly");
 	var store = tx.objectStore("MonsterScanInfo");
 	var range = null; // select all
-//	var direction = HVStat.IDBCursor.NEXT;
 	var count = 0;
 	var texts = [];
 	var tab = "%09";
@@ -2794,8 +2852,8 @@ function collectRoundInfo() {
 						var milliseconds21 = TimeCounter(1);
 						var j = HVStat.monsters.length;
 						while (j--) {
-							if (sel.match(/[^\.]{1,30} (uses|casts) /i)[0].replace(" uses ","").replace(" casts ","") === _round.monsters[j].name) {
-								var mid = parseInt(_round.monsters[j].id);
+							if (sel.match(/[^\.]{1,30} (uses|casts) /i)[0].replace(" uses ","").replace(" casts ","") === HVStat.monsters[j].name) {
+								var mid = HVStat.monsters[j].id;
 								var stype = c.match(/[a-z]{1,10} damage/i)[0].replace(" damage","");
 								_collectdata.skillmid.push(mid);
 								_collectdata.skilltype.push(stype);
@@ -3711,7 +3769,8 @@ function getMonsterStatsHtml() {
 	var oldDatabaseSize = localStorage.HVMonsterDatabase ? localStorage.HVMonsterDatabase.length : 0;
 	var h = "";
 	h += '<div>';
-	h += '<h2>Export</h2>';
+	h += '<h2>Administration</h2>';
+	h += '<h3>Export</h3>';
 	h += '<p>Monster scanning data and monster skill data can be exported as a TSV (tab-seperated-values) format text file. You can import the data using the exported file.</p>';
 	h += '<div>';
 	h += '<table><tr>';
@@ -3724,8 +3783,8 @@ function getMonsterStatsHtml() {
 	h += '<a id="downloadLinkMonsterSkills" style="visibility:hidden;" href="#">Download</a></td>';
 	h += '</tr></table>';
 	h += '</div>';
-	h += '<h2>Import</h2>';
-	h += '<p>Exported TSV file can be imported. The contents of TSV file will be merged into the database. The row of TSV file which has older date will be skipped.</p>';
+	h += '<h3>Import</h3>';
+	h += '<p>The contents of TSV file will be merged into the database. The rows of TSV file which have older date will be skipped.</p>';
 	h += '<div>';
 	h += '<table><tr>';
 	h += '<td><span style="font-weight: bold;">Monster Scanning Data</span></td>';
@@ -3735,7 +3794,7 @@ function getMonsterStatsHtml() {
 	h += '<td><input type="file" id="importMonsterSkills" /></td>';
 	h += '</tr></table>';
 	h += '</div>';
-	h += '<h2>Delete Data</h2>';
+	h += '<h3>Delete Data</h3>';
 	h += '<p>If you want to clean the database, use this.</p>';
 	h += '<table><tr>';
 	h += '<td><span style="font-weight: bold;">Monster Scanning Data</span></td>';
@@ -3745,7 +3804,7 @@ function getMonsterStatsHtml() {
 	h += '<td><input type="button" id="deleteMonsterSkills" value="Delete" /></td>';
 	h += '</tr></table>';
 	h += '</div>';
-	h += '<h2>Delete Database</h2>';
+	h += '<h3>Delete Database</h3>';
 	h += '<div>';
 	h += '<p>If you are facing a problem with the database, and the problem can not be resolved, use this.</p>';
 	h += '<p>In order to re-create your database, reload the page. After that, you can import exported data.</p>';
@@ -4716,201 +4775,6 @@ function loadRoundObject() {
 		console.log("loadRoundObject: index = " + index);
 		console.log("loadRoundObject: HVStat.monsters[index] = " + HVStat.monsters[index]);
 	});
-}
-function getMonsterElementsById(a, b) {
-	switch (b) {
-		case 1:
-			a.imperv = "-";
-			a.resist = "Wind,Holy";
-			a.majWeak = "Fire,Cold";
-			a.minWeak = "-";
-			break;
-		case 2:
-			a.imperv = "-";
-			a.resist = "Holy,Dark";
-			a.majWeak = "Fire,Elec";
-			a.minWeak = "-";
-			break;
-		case 3:
-			a.imperv = "-";
-			a.resist = "Fire,Holy";
-			a.majWeak = "Cold,Elec";
-			a.minWeak = "-";
-			break;
-		case 4:
-			a.imperv = "-";
-			a.resist = "Cold,Elec";
-			a.majWeak = "Holy,Dark";
-			a.minWeak = "Fire";
-			break;
-		case 5:
-			a.imperv = "-";
-			a.resist = "Cold,Wind";
-			a.majWeak = "Fire,Dark";
-			a.minWeak = "-";
-			break;
-		case 6:
-			a.imperv = "-";
-			a.resist = "Fire,Dark";
-			a.majWeak = "Cold,Holy";
-			a.minWeak = "-";
-			break;
-		case 7:
-			a.imperv = "-";
-			a.resist = "Wind,Dark";
-			a.majWeak = "Fire,Holy";
-			a.minWeak = "-";
-			break;
-		case 8:
-			a.imperv = "-";
-			a.resist = "Fire,Cold";
-			a.majWeak = "Elec,Holy";
-			a.minWeak = "Wind";
-			break;
-		case 9:
-			a.imperv = "-";
-			a.resist = "Cold,Holy";
-			a.majWeak = "Wind";
-			a.minWeak = "Fire";
-			break;
-		case 10:
-			a.imperv = "-";
-			a.resist = "Fire,Elec";
-			a.majWeak = "Wind,Dark";
-			a.minWeak = "Holy";
-			break;
-		case 11:
-			a.imperv = "-";
-			a.resist = "Fire,Wind";
-			a.majWeak = "Cold,Elec";
-			a.minWeak = "-";
-			break;
-		case 12:
-			a.imperv = "-";
-			a.resist = "Fire,Elec,Holy";
-			a.majWeak = "Dark";
-			a.minWeak = "Wind";
-			break;
-		case 13:
-			a.imperv = "-";
-			a.resist = "Elec,Dark";
-			a.majWeak = "Fire,Holy";
-			a.minWeak = "Cold";
-			break;
-		case 14:
-			a.imperv = "-";
-			a.resist = "Cold,Holy";
-			a.majWeak = "Elec,Dark";
-			a.minWeak = "Fire";
-			break;
-		case 15:
-			a.imperv = "-";
-			a.resist = "Cold,Dark";
-			a.majWeak = "Fire,Holy";
-			a.minWeak = "Wind";
-			break;
-		case 16:
-			a.imperv = "-";
-			a.resist = "Cold,Elec,Wind,Holy,Dark";
-			a.majWeak = "Fire";
-			a.minWeak = "Soul";
-			break;
-		case 17:
-			a.imperv = "-";
-			a.resist = "Fire,Elec,Wind,Holy,Dark";
-			a.majWeak = "Cold";
-			a.minWeak = "-";
-			break;
-		case 18:
-			a.imperv = "-";
-			a.resist = "Fire,Cold,Elec,Wind,Dark";
-			a.majWeak = "Holy";
-			a.minWeak = "Soul";
-			break;
-		case 19:
-			a.imperv = "-";
-			a.resist = "Fire,Cold,Wind,Holy,Dark";
-			a.majWeak = "Elec";
-			a.minWeak = "Soul";
-			break;
-		case 20:
-			a.imperv = "-";
-			a.resist = "Fire,Cold,Elec,Holy,Dark";
-			a.majWeak = "Wind";
-			a.minWeak = "Soul";
-			break;
-		case 21:
-			a.imperv = "-";
-			a.resist = "Elem,Crush,Slash";
-			a.majWeak = "Holy,Dark,Pierce";
-			a.minWeak = "-";
-			break;
-		case 22:
-			a.imperv = "-";
-			a.resist = "Elem,Crush,Pierce";
-			a.majWeak = "Holy,Dark,Slash";
-			a.minWeak = "-";
-			break;
-		case 23:
-			a.imperv = "-";
-			a.resist = "Elem,Slash,Pierce";
-			a.majWeak = "Holy,Dark,Crush";
-			a.minWeak = "-";
-			break;
-		case 24:
-			a.imperv = "-";
-			a.resist = "Elem,Holy,Dark,Phys";
-			a.majWeak = "-";
-			a.minWeak = "Soul";
-			break;
-		case 25:
-			a.imperv = "-";
-			a.resist = "Fire,Holy";
-			a.majWeak = "Wind,Dark";
-			a.minWeak = "Elec";
-			break;
-		case 26:
-			a.imperv = "-";
-			a.resist = "Wind,Dark";
-			a.majWeak = "Fire,Holy";
-			a.minWeak = "Elec";
-			break;
-		case 27:
-			a.imperv = "-";
-			a.resist = "Fire,Cold,Wind,Holy,Dark";
-			a.majWeak = "Soul,Elec";
-			a.minWeak = "-";
-			break;
-		case 28:
-			a.imperv = "-";
-			a.resist = "Fire,Elec,Wind,Holy,Dark";
-			a.majWeak = "Soul,Cold";
-			a.minWeak = "-";
-			break;
-		case 29:
-			a.imperv = "-";
-			a.resist = "Fire,Cold,Elec,Holy,Dark";
-			a.majWeak = "Soul,Wind";
-			a.minWeak = "-";
-			break;
-		case 30:
-			a.imperv = "-";
-			a.resist = "Cold,Elec,Wind,Holy,Dark";
-			a.majWeak = "Soul,Fire";
-			a.minWeak = "-";
-			break;
-		case 31:
-			a.imperv = "Elem,Holy,Phys";
-			a.resist = "Soul";
-			a.majWeak = "Dark";
-			a.minWeak = "-";
-			break;
-		case 32:
-			a.imperv = "Elem,Dark,Phys";
-			a.resist = "Soul";
-			a.majWeak = "Holy";
-			a.minWeak = "-";
-	}
 }
 function getRelativeTime(b) {
 	var a = (arguments.length > 1) ? arguments[1] : new Date();
@@ -6183,207 +6047,6 @@ function StartDatabase() {
 	if (ISBATTLE) _ltc.isbattle[1] -= TimeCounter(0, sec);
 	_ltc.save();
 }
-function MElemNum(a, b) {
-	if (a === null || a === 0) {
-		a = 0;
-		return a;
-	}
-	if ((b === 0 || b === null || b === undefined) && String(a).match(/\d/ig)) return a;
-	if (b === 0 || b === null || b === undefined) {
-		a = a.replace(/\?/ig, "");
-		if (a.length < 10) {
-			switch (a) {
-			case "Nothing":
-			case "nothing":
-			case "":
-					a = 99; break;
-			case "Slashing":
-			case "slashing":
-			case "Sl":
-					a = 51; break;
-			case "Crushing":
-			case "crushing":
-			case "Cr":
-					a = 52; break;
-			case "Piercing":
-			case "piercing":
-			case "Pi":
-					a = 53; break;
-			case "Fire":
-			case "fire":
-					a = 61; break;
-			case "Cold":
-			case "cold":
-					a = 62; break;
-			case "Elec":
-			case "elec":
-					a = 63; break;
-			case "Wind":
-			case"wind":
-					a = 64; break;
-			case "Holy":
-			case "holy":
-					a = 71; break;
-			case "Dark":
-			case "dark":
-					a = 72; break;
-			case "Soul":
-			case "soul":
-					a = 73; break;
-			case "Void":
-			case "void":
-					a = 74; break;
-			case "Elemental":
-			case "elemental":
-			case "Elem":
-			case "elem":
-				a = 61626364;
-			}
-		} else {
-			a = a.replace(/\,\s/ig, "").replace(/slashing/ig, "51").replace(/sl/ig, "51").replace(/crushing/ig, "52").replace(/cr/ig, "52").replace(/piercing/ig, "53").replace(/pi/ig, "53").replace(/physical/ig,"515253").replace(/phys/ig,"515253").replace(/ph/ig,"515253");
-			a = a.replace(/fire/ig,"61").replace(/cold/ig,"62").replace(/elec/ig,"63").replace(/wind/ig,"64").replace(/elemental/ig,"61626364").replace(/elem/ig,"61626364").replace(/el/ig,"61626364");
-			a = a.replace(/holy/ig,"71").replace(/dark/ig,"72").replace(/soul/ig,"73").replace(/void/ig,"74");
-			a = parseInt(a);
-		}
-	} else {
-		if (a < 100) {
-			switch (a) {
-				case 99:
-					a = "-"; break;
-				case 51:
-					a = "Slash"; break;
-				case 52:
-					a = "Crush"; break;
-				case 53:
-					a = "Pierc"; break;
-				case 61:
-					a = "Fire"; break;
-				case 62:
-					a = "Cold"; break;
-				case 63:
-					a = "Elec"; break;
-				case 64:
-					a = "Wind"; break;
-				case 71:
-					a = "Holy"; break;
-				case 72:
-					a = "Dark"; break;
-				case 73:
-					a = "Soul"; break;
-				case 74:
-					a = "Void"; break;
-				case 1:
-					a = "Mag"; break;
-				case 91:
-					a = "?Mag"; break;
-				case 2:
-					a = "Phys"; break;
-				case 92:
-					a = "?Phys"; break;
-				case 3:
-					a = "Spirit:Mag"; break;
-				case 4:
-					a = "Spirit:Phys";
-			}
-		} else {
-			a = String(a);
-			a = a.replace(/61626364/,", Elem").replace(/515253/,", Phys").replace(/525153/,", Phys").replace(/51852/,", ?Sl/Cr").replace(/52853/,", ?Cr/Pi").replace(/51853/,", ?Cr/Pi").replace(/9/,"?");
-			a = a.replace(/61/g,", Fire").replace(/62/g,", Cold").replace(/63/g,", Elec").replace(/64/g,", Wind");
-			a = a.replace(/71/g,", Holy").replace(/72/g,", Dark").replace(/73/g,", Soul").replace(/74/g,", Void");
-			a = a.replace(/51/g, ", Slash").replace(/52/g, ", Crush").replace(/53/g, ", Pierc");
-			a = a.replace(/1/, ", Mag").replace(/2/, ", Phys").replace(/3/, ", Spirit:Mag").replace(/4/, ", Spirit:Phys").replace(", ", "");
-		}
-	}
-	return a;
-}
-function MClassNum(a, b) {
-	if (b === 1 || String(b).match(/rev/)) {
-		switch (a) {
-			case 1:
-				a = "Arthropod"; break;
-			case 2:
-				a = "Avion"; break;
-			case 3:
-				a = "Beast"; break;
-			case 4:
-				a = "Celestial"; break;
-			case 5:
-				a = "Daimon"; break;
-			case 6:
-				a = "Dragonkin"; break;
-			case 7:
-				a = "Elemental"; break;
-			case 8:
-				a = "Giant"; break;
-			case 9:
-				a = "Humanoid"; break;
-			case 10:
-				a = "Mechanoid"; break;
-			case 11:
-				a = "Reptilian"; break;
-			case 12:
-				a = "Sprite"; break;
-			case 13:
-				a = "Undead"; break;
-			case 31:
-				a = "Common"; break;
-			case 32:
-				a = "Uncommon"; break;
-			case 33:
-				a = "Rare"; break;
-			case 34:
-				a = "Legendary"; break;
-			case 35:
-				a = "Ultimate"; break;
-			default:
-				a = 0;
-		}
-	} else {
-		if (!String(a).match(/\d/)){
-			switch (a) {
-				case "Arthropod":
-					a = 1; break;
-				case "Avion":
-					a = 2; break;
-				case "Beast":
-					a = 3; break;
-				case "Celestial":
-					a = 4; break;
-				case "Daimon":
-					a = 5; break;
-				case "Dragonkin":
-					a = 6; break;
-				case "Elemental":
-					a = 7; break;
-				case "Giant":
-					a = 8; break;
-				case "Humanoid":
-					a = 9; break;
-				case "Mechanoid":
-					a = 10; break;
-				case "Reptilian":
-					a = 11; break;
-				case "Sprite":
-					a = 12; break;
-				case "Undead":
-					a = 13; break;
-				case "Common":
-					a = 31; break;
-				case "Uncommon":
-					a = 32; break;
-				case "Rare":
-					a = 33; break;
-				case "Legendary":
-					a = 34; break;
-				case "Ultimate":
-					a = 35; break;
-				default:
-					a = 0;
-			}
-		}
-	}
-	return a;
-}
 function HVCollectData() {
 	this.load = function () { loadFromStorage(this, HV_COLL); };
 	this.save = function () { saveToStorage(this, HV_COLL); };
@@ -6400,46 +6063,6 @@ function loadCollectdataObject() {
 		_collectdata.load();
 	}
 }
-// function SaveToDatabase(a) {
-// 	loadDatabaseObject();
-// 	if (a === 1 || a === 0) {
-// 		var dmid = parseInt(_round.scan[0]);
-// 		_database.mclass[dmid] = MClassNum(_round.scan[1], 0);
-// 		if (_round.scan[2] === null) _database.mpl[mid] = 0;
-// 		else _database.mpl[dmid] = _round.scan[2];
-// 		_database.mattack[dmid] = MElemNum(_round.scan[3], 0);
-// 		_database.mweak[dmid] = MElemNum(_round.scan[4], 0);
-// 		_database.mresist[dmid] = MElemNum(_round.scan[5], 0);
-// 		_database.mimperv[dmid] = MElemNum(_round.scan[6], 0);
-// 		_database.datescan[dmid] = _round.scan[7];
-// 	}
-// 	if (a === 2 || a === 0) {
-// 		loadCollectdataObject();
-// 		var n = 0;
-// 		while (_collectdata.skillmid[n] !== undefined) {
-// 			var mid = _collectdata.skillmid[n];
-// 			if (_database.mskilltype[mid] === 0 || _database.mskilltype[mid] === null || _database.mskilltype[mid] === undefined) {
-// 				_database.mskillspell[mid] = _collectdata.mskillspell[n];
-// 				_database.mskilltype[mid] = MElemNum(_collectdata.skilltype[n], 0);
-// 			} else if (String(_database.mskillspell[mid]).length === 1) {
-// 				if ((_database.mskillspell[mid] !== _collectdata.mskillspell[n]) || (_database.mskilltype[mid] !== MElemNum(_collectdata.skilltype[n], 0))) {
-// 					_database.mskillspell[mid] = parseInt(String(_database.mskillspell[mid]) + '0' + String(_collectdata.mskillspell[n]));
-// 					_database.mskilltype[mid] = parseInt(String(_database.mskilltype[mid]) + String(MElemNum(_collectdata.skilltype[n], 0)));
-// 				}
-// 			} else if (String(_database.mskillspell[mid]).length === 3) {
-// 				if (((parseInt(String(_database.mskillspell[mid]).slice(0, 1)) !== _collectdata.mskillspell[n]) || (parseInt(String(_database.mskilltype[mid]).slice(0, 2)) !== MElemNum(_collectdata.skilltype[n], 0)))
-// 					&& ((parseInt(String(_database.mskillspell[mid]).slice(-1)) !== _collectdata.mskillspell[n] || parseInt(String(_database.mskilltype[mid]).slice(-2)) !== MElemNum( _collectdata.skilltype[n], 0 ))))
-// 				{
-// 					_database.mskillspell[mid] = parseInt(String(_database.mskillspell[mid]) + '0' + String(_collectdata.mskillspell[n]));
-// 					_database.mskilltype[mid] = parseInt(String(_database.mskilltype[mid]) + String(MElemNum(_collectdata.skilltype[n], 0)));
-// 				}
-// 			}
-// 			n++;
-// 		}
-// 		_collectdata.reset();
-// 	}
-// 	_database.save()
-// }
 function AssumeResistances() {
 	var sec = TimeCounter(1);
 	loadDatabaseObject();
@@ -6865,7 +6488,6 @@ function MonsterPopup() {
 	var popupLeftOffset = _settings.isMonsterPopupPlacement ? 955 : 300;
 	var elemMonsterPane = $("#monsterpane");
 	var monsterPaneHeight = elemMonsterPane.height();
-//	loadRoundObject();
 	var i, len = HVStat.monsters.length;
 	var monster;
 	for (i = 0; i < len; i++) {
