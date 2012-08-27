@@ -13,20 +13,20 @@
 // The goal of the develop-scan branch:
 //
 // - New global variables and functions are stored in the package
-// - Add function that local storage 'HVMonsterDatabase' migrates to new IndexedDB
-// - Add function to import/export monster database
-// - Add Monster information to be stored
-//   - monster trainer
-//   - debuffs affected
-//   - skill name
-//   - skill last used date
-// - Replace HVMonster with HVStat.Monster
-// - Replace MonsterPopup()
+// (Done)- Add function that local storage 'HVMonsterDatabase' migrates to new IndexedDB
+// (Done)- Add function to import/export monster database
+// (Done)- Add Monster information to be stored
+//         - monster trainer
+//         - debuffs affected
+//         - skill name
+//         - skill last used date
+// (Done)- Replace HVMonster with HVStat.Monster
+// (Done)- Replace MonsterPopup()
 // - Remove AssumeResistances()
 // - Remove StartDatabase()
-// - Remove MinimalizeDatabaseSize()
-// - Remove SaveToDatabase()
-// - Modify showMonsterStats()
+// (Done)- Remove MinimalizeDatabaseSize()
+// (Done)- Remove SaveToDatabase()
+// - Modify->Replace showMonsterStats()
 
 // Package
 var HVStat = {
@@ -444,6 +444,7 @@ HVStat.MonsterSkill = (function () {
 				vo.skillType = (_skillType ? _skillType.id : null);
 				vo.attackType = (_attackType ? _attackType.id : null);
 				vo.damageType = (_damageType ? _damageType.id : null);
+				vo.createKey();
 				return vo;
 			},
 			toString: function (abbrLevel) {
@@ -453,13 +454,14 @@ HVStat.MonsterSkill = (function () {
 	};
 
 	// public static method
-	MonsterSkill.fromBattle = function (used, damaged) {
+	MonsterSkill.fetchSkillLog = function (logUsed, logDamaged, skillType) {
 		var vo = new HVStat.MonsterSkillVO();
-		var r = / (uses|casts) ([^\.]+?)/.exec(used);
+		var r = / (uses|casts) ([^\.]+)/.exec(logUsed);
 		if (!r || r.length < 3) {
 			return null;
 		}
 		vo.name = r[2];
+		vo.skillType = skillType.id;
 		switch (r[1]) {
 		case "uses":
 			vo.attackType = HVStat.AttackType.PHYSICAL.id;
@@ -470,7 +472,7 @@ HVStat.MonsterSkill = (function () {
 		default:
 			vo.attackType = null;
 		}
-		r = / (.+?) damage/.exec(damaged);
+		r = / ([A-Za-z]+) damage/.exec(logDamaged);
 		if (!r || r.length < 2) {
 			return null;
 		}
@@ -836,13 +838,14 @@ HVStat.Monster = (function () {
 				return;
 			}
 
-			var nameFrameElement = _baseElement.children().eq(1).children().eq(0);
-			var usingHVFont = nameFrameElement.children().length > 1;
+			var nameOuterFrameElement = _baseElement.children().eq(1);
+			var nameInnerFrameElement = _baseElement.children().eq(1).children().eq(0);
+			var usingHVFont = nameInnerFrameElement.children().length > 1;
 			var hpBarBaseElement = _baseElement.children().eq(2).children().eq(0);
 			var mpBarBaseElement = _baseElement.children().eq(2).children().eq(1);
 			var spBarBaseElement = _baseElement.children().eq(2).children().eq(2);
 			var maxAbbrLevel = 5;
-			var maxStatsWidth = 320;
+			var maxStatsWidth = 315;
 
 			var hpIndicator = "";
 			var mpIndicator = "";
@@ -920,24 +923,84 @@ HVStat.Monster = (function () {
 						}
 						// melee attack and skills
 						if (_settings.showMonsterAttackTypeFromDB) {
-							statsHtml += '(<span style="color: black;">' + _scanInfo.meleeAttack.toString(abbrLevel) + '</span>';
+							statsHtml += '(<span style="color: black;">' + _scanInfo.meleeAttack.toString(abbrLevel > 0 ? abbrLevel : 1) + '</span>';
 							var manaSkills = _getManaSkills();
+							var damageTable = {
+								CRUSHING: false,
+								SLASHING: false,
+								PIERCING: false,
+								FIRE: false,
+								COLD: false,
+								ELEC: false,
+								WIND: false,
+								HOLY: false,
+								DARK: false,
+								SOUL: false,
+								VOID: false
+							};
+							var skillTable = {
+								PHYSICAL: { exists: false, damageTable: {} },
+								MAGICAL: { exists: false, damageTable: {} }
+							};
+							skillTable.PHYSICAL.damageTable = Object.create(damageTable);
+							skillTable.MAGICAL.damageTable = Object.create(damageTable);
+							var skillType, damageType;
 							for (var i = 0; i < manaSkills.length; i++) {
-								statsHtml += "|<span style='color:blue'>" + manaSkills[i].toString(abbrLevel) + "</span>";
+								attackType = manaSkills[i].attackType.id;
+								damageType = manaSkills[i].damageType.id;
+								skillTable[attackType].exists = true;
+								skillTable[attackType].damageTable[damageType] = true;
+							}
+							var manaSkillsExist = manaSkills.length > 0;
+							if (manaSkillsExist) {
+								statsHtml += ';<span style="color:blue">';
+							}
+							var attackTypeCount, damageTypeCount
+							attackTypeCount = 0;
+							for (attackType in skillTable) {
+								if (skillTable[attackType].exists) {
+									if (attackTypeCount > 0) {
+										statsHtml += '|';
+									}
+									damageTypeCount = 0;
+									for (damageType in skillTable[attackType].damageTable) {
+										if (skillTable[attackType].damageTable[damageType]) {
+											if (damageTypeCount === 0) {
+												statsHtml += HVStat.AttackType[attackType].toString(abbrLevel > 0 ? abbrLevel : 1) + '-';
+											} else {
+												statsHtml += HVStat.delimiter.toString(abbrLevel);
+											}
+											statsHtml += HVStat.DamageType[damageType].toString(abbrLevel > 0 ? abbrLevel : 1);
+											damageTypeCount++;
+										}
+									}
+									attackTypeCount++;
+								}
+							}
+							if (manaSkillsExist) {
+								statsHtml += '</span>';
 							}
 							var spiritSkill = _getSpiritSkill();
 							if (spiritSkill) {
-								statsHtml += "|<span style='color:red'>" + spiritSkill.toString(abbrLevel) + "</span>";
+								if (!manaSkillsExist) {
+									statsHtml += ';';
+								} else {
+									statsHtml += '|';
+								}
+								statsHtml += '<span style="color:red">' + spiritSkill.toString(abbrLevel > 0 ? abbrLevel : 1) + '</span>';
 							}
 							statsHtml += ')';
 						}
 					}
 					if (usingHVFont) {
+						nameOuterFrameElement.css("width", "auto"); // tweak for Firefox
+						nameInnerFrameElement.css("width", "auto"); // tweak for Firefox
 						html = "<div style='font-family:arial; font-size:7pt; font-style:normal; font-weight:bold; cursor:default; position:relative; top:-1px; left:2px; padding:0 1px; margin-left:0px; white-space:nowrap;'>" + statsHtml + "</div>";
-						nameFrameElement.after(html);
-						statsElement = nameFrameElement.next();
+						nameInnerFrameElement.after(html);
+						statsElement = nameInnerFrameElement.next();
 						console.log("scrollWidth = " + statsElement.prop("scrollWidth"));
-						if (Number(statsElement.prop("scrollWidth")) <= maxStatsWidth) {	// does not work with Firefox
+//						if (Number(statsElement.prop("scrollWidth")) <= maxStatsWidth) {	// does not work with Firefox without tweak
+						if (Number(nameOuterFrameElement.prop("scrollWidth")) <= maxStatsWidth) {	// does not work with Firefox without tweak
 							break;
 						} else if (abbrLevel < maxAbbrLevel - 1) {
 							// revert
@@ -945,20 +1008,33 @@ HVStat.Monster = (function () {
 						}
 					} else {
 						html = "<div style='font-family:arial; font-size:7pt; font-style:normal; font-weight:bold; display:inline; cursor:default; padding:0 1px; margin-left:1px; white-space:nowrap;'>" + statsHtml + "</div>";
-						var nameElement = nameFrameElement.children().eq(0);
+						var nameElement = nameInnerFrameElement.children().eq(0);
 						var name = nameElement.html();
+						nameOuterFrameElement.css("width", "auto"); // tweak for Firefox
+						nameInnerFrameElement.css("width", "auto"); // tweak for Firefox
 						nameElement.html(name + html);
 						nameElement.css("white-space", "nowrap");
 						console.log("scrollWidth = " + nameElement.prop("scrollWidth"));
-						console.log("clientWidth = " + nameElement.prop("clientWidth"));
-						if (Number(nameElement.prop("scrollWidth")) <= maxStatsWidth) {	// does not work with Firefox
+						if (Number(nameElement.prop("scrollWidth")) <= maxStatsWidth) {	// does not work with Firefox without tweak
 							break;
-						} else if (abbrLevel < maxAbbrLevel - 1) {
+						} else {
 							// revert
 							nameElement.html(name);
+							if (abbrLevel >= maxAbbrLevel - 1) {
+								// reduce name length
+								for (var len = name.length - 2; len >= 6; len--) {
+									var reducedName = name.substring(0, len) + "...";
+									nameElement.html(reducedName + html);
+									console.log("scrollWidth = " + nameElement.prop("scrollWidth"));
+									if (Number(nameElement.prop("scrollWidth")) <= maxStatsWidth) {	// does not work with Firefox without tweak
+										break;
+									}
+								}
+							}
 						}
 					}
 				}
+				nameOuterFrameElement.css("width", String(maxStatsWidth) + "px");
 			}
 			if (_settings.isShowMonsterDuration) {
 				showMonsterEffectsDuration(_baseElement);
@@ -1074,15 +1150,34 @@ HVStat.Monster = (function () {
 				_scanInfo = HVStat.MonsterScanInfo.fetchScanningLog(_index, html);
 				this.putScanInfoToDB(transaction);
 			},
-			setSkillFromBattle: function (used, damaged) {
-				var latest = HVStat.MonsterSkill.fromBattle(used, damaged);
-				// if mana skill then store up to 4
-				// if spirit skill then override
-				if (0 /* new */) {
-					// delele old one if reach a limit
-					// add new one
+			fetchSkillLog: function (used, damaged, transaction) {
+				var i;
+				var spiritSkillFound;
+				var skillType = (_prevSpRate <= _currSpRate) ? HVStat.SkillType.MANA : HVStat.SkillType.SPIRIT;
+				var skill = HVStat.MonsterSkill.fetchSkillLog(used, damaged, skillType);
+				if (skillType === HVStat.SkillType.SPIRIT) {
+					// spirit skill
+					// overwrite if exists
+					for (i = 0; i < _skills.length; i++) {
+						if (_skills[i].skillType ===  HVStat.SkillType.SPIRIT) {
+							break;
+						}
+					}
+					_skills[i] = skill;
 				} else {
-					// update last used date
+					// mana skill
+					// overwrite if same name or name is null
+					for (i = 0; i < _skills.length; i++) {
+						if (_skills[i].skillType ===  HVStat.SkillType.MANA
+								&& (_skills[i].name === skill.name
+									|| (_skills[i].name === null && _skills[i].attackType === skill.attackType && _skills[i].damageType === skill.damageType))) {
+							break;
+						}
+					}
+					_skills[i] = skill;
+				}
+		 		if (_settings.isRememberSkillsTypes) {
+					this.putSkillsToDB(transaction);
 				}
 			},
 			setFromValueObject: function (valueObject) {
@@ -1173,20 +1268,39 @@ HVStat.Monster = (function () {
 				if (!_id) {
 					return;
 				}
-				var skillStore = transaction.objectStore("MonsterSkills");
-				var i;
-				var vo;
-				var reqPut;
-				for (i = 0; i < _skills.length; i++) {
-					vo = _skills.valueObject;
-					vo.id = _id;
-					reqPut = skillStore.put(vo);
-					reqPut.onsuccess = function (event) {
-						console.log("putSkillsToDB: success: id = " + _id);
-					};
-					reqPut.onerror = function (event) {
-						console.log("putSkillsToDB: error: id = " + _id);
-					};
+				// put after delete
+				var skillsStore = transaction.objectStore("MonsterSkills");
+				var range = HVStat.IDBKeyRange.bound(_id, _id);
+				var reqOpen = skillsStore.openCursor(range, "next");
+				reqOpen.onsuccess = function () {
+					var i;
+					var vo;
+					var reqPut;
+					var cursor = this.result;
+					if (cursor) {
+						// delete
+						cursor.delete();
+						cursor.continue();
+					} else {
+						// put
+						for (i = 0; i < _skills.length; i++) {
+							vo = _skills[i].valueObject;
+							vo.id = _id;
+							vo.createKey();
+//							alert("Skill: id = " + vo.id + ", name = '" + vo.name + "', skillType = " + vo.skillType + ", attackType = " + vo.attackType + ", damageType = " + vo.damageType);
+							reqPut = skillsStore.put(vo);
+							reqPut.onsuccess = function (event) {
+								console.log("putSkillsToDB: success: id = " + _id);
+							};
+							reqPut.onerror = function (event) {
+								console.log("putSkillsToDB: error: id = " + _id);
+							};
+						}
+					}
+				}
+				reqOpen.onerror = function () {
+					console.log('request error.');
+					alert('request error.');
 				}
 			},
 			renderStats: function () {
@@ -2222,12 +2336,12 @@ function main3() {
 			_ltc.taggingitems[0]++;
 			_ltc.taggingitems[1] += TimeCounter(0, t51);
 		}
-		if (_settings.isRememberSkillsTypes) {
-			loadCollectdataObject();
-			if (_collectdata.skillmid.length > 3) {
-//				SaveToDatabase(2);
-			}
-		}
+// 		if (_settings.isRememberSkillsTypes) {
+// 			loadCollectdataObject();
+// 			if (_collectdata.skillmid.length > 3) {
+// 				SaveToDatabase(2);
+// 			}
+// 		}
 		if ((_settings.isStartAlert || _settings.isShowEquippedSet) && !isHVFontEngine()) {
 			var t52 = TimeCounter(1);
 			FindSettingsStats();
@@ -2595,19 +2709,19 @@ function collectRoundInfo() {
 		HVStat.monsters.push(new HVStat.Monster(index));
 	});
 	loadRoundObject();
-	if (_settings.isRememberSkillsTypes)
-		loadCollectdataObject();
+// 	if (_settings.isRememberSkillsTypes)
+// 		loadCollectdataObject();
 	if (_settings.isTrackItems)
 		loadDropsObject();
 	if (_settings.isTrackRewards)
 		loadRewardsObject();
-	if (!_round.isLoaded) {
-		// create monster objects
-		$("#monsterpane > div").each(function () {
-			var monster = new HVMonster();
-			_round.monsters.push(monster);
-		});
-	}
+// 	if (!_round.isLoaded) {
+// 		// create monster objects
+// 		$("#monsterpane > div").each(function () {
+// 			var monster = new HVMonster();
+// 			_round.monsters.push(monster);
+// 		});
+// 	}
 // 	if (_settings.isSpellsSkillsDifference || _settings.isShowStatsPopup) {
 // 		var t74 = TimeCounter(1);
 // 		var i = _round.monsters.length;
@@ -2626,6 +2740,7 @@ function collectRoundInfo() {
 // 	}
 	var index = HVStat.monsters.length - 1;
 	$("#togpane_log td:first-child").each(function (j) {
+		var reResult;
 		var g = $(this);
 		var k = g.next().next();
 		if (j === 0) {
@@ -2640,7 +2755,7 @@ function collectRoundInfo() {
 		var selall = $(".t1:contains(" + kline + ")").next().next().text();
 		_ltc.sel[0]++;
 		_ltc.sel[1] += TimeCounter(0, t87);
-		if (!_round.isLoaded) {
+		if (!_round.isLoaded) { // -> if turn 0
 			if (c.match(/HP=/)) {
 				HVStat.monsters[index].fetchStartingLog(c);
 				if (_settings.showMonsterInfoFromDB) {
@@ -2684,7 +2799,7 @@ function collectRoundInfo() {
 			} else if (c.match(/CrysFest/)) {
 				_round.battleType = CRYSFEST;
 			}
-//			_round.save();
+			RoundSave();
 		}
 		if (g.html() !== e) {
 			return false;
@@ -2852,26 +2967,9 @@ function collectRoundInfo() {
 						var milliseconds21 = TimeCounter(1);
 						var j = HVStat.monsters.length;
 						while (j--) {
-							if (sel.match(/[^\.]{1,30} (uses|casts) /i)[0].replace(" uses ","").replace(" casts ","") === HVStat.monsters[j].name) {
-								var mid = HVStat.monsters[j].id;
-								var stype = c.match(/[a-z]{1,10} damage/i)[0].replace(" damage","");
-								_collectdata.skillmid.push(mid);
-								_collectdata.skilltype.push(stype);
-								var spdiff = _round.monsters[j].sp1 - _round.monsters[j].sp2;
-								if (sel.match(/ casts /i)) {
-									if (spdiff < 0) {
-										_collectdata.mskillspell.push(3);
-									} else {
-										_collectdata.mskillspell.push(1);
-									}
-								} else {
-									if (spdiff < 0) {
-										_collectdata.mskillspell.push(4);
-									} else {
-										_collectdata.mskillspell.push(2);
-									}
-								}
-								_collectdata.save();
+							reResult = /([^\.]{1,30}) (?:uses|casts) /.exec(sel);
+							if (reResult && reResult.length >= 2 && reResult[1] === HVStat.monsters[j].name && reResult[1].indexOf("Unnamed ") !== 0) {
+								HVStat.monsters[j].fetchSkillLog(sel, c, HVStat.transaction);
 								break;
 							}
 						}
@@ -3133,16 +3231,16 @@ function collectRoundInfo() {
 	if (e > _round.lastTurn) {
 		_round.lastTurn = e;
 	}
-	if (_settings.isSpellsSkillsDifference) {
-		var t74 = TimeCounter(1);
-		var i = _round.monsters.length;
-		while (i--) {
-			if (_round.monsters[i].hasspbar) {
-				_round.monsters[i].sp2 = _round.monsters[i].sp1;
-			}
-		}
-		_ltc.changedMHits[1] += TimeCounter(0, t74);
-	}
+// 	if (_settings.isSpellsSkillsDifference) {
+// 		var t74 = TimeCounter(1);
+// 		var i = _round.monsters.length;
+// 		while (i--) {
+// 			if (_round.monsters[i].hasspbar) {
+// 				_round.monsters[i].sp2 = _round.monsters[i].sp1;
+// 			}
+// 		}
+// 		_ltc.changedMHits[1] += TimeCounter(0, t74);
+// 	}
 	RoundSave();
 	_ltc.collectRoundInfo[0]++;
 	_ltc.collectRoundInfo[1] += TimeCounter(0, milliseconds1);
@@ -3150,9 +3248,9 @@ function collectRoundInfo() {
 }
 
 function RoundSave() {
-	_round.monstersV2 = [];
+	_round.monsters = [];
 	HVStat.monsters.forEach(function (element, index, array) {
-		_round.monstersV2[index] = element.valueObject;
+		_round.monsters[index] = element.valueObject;
 	});
 	_round.save();
 }
@@ -3795,7 +3893,7 @@ function getMonsterStatsHtml() {
 	h += '</tr></table>';
 	h += '</div>';
 	h += '<h3>Delete Data</h3>';
-	h += '<p>If you want to clean the database, use this.</p>';
+	h += '<p>If you want to clean the database, delete data.</p>';
 	h += '<table><tr>';
 	h += '<td><span style="font-weight: bold;">Monster Scanning Data</span></td>';
 	h += '<td><input type="button" id="deleteMonsterScanInfo" value="Delete" /></td>';
@@ -3806,8 +3904,8 @@ function getMonsterStatsHtml() {
 	h += '</div>';
 	h += '<h3>Delete Database</h3>';
 	h += '<div>';
-	h += '<p>If you are facing a problem with the database, and the problem can not be resolved, use this.</p>';
-	h += '<p>In order to re-create your database, reload the page. After that, you can import exported data.</p>';
+	h += '<p>If you are facing a problem with database, and the problem can not be resolved, delete the database.</p>';
+	h += '<p>In order to re-create database, reload the page. After that, you can import data previously exported.</p>';
 	h += '<input type="button" id="deleteDatabase" value="Delete Database" />';
 	h += '</div>';
 	h += '<h2>Migration</h2>';
@@ -3820,7 +3918,7 @@ function getMonsterStatsHtml() {
 	h += '<h3>Delete Old Database (localStorage)</h3>';
 	h += '<div>';
 	h += '<p>Currently your old database occupies <span style="font-weight: bold;">'
-		+ (oldDatabaseSize / 1024 / 1024 * (browserIsChrome() ? 2 : 1)).toFixed(1)
+		+ (oldDatabaseSize / 1024 / 1024 * (browserIsChrome() ? 2 : 1)).toFixed(2)
 		+ '</span> MB on the localStorage. In order to free up space for other HV scripts, delete the old database after migration.</p>';
 	h += '<p><span style="color: red;"></span></p>';
 	h += '<input type="button" id="deleteOldDatabase" value="Delete" />';
@@ -4769,11 +4867,8 @@ function loadRoundObject() {
 	if (_round !== null) return;
 	_round = new HVRound();
 	_round.load();
-	_round.monstersV2.forEach(function (element, index, array) {
+	_round.monsters.forEach(function (element, index, array) {
 		HVStat.monsters[index].setFromValueObject(element);
-		console.log("loadRoundObject: HVStat.monsters.length = " + HVStat.monsters.length);
-		console.log("loadRoundObject: index = " + index);
-		console.log("loadRoundObject: HVStat.monsters[index] = " + HVStat.monsters[index]);
 	});
 }
 function getRelativeTime(b) {
@@ -6047,22 +6142,22 @@ function StartDatabase() {
 	if (ISBATTLE) _ltc.isbattle[1] -= TimeCounter(0, sec);
 	_ltc.save();
 }
-function HVCollectData() {
-	this.load = function () { loadFromStorage(this, HV_COLL); };
-	this.save = function () { saveToStorage(this, HV_COLL); };
-	this.reset = function () { deleteFromStorage(HV_COLL); };
-	this.cloneFrom = clone;
-	this.skillmid = [];
-	this.skilltype = [];
-	this.mskillspell = [];
-	this.isLoaded = false;
-}
-function loadCollectdataObject() {
-	if (_collectdata === null) {
-		_collectdata = new HVCollectData();
-		_collectdata.load();
-	}
-}
+// function HVCollectData() {
+// 	this.load = function () { loadFromStorage(this, HV_COLL); };
+// 	this.save = function () { saveToStorage(this, HV_COLL); };
+// 	this.reset = function () { deleteFromStorage(HV_COLL); };
+// 	this.cloneFrom = clone;
+// 	this.skillmid = [];
+// 	this.skilltype = [];
+// 	this.mskillspell = [];
+// 	this.isLoaded = false;
+// }
+// function loadCollectdataObject() {
+// 	if (_collectdata === null) {
+// 		_collectdata = new HVCollectData();
+// 		_collectdata.load();
+// 	}
+// }
 function AssumeResistances() {
 	var sec = TimeCounter(1);
 	loadDatabaseObject();
