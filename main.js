@@ -22,8 +22,8 @@
 //         - skill last used date
 // (Done)- Replace HVMonster with HVStat.Monster
 // (Done)- Replace MonsterPopup()
-// - Remove AssumeResistances()
-// - Remove StartDatabase()
+// (Done)- Remove AssumeResistances()
+// (Done)- Remove StartDatabase()
 // (Done)- Remove MinimalizeDatabaseSize()
 // (Done)- Remove SaveToDatabase()
 // - Modify->Replace showMonsterStats()
@@ -31,12 +31,17 @@
 // Package
 var HVStat = {
 	// package scope global constants
+	isChrome: navigator.userAgent.indexOf("Chrome") >= 0,
 	indexedDB: window.indexedDB || window.webkitIndexedDB || window.mozIndexedDB,
 	IDBTransaction: window.IDBTransaction || window.webkitIDBTransaction,
 	IDBKeyRange: window.IDBKeyRange|| window.webkitIDBKeyRange,
 	IDBCursor: window.IDBCursor || window.webkitIDBCursor,
 	reMonsterScanInfoTSV: /^(\d+?)\t(.*?)\t(.*?)\t(.*?)\t(\d*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)$/gm,
 	reMonsterSkillsTSV: /^(\d+?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)$/gm,
+
+	// DOM caches
+	popupElement: null,
+	monsterPaneElement: null,
 
 	// package scope global variables
 	idb: null,
@@ -47,7 +52,9 @@ var HVStat = {
 	dataURIMonsterSkills: null,
 	nRowsMonsterScanInfoTSV: 0,
 	nRowsMonsterSkillsTSV: 0,
-	monsters: []	// contains Monster instances
+	duringBattle: false,
+	monsters: []	// instances of HVStat.Monster
+
 };
 
 HV_SETTINGS = "HVSettings";
@@ -390,7 +397,7 @@ HVStat.MonsterVO = function () {
 // functions for rendering
 
 HVStat.getDateTimeString = function (date) {
-	if (browserIsChrome()) {
+	if (HVStat.isChrome) {
 		// see http://code.google.com/p/chromium/issues/detail?id=3607
 		return date.toLocaleDateString() + " " + date.toLocaleTimeString();
 	} else {
@@ -425,7 +432,7 @@ HVStat.MonsterSkill = (function () {
 	// constructor
 	function MonsterSkill(vo) {
 		var _name = vo.name || null;
-		var _lastUsedDate = new Date(vo.lastUsedDate) || null;
+		var _lastUsedDate = vo.lastUsedDate ? new Date(vo.lastUsedDate) : null;
 		var _skillType = HVStat.SkillType[vo.skillType] || null;
 		var _attackType = HVStat.AttackType[vo.attackType] || null;
 		var _damageType = HVStat.DamageType[vo.damageType] || null;
@@ -440,10 +447,10 @@ HVStat.MonsterSkill = (function () {
 			get valueObject() {
 				var vo = new HVStat.MonsterSkillVO();
 				vo.name = _name;
-				vo.lastUsedDate = _lastUsedDate.toISOString();
-				vo.skillType = (_skillType ? _skillType.id : null);
-				vo.attackType = (_attackType ? _attackType.id : null);
-				vo.damageType = (_damageType ? _damageType.id : null);
+				vo.lastUsedDate = _lastUsedDate ? _lastUsedDate.toISOString() : null;
+				vo.skillType = _skillType ? _skillType.id : null;
+				vo.attackType = _attackType ? _attackType.id : null;
+				vo.damageType = _damageType ? _damageType.id : null;
 				vo.createKey();
 				return vo;
 			},
@@ -570,7 +577,7 @@ HVStat.MonsterScanInfo = (function () {
 			_debuffsAffected.push(HVStat.Debuff[vo.debuffsAffected[i]]);
 		}
 
-		// private instancce method
+		// private instance method
 		var _hideDamageTypes = function (source) {
 			var i, j;
 			var damageTypes = source.concat();
@@ -763,7 +770,8 @@ HVStat.Monster = (function () {
 	// constructor
 	function Monster(index) {
 		if (isNaN(index) || index < 0 || _domElementIds.length <= index) {
-			throw new Error("invalid index");
+			alert("invalid index");
+			return null;
 		}
 
 		var _index = index;
@@ -804,7 +812,7 @@ HVStat.Monster = (function () {
 		var _currHp = function () {
 			return Math.ceil(_currHpRate * _maxHp);
 		};
-		var _waitingDBResponse = function () {
+		var _waitingForDBResponse = function () {
 			return _waitingForGetResponseOfMonsterScanInfo || _waitingForGetResponseOfMonsterSkills;
 		};
 		var _getManaSkills = function () {
@@ -818,6 +826,36 @@ HVStat.Monster = (function () {
 				}
 			}
 			return manaSkills;
+		};
+		var _getManaSkillTable = function () {
+			var manaSkills = _getManaSkills();
+			var damageTable = {
+				CRUSHING: false,
+				SLASHING: false,
+				PIERCING: false,
+				FIRE: false,
+				COLD: false,
+				ELEC: false,
+				WIND: false,
+				HOLY: false,
+				DARK: false,
+				SOUL: false,
+				VOID: false
+			};
+			var skillTable = {
+				PHYSICAL: { exists: false, damageTable: {} },
+				MAGICAL: { exists: false, damageTable: {} }
+			};
+			skillTable.PHYSICAL.damageTable = Object.create(damageTable);
+			skillTable.MAGICAL.damageTable = Object.create(damageTable);
+			var skillType, damageType;
+			for (var i = 0; i < manaSkills.length; i++) {
+				attackType = manaSkills[i].attackType.id;
+				damageType = manaSkills[i].damageType.id;
+				skillTable[attackType].exists = true;
+				skillTable[attackType].damageTable[damageType] = true;
+			}
+			return skillTable;
 		};
 		var _getSpiritSkill = function () {
 			var i, skill;
@@ -924,37 +962,12 @@ HVStat.Monster = (function () {
 						// melee attack and skills
 						if (_settings.showMonsterAttackTypeFromDB) {
 							statsHtml += '(<span style="color: black;">' + _scanInfo.meleeAttack.toString(abbrLevel > 0 ? abbrLevel : 1) + '</span>';
-							var manaSkills = _getManaSkills();
-							var damageTable = {
-								CRUSHING: false,
-								SLASHING: false,
-								PIERCING: false,
-								FIRE: false,
-								COLD: false,
-								ELEC: false,
-								WIND: false,
-								HOLY: false,
-								DARK: false,
-								SOUL: false,
-								VOID: false
-							};
-							var skillTable = {
-								PHYSICAL: { exists: false, damageTable: {} },
-								MAGICAL: { exists: false, damageTable: {} }
-							};
-							skillTable.PHYSICAL.damageTable = Object.create(damageTable);
-							skillTable.MAGICAL.damageTable = Object.create(damageTable);
-							var skillType, damageType;
-							for (var i = 0; i < manaSkills.length; i++) {
-								attackType = manaSkills[i].attackType.id;
-								damageType = manaSkills[i].damageType.id;
-								skillTable[attackType].exists = true;
-								skillTable[attackType].damageTable[damageType] = true;
-							}
+ 							var manaSkills = _getManaSkills();
 							var manaSkillsExist = manaSkills.length > 0;
 							if (manaSkillsExist) {
 								statsHtml += ';<span style="color:blue">';
 							}
+							var skillTable = _getManaSkillTable();
 							var attackTypeCount, damageTypeCount
 							attackTypeCount = 0;
 							for (attackType in skillTable) {
@@ -1064,11 +1077,20 @@ HVStat.Monster = (function () {
 			if (manaSkills && manaSkills.length > 0) {
 				html += '<tr><td valign="top">Skills:</td><td>';
 				len = manaSkills.length;
-				for (i = 0; i < len; i++) {
-					if (i > 0) {
-						html += '<br/>';
+				var skillTable = _getManaSkillTable();
+				var skillCount = 0;
+				for (attackType in skillTable) {
+					if (skillTable[attackType].exists) {
+						for (damageType in skillTable[attackType].damageTable) {
+							if (skillTable[attackType].damageTable[damageType]) {
+								if (skillCount > 0) {
+			 						html += '<br/>';
+								}
+								html += HVStat.AttackType[attackType].name + '-' + HVStat.DamageType[damageType].name;
+								skillCount++;
+							}
+						}
 					}
-					html += manaSkills[i].toString();
 				}
 				html += '</td></tr>';
 			}
@@ -1089,7 +1111,7 @@ HVStat.Monster = (function () {
 			} else {
 				lastScanString = "Never";
 			}
-			html += '<tr><td>Last Scan:</td><td>' + lastScanString + '</td></tr>';
+			html += '<tr><td valign="top">Last Scan:</td><td>' + lastScanString + '</td></tr>';
 			if (existsScanInfo && _scanInfo.lastScanDate) {
 				html += '<tr><td></td><td>' + HVStat.getElapsedFrom(_scanInfo.lastScanDate) + ' ago</td></tr>';
 			}
@@ -1176,7 +1198,7 @@ HVStat.Monster = (function () {
 					}
 					_skills[i] = skill;
 				}
-		 		if (_settings.isRememberSkillsTypes) {
+				if (_settings.isRememberSkillsTypes) {
 					this.putSkillsToDB(transaction);
 				}
 			},
@@ -1238,7 +1260,7 @@ HVStat.Monster = (function () {
 				}
 				var doCallback = function () {
 					if (callback instanceof Function) {
-						if (!_waitingDBResponse()) {
+						if (!_waitingForDBResponse()) {
 							callback();
 						} else {
 							console.log("waiting");
@@ -1304,7 +1326,7 @@ HVStat.Monster = (function () {
 				}
 			},
 			renderStats: function () {
-				if (!_waitingDBResponse()) {
+				if (!_waitingForDBResponse()) {
 					_renderStats();
 				} else {
 					setTimeout(arguments.callee, 10);
@@ -1901,9 +1923,9 @@ HVStat.migration.damageTypeFromCode = function (code) {
 };
 
 HVStat.migration.createMonsterScanInfoVOFromOldDB = function (oldDB, index) {
-	if (!oldDB.mclass[index])
+	if (!oldDB.mclass[index]) {
 		return null;
-
+	}
 	var i, len, v, vo = new HVStat.MonsterScanInfoVO();
 	// id
 	vo.id = Number(index);
@@ -2107,7 +2129,6 @@ ARENA = 1;
 GRINDFEST = 2;
 ITEM_WORLD = 3;
 CRYSFEST = 4;
-ISBATTLE = 0;
 _overview = null;
 _stats = null;
 _profs = null;
@@ -2153,13 +2174,17 @@ function main1() {
 		_ltc.hidelogo[0]++;
 		_ltc.hidelogo[1] += (TimeCounter(0, t));
 	}
+	// store DOM cache
+	HVStat.popupElement = document.getElementById("popup_box");
+	HVStat.monsterPaneElement = document.getElementById("monsterpane");
+
 	setTimeout(main2, 10);
 }
 function main2() {
 	HVStat.openIndexedDB(main3);
 }
 function main3() {
-	if (!browserIsChrome() && !cssInserted()) {
+	if (!HVStat.isChrome && !cssInserted()) {
 		GM_addStyle(GM_getResourceText("jQueryUICSS"));
 		cssAdded();
 	}
@@ -2172,9 +2197,10 @@ function main3() {
 		_ltc.hidetitle[0]++;
 		_ltc.hidetitle[1] += (TimeCounter(0, t));
 	}
-	if (document.getElementById("togpane_log"))
-		ISBATTLE = 1;
-	if (ISBATTLE) {
+	if (document.getElementById("togpane_log")) {
+		HVStat.duringBattle = true;
+	}
+	if (HVStat.duringBattle) {
 		HVStat.transaction = HVStat.idb.transaction(["MonsterScanInfo", "MonsterSkills"], "readwrite");
 		if (_settings.isShowMonsterNumber)
 			showMonsterNumber();
@@ -2231,7 +2257,7 @@ function main3() {
 		}
 		if (_settings.isShowStatsPopup) {
 			var t45 = TimeCounter(1);
-			MonsterPopup();
+			registerEventHandlersForMonsterPopup();
 			_ltc.monsterpopup[0]++;
 			_ltc.monsterpopup[1] += TimeCounter(0, t45);
 		}
@@ -2242,7 +2268,7 @@ function main3() {
 			_ltc.showscanbutton[1] += TimeCounter(0, t46);
 		}
 	} else {
-		if (!ISBATTLE && (_round !== null))
+		if (!HVStat.duringBattle && (_round !== null))
 			_round.reset();
 		else if (_settings.isColumnInventory && isItemInventoryPage())
 			initItemsView();
@@ -2251,7 +2277,7 @@ function main3() {
 		else if (isShrinePage()) {
 			if (_settings.isTrackShrine)
 				captureShrine();
-			if (browserIsChrome())
+			if (HVStat.isChrome)
 				window.document.onkeydown = null;	// workaround to make enable SPACE key
 		}
 	}
@@ -2264,7 +2290,7 @@ function main3() {
 	if (c) inventoryWarning();
 	initUI();
 
-	if (ISBATTLE) {
+	if (HVStat.duringBattle) {
 		if (_settings.isCountPageLoadTime) {
 			var clickedLTC = localStorage.getItem('PLTC');
 			if (clickedLTC !== null) {
@@ -2336,12 +2362,6 @@ function main3() {
 			_ltc.taggingitems[0]++;
 			_ltc.taggingitems[1] += TimeCounter(0, t51);
 		}
-// 		if (_settings.isRememberSkillsTypes) {
-// 			loadCollectdataObject();
-// 			if (_collectdata.skillmid.length > 3) {
-// 				SaveToDatabase(2);
-// 			}
-// 		}
 		if ((_settings.isStartAlert || _settings.isShowEquippedSet) && !isHVFontEngine()) {
 			var t52 = TimeCounter(1);
 			FindSettingsStats();
@@ -2709,35 +2729,10 @@ function collectRoundInfo() {
 		HVStat.monsters.push(new HVStat.Monster(index));
 	});
 	loadRoundObject();
-// 	if (_settings.isRememberSkillsTypes)
-// 		loadCollectdataObject();
 	if (_settings.isTrackItems)
 		loadDropsObject();
 	if (_settings.isTrackRewards)
 		loadRewardsObject();
-// 	if (!_round.isLoaded) {
-// 		// create monster objects
-// 		$("#monsterpane > div").each(function () {
-// 			var monster = new HVMonster();
-// 			_round.monsters.push(monster);
-// 		});
-// 	}
-// 	if (_settings.isSpellsSkillsDifference || _settings.isShowStatsPopup) {
-// 		var t74 = TimeCounter(1);
-// 		var i = _round.monsters.length;
-// 		while (i--) {
-// 			var e = $("#" + HVStat.Monster.getDomElementId(i)).children().eq(2).children();
-// 			if (e.filter("div.btm5").length > 2) {
-// 				_round.monsters[i].hasspbar = true;
-// 			}
-// 			if (_round.monsters[i].hasspbar) {
-// 				var spbar = e.eq(2);
-// 				// get current SP percent
-// 				_round.monsters[i].sp1 = spbar.children().eq(0).children("img").eq(1).width() / 120;
-// 			}
-// 		}
-// 		_ltc.changedMHits[1] += TimeCounter(0, t74);
-// 	}
 	var index = HVStat.monsters.length - 1;
 	$("#togpane_log td:first-child").each(function (j) {
 		var reResult;
@@ -3231,16 +3226,6 @@ function collectRoundInfo() {
 	if (e > _round.lastTurn) {
 		_round.lastTurn = e;
 	}
-// 	if (_settings.isSpellsSkillsDifference) {
-// 		var t74 = TimeCounter(1);
-// 		var i = _round.monsters.length;
-// 		while (i--) {
-// 			if (_round.monsters[i].hasspbar) {
-// 				_round.monsters[i].sp2 = _round.monsters[i].sp1;
-// 			}
-// 		}
-// 		_ltc.changedMHits[1] += TimeCounter(0, t74);
-// 	}
 	RoundSave();
 	_ltc.collectRoundInfo[0]++;
 	_ltc.collectRoundInfo[1] += TimeCounter(0, milliseconds1);
@@ -3565,7 +3550,7 @@ function getReportOverviewHtml() {
 		else E = K + " days, " + Math.floor((v / 60) - (K * 24)) + " hours, " + (v % 60).toFixed() + " mins";
 		var e = f.toLocaleString();
 		var z = r.toLocaleString();
-		if (browserIsChrome()) {
+		if (HVStat.isChrome) {
 			e = f.toLocaleDateString() + " " + f.toLocaleTimeString();
 			z = r.toLocaleDateString() + " " + r.toLocaleTimeString();
 		}
@@ -3728,7 +3713,7 @@ function getReportStatsHtml() {
 		var forall = _stats.forbidSpells[1] + _stats.forbidSpells[3];
 		var offhand = _stats.aOffhands[0] + _stats.aOffhands[2];
 		var offhanddam = _stats.aOffhands[1] + _stats.aOffhands[3];
-		if (browserIsChrome()) dst1 = dst.toLocaleDateString() + " " + dst.toLocaleTimeString();
+		if (HVStat.isChrome) dst1 = dst.toLocaleDateString() + " " + dst.toLocaleTimeString();
 		c += '<tr><td colspan="2"><b>Rounds tracked:</b> ' + _stats.rounds + ' <b>Since: </b>' + dst1 + '</td></tr><tr><td colspan="2"><b>Monsters killed:</b> ' + _stats.kills + '</td></tr><tr><td colspan="2"><b>Offensive Statistics:</b></td></tr><tr><td style="padding-left:10px"><b>Physical:</b></td><td style="padding-left:10px"><b>Magical:</b></td></tr><tr><td style="padding-left:20px">Accuracy: ' + (_stats.aAttempts === 0 ? 0 : (f / _stats.aAttempts * 100).toFixed(2)) + '%</td><td style="padding-left:20px">Accuracy: ' + (h === 0 ? 0 : (g / h * 100).toFixed(2)) + '%</td></tr><tr><td style="padding-left:20px">Crit chance: ' + (f === 0 ? 0 : (_stats.aHits[1] / f * 100).toFixed(2)) + '%</td><td style="padding-left:20px">Crit chance: ' + (e === 0 ? 0 : (_stats.sHits[1] / e * 100).toFixed(2)) + '%</td></tr><tr><td style="padding-left:20px">Overwhelming Strikes chance: ' + (f === 0 ? 0 : (_stats.overStrikes / f * 100).toFixed(2)) + '%</td></tr><tr><td style="padding-left:20px">Counter chance on block/parry: ' + (bp === 0 ? 0 : (_stats.aCounters[0]*100/bp).toFixed(2)) + '%</td></tr><tr><td style="padding-left:30px">Number of counters in turn:</td></tr>';
 		c +=  '<tr><td colspan="2" style="padding-left:30px">One - ' + (c1 === 0 ? 0 : (c1*100/call).toFixed(2)) + '% | Two - ' + (_stats.aCounters[2] === 0 ? 0 : (_stats.aCounters[2]*100/call).toFixed(2)) + '% | Three - ' + (_stats.aCounters[3] === 0 ? 0 :(_stats.aCounters[3]*100/call).toFixed(2));
 		c += '%</td></tr>';
@@ -3917,8 +3902,8 @@ function getMonsterStatsHtml() {
 	h += '</div>';
 	h += '<h3>Delete Old Database (localStorage)</h3>';
 	h += '<div>';
-	h += '<p>Currently your old database occupies <span style="font-weight: bold;">'
-		+ (oldDatabaseSize / 1024 / 1024 * (browserIsChrome() ? 2 : 1)).toFixed(2)
+	h += '<p>Currently your old database occupies <span id="oldDatabaseSize" style="font-weight: bold;">'
+		+ (oldDatabaseSize / 1024 / 1024 * (HVStat.isChrome ? 2 : 1)).toFixed(2)
 		+ '</span> MB on the localStorage. In order to free up space for other HV scripts, delete the old database after migration.</p>';
 	h += '<p><span style="color: red;"></span></p>';
 	h += '<input type="button" id="deleteOldDatabase" value="Delete" />';
@@ -3938,7 +3923,7 @@ function initUI() {
 }
 function initMainMenu() {
 	if (_isMenuInitComplete) return;
-	var b = "[STAT] HentaiVerse Statistics, Tracking, and Analysis Tool v." + VERSION + (browserIsChrome() ? " (Chrome Edition)" : "");
+	var b = "[STAT] HentaiVerse Statistics, Tracking, and Analysis Tool v." + VERSION + (HVStat.isChrome ? " (Chrome Edition)" : "");
 	var c = document.createElement("div");
 	$(c).addClass("_mainMenu").css("text-align", "left");
 	var a = '<div id="tabs"><ul>'
@@ -4017,12 +4002,12 @@ function initStatsPane() {
 			if (_backup[i].datesave !== 0) {
 				nd.setTime( _backup[i].datesave);
 				ds[i] = nd.toLocaleString();
-				if (browserIsChrome()) ds[i] = nd.toLocaleDateString() + " " + nd.toLocaleTimeString();
+				if (HVStat.isChrome) ds[i] = nd.toLocaleDateString() + " " + nd.toLocaleTimeString();
 			}
 			if (_backup[i].datestart !== 0) {
 				nd.setTime( _backup[i].datestart);
 				d[i] = nd.toLocaleString();
-				if (browserIsChrome()) d[i] = nd.toLocaleDateString() + " " + nd.toLocaleTimeString();
+				if (HVStat.isChrome) d[i] = nd.toLocaleDateString() + " " + nd.toLocaleTimeString();
 			}
 			
 		}
@@ -4132,7 +4117,7 @@ function initMonsterStatsPane() {
 				downloadLink.attr("href", HVStat.dataURIMonsterScanInfo);
 				downloadLink.attr("download", "hvstat_monster_scan.tsv");
 				downloadLink.css("visibility", "visible");
-				alert("Ready to export your monster scanning data.\nClick download link.");
+				alert("Ready to export your monster scanning data.\nClick the download link.");
 			}
 		});
 	});
@@ -4145,7 +4130,7 @@ function initMonsterStatsPane() {
 				downloadLink.attr("href", HVStat.dataURIMonsterSkills);
 				downloadLink.attr("download", "hvstat_monster_skill.tsv");
 				downloadLink.css("visibility", "visible");
-				alert("Ready to export your monster skill data.\nClick download link.");
+				alert("Ready to export your monster skill data.\nClick the download link.");
 			}
 		});
 	});
@@ -4329,10 +4314,12 @@ function initSettingsPane() {
 		+ '<tr><td align="center" style="width:5px;padding-left:20px"><input type="checkbox" name="isWarnCF" /></td><td colspan="2" style="padding-left:10px">Crystfest</td></tr>'
 		+ '<tr><td align="center" style="width:5px;padding-left:20px"><input type="checkbox" name="isWarnIW" /></td><td colspan="2" style="padding-left:10px">Item World</td></tr>'
 		+ '<tr><td colspan="2"><b>Database Options:</b></td></tr>'
-		+ '<tr><td colspan="3"><input type="button" class="_startdatabase" value="Save Original Monsters" /><input type="button" class="_assumemonsterstats" value="Assume Monster Stats" /></td></tr>'
-		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isRememberScan" /></td><td colspan="2">Save scan results</td><td align="center" style="width:120px">' + t15 + ' ms by scan, ' + t15b + ' ms by round(' + (t15b*100/t15b0).toFixed(1) + '%)</td></tr>'
-		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isRememberSkillsTypes" /></td><td colspan="2">Save skill types (elements) while used in  battle (data updated on scan and outside of battle)</td><td align="center" style="width:120px">' + t21 + ' ms (' + (t21*100/t0).toFixed(1) + '%)</td></tr>'
-		+ '<tr><td align="center" style="width:5px;padding-left:10px"><input type="checkbox" name="isSpellsSkillsDifference" /></td><td colspan="2" style="padding-left:10px">Save monster\'s physical/magical skills usage and damage separetly </td></tr></table><hr /><table class="_settings" cellspacing="0" cellpadding="2" style="width:100%"><tr><td align="center"><input type="button" class="_resetSettings" value="Default Settings" title="Reset settings to default."/></td><td align="center"><input type="button" class="_masterReset" value="MASTER RESET" title="Deletes all of STAT\'s saved data and settings."/></td></tr></table>';
+		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isRememberScan" /></td><td colspan="2">Record monster scan results</td><td align="center" style="width:120px">' + t15 + ' ms by scan, ' + t15b + ' ms by round(' + (t15b*100/t15b0).toFixed(1) + '%)</td></tr>'
+		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isRememberSkillsTypes" /></td><td colspan="2">Record monster skills</td><td align="center" style="width:120px">' + t21 + ' ms (' + (t21*100/t0).toFixed(1) + '%)</td></tr>'
+		+ '</table><hr />'
+		+ '<table class="_settings" cellspacing="0" cellpadding="2" style="width:100%">'
+		+ '<tr><td align="center"><input type="button" class="_resetSettings" value="Default Settings" title="Reset settings to default."/></td><td align="center"><input type="button" class="_masterReset" value="MASTER RESET" title="Deletes all of STAT\'s saved data and settings."/></td></tr>'
+		+ '</table>';
 	$("#pane6").html(a);
 	if (_settings.isShowHighlight) $("input[name=isShowHighlight]").attr("checked", "checked");
 	if (_settings.isAltHighlight) $("input[name=isAltHighlight]").attr("checked", "checked");
@@ -4388,7 +4375,6 @@ function initSettingsPane() {
 	if (_settings.isShowSidebarProfs) $("input[name=isShowSidebarProfs]").attr("checked", "checked");
 	if (_settings.isRememberScan) $("input[name=isRememberScan]").attr("checked", "checked");
 	if (_settings.isRememberSkillsTypes) $("input[name=isRememberSkillsTypes]").attr("checked", "checked");
-	if (_settings.isSpellsSkillsDifference) $("input[name=isSpellsSkillsDifference]").attr("checked", "checked");
 	if (_settings.isShowRoundReminder) $("input[name=isShowRoundReminder]").attr("checked", "checked");
 	$("input[name=reminderMinRounds]").attr("value", _settings.reminderMinRounds);
 	if (_settings.isAlertGem) $("input[name=isAlertGem]").attr("checked", "checked");
@@ -4532,7 +4518,6 @@ function initSettingsPane() {
 	$("input[name=isShowSidebarProfs]").click(reminderAndSaveSettings);
 	$("input[name=isRememberScan]").click(reminderAndSaveSettings);
 	$("input[name=isRememberSkillsTypes]").click(reminderAndSaveSettings);
-	$("input[name=isSpellsSkillsDifference]").click(reminderAndSaveSettings);
 	$("input[name=isShowRoundReminder]").click(saveSettings);
 	$("input[name=reminderMinRounds]").change(saveSettings);
 	$("input[name=reminderBeforeEnd]").change(saveSettings);
@@ -4589,8 +4574,6 @@ function initSettingsPane() {
 	$("input[name=isNagSP]").click(saveSettings);
 	$("input[name=isShowPopup]").click(saveSettings);
 	$("input[name=isShowMonsterNumber]").click(saveSettings);
-	$("._startdatabase").click(function (){ if (confirm("Write original bestiary monsters into database?")) StartDatabase(); })
-	$("._assumemonsterstats").click(function (){ if (confirm("Write assumed stats based on custom monsters classes into database?")) AssumeResistances(); })
 	$("._resetSettings").click(function (){ if (confirm("Reset Settings to default?")) _settings.reset(); })
 	$("._resetAll").click(function (){ if (confirm("Reset All Tracking data?")) HVResetTracking(); })
 	$("._masterReset").click(function (){ if (confirm("This will delete ALL HV data saved in localStorage.\nAre you sure you want to do this?")) HVMasterReset(); })
@@ -4640,7 +4623,6 @@ function saveSettings() {
 	_settings.isShowSidebarProfs = $("input[name=isShowSidebarProfs]").get(0).checked;
 	_settings.isRememberScan = $("input[name=isRememberScan]").get(0).checked;
 	_settings.isRememberSkillsTypes = $("input[name=isRememberSkillsTypes]").get(0).checked;
-	_settings.isSpellsSkillsDifference = $("input[name=isSpellsSkillsDifference]").get(0).checked;
 	_settings.isShowRoundReminder = $("input[name=isShowRoundReminder]").get(0).checked;
 	_settings.reminderMinRounds = $("input[name=reminderMinRounds]").get(0).value;
 	_settings.reminderBeforeEnd = $("input[name=reminderBeforeEnd]").get(0).value;
@@ -4882,8 +4864,7 @@ function getRelativeTime(b) {
 	if (c < (48 * 60 * 60)) return "1 day ago";
 	return (parseInt(c / 86400)).toString() + " days ago";
 }
-function browserIsChrome(){ return /Chrome/i.test(navigator.userAgent); }
-if (browserIsChrome()) {	//=== Clones a few GreaseMonkey functions for Chrome Users.
+if (HVStat.isChrome) {	//=== Clones a few GreaseMonkey functions for Chrome Users.
 	unsafeWindow = window;
 	function GM_addStyle(a) {
 		var b = document.createElement("style");
@@ -4955,7 +4936,6 @@ function HVRound() {
 	this.save = function () { saveToStorage(this, HV_ROUND); };
 	this.reset = function () { deleteFromStorage(HV_ROUND); };
 	this.cloneFrom = clone;
-	this.monstersV2 = [];	// TODO: finally replace monsters
 	this.monsters = [];
 	this.currRound = 0;
 	this.maxRound = 0;
@@ -5267,7 +5247,6 @@ function HVSettings() {
 	this.isShowSidebarProfs = false;
 	this.isRememberScan = false;
 	this.isRememberSkillsTypes = false;
-	this.isSpellsSkillsDifference = false;
 	this.isShowRoundReminder = false;
 	this.reminderMinRounds = 3;
 	this.reminderBeforeEnd = 1;
@@ -5295,31 +5274,6 @@ function HVSettings() {
 	//0-equipment page, 1-shop, 2-itemworld, 3-moogle, 4-forge
 	this.isShowTags = [false, false, false, false, false, false];
 	this.isShowMonsterNumber = false;
-}
-function HVMonster() {
-	this.id = 0;
-	this.maxHp = 0;
-	this.currHp = 0;
-	this.name = "";
-	this.mclass = 0;
-	this.mpl = 0;
-	this.mattack = 0;
-	this.mweak = 0;
-	this.mresist = 0;
-	this.mimperv = 0;
-	this.mskilltype = 0;
-	this.mskillspell = 0;
-	this.datesave = 0;
-	this.hasspbar = false;
-	this.sp1 = 0;
-	this.sp2 = 0;
-	this.currmp = 0;
-}
-function ElementalStats() {
-	this.resist = "";
-	this.imperv = "";
-	this.majWeak = "";
-	this.minWeak = "";
 }
 function saveStatsBackup(back) {
 	loadStatsObject();
@@ -5888,383 +5842,6 @@ function HVMonsterDatabase() {
 	this.datescan = [];
 	this.isLoaded = false;
 }
-function StartDatabase() {
-	var sec = TimeCounter(1);
-	loadDatabaseObject();
-	_database.mclass[1] = 31;
-	_database.mattack[1] = 52;
-	_database.mweak[1] = 6162;
-	_database.mresist[1] = 6471;
-	_database.mimperv[1] = 99;
-	_database.mskillspell[1] = 1;
-	_database.mskilltype[1] = 64;
-	_database.mclass[2] = 31;
-	_database.mattack[2] = 53;
-	_database.mweak[2] = 6163;
-	_database.mresist[2] = 7172;
-	_database.mimperv[2] = 99;
-	_database.mskillspell[2] = 1;
-	_database.mskilltype[2] = 72;
-	_database.mclass[3] = 31;
-	_database.mattack[3] = 53;
-	_database.mweak[3] = 6263;
-	_database.mresist[3] = 6171;
-	_database.mimperv[3] = 99;
-	_database.mskillspell[3] = 1;
-	_database.mskilltype[3] = 61;
-	_database.mclass[4] = 31;
-	_database.mattack[4] = 53;
-	_database.mweak[4] = 617172;
-	_database.mresist[4] = 6263;
-	_database.mimperv[4] = 99;
-	_database.mskillspell[4] = 2;
-	_database.mskilltype[4] = 53;
-	_database.mclass[5] = 31;
-	_database.mattack[5] = 51;
-	_database.mweak[5] = 6172;
-	_database.mresist[5] = 6264;
-	_database.mimperv[5] = 99;
-	_database.mskillspell[5] = 2;
-	_database.mskilltype[5] = 53;
-	_database.mclass[6] = 31;
-	_database.mattack[6] = 51;
-	_database.mweak[6] = 6271;
-	_database.mresist[6] = 6172;
-	_database.mimperv[6] = 99;
-	_database.mskillspell[6] = 2;
-	_database.mskilltype[6] = 61;
-	_database.mclass[7] = 31;
-	_database.mattack[7] = 74;
-	_database.mweak[7] = 6171;
-	_database.mresist[7] = 6472;
-	_database.mimperv[7] = 99;
-	_database.mskillspell[7] = 1;
-	_database.mskilltype[7] = 72;
-	_database.mclass[8] = 31;
-	_database.mattack[8] = 53;
-	_database.mweak[8] = 636471;
-	_database.mresist[8] = 6162;
-	_database.mimperv[8] = 99;
-	_database.mskillspell[8] = 2;
-	_database.mskilltype[8] = 72;
-	_database.mclass[9] = 31;
-	_database.mattack[9] = 51;
-	_database.mweak[9] = 6164;
-	_database.mresist[9] = 6271;
-	_database.mimperv[9] = 99;
-	_database.mskillspell[9] = 2;
-	_database.mskilltype[9] = 51;
-	_database.mclass[10] = 31;
-	_database.mattack[10] = 52;
-	_database.mweak[10] = 647271;
-	_database.mresist[10] = 6163;
-	_database.mimperv[10] = 99;
-	_database.mskillspell[10] = 1;
-	_database.mskilltype[10] = 71;
-	_database.mclass[11] = 32;
-	_database.mattack[11] = 51;
-	_database.mweak[11] = 626371;
-	_database.mresist[11] = 6164;
-	_database.mimperv[11] = 99;
-	_database.mskillspell[11] = 1;
-	_database.mskilltype[11] = 64;
-	_database.mclass[12] = 32;
-	_database.mattack[12] = 51;
-	_database.mweak[12] = 6472;
-	_database.mresist[12] = 616371;
-	_database.mimperv[12] = 99;
-	_database.mskillspell[12] = 2;
-	_database.mskilltype[12] = 51;
-	_database.mclass[13] = 32;
-	_database.mattack[13] = 52;
-	_database.mweak[13] = 616271;
-	_database.mresist[13] = 6372;
-	_database.mimperv[13] = 99;
-	_database.mskillspell[13] = 1;
-	_database.mskilltype[13] = 63;
-	_database.mclass[14] = 32;
-	_database.mattack[14] = 52;
-	_database.mweak[14] = 616372;
-	_database.mresist[14] = 6271;
-	_database.mimperv[14] = 99;
-	_database.mskillspell[14] = 2;
-	_database.mskilltype[14] = 52;
-	_database.mclass[15] = 32;
-	_database.mattack[15] = 53;
-	_database.mweak[15] = 616471;
-	_database.mresist[15] = 6272;
-	_database.mimperv[15] = 99;
-	_database.mskillspell[15] = 1;
-	_database.mskilltype[15] = 62;
-	_database.mclass[16] = 33;
-	_database.mattack[16] = 51;
-	_database.mweak[16] = 61;
-	_database.mresist[16] = 6263647172;
-	_database.mimperv[16] = 99;
-	_database.mskillspell[16] = 203;
-	_database.mskilltype[16] = 7361;
-	_database.mclass[17] = 33;
-	_database.mattack[17] = 53;
-	_database.mweak[17] = 62;
-	_database.mresist[17] = 6163647172;
-	_database.mimperv[17] = 99;
-	_database.mskillspell[17] = 104;
-	_database.mskilltype[17] = 7371;
-	_database.mclass[18] = 33;
-	_database.mattack[18] = 51;
-	_database.mweak[18] = 71;
-	_database.mresist[18] = 6162636472;
-	_database.mimperv[18] = 99;
-	_database.mskillspell[18] = 104;
-	_database.mskilltype[18] = 7364;
-	_database.mclass[19] = 33;
-	_database.mattack[19] = 53;
-	_database.mweak[19] = 63;
-	_database.mresist[19] = 6162647172;
-	_database.mimperv[19] = 99;
-	_database.mskillspell[19] = 104;
-	_database.mskilltype[19] = 7361;
-	_database.mclass[20] = 34;
-	_database.mattack[20] = 52;
-	_database.mweak[20] = 64;
-	_database.mresist[20] = 616263717273;
-	_database.mimperv[20] = 99;
-	_database.mskillspell[20] = 104;
-	_database.mskilltype[20] = 7352;
-	_database.mclass[21] = 34;
-	_database.mattack[21] = 53;
-	_database.mweak[21] = 537172;
-	_database.mresist[21] = 515261626364;
-	_database.mimperv[21] = 99;
-	_database.mskillspell[21] = 103;
-	_database.mskilltype[21] = 7372;
-	_database.mclass[22] = 34;
-	_database.mattack[22] = 51;
-	_database.mweak[22] = 517172;
-	_database.mresist[22] = 525361626364;
-	_database.mimperv[22] = 99;
-	_database.mskillspell[22] = 204;
-	_database.mskilltype[22] = 7362;
-	_database.mclass[23] = 34;
-	_database.mattack[23] = 52;
-	_database.mweak[23] = 527172;
-	_database.mresist[23] = 515361626364;
-	_database.mimperv[23] = 99;
-	_database.mskillspell[23] = 103;
-	_database.mskilltype[23] = 7372;
-	_database.mclass[24] = 35;
-	_database.mattack[24] = 73;
-	_database.mweak[24] = 99;
-	_database.mresist[24] = 51525373;
-	_database.mimperv[24] = 616263647172;
-	_database.mskillspell[24] = 203;
-	_database.mskilltype[24] = 7373;
-	_database.mclass[25] = 31;
-	_database.mattack[25] = 53;
-	_database.mweak[25] = 636472;
-	_database.mresist[25] = 6171;
-	_database.mimperv[25] = 99;
-	_database.mskillspell[25] = 102;
-	_database.mskilltype[25] = 7353;
-	_database.mclass[26] = 31;
-	_database.mattack[26] = 52;
-	_database.mweak[26] = 616371;
-	_database.mresist[26] = 6472;
-	_database.mimperv[26] = 99;
-	_database.mskillspell[26] = 102;
-	_database.mskilltype[26] = 7373;
-	_database.mclass[27] = 34;
-	_database.mattack[27] = 52;
-	_database.mweak[27] = 6373;
-	_database.mresist[27] = 6162647172;
-	_database.mimperv[27] = 99;
-	_database.mskillspell[27] = 104;
-	_database.mskilltype[27] = 6373;
-	_database.mclass[28] = 34;
-	_database.mattack[28] = 53;
-	_database.mweak[28] = 6273;
-	_database.mresist[28] = 6163647172;
-	_database.mimperv[28] = 99;
-	_database.mskillspell[28] = 104;
-	_database.mskilltype[28] = 6273;
-	_database.mclass[29] = 34;
-	_database.mattack[29] = 51;
-	_database.mweak[29] = 6473;
-	_database.mresist[29] = 6162637172;
-	_database.mimperv[29] = 99;
-	_database.mskillspell[29] = 104;
-	_database.mskilltype[29] = 6473;
-	_database.mclass[30] = 34;
-	_database.mattack[30] = 73;
-	_database.mweak[30] = 6173;
-	_database.mresist[30] = 6263647172;
-	_database.mimperv[30] = 99;
-	_database.mskillspell[30] = 0;
-	_database.mskilltype[30] = 0;
-	_database.mclass[31] = 35;
-	_database.mattack[31] = 71;
-	_database.mweak[31] = 72;
-	_database.mresist[31] = 51525373;
-	_database.mimperv[31] = 6162636471;
-	_database.mskillspell[31] = 203;
-	_database.mskilltype[31] = 7173;
-	_database.mclass[32] = 35;
-	_database.mattack[32] = 72;
-	_database.mweak[32] = 71;
-	_database.mresist[32] = 51525373;
-	_database.mimperv[32] = 6162636472;
-	_database.mskillspell[32] = 203;
-	_database.mskilltype[32] = 7273;
-	_database.mclass[8223] = 34;
-	_database.mattack[8223] = 52;
-	_database.mweak[8223] = 62;
-	_database.mresist[8223] = 52616364717273;
-	_database.mimperv[8223] = 99;
-	_database.mskillspell[8223] = 203;
-	_database.mskilltype[8223] = 6161;
-	_database.mclass[8224] = 34;
-	_database.mattack[8224] = 52;
-	_database.mweak[8224] = 62;
-	_database.mresist[8224] = 52616364717273;
-	_database.mimperv[8224] = 99;
-	_database.mskillspell[8224] = 203;
-	_database.mskilltype[8224] = 6161;
-	_database.mclass[8225] = 34;
-	_database.mattack[8225] = 52;
-	_database.mweak[8225] = 71;
-	_database.mresist[8225] = 51616263647273;
-	_database.mimperv[8225] = 99;
-	_database.mskillspell[8225] = 203;
-	_database.mskilltype[8225] = 7274;
-	_database.save();
-	alert("Done");
-	_ltc.main[1] -= TimeCounter(0, sec);
-	if (ISBATTLE) _ltc.isbattle[1] -= TimeCounter(0, sec);
-	_ltc.save();
-}
-// function HVCollectData() {
-// 	this.load = function () { loadFromStorage(this, HV_COLL); };
-// 	this.save = function () { saveToStorage(this, HV_COLL); };
-// 	this.reset = function () { deleteFromStorage(HV_COLL); };
-// 	this.cloneFrom = clone;
-// 	this.skillmid = [];
-// 	this.skilltype = [];
-// 	this.mskillspell = [];
-// 	this.isLoaded = false;
-// }
-// function loadCollectdataObject() {
-// 	if (_collectdata === null) {
-// 		_collectdata = new HVCollectData();
-// 		_collectdata.load();
-// 	}
-// }
-function AssumeResistances() {
-	var sec = TimeCounter(1);
-	loadDatabaseObject();
-	var n = 0;
-	while (_database.mclass[n] !== undefined) {
-		if ((_database.mclass[n] !== null) && (_database.mweak[n] === null) && (_database.mattack[n] === null)) {
-			switch (_database.mclass[n]){
-				case 1: 	//Arthropod
-					_database.mattack[n] = 52853;
-					_database.mweak[n] = 95262;
-					_database.mresist[n] = 51616364;
-					_database.mimperv[n] = 99;
-					if (_database.mskillspell[n] === null) _database.mskillspell[n] = 9515253;
-					break;
-				case 2: 	//Avion
-					_database.mattack[n] = 51853;
-					_database.mweak[n] = 96164;
-					_database.mresist[n] = 63;
-					_database.mimperv[n] = 99;
-					if (_database.mskillspell[n] === null) _database.mskillspell[n] = 9515253;
-					break;
-				case 3: 	//Beast
-					_database.mattack[n] = 51853;
-					_database.mweak[n] = 961;
-					_database.mresist[n] = 526264;
-					_database.mimperv[n] = 99;
-					if (_database.mskillspell[n] === null) _database.mskillspell[n] = 9515253;
-					break;
-				case 4: 	//Celestial
-					_database.mattack[n] = 51852;
-					_database.mweak[n] = 95152537273;
-					_database.mresist[n] = 6162636471;
-					_database.mimperv[n] = 99;
-					if (_database.mskillspell[n] === null) _database.mskillspell[n] = 9515253;
-					break;
-				case 5: 	//Daimon
-					_database.mattack[n] = 51853;
-					_database.mweak[n] = 95152537173;
-					_database.mresist[n] = 6162636472;
-					_database.mimperv[n] = 99;
-					if (_database.mskillspell[n] === null) _database.mskillspell[n] = 9515253;
-					break;
-				case 6: 	//Dragonkin
-					_database.mattack[n] = 52853;
-					_database.mweak[n] = 96264;
-					_database.mresist[n] = 51526163;
-					_database.mimperv[n] = 99;
-					if (_database.mskillspell[n] === null) _database.mskillspell[n] = 9515253;
-					break;
-				case 7: 	//Elemental
-					_database.mattack[n] = 961626364;
-					_database.mweak[n] = 9525373;
-					_database.mresist[n] = 616263647172;
-					_database.mimperv[n] = 99;
-					if (_database.mskillspell[n] === null) _database.mskillspell[n] = 961626364;
-					break;
-				case 8: 	//Giant
-					_database.mattack[n] = 52;
-					_database.mweak[n] = 96364;
-					_database.mresist[n] = 51526162;
-					_database.mimperv[n] = 99;
-					if (_database.mskillspell[n] === null) _database.mskillspell[n] = 9515253;
-					break;
-				case 9: 	//Humanoid
-					_database.mattack[n] = 9515253;
-					_database.mweak[n] = 972;
-					_database.mresist[n] = 99;
-					_database.mimperv[n] = 99;
-					if (_database.mskillspell[n] === null) _database.mskillspell[n] = 9515253;
-					break;
-				case 10:	//Mechanoid
-					_database.mattack[n] = 51853;
-					_database.mweak[n] = 963;
-					_database.mresist[n] = 51536162647173;
-					_database.mimperv[n] = 99;
-					if (_database.mskillspell[n] === null) _database.mskillspell[n] = 9515253;
-					break;
-				case 11:	//Retilian
-					_database.mattack[n] = 51853;
-					_database.mweak[n] = 962;
-					_database.mresist[n] = 51526163;
-					_database.mimperv[n] = 99;
-					if (_database.mskillspell[n] === null) _database.mskillspell[n] = 9515253;
-					break;
-				case 12:	//Sprite
-					_database.mattack[n] = 51853;
-					_database.mweak[n] = 95272;
-					_database.mresist[n] = 536162636471;
-					_database.mimperv[n] = 99;
-					if (_database.mskillspell[n] === null) _database.mskillspell[n] = 9515253;
-					break;
-				case 13:	//Undead
-					_database.mattack[n] = 51852;
-					_database.mweak[n] = 96171;
-					_database.mresist[n] = 525362636472;
-					_database.mimperv[n] = 99;
-					if (_database.mskillspell[n] === null) _database.mskillspell[n] = 9515253;
-			}
-		}
-		n++;
-	}
-	alert("Done");
-	_database.save();
-	_ltc.main[1] -= TimeCounter(0, sec);
-	if (ISBATTLE) _ltc.isbattle[1] -= TimeCounter(0, sec);
-	_ltc.save();
-}
 function TimeCounter(a, b) {
 	var dtm = new Date();
 	if (a === 1) var b = dtm.getTime();
@@ -6406,7 +5983,6 @@ function Scanbutton() {
 	var n = mkeymax;
 	var num = 0;
 	var a = $("#mainpane");
-	var ischromeSTAT = browserIsChrome();
 	document.addEventListener('keydown', function(a) {
 		var key = a.keyCode ? a.keyCode : a.which;
 		if (_settings.isEnableScanHotkey) {
@@ -6414,14 +5990,14 @@ function Scanbutton() {
 				if (!window.pressedScanbySTAT) {
 					if (window.pressedSkillbySTAT === 0) {
 						// open skill menu
-						if (ischromeSTAT) {
+						if (HVStat.isChrome) {
 							document.getElementById("ckey_skills").onclick();
 						} else {
 							location.href = 'javascript:document.getElementById("ckey_skills").onclick(); void(0);';
 						}
 					}
 					// select scan
-					if (ischromeSTAT) {
+					if (HVStat.isChrome) {
 						document.getElementById("100020").onclick();
 					} else {
 						location.href = 'javascript:document.getElementById("100020").onclick(); void(0);';
@@ -6429,7 +6005,7 @@ function Scanbutton() {
 					window.pressedScanbySTAT = true;
 				} else {
 					// close skill menu
-					if (ischromeSTAT) {
+					if (HVStat.isChrome) {
 						document.getElementById("ckey_skills").onclick();
 					} else {
 						location.href = 'javascript:document.getElementById("ckey_skills").onclick(); void(0);';
@@ -6444,14 +6020,14 @@ function Scanbutton() {
 				if (window.pressedSkillbySTAT === 0) {
 					if (!window.pressedScanbySTAT) {
 						// open skill menu
-						if (ischromeSTAT) {
+						if (HVStat.isChrome) {
 							document.getElementById("ckey_skills").onclick();
 						} else {
 							location.href = 'javascript:document.getElementById("ckey_skills").onclick(); void(0);';
 						}
 					}
 					if (!cooldown[0]) {
-						if (ischromeSTAT) {
+						if (HVStat.isChrome) {
 							document.getElementById(skillnum[0]).onclick();
 						} else {
 							location.href = 'javascript:document.getElementById("' + skillnum[0] + '").onclick(); void(0);';
@@ -6464,7 +6040,7 @@ function Scanbutton() {
 							window.pressedSkillbySTAT = 3;
 						}
 					} else if (!cooldown[1]) {
-						if (ischromeSTAT) {
+						if (HVStat.isChrome) {
 							document.getElementById(skillnum[1]).onclick();
 						} else {
 							location.href = 'javascript:document.getElementById("' + skillnum[1] + '").onclick(); void(0);';
@@ -6475,7 +6051,7 @@ function Scanbutton() {
 							window.pressedSkillbySTAT = 3;
 						}
 					} else if (!cooldown[2]) {
-						if (ischromeSTAT) {
+						if (HVStat.isChrome) {
 							document.getElementById(skillnum[2]).onclick();
 						} else {
 							location.href = 'javascript:document.getElementById("' + skillnum[2] + '").onclick(); void(0);';
@@ -6483,7 +6059,7 @@ function Scanbutton() {
 						window.pressedSkillbySTAT = 3;
 					} else if (window.pressedScanbySTAT) {
 						// close skill menu
-						if (ischromeSTAT) {
+						if (HVStat.isChrome) {
 							document.getElementById("ckey_skills").onclick();
 						} else {
 							location.href = 'javascript:document.getElementById("ckey_skills").onclick(); void(0);';
@@ -6493,7 +6069,7 @@ function Scanbutton() {
 					}
 				} else if (window.pressedSkillbySTAT === 1) {
 					if (!cooldown[1]) {
-						if (ischromeSTAT) {
+						if (HVStat.isChrome) {
 							document.getElementById(skillnum[1]).onclick();
 						} else {
 							location.href = 'javascript:document.getElementById("' + skillnum[1] + '").onclick(); void(0);';
@@ -6504,7 +6080,7 @@ function Scanbutton() {
 							window.pressedSkillbySTAT = 3;
 						}
 					} else if (!cooldown[2]) {
-						if (ischromeSTAT) {
+						if (HVStat.isChrome) {
 							document.getElementById(skillnum[2]).onclick();
 						} else {
 							location.href = 'javascript:document.getElementById("' + skillnum[2] + '").onclick(); void(0);';
@@ -6515,7 +6091,7 @@ function Scanbutton() {
 					}
 				} else if (window.pressedSkillbySTAT === 2) {
 					if (!cooldown[2]) {
-						if (ischromeSTAT) {
+						if (HVStat.isChrome) {
 							document.getElementById(skillnum[2]).onclick();
 						} else {
 							location.href = 'javascript:document.getElementById("' + skillnum[2] + '").onclick(); void(0);';
@@ -6526,7 +6102,7 @@ function Scanbutton() {
 					}
 				} else if (window.pressedSkillbySTAT === 3) {
 					// close skill menu
-					if (ischromeSTAT) {
+					if (HVStat.isChrome) {
 						document.getElementById("ckey_skills").onclick();
 					} else {
 						location.href = 'javascript:document.getElementById("ckey_skills").onclick(); void(0);';
@@ -6577,34 +6153,40 @@ function Scanbutton() {
 		}
 	}
 }
-function MonsterPopup() {
-	var popup = document.getElementById("popup_box");
+function registerEventHandlersForMonsterPopup() {
 	var delay = _settings.monsterPopupDelay;
 	var popupLeftOffset = _settings.isMonsterPopupPlacement ? 955 : 300;
-	var elemMonsterPane = $("#monsterpane");
-	var monsterPaneHeight = elemMonsterPane.height();
+	var showPopup = function (index) {
+		var html = HVStat.monsters[index].renderPopup();
+		HVStat.popupElement.style.width = "270px";
+		HVStat.popupElement.style.height = "auto";
+		HVStat.popupElement.innerHTML = html;
+		var popupTopOffset = HVStat.monsterPaneElement.offsetTop
+			+ index * ((HVStat.monsterPaneElement.scrollHeight - HVStat.popupElement.scrollHeight) / 9);
+		HVStat.popupElement.style.top = popupTopOffset + "px";
+		HVStat.popupElement.style.left = popupLeftOffset + "px";
+		HVStat.popupElement.style.visibility = "visible";
+	};
+	var hidePopup = function () {
+		HVStat.popupElement.style.visibility = "hidden";
+	};
+	var timerId;
+	var prepareForShowingPopup = function (event) {
+		(function (index) {
+			timerId = setTimeout(function () {
+				showPopup(index);
+			}, delay);
+		})(event.data.index);
+	};
+	var prepareForHidingPopup = function (event) {
+		setTimeout(hidePopup, delay);
+		clearTimeout(timerId);
+	};
 	var i, len = HVStat.monsters.length;
-	var monster;
 	for (i = 0; i < len; i++) {
-		$("#" + HVStat.monsters[i].domElementId).bind('mouseover', {index: i}, function (event) {
-			var index = event.data.index;
-			var popupHeight = 280;
-			var popupTopOffset = elemMonsterPane.offset().top + index * ((monsterPaneHeight - popupHeight) / 9);
-			var html;
-			popup.style.left = popupLeftOffset + "px";
-			popup.style.width = "270px";
-			popup.style.height = String(popupHeight) + "px";
-			html = HVStat.monsters[index].renderPopup();
-			setTimeoutByledalej1 = setTimeout('document.getElementById("popup_box").style.top = ' + popupTopOffset + ' + "px"', delay);
-			setTimeoutByledalej2 = setTimeout("document.getElementById('popup_box').innerHTML = '" + html + "'", delay);
-			setTimeoutByledalej3 = setTimeout('document.getElementById("popup_box").style.visibility = "visible"', delay);
-		});
-		$("#" + HVStat.monsters[i].domElementId).bind('mouseout', function () {
-			setTimeout('document.getElementById("popup_box").style.visibility = "hidden"', delay);
-			clearTimeout(window.setTimeoutByledalej1);
-			clearTimeout(window.setTimeoutByledalej2);
-			clearTimeout(window.setTimeoutByledalej3);
-		});
+		var monsterElement = $("#" + HVStat.monsters[i].domElementId);
+		monsterElement.bind('mouseover', { index: i }, prepareForShowingPopup);
+		monsterElement.bind('mouseout', prepareForHidingPopup);
 	}
 }
 function StartBattleAlerts () {
@@ -6856,7 +6438,7 @@ function TaggingItems(clean) {
 	}
 }
 
-if (browserIsChrome()) {
+if (HVStat.isChrome) {
 	document.addEventListener("DOMContentLoaded", main1, false);
 } else {
 	// Greasemonkey user script gets invoked when the DOMContentLoaded event fires
