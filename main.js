@@ -8,11 +8,12 @@
 // @require          https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js
 // @require          https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.21/jquery-ui.min.js
 // @resource         jQueryUICSS http://www.starfleetplatoon.com/~cmal/HVSTAT/jqueryui.css
+// @run-at           document-start
 // ==/UserScript==
 
 // The goal of the develop-scan branch:
 //
-// - New global variables and functions are stored in the package
+// (Done)- New global variables and functions are stored in the package
 // (Done)- Add function that local storage 'HVMonsterDatabase' migrates to new IndexedDB
 // (Done)- Add function to import/export monster database
 // (Done)- Add Monster information to be stored
@@ -26,42 +27,53 @@
 // (Done)- Remove StartDatabase()
 // (Done)- Remove MinimalizeDatabaseSize()
 // (Done)- Remove SaveToDatabase()
-// - Modify->Replace showMonsterStats()
+// (Almost done)- Modify->Replace showMonsterStats()
 
 // Package
 var HVStat = {
+	//------------------------------------
 	// package scope global constants
+	//------------------------------------
 	isChrome: navigator.userAgent.indexOf("Chrome") >= 0,
 	indexedDB: window.indexedDB || window.webkitIndexedDB || window.mozIndexedDB,
 	IDBTransaction: window.IDBTransaction || window.webkitIDBTransaction,
 	IDBKeyRange: window.IDBKeyRange|| window.webkitIDBKeyRange,
 	IDBCursor: window.IDBCursor || window.webkitIDBCursor,
-	reMonsterScanInfoTSV: /^(\d+?)\t(.*?)\t(.*?)\t(.*?)\t(\d*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)$/gm,
+	reMonsterScanResultsTSV: /^(\d+?)\t(.*?)\t(.*?)\t(.*?)\t(\d*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)$/gm,
 	reMonsterSkillsTSV: /^(\d+?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)$/gm,
 
+	//------------------------------------
 	// DOM caches
+	//------------------------------------
 	popupElement: null,
 	monsterPaneElement: null,
+	battleLogElement: null,
 
+	//------------------------------------
 	// package scope global variables
+	//------------------------------------
 	idb: null,
 	transaction: null,
-	monsterScanInfoStore: null,
-	monsterSkillsStore: null,
-	dataURIMonsterScanInfo: null,
+// 	monsterScanResultsStore: null,
+// 	monsterSkillsStore: null,
+	dataURIMonsterScanResults: null,
 	dataURIMonsterSkills: null,
-	nRowsMonsterScanInfoTSV: 0,
+	nRowsMonsterScanResultsTSV: 0,
 	nRowsMonsterSkillsTSV: 0,
-	duringBattle: false,
-	monsters: []	// instances of HVStat.Monster
 
+	// battle-related
+	duringBattle: false,
+	numberOfMonsters: 0,
+	monsters: []	// instances of HVStat.Monster
 };
 
 HV_SETTINGS = "HVSettings";
 _settings = null;
 loadSettingsObject();
 
-// basic class modules
+//------------------------------------
+// basic classes
+//------------------------------------
 
 HVStat.Keyword = function (id, name, abbrNames) {
 	var _id = String(id);
@@ -231,7 +243,9 @@ HVStat.Debuff = (function () {
 
 HVStat.delimiter = new HVStat.Keyword("DELIMITER", ", ", [","]);
 
-// Value Objects
+//------------------------------------
+// value objects
+//------------------------------------
 
 HVStat.DefenceLevelVO = function () {
 	var v = "AVERAGE";
@@ -250,7 +264,7 @@ HVStat.DefenceLevelVO = function () {
 	};
 };
 
-HVStat.MonsterScanInfoVO = function (spec) {
+HVStat.MonsterScanResultsVO = function (spec) {
 	this.id = null;
 	this.lastScanDate = null;
 	this.name = null;
@@ -389,12 +403,14 @@ HVStat.MonsterVO = function () {
 		maxHp: null,
 		prevMpRate: null,
 		prevSpRate: null,
-		scanInfo: null,
+		scanResult: null,
 		skills: [],
 	};
 };
 
-// functions for rendering
+//------------------------------------
+// utility functions
+//------------------------------------
 
 HVStat.getDateTimeString = function (date) {
 	if (HVStat.isChrome) {
@@ -427,6 +443,10 @@ HVStat.getElapsedFrom = function (date) {
 	}
 	return str;
 };
+
+//------------------------------------
+// classes
+//------------------------------------
 
 HVStat.MonsterSkill = (function () {
 	// constructor
@@ -492,7 +512,7 @@ HVStat.MonsterSkill = (function () {
 	return MonsterSkill;
 }());
 
-HVStat.MonsterScanInfo = (function () {
+HVStat.MonsterScanResults = (function () {
 	// private static variable
 	var _mappingToSettingsHideSpecificDamageType = [
 		HVStat.DamageType.CRUSHING,
@@ -538,7 +558,7 @@ HVStat.MonsterScanInfo = (function () {
 	})();
 
 	// constructor
-	function MonsterScanInfo(vo) {
+	function MonsterScanResults(vo) {
 		var _lastScanDate;
 		var _monsterClass;
 		var _powerLevel;
@@ -657,7 +677,7 @@ HVStat.MonsterScanInfo = (function () {
 			get defImpervious() { return _defImpervious.concat(); },
 			get valueObject() {
 				var i, len;
-				var vo = new HVStat.MonsterScanInfoVO();
+				var vo = new HVStat.MonsterScanResultsVO();
 				vo.lastScanDate = _lastScanDate.toISOString();
 				vo.monsterClass = (_monsterClass ? _monsterClass.id : null);
 				vo.powerLevel = _powerLevel;
@@ -688,11 +708,11 @@ HVStat.MonsterScanInfo = (function () {
 	};
 
 	// public static method
-	MonsterScanInfo.fetchScanningLog = function (index, html) {
+	MonsterScanResults.fetchScanningLog = function (index, html) {
 		var reOfficial = /Monster Class:.*?<\/td><td.*?>(Common|Uncommon|Rare|Legendary|Ultimate)/;
 		var reCustom = /Monster Class:.*?<\/td><td.*?>([A-Za-z]+), Power Level (\d+).*?<\/td/;
 		var defWeak, defResistant, defImpervious;
-		var vo = new HVStat.MonsterScanInfoVO();
+		var vo = new HVStat.MonsterScanResultsVO();
 		var r, array;
 		vo.lastScanDate = (new Date()).toISOString();
 		r = /Monster Trainer:.*?<\/td><td.*?>(.*?)<\/td/.exec(html);
@@ -753,10 +773,10 @@ HVStat.MonsterScanInfo = (function () {
 				}
 			}
 		});
-		return new MonsterScanInfo(vo);
+		return new MonsterScanResults(vo);
 	}
 
-	return MonsterScanInfo;
+	return MonsterScanResults;
 }());
 
 HVStat.Monster = (function () {
@@ -778,7 +798,7 @@ HVStat.Monster = (function () {
 		var _baseElement = $("#" + _domElementIds[_index]);
 		var _healthBars = $("div.btm5", _baseElement);
 		var _isDead = $("img.chb2", _healthBars.eq(0)).length === 0;
-		var _waitingForGetResponseOfMonsterScanInfo = false;
+		var _waitingForGetResponseOfMonsterScanResults = false;
 		var _waitingForGetResponseOfMonsterSkills = false;
 
 		var _id;
@@ -786,7 +806,7 @@ HVStat.Monster = (function () {
 		var _maxHp;
 		var _prevMpRate;
 		var _prevSpRate;
-		var _scanInfo;
+		var _scanResult;
 		var _skills = [];
 
 		var currBarRate = function (barIndex) {
@@ -813,7 +833,7 @@ HVStat.Monster = (function () {
 			return Math.ceil(_currHpRate * _maxHp);
 		};
 		var _waitingForDBResponse = function () {
-			return _waitingForGetResponseOfMonsterScanInfo || _waitingForGetResponseOfMonsterSkills;
+			return _waitingForGetResponseOfMonsterScanResults || _waitingForGetResponseOfMonsterSkills;
 		};
 		var _getManaSkills = function () {
 			var manaSkills = [];
@@ -872,7 +892,10 @@ HVStat.Monster = (function () {
 			if (_isDead) {
 				return;
 			}
-			if (!(_settings.showMonsterHP || _settings.showMonsterMP || _settings.showMonsterSP || _settings.showMonsterDefence || _settings.isShowMonsterDuration)) {
+			if (!(_settings.showMonsterHP
+					|| _settings.showMonsterMP
+					|| _settings.showMonsterSP
+					|| _settings.showMonsterInfoFromDB)) {
 				return;
 			}
 
@@ -882,7 +905,7 @@ HVStat.Monster = (function () {
 			var hpBarBaseElement = _baseElement.children().eq(2).children().eq(0);
 			var mpBarBaseElement = _baseElement.children().eq(2).children().eq(1);
 			var spBarBaseElement = _baseElement.children().eq(2).children().eq(2);
-			var maxAbbrLevel = 5;
+			var maxAbbrLevel = _settings.ResizeMonsterInfo ? 5 : 1;
 			var maxStatsWidth = 315;
 
 			var hpIndicator = "";
@@ -912,10 +935,10 @@ HVStat.Monster = (function () {
 				spBarBaseElement.after(html);
 			}
 
-			if (_settings.showMonsterDefence && _settings.showMonsterInfoFromDB) {
+			if (_settings.showMonsterInfoFromDB) {
 				for (abbrLevel = 0; abbrLevel < maxAbbrLevel; abbrLevel++) {
 					statsHtml = '';
-					if (!_scanInfo || !_scanInfo.monsterClass) {
+					if (!_scanResult || !_scanResult.monsterClass) {
 						statsHtml = '[<span style="color:red;font-weight:bold">NEW</span>]';
 					} else {
 						// class and power level
@@ -923,13 +946,13 @@ HVStat.Monster = (function () {
 							statsHtml += '{<span style="color: blue;">';
 						}
 						if (_settings.showMonsterClassFromDB) {
-							statsHtml += _scanInfo.monsterClass.toString(abbrLevel);
+							statsHtml += _scanResult.monsterClass.toString(abbrLevel);
 						}
-						if (_settings.showMonsterPowerLevelFromDB && _scanInfo.powerLevel) {
+						if (_settings.showMonsterPowerLevelFromDB && _scanResult.powerLevel) {
 							if (_settings.showMonsterClassFromDB) {
 								statsHtml += HVStat.delimiter.toString(abbrLevel);
 							}
-							statsHtml += _scanInfo.powerLevel + '+';
+							statsHtml += _scanResult.powerLevel + '+';
 						}
 						if (_settings.showMonsterClassFromDB || _settings.showMonsterPowerLevelFromDB) {
 							statsHtml += '</span>}';
@@ -940,7 +963,7 @@ HVStat.Monster = (function () {
 						}
 						if (_settings.showMonsterWeaknessesFromDB) {
 							statsHtml += '<span style="color: #3CB878;">';
-							statsHtml += (_scanInfo.defWeak.length > 0) ? _scanInfo.getDefWeakString(true, true, abbrLevel) : "-";
+							statsHtml += (_scanResult.defWeak.length > 0) ? _scanResult.getDefWeakString(true, true, abbrLevel) : "-";
 							statsHtml += '</span>';
 						}
 						if (_settings.showMonsterResistancesFromDB) {
@@ -948,11 +971,11 @@ HVStat.Monster = (function () {
 								statsHtml += '|';
 							}
 							statsHtml += '<span style="color: #FF3300;">';
-							statsHtml += (_scanInfo.defResistant.length > 0) ? _scanInfo.getDefResistantString(true, true, abbrLevel) : '-';
+							statsHtml += (_scanResult.defResistant.length > 0) ? _scanResult.getDefResistantString(true, true, abbrLevel) : '-';
 							statsHtml += '</span>';
-							if (_scanInfo.defImpervious.length > 0) {
+							if (_scanResult.defImpervious.length > 0) {
 								statsHtml += '|<span style="font-weight: bold; color: #990000; text-decoration: underline;">';
-								statsHtml += _scanInfo.getDefImperviousString(true, true, abbrLevel);
+								statsHtml += _scanResult.getDefImperviousString(true, true, abbrLevel);
 								statsHtml += '</span>';
 							}
 						}
@@ -961,8 +984,8 @@ HVStat.Monster = (function () {
 						}
 						// melee attack and skills
 						if (_settings.showMonsterAttackTypeFromDB) {
-							statsHtml += '(<span style="color: black;">' + _scanInfo.meleeAttack.toString(abbrLevel > 0 ? abbrLevel : 1) + '</span>';
- 							var manaSkills = _getManaSkills();
+							statsHtml += '(<span style="color: black;">' + _scanResult.meleeAttack.toString(abbrLevel > 0 ? abbrLevel : 1) + '</span>';
+							var manaSkills = _getManaSkills();
 							var manaSkillsExist = manaSkills.length > 0;
 							if (manaSkillsExist) {
 								statsHtml += ';<span style="color:blue">';
@@ -1011,8 +1034,7 @@ HVStat.Monster = (function () {
 						html = "<div style='font-family:arial; font-size:7pt; font-style:normal; font-weight:bold; cursor:default; position:relative; top:-1px; left:2px; padding:0 1px; margin-left:0px; white-space:nowrap;'>" + statsHtml + "</div>";
 						nameInnerFrameElement.after(html);
 						statsElement = nameInnerFrameElement.next();
-						console.log("scrollWidth = " + statsElement.prop("scrollWidth"));
-//						if (Number(statsElement.prop("scrollWidth")) <= maxStatsWidth) {	// does not work with Firefox without tweak
+						//console.log("scrollWidth = " + statsElement.prop("scrollWidth"));
 						if (Number(nameOuterFrameElement.prop("scrollWidth")) <= maxStatsWidth) {	// does not work with Firefox without tweak
 							break;
 						} else if (abbrLevel < maxAbbrLevel - 1) {
@@ -1027,10 +1049,10 @@ HVStat.Monster = (function () {
 						nameInnerFrameElement.css("width", "auto"); // tweak for Firefox
 						nameElement.html(name + html);
 						nameElement.css("white-space", "nowrap");
-						console.log("scrollWidth = " + nameElement.prop("scrollWidth"));
+						//console.log("scrollWidth = " + nameElement.prop("scrollWidth"));
 						if (Number(nameElement.prop("scrollWidth")) <= maxStatsWidth) {	// does not work with Firefox without tweak
 							break;
-						} else {
+						} else if (_settings.ResizeMonsterInfo) {
 							// revert
 							nameElement.html(name);
 							if (abbrLevel >= maxAbbrLevel - 1) {
@@ -1038,7 +1060,7 @@ HVStat.Monster = (function () {
 								for (var len = name.length - 2; len >= 6; len--) {
 									var reducedName = name.substring(0, len) + "...";
 									nameElement.html(reducedName + html);
-									console.log("scrollWidth = " + nameElement.prop("scrollWidth"));
+									//console.log("scrollWidth = " + nameElement.prop("scrollWidth"));
 									if (Number(nameElement.prop("scrollWidth")) <= maxStatsWidth) {	// does not work with Firefox without tweak
 										break;
 									}
@@ -1049,14 +1071,11 @@ HVStat.Monster = (function () {
 				}
 				nameOuterFrameElement.css("width", String(maxStatsWidth) + "px");
 			}
-			if (_settings.isShowMonsterDuration) {
-				showMonsterEffectsDuration(_baseElement);
-			}
 		};
 
 		var _renderPopup = function () {
 			var i, len, skill, lastScanString;
-			var existsScanInfo = _scanInfo && _scanInfo.monsterClass;
+			var existsScanResult = _scanResult && _scanResult.monsterClass;
 			var html = '<table cellspacing="0" cellpadding="0" style="width:100%">'
 				+ '<tr class="monname"><td colspan="2"><b>' + _name + '</b></td></tr>'
 				+ '<tr><td width="33%">ID: </td><td>' + _id + '</td></tr>'
@@ -1065,13 +1084,13 @@ HVStat.Monster = (function () {
 			if (_hasSpiritPoint) {
 				html += '<tr><td>Spirit: </td><td>' + (_currSpRate * 100).toFixed(2) + '%</td></tr>';
 			}
-			if (existsScanInfo) {
-				html += '<tr><td>Class:</td><td>' + (_scanInfo.monsterClass ? _scanInfo.monsterClass : "") + '</td></tr>'
-					+ '<tr><td>Trainer:</td><td>' + (_scanInfo.trainer ? _scanInfo.trainer : "") + '</td></tr>';
-				if (_scanInfo.powerLevel) {
-					html += '<tr><td>Power Level:</td><td>' + _scanInfo.powerLevel + '</td></tr>';
+			if (existsScanResult) {
+				html += '<tr><td>Class:</td><td>' + (_scanResult.monsterClass ? _scanResult.monsterClass : "") + '</td></tr>'
+					+ '<tr><td>Trainer:</td><td>' + (_scanResult.trainer ? _scanResult.trainer : "") + '</td></tr>';
+				if (_scanResult.powerLevel) {
+					html += '<tr><td>Power Level:</td><td>' + _scanResult.powerLevel + '</td></tr>';
 				}
-				html += '<tr><td>Melee Attack:</td><td>' + (_scanInfo.meleeAttack ? _scanInfo.meleeAttack : "") + '</td></tr>';
+				html += '<tr><td>Melee Attack:</td><td>' + (_scanResult.meleeAttack ? _scanResult.meleeAttack : "") + '</td></tr>';
 			}
 			var manaSkills = _getManaSkills();
 			if (manaSkills && manaSkills.length > 0) {
@@ -1084,7 +1103,7 @@ HVStat.Monster = (function () {
 						for (damageType in skillTable[attackType].damageTable) {
 							if (skillTable[attackType].damageTable[damageType]) {
 								if (skillCount > 0) {
-			 						html += '<br/>';
+									html += '<br/>';
 								}
 								html += HVStat.AttackType[attackType].name + '-' + HVStat.DamageType[damageType].name;
 								skillCount++;
@@ -1100,20 +1119,20 @@ HVStat.Monster = (function () {
 				html += spiritSkill.toString();
 				html += '</td></tr>';
 			}
-			if (existsScanInfo) {
-				html += '<tr><td>Weak against:</td><td>' + (_scanInfo.defWeak.length > 0 ? _scanInfo.getDefWeakString(false, true, 0) : "-") + '</td></tr>'
-					+ '<tr><td>Resistant to:</td><td>' + (_scanInfo.defResistant.length > 0 ? _scanInfo.getDefResistantString(false, true, 0) : "-") + '</td></tr>'
-					+ '<tr><td>Impervious to:</td><td>' + (_scanInfo.defImpervious.length > 0 ? _scanInfo.getDefImperviousString(false, true, 0) : "-") + '</td></tr>'
-					+ '<tr><td>Debuffs affected:</td><td>' + (_scanInfo.debuffsAffected.length > 0 ? _scanInfo.debuffsAffected.join(", ") : "-") + '</td></tr>';
-				if (_scanInfo.lastScanDate) {
-					lastScanString = HVStat.getDateTimeString(_scanInfo.lastScanDate);
+			if (existsScanResult) {
+				html += '<tr><td>Weak against:</td><td>' + (_scanResult.defWeak.length > 0 ? _scanResult.getDefWeakString(false, true, 0) : "-") + '</td></tr>'
+					+ '<tr><td>Resistant to:</td><td>' + (_scanResult.defResistant.length > 0 ? _scanResult.getDefResistantString(false, true, 0) : "-") + '</td></tr>'
+					+ '<tr><td>Impervious to:</td><td>' + (_scanResult.defImpervious.length > 0 ? _scanResult.getDefImperviousString(false, true, 0) : "-") + '</td></tr>'
+					+ '<tr><td>Debuffs affected:</td><td>' + (_scanResult.debuffsAffected.length > 0 ? _scanResult.debuffsAffected.join(", ") : "-") + '</td></tr>';
+				if (_scanResult.lastScanDate) {
+					lastScanString = HVStat.getDateTimeString(_scanResult.lastScanDate);
 				}
 			} else {
 				lastScanString = "Never";
 			}
 			html += '<tr><td valign="top">Last Scan:</td><td>' + lastScanString + '</td></tr>';
-			if (existsScanInfo && _scanInfo.lastScanDate) {
-				html += '<tr><td></td><td>' + HVStat.getElapsedFrom(_scanInfo.lastScanDate) + ' ago</td></tr>';
+			if (existsScanResult && _scanResult.lastScanDate) {
+				html += '<tr><td></td><td>' + HVStat.getElapsedFrom(_scanResult.lastScanDate) + ' ago</td></tr>';
 			}
 			html += '</table>';
 			return html;
@@ -1129,7 +1148,7 @@ HVStat.Monster = (function () {
 			get currSpRate() { return _currSpRate; },
 			get hasSpiritPoint() { return _hasSpiritPoint; },
 			get isDead() { return _isDead; },
-			get scanInfo() { return _scanInfo; },
+			get scanResult() { return _scanResult; },
 			get skills() { return _skills },
 			get valueObject() {
 				var vo = new HVStat.MonsterVO();
@@ -1138,13 +1157,14 @@ HVStat.Monster = (function () {
 				vo.maxHp = _maxHp;
 				vo.prevMpRate = _currMpRate;
 				vo.prevSpRate = _currSpRate;
-				vo.scanInfo = _scanInfo ? _scanInfo.valueObject : null;
+				vo.scanResult = _scanResult ? _scanResult.valueObject : null;
 				for (var i = 0; i < _skills.length; i++) {
 					vo.skills[i] = _skills[i].valueObject;
 				}
 				return vo;
 			},
 			get domElementId() { return _domElementIds[_index]; },
+			get baseElement() { return _baseElement; },
 
 			set id(id) { _id = id; },
 			set name(name) { _name = name; },
@@ -1169,8 +1189,8 @@ HVStat.Monster = (function () {
 				}
 			},
 			fetchScanningLog: function (html, transaction) {
-				_scanInfo = HVStat.MonsterScanInfo.fetchScanningLog(_index, html);
-				this.putScanInfoToDB(transaction);
+				_scanResult = HVStat.MonsterScanResults.fetchScanningLog(_index, html);
+				this.putScanResultToDB(transaction);
 			},
 			fetchSkillLog: function (used, damaged, transaction) {
 				var i;
@@ -1209,7 +1229,7 @@ HVStat.Monster = (function () {
 				_maxHp = vo.maxHp;
 				_prevMpRate = vo.prevMpRate;
 				_prevSpRate = vo.prevSpRate;
-				_scanInfo = vo.scanInfo ? new HVStat.MonsterScanInfo(vo.scanInfo) : null;
+				_scanResult = vo.scanResult ? new HVStat.MonsterScanResults(vo.scanResult) : null;
 				vo.skills.forEach(function (element, index, array) {
 					_skills.push(new HVStat.MonsterSkill(element));
 				});
@@ -1219,23 +1239,23 @@ HVStat.Monster = (function () {
 					return;
 				}
 				var tx = transaction; 
-				var scanInfoStore = tx.objectStore("MonsterScanInfo");
+				var scanResultsStore = tx.objectStore("MonsterScanResults");
 				var skillsStore = tx.objectStore("MonsterSkills");
-				// MonsterScanInfo
-				var reqGet = scanInfoStore.get(_id);
-				_waitingForGetResponseOfMonsterScanInfo = true;
+				// MonsterScanResults
+				var reqGet = scanResultsStore.get(_id);
+				_waitingForGetResponseOfMonsterScanResults = true;
 				reqGet.onsuccess = function (event) {
-					_waitingForGetResponseOfMonsterScanInfo = false;
+					_waitingForGetResponseOfMonsterScanResults = false;
 					if (event.target.result === undefined) {
-						console.log("get from MonsterScanInfo: not found: id = " + _id);
+						//console.log("get from MonsterScanResults: not found: id = " + _id);
 					} else {
-						console.log("get from MonsterScanInfo: success: id = " + _id);
-						_scanInfo = new HVStat.MonsterScanInfo(event.target.result);
+						//console.log("get from MonsterScanResults: success: id = " + _id);
+						_scanResult = new HVStat.MonsterScanResults(event.target.result);
 					}
 				};
 				reqGet.onerror = function (event) {
-					_waitingForGetResponseOfMonsterScanInfo = false;
-					console.log("get from MonsterScanInfo: error");
+					_waitingForGetResponseOfMonsterScanResults = false;
+					console.log("get from MonsterScanResults: error");
 				};
 				// MonsterSkills
 				var reqGet = skillsStore.get(_id);
@@ -1247,11 +1267,11 @@ HVStat.Monster = (function () {
 					var cursor = this.result;
 					if (cursor) {
 						_skills.push(new HVStat.MonsterSkill(cursor.value));
-						console.log("get from MonsterSkills: id = " + _id);
+						//console.log("get from MonsterSkills: id = " + _id);
 						cursor.continue();
 					} else {
 						_waitingForGetResponseOfMonsterSkills = false;
-						console.log("get from MonsterSkills: finished: id = " + _id);
+						//console.log("get from MonsterSkills: finished: id = " + _id);
 					}
 				}
 				reqOpen.onerror = function(){
@@ -1263,27 +1283,27 @@ HVStat.Monster = (function () {
 						if (!_waitingForDBResponse()) {
 							callback();
 						} else {
-							console.log("waiting");
+							//console.log("waiting");
 							setTimeout(arguments.callee, 10);
 						}
 					}
 				};
 				doCallback();
 			},
-			putScanInfoToDB: function (transaction) {
+			putScanResultToDB: function (transaction) {
 				if (!_id) {
 					return;
 				}
-				var scanInfoStore = transaction.objectStore("MonsterScanInfo");
-				var vo = _scanInfo.valueObject;
+				var scanResultsStore = transaction.objectStore("MonsterScanResults");
+				var vo = _scanResult.valueObject;
 				vo.id = _id;
 				vo.name = _name;
-				var reqPut = scanInfoStore.put(vo);
+				var reqPut = scanResultsStore.put(vo);
 				reqPut.onsuccess = function (event) {
-					console.log("putScanInfoToDB: success: id = " + _id);
+					//console.log("putScanResultToDB: success: id = " + _id);
 				};
 				reqPut.onerror = function (event) {
-					console.log("putScanInfoToDB: error: id = " + _id);
+					console.log("putScanResultToDB: error: id = " + _id);
 				};
 			},
 			putSkillsToDB: function (transaction) {
@@ -1312,7 +1332,7 @@ HVStat.Monster = (function () {
 //							alert("Skill: id = " + vo.id + ", name = '" + vo.name + "', skillType = " + vo.skillType + ", attackType = " + vo.attackType + ", damageType = " + vo.damageType);
 							reqPut = skillsStore.put(vo);
 							reqPut.onsuccess = function (event) {
-								console.log("putSkillsToDB: success: id = " + _id);
+								//console.log("putSkillsToDB: success: id = " + _id);
 							};
 							reqPut.onerror = function (event) {
 								console.log("putSkillsToDB: error: id = " + _id);
@@ -1350,7 +1370,9 @@ HVStat.Monster = (function () {
 	return Monster;
 }());
 
-// functions related to IndexedDB
+//------------------------------------
+// IndexedDB manipulators
+//------------------------------------
 
 HVStat.deleteIndexedDB = function () {
 	// close connection
@@ -1361,15 +1383,15 @@ HVStat.deleteIndexedDB = function () {
 	var reqDelete = HVStat.indexedDB.deleteDatabase("HVStat");
 	reqDelete.onsuccess = function (event) {
 		alert("Your database has been deleted.");
-		console.log("deleteIndexedDB: success");
+		//console.log("deleteIndexedDB: success");
 	};
 	reqDelete.onerror = function (event) {
 		alert("Error: Failed to delete your database");
-		console.log("deleteIndexedDB: error");
+		//console.log("deleteIndexedDB: error");
 	};
 	reqDelete.onblocked = function (event) {
 		alert("Blocked: Please wait for a while or close the browser.");
-		console.log("deleteIndexedDB: blocked");
+		//console.log("deleteIndexedDB: blocked");
 	};
 };
 
@@ -1381,13 +1403,13 @@ HVStat.maintainObjectStores = function (event) {
 	var oldVer = event.oldVersion;	// does not work with Chrome
 	var newVer = event.newVersion || Number(idb.version);
 	var store;
-	console.log("maintainObjectStores: old version = " + oldVer);
-	console.log("maintainObjectStores: new version = " + newVer);
+	//console.log("maintainObjectStores: old version = " + oldVer);
+	//console.log("maintainObjectStores: new version = " + newVer);
 
 	if (newVer >= 1) {
-		// MonsterScanInfo
+		// MonsterScanResults
 		try {
-			store = idb.createObjectStore("MonsterScanInfo", { keyPath: "id", autoIncrement: false });
+			store = idb.createObjectStore("MonsterScanResults", { keyPath: "id", autoIncrement: false });
 		} catch (e) {
 			alert(alertMessage);
 			console.log(e.message + "\n" + e.stack);
@@ -1470,9 +1492,9 @@ HVStat.openIndexedDB = function (callback) {
 	};
 };
 
-HVStat.deleteAllObjectsInMonsterScanInfo = function () {
-	var tx = HVStat.idb.transaction(["MonsterScanInfo"], "readwrite");
-	var store = tx.objectStore("MonsterScanInfo");
+HVStat.deleteAllObjectsInMonsterScanResults = function () {
+	var tx = HVStat.idb.transaction(["MonsterScanResults"], "readwrite");
+	var store = tx.objectStore("MonsterScanResults");
 	var range = null; // select all
 	var count = 0;
 
@@ -1484,7 +1506,7 @@ HVStat.deleteAllObjectsInMonsterScanInfo = function () {
 			count++;
 			cursor.continue();
 		} else {
-			alert("Your monster scanning data has been deleted.\nsuccess(es): " + count);
+			alert("Your monster scan results has been deleted.\nsuccess(es): " + count);
 		}
 	}
 	req.onerror = function () {
@@ -1516,9 +1538,9 @@ HVStat.deleteAllObjectsInMonsterSkills = function () {
 	}
 };
 
-HVStat.exportMonsterScanInfo = function (callback) {
-	var tx = HVStat.idb.transaction(["MonsterScanInfo"], "readonly");
-	var store = tx.objectStore("MonsterScanInfo");
+HVStat.exportMonsterScanResults = function (callback) {
+	var tx = HVStat.idb.transaction(["MonsterScanResults"], "readonly");
+	var store = tx.objectStore("MonsterScanResults");
 	var range = null; // select all
 	var count = 0;
 	var texts = [];
@@ -1573,8 +1595,8 @@ HVStat.exportMonsterScanInfo = function (callback) {
 				+ tab + (vo.debuffsAffected ? vo.debuffsAffected.join(", ") : "");
 			cursor.continue();
 		} else {
-			HVStat.dataURIMonsterScanInfo = "data:text/tsv;charset=utf-8," + texts.join(newline);
-			HVStat.nRowsMonsterScanInfoTSV = count;
+			HVStat.dataURIMonsterScanResults = "data:text/tsv;charset=utf-8," + texts.join(newline);
+			HVStat.nRowsMonsterScanResultsTSV = count;
 			if (callback instanceof Function) {
 				callback(event);
 			}
@@ -1630,38 +1652,37 @@ HVStat.exportMonsterSkills = function (callback) {
 	}
 };
 
-HVStat.importMonsterScanInfo = function (file, callback) {
+HVStat.importMonsterScanResults = function (file, callback) {
 	var reader = new FileReader();
 	reader.onload = function (event) {
 		var contents = event.target.result;
 		var rowCount, procCount;
 		var result;
-		var tx = HVStat.idb.transaction(["MonsterScanInfo"], "readwrite");
-		var store = tx.objectStore("MonsterScanInfo");
+		var tx = HVStat.idb.transaction(["MonsterScanResults"], "readwrite");
+		var store = tx.objectStore("MonsterScanResults");
 		var skipCount = 0;
 		var successCount = 0;
 		var errorCount = 0;
 		var voExisting, voToPut, reqPut;
 
 		var report = function () {
-//			console.log("importMonsterScanInfo: procCount = " + procCount + ", rowCount = " + rowCount);
 			if (procCount >= rowCount) {
 				alert(rowCount + " row(s) found, " + successCount + " row(s) imported, " + skipCount + " row(s) skipped, " + errorCount + " error(s)");
 			}
 		}
 
 		// prescan
-		HVStat.reMonsterScanInfoTSV.lastIndex = 0;
+		HVStat.reMonsterScanResultsTSV.lastIndex = 0;
 		rowCount = 0;
-		while ((result = HVStat.reMonsterScanInfoTSV.exec(contents)) !== null) {
+		while ((result = HVStat.reMonsterScanResultsTSV.exec(contents)) !== null) {
 			rowCount++;
 		}
 
 		// import
 		procCount = 0;
-		HVStat.reMonsterScanInfoTSV.lastIndex = 0;
-		while ((result = HVStat.reMonsterScanInfoTSV.exec(contents)) !== null) {
-			voToPut = new HVStat.MonsterScanInfoVO({
+		HVStat.reMonsterScanResultsTSV.lastIndex = 0;
+		while ((result = HVStat.reMonsterScanResultsTSV.exec(contents)) !== null) {
+			voToPut = new HVStat.MonsterScanResultsVO({
 				id: result[1],
 				lastScanDate: result[2],
 				name: result[3],
@@ -1685,7 +1706,6 @@ HVStat.importMonsterScanInfo = function (file, callback) {
 			(function (voToPut) {
 				reqGet = store.get(voToPut.id);
 				reqGet.onsuccess = function (event) {
-//					console.log("importMonsterScanInfo: get: success");
 					var doPut = false;
 					if (event.target.result === undefined) {
 						doPut = true;
@@ -1694,8 +1714,8 @@ HVStat.importMonsterScanInfo = function (file, callback) {
 						if (voExisting.lastScanDate === null || voToPut.lastScanDate >= voExisting.lastScanDate) {
 							doPut = true;
 						} else {
-							console.log("importMonsterScanInfo: voToPut.id = [" + voToPut.id + "], voExisting.id  [" + voExisting.id + "]");
-							console.log("importMonsterScanInfo: voToPut.lastScanDate = [" + voToPut.lastScanDate + "], voExisting.lastScanDate  [" + voExisting.lastScanDate + "]");
+							//console.log("importMonsterScanResults: voToPut.id = [" + voToPut.id + "], voExisting.id  [" + voExisting.id + "]");
+							//console.log("importMonsterScanResults: voToPut.lastScanDate = [" + voToPut.lastScanDate + "], voExisting.lastScanDate  [" + voExisting.lastScanDate + "]");
 						}
 					}
 					if (!doPut) {
@@ -1704,13 +1724,12 @@ HVStat.importMonsterScanInfo = function (file, callback) {
 					} else {
 						reqPut = store.put(voToPut);
 						reqPut.onsuccess = function (event) {
-//							console.log("importMonsterScanInfo: put: success");
 							successCount++;
 							procCount++;
 							report();
 						};
 						reqPut.onerror = function (event) {
-							console.log("importMonsterScanInfo: put: error");
+							console.log("importMonsterScanResults: put: error");
 							errorCount++;
 							procCount++;
 							report();
@@ -1718,7 +1737,7 @@ HVStat.importMonsterScanInfo = function (file, callback) {
 					}
 				};
 				reqGet.onerror = function (event) {
-					console.log("importMonsterScanInfo: get: error");
+					console.log("importMonsterScanResults: get: error");
 					errorCount++;
 					procCount++;
 					report();
@@ -1746,7 +1765,6 @@ HVStat.importMonsterSkills = function (file, callback) {
 		var voExisting, voToPut, reqPut;
 
 		var report = function () {
-//			console.log("importMonsterSkills: procCount = " + procCount + ", rowCount = " + rowCount);
 			if (procCount >= rowCount) {
 				alert(rowCount + " row(s) found, " + successCount + " row(s) imported, " + skipCount + " row(s) skipped, " + errorCount + " error(s)");
 			}
@@ -1774,7 +1792,6 @@ HVStat.importMonsterSkills = function (file, callback) {
 			(function (voToPut) {
 				reqGet = store.get(voToPut.id);
 				reqGet.onsuccess = function (event) {
-//					console.log("importMonsterSkills: get: success");
 					var doPut = false;
 					if (event.target.result === undefined) {
 						doPut = true;
@@ -1783,8 +1800,8 @@ HVStat.importMonsterSkills = function (file, callback) {
 						if (voExisting.lastUsedDate === null || voToPut.lastUsedDate >= voExisting.lastUsedDate) {
 							doPut = true;
 						} else {
-							console.log("importMonsterSkills: voToPut.id = [" + voToPut.id + "], voExisting.id  [" + voExisting.id + "]");
-							console.log("importMonsterSkills: voToPut.lastUsedDate = [" + voToPut.lastUsedDate + "], voExisting.lastUsedDate  [" + voExisting.lastUsedDate + "]");
+							//console.log("importMonsterSkills: voToPut.id = [" + voToPut.id + "], voExisting.id  [" + voExisting.id + "]");
+							//console.log("importMonsterSkills: voToPut.lastUsedDate = [" + voToPut.lastUsedDate + "], voExisting.lastUsedDate  [" + voExisting.lastUsedDate + "]");
 						}
 					}
 					if (!doPut) {
@@ -1793,7 +1810,6 @@ HVStat.importMonsterSkills = function (file, callback) {
 					} else {
 						reqPut = store.put(voToPut);
 						reqPut.onsuccess = function (event) {
-//							console.log("importMonsterSkills: put: success");
 							successCount++;
 							procCount++;
 							report();
@@ -1821,8 +1837,11 @@ HVStat.importMonsterSkills = function (file, callback) {
 	reader.readAsText(file, 'UTF-8');
 }
 
-// functions for reading old monster database
+//------------------------------------
+// migration functions
+//------------------------------------
 // finally to be obsolete
+
 HVStat.migration = {};
 HVStat.migration.monsterClassFromCode = function (code) {
 	code = String(code);
@@ -1922,11 +1941,11 @@ HVStat.migration.damageTypeFromCode = function (code) {
 	return array;
 };
 
-HVStat.migration.createMonsterScanInfoVOFromOldDB = function (oldDB, index) {
+HVStat.migration.createMonsterScanResultsVOFromOldDB = function (oldDB, index) {
 	if (!oldDB.mclass[index]) {
 		return null;
 	}
-	var i, len, v, vo = new HVStat.MonsterScanInfoVO();
+	var i, len, v, vo = new HVStat.MonsterScanResultsVO();
 	// id
 	vo.id = Number(index);
 	// lastScanDate
@@ -1968,15 +1987,15 @@ HVStat.migration.createMonsterScanInfoVOFromOldDB = function (oldDB, index) {
 	return vo;
 };
 
-HVStat.migration.migrateMonsterScanInfo = function () {
-	var tx = HVStat.idb.transaction(["MonsterScanInfo"], "readwrite");
-	var store = tx.objectStore("MonsterScanInfo");
+HVStat.migration.migrateMonsterScanResults = function () {
+	var tx = HVStat.idb.transaction(["MonsterScanResults"], "readwrite");
+	var store = tx.objectStore("MonsterScanResults");
 	var i, len = _database.mclass.length;
 	var successCount = 0;
 	var errorCount = 0;
 	var lastIndex, vo, reqPut;
 	var report = function () {
-		alert("Migration of the monster scanning data has completed.\n" + successCount + " success(es), " + errorCount + " error(s)");
+		alert("Migration of the monster scan results has completed.\n" + successCount + " success(es), " + errorCount + " error(s)");
 	}
 	// prescan
 	for (i = 0; i < len; i++) {
@@ -1987,7 +2006,7 @@ HVStat.migration.migrateMonsterScanInfo = function () {
 	// migrate
 	for (i = 0; i < len; i++) {
 		if (_database.mclass[i]) {
-			vo = HVStat.migration.createMonsterScanInfoVOFromOldDB(_database, i);
+			vo = HVStat.migration.createMonsterScanResultsVOFromOldDB(_database, i);
 			if (vo) {
 				reqPut = store.put(vo);
 				if (i < lastIndex) {
@@ -2088,7 +2107,7 @@ HVStat.migration.migrateMonsterSkills = function () {
 
 HVStat.migration.migrateDatabase = function () {
 	loadDatabaseObject();
-	HVStat.migration.migrateMonsterScanInfo();
+	HVStat.migration.migrateMonsterScanResults();
 	HVStat.migration.migrateMonsterSkills();
 };
 
@@ -2097,8 +2116,11 @@ HVStat.migration.deleteOldDatabase = function () {
 	alert("Your old monster database has been deleted.");
 };
 
+//------------------------------------
+// legacy codes
+//------------------------------------
+
 /* ========== GLOBAL VARIABLES ========== */
-var millisecondsAll = TimeCounter(1);
 VERSION = "5.4.1.8";
 SAVE_STATS = true;
 MAX_MID = 33;
@@ -2150,7 +2172,6 @@ _lastArtName = "";
 _tokenDrops = [0, 0, 0];
 
 /* ========== EMBEDDED IMAGES ========== */
-I_HVLOGO = "data:image/gif;base64,R0lGODlhlgBuAMQAAO/r3uXc0NzOwtK/tMiwpr+hmLWTiquEfKJ2b5lnYoVKRo9YVHIsKnw7OFUAAF8PDmgdHAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACwAAAAAlgBuAAAF/yAgjmRpnmiqrmzrvnAsz3Rt33iu73zv/8CgcEgsGo/IpHLJbDqf0Kh0Sq1ar9isdsvter/gsFgqIJQQiADAgBgADug4mgA3lwpyNEDARtgBAXEFJXUicHl+JX15B3t9fyQCiGgDgQgCI2gGIniImzAECg4PaiIGDg17owINDq6vEAatDgglCa+vCKe4DAEDEK8PJAuuabO4EIMjrLi4us29JAcPza4PBdQOf66pt80PtTIHxSMM2gDE4WWYZ7QkAQRuIgIHA6NmAcQLIgMFop8CmKkjwO4Eq0bwCM67B0gfCQQKMA0g8CeAAWDbUImAJ+/GOFIACGgMMKoUAnftwv+JEJmKxKl9CyGIaEWAgcwADxKcDLezhUiUL5c5kHliVgmaI7it1JhDVC2kPUWczJUJ5VIGKUm4mqlNJIFTBKJOJZfiJ0+rALYWVTsCqQilIXEpKEVDwKgCIx+AlIqqzUO0JB1kTSoYANIGDSCkEtu3IwqzfFWmLWzCKAmaYae2FAkBgbIbJ6kRyIc26l/JAMx9ujoCb0ukP80wRv2YrEisnJhWZss1FK7NunHgREWA2l6+DeRsOpk8jgGRD/C5MZc8ATVlbhFHRq68tlXqCKw7+HyUt+Fzb5lylnOA7gxio4GhHjsqDQD64NQUAMbgUz5gqHzmFkXb3YdLft4V9B//N+SVB1Nb6E0GHC4LFFQXbgMcN0YADDwYwykWMlFQiBuS+IJjY6So4oostujiizDGKOOMNNZo441OTERRPCiUsSNFJCb045BE7uiGkEOegCQkGxXpJJFKDuneO0SiyEIA3rzSkgn0kTUCAQBWI2YwaYA55mpfNlOCmWO2CdcIgWTzSgLe/QZKmFqi0KVVWLo5Zn59tokbCT+9AmeWfo7ZUZxiEmVCoXm2EGg1W7bTTDhsJkqmGpm2ySSkhXWqaTMwMdqmlXE1U6kKvom5alWXrvTkk3QVaQAxcq2pJgB4JjNrkaUMAIcCcjZD56OUwhBAAQsU+ypfsQYhgDmvWAgq/z/ZJDBlDQYU64qjhCYrA33PGhhtCc0wyUIzBVDrgIfXrnDMK+ouhIsAGVZjJajBvUCuntXQNhm9MaRb6HHxqjCvK/W+wQs/1Rwbrqoz/HvCngKnWzAuZuBqVcIpLBxhCe460Ai0sCBL8bh2XhzwCaRO0qBWHKvybZq4sCByvXbdC6e3KPJb7goWc/myCYkKTBjB6LzyCcgo7HzCOK8MirIrEi+1cgxFW+oMzIKiSjPTPau3q8LV1FvyyT8jo+vWMHT917ljH72CxiJ4bAbUa+EdSTMkdumY0BW3TLWbGdcMg99l78P3bn6PcLiYpJSN9cQtc91yyWMmzvQLkXtcxv/ZIadtAucvi5IyzpnHbaflbXrO8Maf2/zu4+VFbnubpOCFS0eEs5znAIiILPvILeju8cI6my4NMpP4hafEwWseqdF0Lz374ooLNWbzuq+tAn2OVu/69V5ThTQviLXvfvto6t60mOD77H21KsAuD78e+tv63F9b36gqhK7u3Y90USMVIR62gpIdi18mYoHcYBXAAiaKgALcXgk8ljN5AY5kuGBbCnZxs1S9on8vkEX7suaS9zUATW1x4fswWBT3oQp2o2CB6lzRvwC8L4Lv+CEA7GE/HM2PG0CEk7uSeAMSotBGPXuACFfAoXcNYRdMlNECGpDFEnCoi0184o22ZcT/MprxjGhMoxrXyMY2uvGNcIyjHOdIRxqQ8QRSisSvnoQJH+3RSC3w4x8BuYxBEgmMeCQGDPF4ILpMY1TI2MQjIfmtmcFJZKP6zCQpGYsZBOAAYQJXAtXHDEoOZROlNOUrLHlEUypgHpj0UydlQAAOOo1VjXyDtxI1y02q0hoo2KWmQOJLTc1SBvTApChzR44lDRJOhiRAAvBkwC8ZsluuGIQz/5iDmlRjkRALxh2HsCe02FEPT6ii207AQYHhriwIBKD67iCnZNDgnTtQ5y1LYDkNsc48LHgnDpUWgB2iApH/pIwQAoAnf7azTgBdAT6dh4JNSjEG+OQBqCTTzztu/3QSYhNoNcY5j5IxAJEfRYTYbIAfuiBKaSb8EytjqtD0OeCVLcAPOBnppmv8gKEBHI41xskvuZAUd0Kt3Qp+QSGSam1McwkCpEBCH5jSNBgzTego0Scpg55UojIlgkHTICd/vs1QoIhnK0exUhUg6gFtzagP+vlSsHbwBVAjTTN22gISjoKvcvWBLcVpV7TilXQD4JxPbeBX5Gk1CQIQplWfGlFc3hWHEHDqEKdoAoPClaeGRcKezKqy0PqEdI11wFdHyJAUIEq1oK3sEAZ62t/I0H0K+APUUrtYE0xOMTJEnQMWCarb4rZhNuAgaUubKAQ91iViYuFaTUmbov7JPmZzrWBhe4pdzEU0taplhw9/iYuZWfcb3f0BrpaZggEYt33pJYF73YcCFb4vIgBIwHv32wAFWHK+743vD4jI1zoWITEGdsJXEszgBjv4wRCOsIQnTOEKW/jCGM6whjfM4Q57+MMiCAEAOw==";
 I_HEALTHPOT = "data:image/gif;base64,R0lGODlhHgAgAOYAAPbt9ho9IwArCAArAAARAAhGCAgrCBFXERFGETR7NAgRCEaDRmmvacrkyvb/9uTt5BFXCDR7KxFGCBpXERpGEQgrABFXACtpGleVRhpXCE+nNBppABFGACt7ERErCDSMETR7GiuMABpXACt7CBpGCCtpETR7ETRpGkanETR7CCtpCE+MK4OvaafTjHKnT5XKcjR7ACtpAAgRAE+MGkZ7GnLBKytXAE+MEUZ7EU+MAHLBEcHklWCnAHKnK57bRq/bcnKnEZXKK57BT5XBGvb/28HkRnKMEa/TI9PtcuT2lfb2r9vTI/bt2wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACwAAAAAHgAgAAAH/4AzJioZhRsbEBkqiykmHSUrLhggKzMjLgwuLj0zLkJBKDc0H6QzpjNAQDcrP0o/QT89NURESUhFQR89PkeqMx83wagoOTk1SklBRz5BSERKSEdLRSMpNUW4KCY0JiZAoDdArUlAR83PRUfqQSU94UhJRZwzOTpHOjw6SURCQ0FBSoj80KFjSI8UHlwgAdIjCTIf+OwdGeJDiZIeQYA4+wGER6oZHCokeCakRyto6bAVcRgriBCBKFLkCKbigAEELwImmdHQIpKfKocYRBaER4gbKFCokGAARA8UP569WCHkVjp///4lSdILhQYgSpkucKWhBhJX4XQU+elw64+1Rf90hEpqAoGBkbR+oBAy0B7bgLR2HFmbMRyKDggITMjp4FkNHkPS+RgCpMgPh9CCYKPM48aGAgYuPHWxg0i6rTUgCvFpMt7gXp0RK1hAZMeLr0PO/vCBKwkAB0mCrY1chPKNEQgqRKDl4EE0h0UAE/mNJEcMfeaQCKkBJIWEChmE7KsVPR4RB+gBPPtx41jvJK9mkBiQAYhZZOUrMjmPvvFkaEc4RMsLFAwAASrNJOGDQ0I58xsRDzARREVI6HBDD+K1gIAAEsyAglpcrfSPgw9stVAr2OxQEgorQMChh9/cAuJltChRQw03AJRMRevNIIEABwZTGRL+tLWDgsUAwVL/Ribt90JyEJASzkrFRYcMEhlFhsRkK7G31wsBVBDlB6gUUUsqVWF2SxBCAeFDjT8IUVcFFkipj0CQvYZNEDrEGMt957GAgAx1AhPEPj00hM1E+WgGj0Wv+HBWCwEYkMFRN1S0Qw47MBHPLTFctuYR8JQay3clhFOZEiVN95MrMBBFWUGfrLUQBxkkmkNuSrjEBBMrsdoDNEAYkQMPMwFRkDkiiFBERwEmk4SnAPW6GkfB3ICDTB59ZMMQHkWHJS0++MDEDjq04gMQOeAwww0wwJBDKjfMUENRh9r4w68auZJuMtaZQkOxqahygwk35CBECy7c0EIDLWjwQwuJ/hDLCw0qmADCCfVmu20gADs=";
 I_MANAPOT = "data:image/gif;base64,R0lGODlhHgAgAOYAACMRGiMIGkYrRmlPafbT9ox7jGkrcvbT/5V7p0YrYD0aYBEIGq+ewWlPjD0acisaRkYrcntXuCMRRsq47QgAGkYrgysRchEARisaYIx7wZ6M0yMRYNvT9j0jpyMaRhEAYCMRcisacmBPpysag089pxEAexEIRisalSMaYAgARhEIYAgAYGBXuAAATwAARgAAGggIYAgIRhERPQgIGisrafb2/z1GaT1PjCMrRmlyjLjB05Wnnmlyaaeeg1dPPfbt5MGvp9uVeysaGoxyctPBwdvT0/b29gAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACwAAAAAHgAgAAAH/4AQGBImhTIyMSYSiw8YKBsVIiQhFRAeIiwiIg0QIggFNgkONKQQphADAwkVDD8MBQwNOUZGRURABTQNOz2qEDQJwag2AgI5P0UFPTsFREY/RD1BQB4POUC4NhgOGBgDoAkDrUUDPc3PQD3qBRsN4URFQJwQAjw9PD48RUYIQwUFP4ww4MFjSIMHKUQQGdCgCLId+Oz1GLLjx48GBQY4YzDARyoIFF6ceIagQSto6bABcRirAAKBNh4ICCYBhosVGQIWgdDQIpGfKocYRFbAB44ENmxISOEiRAMbDJ5lqIDgVjp///4VKdLLxo0BSpl2cHUjBxFX4XgA+elwK4O1QP94hEqKYYWLkbQY2EAw0B7bgLR09FibMZwNFCteqMhZ41kOH0PS7RgyAAgDh9AKYKPsI4EMFy5APBWhw0i6rTkgIvBpMt7gXp0Rt+hgREeGr0POMtiBq8iBGkWCrY0MhHICD4lH0KrBIZpDIICN/CYiAIA+c0QQ5BiA8IUJBPtqQY9npIb5A88YJDjWu8grCBe8DzCLbHxFAuXNN54MrYdDWhl88EIMqDRTxA4OCeXMb0ZwQEABFRHBQwINgKeBXSlAYINaXK30z4IcbLVQK9joUJINFcTgQoY2fHMLh5fR8kMOOSQAUDIVpQcBUwQGUxkR/rSlw4HFDMBSRibhl0H/YjGQEs5KxUGHDBEZRUbEZCupt1cGJQxYSmW1pFIVZrcUINQAO8jIAAJ1vTCDk/oIBNlr2BTAg4ux0FdeBIm9CUwB+zTQEDYT5aMZPBa9ssNZGpTggglHJVCRDgLoQEA8twBwWZk9wONpLCm8sEE4lf1QknQ/uSIEUZQV9MlaC1FggqAC5PaDSwQQsJKpDUAzgAEC+DDTAAWZs8ACQHTkXzJFXArQratxFEwCCsjk0UcBDOERdFTSssMOBOjAQys7DCCAAhAkIIQQAqSSAAQ5FAXojAzkqpEr4yZTnSkO/JqKKglgkIAACGggQgIaTKDBDQxoICgDsSQgAQYhWPDuBLTVBgIAOw==";
 I_SPIRITPOT = "data:image/gif;base64,R0lGODlhHgAgAOYAACsACFcRI//k9tvTlcq4Rvbkla+MEdOvI6eMK+TBRu3Tcv/tr8GVGv/2255yAIxpEcGVK4xyNNO4cnJPAO2vI6dyEXJPEYxPAMqVT08rAK9yK4xPEREIAGk0CIxPGns0AMGVcmkrAKdPEXs0CGk0EadyT9OnjEYaAGkrCIxPK3s0EYM0EVcaAEYaCGkrEad7aXs0GmkaAEYRACsRCIM0Gv/k21caCGkrGpVXRrh7aSsIAHsrGkYaEUYRCFcaEVcRCHs0KysAABEAAEYICCsICFcREUYREXs0NBEICINGRuTKyv/29u3k5AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACwAAAAAHgAgAAAH/4AeKig2hRkZLTYoiyMqJC4pJTgwKR4dJS8lJRoeJRgQDxs0FqQeph4VFRspEgsSEBIaCA0NBQoJEBYaBAeqHhYbwagPFxcICwUQBwQQCg0LCgcUCR0jCAm4Dyo0KioVoBsVrQUVB83PCQfqEC4a4QoFCZweFwYHBg4GBQ0YDBAQCxpIMGCAgYYRQ0ooqKChADIC+OwdYEBgwQINECo4k1DBQSoPMnQceYZBQyto6bAlcBgLAgaBD0ZcCIaCBxEjIAIW8NDQooKfKhkYRAbBwYQNDx6g6EEEhoYHEp6BSIHhVjp///4VKNDrQYQKSpkmcRUBgQJX4Qwk+Olwq4S1Cf8MhEqqwgiRkbQkPMAw0B7bgLQGHFibMdwDEkaE+Mi55BkCBwzSEWBQIYEEh9AgYKPsYEOGGURuPC0xoEG6rQggYvBpMt7gXp0RA0jSYACIrwzOSiCAq4CAJQWCrY2cgPKGDkZ0AKG1hEk0hwkAN/it4EIIfeYUYEBQYUQPHTYw7KsVPV6DJegFPJOw4VjvAq88/OBgo4JZZOUr1jiPvvFkaAc4RAsIRXDQAirNFECAQ0I581sDTNQAQUUKGLCBBuKZYAQSPXjwgFpcrfSPg0xstVAr2AxQ0gMptMChh9/cAuJltCyAAAIbAJRMRet50AMSBwZTmQL+tDWAgsVUwFL/RibtB0JyLZASzkrFRYeMAhlFpsBkK7G3FwgB6BClBagkUEsqVWF2CwRCVUBAjRJgUJcOJ0ipj0CQvYYNBAbEGMt95+VgRBB1AgPBPho0hM1E+WgGj0WvEHCWCQEQYcNRG1Q0wAUD1BDPLSFctuYB8JQay3cuhFPZAiVN95MrHxBFWUGfrLWQDDYkekFuC7hUQw0rsaoBNBWIcIEDM1VQkDkssJBARwEmU4CnAPW6GkfBbLCCTB59FAMDHkWHJS0EEFDDAAa0QkAFF6zgwQYffHBBKht4gEBRh9oowa8auZJuMtaZQkOxqaiygQobXICBCSVsYIISJkQggQmJShDLCwYoqADDDvVmu20gADs=";
@@ -2160,231 +2181,6 @@ jQuery.fn.outerHTML = function () {
 	return $("<div>").append(this.eq(0).clone()).html();
 };
 
-loadLTCObject();
-
-function main1() {
-	//-- Hide Logo ASAP to avoid flashing in Chrome.
-	//-- Flash still occurs for Firefoxers.
-	if (_settings.isHideHVLogo){
-		var t = TimeCounter(1);
-		var eStyle = document.createElement('style');
-		eStyle.type = 'text/css';
-		eStyle.appendChild(document.createTextNode('img.cw{visibility:hidden}'));
-		document.childNodes[1].appendChild(eStyle);
-		_ltc.hidelogo[0]++;
-		_ltc.hidelogo[1] += (TimeCounter(0, t));
-	}
-	// store DOM cache
-	HVStat.popupElement = document.getElementById("popup_box");
-	HVStat.monsterPaneElement = document.getElementById("monsterpane");
-
-	setTimeout(main2, 10);
-}
-function main2() {
-	HVStat.openIndexedDB(main3);
-}
-function main3() {
-	if (!HVStat.isChrome && !cssInserted()) {
-		GM_addStyle(GM_getResourceText("jQueryUICSS"));
-		cssAdded();
-	}
-	var a = localStorage.getItem(HV_EQUIP);
-	var c = (a === null) ? false : JSON.parse(a);
-	
-	if (_settings.isChangePageTitle && document.title === "The HentaiVerse") {
-		var t = TimeCounter(1);
-		document.title = _settings.customPageTitle;
-		_ltc.hidetitle[0]++;
-		_ltc.hidetitle[1] += (TimeCounter(0, t));
-	}
-	if (document.getElementById("togpane_log")) {
-		HVStat.duringBattle = true;
-	}
-	if (HVStat.duringBattle) {
-		HVStat.transaction = HVStat.idb.transaction(["MonsterScanInfo", "MonsterSkills"], "readwrite");
-		if (_settings.isShowMonsterNumber)
-			showMonsterNumber();
-		if (_settings.isMainEffectsAlertSelf)
-			AlertEffectsSelf();
-		if (_settings.isMainEffectsAlertMonsters)
-			AlertEffectsMonsters();
-		collectRoundInfo();
-		if (_settings.warnMode[_round.battleType]) {
-			var t2 = TimeCounter(1);
-			healthWarning();
-			_ltc.healthWarning[0]++;
-			_ltc.healthWarning[1] += (TimeCounter(0, t2));
-		}
-		if ((_round !== null) && (_round.currRound > 0)) {
-			var t3 = TimeCounter(1);
-			showRoundCounter();
-			_ltc.showRoundCounter[0]++;
-			_ltc.showRoundCounter[1] += (TimeCounter(0, t3));
-		}
-		displayPowerupBox();
-		if (_settings.isShowDivider) {
-			var t4 = TimeCounter(1);
-			addBattleLogDividers();
-			_ltc.addBattleLogDividers[0]++;
-			_ltc.addBattleLogDividers[1] += (TimeCounter(0, t4));
-		}
-		if (_settings.isShowHighlight) {
-			var t5 = TimeCounter(1);
-			highlightLogText();
-			_ltc.highlightLogText[0]++;
-			_ltc.highlightLogText[1] += (TimeCounter(0, t5));
-		}
-		if (_settings.isShowSelfDuration) {
-			var t7 = TimeCounter(1);
-			showSelfEffectsDuration();
-			_ltc.showSelfEffectsDuration[0]++;
-			_ltc.showSelfEffectsDuration[1] += (TimeCounter(0, t7));
-		}
-		if ((_round !== null) && (HVStat.monsters.length > 0)){
-			var t6 = TimeCounter(1);
-			showMonsterStats();
-			_ltc.showMonsterStats[0]++;
-			_ltc.showMonsterStats[1] += (TimeCounter(0, t6));
-		}
-		if (isBattleOver()) {
-			if (_settings.isShowEndStats) {
-				var t8 = TimeCounter(1);
-				showBattleEndStats();
-				_ltc.showBattleEndStats[1] += (TimeCounter(0, t8));
-			}
-			saveStats();
-			_round.reset();
-		}
-		if (_settings.isShowStatsPopup) {
-			var t45 = TimeCounter(1);
-			registerEventHandlersForMonsterPopup();
-			_ltc.monsterpopup[0]++;
-			_ltc.monsterpopup[1] += TimeCounter(0, t45);
-		}
-		if (_settings.isShowScanButton || _settings.isShowSkillButton || _settings.isEnableScanHotkey || _settings.isEnableSkillHotkey) {
-			var t46 = TimeCounter(1);
-			Scanbutton();
-			_ltc.showscanbutton[0]++;
-			_ltc.showscanbutton[1] += TimeCounter(0, t46);
-		}
-	} else {
-		if (!HVStat.duringBattle && (_round !== null))
-			_round.reset();
-		else if (_settings.isColumnInventory && isItemInventoryPage())
-			initItemsView();
-		else if (isCharacterPage())
-			collectCurrentProfsData();
-		else if (isShrinePage()) {
-			if (_settings.isTrackShrine)
-				captureShrine();
-			if (HVStat.isChrome)
-				window.document.onkeydown = null;	// workaround to make enable SPACE key
-		}
-	}
-	if (_settings.isShowSidebarProfs) {
-		var t9 = TimeCounter(1);
-		showSidebarProfs();
-		_ltc.showSidebarProfs[0]++;
-		_ltc.showSidebarProfs[1] += (TimeCounter(0, t9));
-	}
-	if (c) inventoryWarning();
-	initUI();
-
-	if (HVStat.duringBattle) {
-		if (_settings.isCountPageLoadTime) {
-			var clickedLTC = localStorage.getItem('PLTC');
-			if (clickedLTC !== null) {
-				if (clickedLTC[1] === 1) {
-					localStorage.removeItem('PLTC');
-					_ltc.pageLoad[0] = 1;
-					var treadyload = (TimeCounter(0, clickedLTC.slice(3, 16)) - TimeCounter(0, millisecondsAll));
-					if (treadyload < 3000) {
-						_ltc.pageLoad[2]++;
-						_ltc.pageLoad[3] += treadyload;
-					}
-					var d45 = new Date();
-					d45.setTime(clickedLTC.slice(3, 16));
-					var ltchour = d45.getHours();
-					var n11 = 1;
-					while (n11 < 9) {
-						if (ltchour < (n11 * 3)) {
-							if (treadyload < 3000) {
-								_ltc.pageLoad[2 + (n11 * 2)]++;
-								_ltc.pageLoad[3 + (n11 * 2)] += treadyload;
-							}
-							break;
-						}
-						n11++;
-					}
-				}
-			}
-			CheckForAction();
-		}
-		_ltc.isbattle[0]++;
-		_ltc.isbattle[1] += TimeCounter(0, millisecondsAll);
-	} else {
-		if (isEquipmentInventoryPage() && _settings.isShowTags[0]) {
-			var t47 = TimeCounter(1);
-			TaggingItems(false);
-			_ltc.taggingitems[0]++;
-			_ltc.taggingitems[1] += TimeCounter(0, t47);
-		}
-		if (isAllInventoryPage() && _settings.isShowTags[5]) {
-			var t47 = TimeCounter(1);
-			TaggingItems(true);
-			_ltc.taggingitems[0]++;
-			_ltc.taggingitems[1] += TimeCounter(0, t47);
-		}
-		if (isShopPage() && _settings.isShowTags[1]) {
-			var t48 = TimeCounter(1);
-			TaggingItems(false);
-			_ltc.taggingitems[0]++;
-			_ltc.taggingitems[1] += TimeCounter(0, t48);
-		}
-		if (isItemWorldPage() && _settings.isShowTags[2]) {
-			var t49 = TimeCounter(1);
-			TaggingItems(false);
-			_ltc.taggingitems[0]++;
-			_ltc.taggingitems[1] += TimeCounter(0, t49);
-		}
-		if (isMoogleWrite() && _settings.isShowTags[3]) {
-			var t50 = TimeCounter(1);
-			$("#mailform #leftpane").children().eq(3).children().eq(1).click(TaggingItems);
-			_ltc.taggingitems[0]++;
-			_ltc.taggingitems[1] += TimeCounter(0, t50);
-		}
-		if (isForgePage() && _settings.isShowTags[4]) {
-			var t51 = TimeCounter(1);
-			TaggingItems(false);
-			if (_settings.isDisableForgeHotKeys) {
-				document.onkeypress = null;
-			}
-			_ltc.taggingitems[0]++;
-			_ltc.taggingitems[1] += TimeCounter(0, t51);
-		}
-		if ((_settings.isStartAlert || _settings.isShowEquippedSet) && !isHVFontEngine()) {
-			var t52 = TimeCounter(1);
-			FindSettingsStats();
-			_ltc.startalerts[0]++;
-			_ltc.startalerts[1] += TimeCounter(0, t52);
-		}
-		if (_settings.isStartAlert && !isHVFontEngine()) {
-			var t53 = TimeCounter(1);
-			StartBattleAlerts();
-			_ltc.startalerts[0]++;
-			_ltc.startalerts[1] += TimeCounter(0, t53);
-		}
-	}
-	if (!isHVFontEngine() && _settings.isShowEquippedSet) {
-		var t54 = TimeCounter(1);
-		SetDisplay();
-		_ltc.showset[0]++;
-		_ltc.showset[1] += TimeCounter(0, t54);
-	}
-	_ltc.main[0]++;
-	_ltc.main[1] += TimeCounter(0, millisecondsAll);
-	_ltc.save();
-}
 function highlightLogText() {
 	var array = document.getElementById('togpane_log').getElementsByTagName('tr');
 	var i = array.length;
@@ -2434,7 +2230,7 @@ function highlightLogText() {
 			b.style.color = "#C97600";
 			
 		if (_settings.isAltHighlight) {
-			if (a.indexOf('gains the effect ')>-1 && (a.indexOf('penetrated')>-1 || a.indexOf('stun')>-1 || a.indexOf('ripened soul')>-1))
+			if (a.indexOf('gains the effect ')>-1 && (a.indexOf('bleeding')>-1 || a.indexOf('penetrated')>-1 || a.indexOf('stun')>-1 || a.indexOf('ripened soul')>-1))
 				b.style.color = "#800080";
 			else if (a.indexOf('proficiency')>-1)
 				b.style.color = "#ba9e1c";
@@ -2466,10 +2262,10 @@ function showRoundCounter() {
 	var c = _round.currRound;
 	var a = _round.maxRound;
 	b = a > 0 ? c + "/" + a : "#" + c;
-  div = document.createElement('div');
-  div.setAttribute('style', 'font-size:18px;font-weight:bold;font-family:arial,helvetica,sans-serif;text-align:right;position:absolute;top:6px;right:17px;');
-  div.innerHTML = "<div style='" + (c === a - 1 ? "color:orange;'>" : c === a ? "color:red;'>" : "'>") + b + "</div>";
-  document.getElementById('battleform').children[0].appendChild(div);
+	div = document.createElement('div');
+	div.setAttribute('style', 'font-size:18px;font-weight:bold;font-family:arial,helvetica,sans-serif;text-align:right;position:absolute;top:6px;right:17px;');
+	div.innerHTML = "<div style='" + (c === a - 1 ? "color:orange;'>" : c === a ? "color:red;'>" : "'>") + b + "</div>";
+	document.getElementById('battleform').children[0].appendChild(div);
 }
 function displayPowerupBox() {
 	var a = $("div.btp");
@@ -2495,16 +2291,17 @@ function displayPowerupBox() {
 	a.after(c);
 }
 function showMonsterStats() {
-	HVStat.monsters.forEach(function (element, index, array) {
-		element.renderStats();
-	});
-	_ltc.save();
+	for (var i = 0; i < HVStat.numberOfMonsters; i++) {
+		HVStat.monsters[i].renderStats();
+	}
 }
-function showMonsterEffectsDuration(a) {
-	a.children().eq(3).children("img").each(createDurationBadge);
+function showMonsterEffectsDuration() {
+	for (var i = 0; i < HVStat.numberOfMonsters; i++) {
+		$("#" + HVStat.Monster.getDomElementId(i)).children().eq(3).children("img").each(createDurationBadge);
+	}
 }
 function showSelfEffectsDuration() {
-	$(".btps img").each(createDurationBadge);
+	$("div.btps img").each(createDurationBadge);
 }
 function createDurationBadge(a) {
 	var e = $(this);
@@ -2547,7 +2344,7 @@ function showBattleEndStats() {
 	$("#togpane_log").children().before("<div class='ui-state-default ui-corner-bottom' style='padding:10px;margin-bottom:10px;text-align:left'>" + getBattleEndStatsHtml() + "</div>");
 }
 function showMonsterNumber() {
-	var targets = document.querySelectorAll('.btmi');
+	var targets = document.querySelectorAll('img.btmi');
 	var i = targets.length;
 	while (i--)
 		targets[i].parentNode.appendChild(document.createElement('div')).innerHTML = (i+1)%10;
@@ -2603,39 +2400,24 @@ function healthWarning() {
 	else if ((bsp <= gsp) && _settings.isHighlightQC)
 		document.getElementById("quickbar").style.backgroundColor = bsp > isp ? "lime" : "green";
 	if (!isBattleOver() && _settings.isShowPopup && (b <= h) && (!f || _settings.isNagHP)) {
-		var sec1 = TimeCounter(1);
 		alert("Your health is dangerously low!");
-		_ltc.healthWarning[1] -= TimeCounter(0, sec1);
-		_ltc.main[1] -= TimeCounter(0, sec1);
-		_ltc.isbattle[1] -= TimeCounter(0, sec1);
 		f = true;
 		localStorage.setItem(HV_ALERT, JSON.stringify(f));
 	}
 	if (!isBattleOver() && _settings.isShowPopup && (bmp <= hmp) && (!fmp || _settings.isNagMP)) {
-		var sec1 = TimeCounter(1);
 		alert("Your mana is dangerously low!");
-		_ltc.healthWarning[1] -= TimeCounter(0, sec1);
-		_ltc.main[1] -= TimeCounter(0, sec1);
-		_ltc.isbattle[1] -= TimeCounter(0, sec1);
 		fmp = true;
 		localStorage.setItem(HV_ALERTMP, JSON.stringify(fmp));
 	}
 	if (!isBattleOver() && _settings.isShowPopup && (bsp <= hsp) && (!fsp || _settings.isNagSP)) {
-		var sec1 = TimeCounter(1);
 		alert("Your spirit is dangerously low!");
-		_ltc.healthWarning[1] -= TimeCounter(0, sec1);
-		_ltc.main[1] -= TimeCounter(0, sec1);
-		_ltc.isbattle[1] -= TimeCounter(0, sec1);
 		fsp = true;
 		localStorage.setItem(HV_ALERTSP, JSON.stringify(fsp));
 	}
 	if (!isBattleOver() && _settings.isAlertOverchargeFull && overchargeRate >= 1.0 && !overchargeAlertAlreadyShown) {
-		var sec1 = TimeCounter(1);
 		alert("Your overcharge is full.");
 		overchargeAlertAlreadyShown = true;
 		localStorage.setItem(HV_ALERTOC, JSON.stringify(overchargeAlertAlreadyShown));
-		_ltc.main[1] -= TimeCounter(0, sec1);
-		_ltc.isbattle[1] -= TimeCounter(0, sec1);
 	}
 	if (_settings.isShowPopup) {
 		if (f && b > a)
@@ -2678,7 +2460,7 @@ function showSidebarProfs() {
 	var a = "<div id='_profbutton' class='ui-corner-all' style='position:absolute;top:" + b + "px;border:1px solid;margin-left:5px;padding:2px;width:132px;font-size:10pt;font-weight:bold;text-align:center;cursor:default;'>Proficiency</div>";
 	$(".clb").append(a);
 	$("#_profbutton").mouseover(function () {
-		var c = document.getElementById("popup_box");
+		var c = HVStat.popupElement;
 		var d = $("#_profbutton").offset();
 		c.style.left = d.left + 145 + "px";
 		c.style.top = d.top - 126 + "px";
@@ -2696,7 +2478,7 @@ function showSidebarProfs() {
 		c.style.visibility = "visible";
 	});
 	$("#_profbutton").mouseout(function () {
-		document.getElementById("popup_box").style.visibility = "hidden";
+		HVStat.popupElement.style.visibility = "hidden";
 	});
 }
 function isProfTotalsRecorded() {
@@ -2717,7 +2499,6 @@ function inventoryWarning() {
 	});
 }
 function collectRoundInfo() {
-	var milliseconds1 = TimeCounter(1);
 	var e = "";
 	var a = 0;
 	var ac = 0;
@@ -2725,9 +2506,9 @@ function collectRoundInfo() {
 	var d;
 	var b = false;
 	// create monster objects
-	$("#monsterpane > div").each(function (index) {
-		HVStat.monsters.push(new HVStat.Monster(index));
-	});
+	for (var i = 0; i < HVStat.numberOfMonsters; i++) {
+		HVStat.monsters.push(new HVStat.Monster(i));
+	}
 	loadRoundObject();
 	if (_settings.isTrackItems)
 		loadDropsObject();
@@ -2742,21 +2523,16 @@ function collectRoundInfo() {
 			e = g.html();
 		}
 		c = k.html();
-		var t87 = TimeCounter(1);
 		var kline = g.html();
 		var kline2 = parseInt(g.next().html()) - 1;
 		var sel0 = $(".t1:contains(" + kline + ")");
 		var sel = sel0.next().filter(":contains(" + kline2 + ")").next().html();
 		var selall = $(".t1:contains(" + kline + ")").next().next().text();
-		_ltc.sel[0]++;
-		_ltc.sel[1] += TimeCounter(0, t87);
 		if (!_round.isLoaded) { // -> if turn 0
 			if (c.match(/HP=/)) {
 				HVStat.monsters[index].fetchStartingLog(c);
 				if (_settings.showMonsterInfoFromDB) {
-					var t43 = TimeCounter(1);
 					HVStat.monsters[index].getFromDB(HVStat.transaction, RoundSave);
-					_ltc.showMonsterInfoFromDB[1] += TimeCounter(0, t43);
 				}
 				if (_settings.isTrackItems) {
 					_round.dropChances++;
@@ -2771,16 +2547,12 @@ function collectRoundInfo() {
 				}
 			}
 			if (_settings.isShowRoundReminder && (_round.maxRound >= _settings.reminderMinRounds) && (_round.currRound === _round.maxRound - _settings.reminderBeforeEnd) && !b) {
-				var sec1 = TimeCounter(1);
 				if (_settings.reminderBeforeEnd === 0) {
 					alert("This is final round");
 				} else {
 					alert("The final round is approaching.");
 				}
 				b = true;
-				_ltc.collectRoundInfo[1] -= TimeCounter(0, sec1);
-				_ltc.main[1] -= TimeCounter(0, sec1);
-				_ltc.isbattle[1] -= TimeCounter(0, sec1);
 			}
 			if (c.match(/random encounter/)) {
 				_round.battleType = HOURLY;
@@ -2800,32 +2572,16 @@ function collectRoundInfo() {
 			return false;
 		}
 		if (_settings.isAlertGem && c.match(/drops a (.*) Gem/)) {
-			var sec1 = TimeCounter(1);
 			alert("You picked up a " + RegExp.$1 + " Gem.");
-			_ltc.collectRoundInfo[1] -= TimeCounter(0, sec1);
-			_ltc.main[1] -= TimeCounter(0, sec1);
-			_ltc.isbattle[1] -= TimeCounter(0, sec1);
 		}
 		if (_settings.isWarnAbsorbTrigger && /The spell is absorbed/.test(c)) {
-			var sec1 = TimeCounter(1);
 			alert("Absorbing Ward has triggered.");
-			_ltc.collectRoundInfo[1] -= TimeCounter(0, sec1);
-			_ltc.main[1] -= TimeCounter(0, sec1);
-			_ltc.isbattle[1] -= TimeCounter(0, sec1);
 		}
 		if (_settings.isWarnSparkTrigger && c.match(/spark of life.*defeat/ig)) {
-			var sec1 = TimeCounter(1);
 			alert("Spark of Life has triggered!!");
-			_ltc.collectRoundInfo[1] -= TimeCounter(0, sec1);
-			_ltc.main[1] -= TimeCounter(0, sec1);
-			_ltc.isbattle[1] -= TimeCounter(0, sec1);
 		}
 		if (_settings.isWarnSparkExpire && c.match(/spark of life.*expired/ig)) {
-			var sec1 = TimeCounter(1);
 			alert("Spark of Life has expired!!");
-			_ltc.collectRoundInfo[1] -= TimeCounter(0, sec1);
-			_ltc.main[1] -= TimeCounter(0, sec1);
-			_ltc.isbattle[1] -= TimeCounter(0, sec1);
 		}
 		if ((_settings.isShowSidebarProfs || _settings.isTrackStats) && c.match(/0.0(\d+) points of (.*?) proficiency/ig)) {
 			var p = (RegExp.$1) / 100;
@@ -2894,7 +2650,6 @@ function collectRoundInfo() {
 			}
 		}
 		if (_settings.isTrackStats || _settings.isShowEndStats) {
-			var milliseconds4 = TimeCounter(1);
 			var o = 0;
 			if (c.match(/\s(\d+)\s/)) {
 				o = parseInt(RegExp.$1);
@@ -2921,7 +2676,6 @@ function collectRoundInfo() {
 					_round.effectPoison[1] += o;
 					_round.effectPoison[0]++;
 				} else {
-					var milliseconds20 = TimeCounter(1);
 					if (c.match(/(searing skin|freezing limbs|deep burns|turbulent air|burning soul|breached defence|blunted attack) (hits|blasts|explodes)/i) && !c.match(/(hits you |crits you )/i)) {
 						_round.elemEffects[1]++;
 						_round.elemEffects[2] += o;
@@ -2941,8 +2695,6 @@ function collectRoundInfo() {
 						_round.forbidSpells[1]++;
 						_round.forbidSpells[2] += o
 					}
-					_ltc.extendedHits[0]++;
-					_ltc.extendedHits[1] += TimeCounter(0, milliseconds20);
 				}
 			} else if (c.match(/(hits you )|(crits you )/i)) {
 				_round.mAttempts++;
@@ -2959,7 +2711,6 @@ function collectRoundInfo() {
 						_round.pskills[4] += o;
 					}
 					if (_settings.isRememberSkillsTypes) {
-						var milliseconds21 = TimeCounter(1);
 						var j = HVStat.monsters.length;
 						while (j--) {
 							reResult = /([^\.]{1,30}) (?:uses|casts) /.exec(sel);
@@ -2968,8 +2719,6 @@ function collectRoundInfo() {
 								break;
 							}
 						}
-						_ltc.changedMHits[0]++;
-						_ltc.changedMHits[1] += TimeCounter(0, milliseconds21);
 					}
 				}
 			} else if (c.match(/you (dodge|evade|block|parry|resist)|(misses.*?against you)/i)) {
@@ -2990,7 +2739,6 @@ function collectRoundInfo() {
 					_round.mAttempts++;
 					_round.mSpells++;
 				} else if (c.match(/you cast/i)) {
-					var milliseconds22 = TimeCounter(1);
 					if (c.match(/(poison|slow|weaken|sleep|confuse|imperil|blind|silence|nerf|x.nerf|magnet|lifestream)/i)) {
 						_round.depSpells[0]++;
 						_round.sAttempts++
@@ -3024,8 +2772,6 @@ function collectRoundInfo() {
 							_round.cureCounts[c.match(/cure\./i) ? 0 : c.match(/cure ii\./i) ? 1 : 2]++
 						}
 					}
-					_ltc.cast[0]++;
-					_ltc.cast[1] += TimeCounter(0, milliseconds22);
 				}
 			} else if (c.match(/The spell is absorbed. You gain (\d+) Magic Points/)) {
 				_round.absArry[1]++;
@@ -3046,7 +2792,6 @@ function collectRoundInfo() {
 				} else if (c.match(/gain the effect Channeling/i)) {
 					_round.channel++;
 				} else {
-					var milliseconds23 = TimeCounter(1);
 					if (c.match(/gains the effect (searing skin|freezing limbs|deep burns|turbulent air|breached defence|blunted attack|burning soul|rippened soul)/i)) {
 						_round.elemEffects[0]++;
 					} else if (c.match(/gains the effect (spreading poison|slowed|weakened|sleep|confused|imperiled|blinded|silenced|nerfed|magically snared|lifestream)/i)) {
@@ -3064,8 +2809,6 @@ function collectRoundInfo() {
 					} else if (c.match(/gains the effect ether theft/i)) {
 						_round.weaponprocs[3]++;
 					}
-					_ltc.effects[0]++;
-					_ltc.effects[1] += TimeCounter(0, milliseconds23);
 				}
 			} else if (c.match(/uses?/i)) {
 				if (c.match(/uses/i)) {
@@ -3082,23 +2825,10 @@ function collectRoundInfo() {
 					_round.weaponprocs[6]++;
 				}
 			}
-			if (_settings.isTrackStats && !_settings.isShowEndStats) {
-				_ltc.isTrackStats[0]++;
-				_ltc.isTrackStats[1] += TimeCounter(0, milliseconds4);
-			} else if (_settings.isShowEndStats && !_settings.isTrackStats) {
-				_ltc.showBattleEndStats[0]++;
-				_ltc.showBattleEndStats[1] += TimeCounter(0, milliseconds4);
-			} else {
-				_ltc.isTrackStats[0]++;
-				_ltc.isTrackStats[1] += parseInt((TimeCounter(0, milliseconds4) / 2).toFixed());
-				_ltc.showBattleEndStats[0]++;
-				_ltc.showBattleEndStats[1] += parseInt((TimeCounter(0, milliseconds4) / 2).toFixed());
-			}
 		}
 		var l = /\[.*?\]/i;
 		var n;
 		var t = 1;
-		var milliseconds5 = TimeCounter(1);
 		if (c.match(/dropped.*?color:.*?red.*?\[.*?\]/ig)) {
 			_equips++;
 			var q = c.match(l)[0];
@@ -3152,8 +2882,6 @@ function collectRoundInfo() {
 			_drops.dropChances--;
 			_drops.dropChancesbyBT[_round.battleType]--;
 		}
-		_ltc.isTrackItems[0]++;
-		_ltc.isTrackItems[1] += TimeCounter(0, milliseconds5);
 		if (c.match(/(clear bonus).*?color:.*?red.*?\[.*?\]/ig)) {
 			_equips++;
 			var s = c.match(l)[0];
@@ -3227,9 +2955,6 @@ function collectRoundInfo() {
 		_round.lastTurn = e;
 	}
 	RoundSave();
-	_ltc.collectRoundInfo[0]++;
-	_ltc.collectRoundInfo[1] += TimeCounter(0, milliseconds1);
-	_ltc.save();
 }
 
 function RoundSave() {
@@ -3241,7 +2966,6 @@ function RoundSave() {
 }
 
 function saveStats() {
-	var milliseconds1 = TimeCounter(1);
 	if (!SAVE_STATS) return;
 	loadOverviewObject();
 	loadStatsObject();
@@ -3405,9 +3129,6 @@ function saveStats() {
 	_stats.save();
 	_rewards.save();
 	_drops.save();
-	_ltc.saveStats[0]++;
-	_ltc.saveStats[1] += TimeCounter(0, milliseconds1);
-	_ltc.save();
 }
 function getBattleEndStatsHtml() {
 	var f = _round.sHits[0] + _round.sHits[1] + _round.depSpells[1] + _round.sResists;
@@ -3500,8 +3221,6 @@ function getReportOverviewHtml() {
 	y += N;
 	y += _settings.showMonsterSP ? '<span style="color:green"><b>SP</b></span>' : I;
 	y += N;
-	y += _settings.showMonsterDefence ? '<span style="color:green"><b>Resistance</b></span>' : I;
-	y += N;
 	y += _settings.isShowMonsterDuration ? '<span style="color:green"><b>Duration</b></span>' : I;
 	B = _settings.isTrackStats ? a : _stats.isLoaded && _stats.rounds > 0 ? q : w;
 	A = _settings.isTrackItems ? a : _drops.isLoaded && _drops.dropChances > 0 ? q : w;
@@ -3572,26 +3291,6 @@ function getReportOverviewHtml() {
 		var t = 0;
 		var s = "none yet!";
 		var H = "N/A";
-		var avtime = (_ltc.main[1] / _ltc.main[0]).toFixed();
-		var avtime2 = (_ltc.isbattle[1] / _ltc.isbattle[0]).toFixed(1);
-		var loadtime = (_ltc.pageLoad[3] / _ltc.pageLoad[2]).toFixed(1);
-		var at = (_ltc.isbattle[1]/_ltc.isbattle[0] + _ltc.pageLoad[3]/_ltc.pageLoad[2]).toFixed(1);
-		var loadtime03 = (_ltc.pageLoad[5] / _ltc.pageLoad[4]).toFixed(1);
-		var at03 = (_ltc.isbattle[1]/_ltc.isbattle[0] + _ltc.pageLoad[5]/_ltc.pageLoad[4]).toFixed(1);
-		var loadtime06 = (_ltc.pageLoad[7] / _ltc.pageLoad[6]).toFixed(1);
-		var at06 = (_ltc.isbattle[1]/_ltc.isbattle[0] + _ltc.pageLoad[7]/_ltc.pageLoad[6]).toFixed(1);
-		var loadtime09 = (_ltc.pageLoad[9] / _ltc.pageLoad[8]).toFixed(1);
-		var at09 = (_ltc.isbattle[1]/_ltc.isbattle[0] + _ltc.pageLoad[9]/_ltc.pageLoad[8]).toFixed(1);
-		var loadtime12 = (_ltc.pageLoad[11] / _ltc.pageLoad[10]).toFixed(1);
-		var at12 = (_ltc.isbattle[1]/_ltc.isbattle[0] + _ltc.pageLoad[11]/_ltc.pageLoad[10]).toFixed(1);
-		var loadtime15 = (_ltc.pageLoad[13] / _ltc.pageLoad[12]).toFixed(1);
-		var at15 = (_ltc.isbattle[1]/_ltc.isbattle[0] + _ltc.pageLoad[13]/_ltc.pageLoad[12]).toFixed(1);
-		var loadtime18 = (_ltc.pageLoad[15] / _ltc.pageLoad[14]).toFixed(1);
-		var at18 = (_ltc.isbattle[1]/_ltc.isbattle[0] + _ltc.pageLoad[15]/_ltc.pageLoad[14]).toFixed(1);
-		var loadtime21 = (_ltc.pageLoad[17] / _ltc.pageLoad[16]).toFixed(1);
-		var at21 = (_ltc.isbattle[1]/_ltc.isbattle[0] + _ltc.pageLoad[17]/_ltc.pageLoad[16]).toFixed(1);
-		var loadtime24 = (_ltc.pageLoad[19] / _ltc.pageLoad[18]).toFixed(1);
-		var at24 = (_ltc.isbattle[1]/_ltc.isbattle[0] + _ltc.pageLoad[19]/_ltc.pageLoad[18]).toFixed(1);
 		if (_overview.artifacts > 0) {
 			t = (_overview.totalRounds / _overview.artifacts).toFixed(1);
 			s = _overview.lastArtName;
@@ -3600,30 +3299,6 @@ function getReportOverviewHtml() {
 		x = '<table class="_UI" cellspacing="0" cellpadding="2" style="width:100%">'
 			+ '<tr><td colspan="2"><b>Reporting period:</b> ' + e + " to " + z + '</td></tr>'
 			+ '<tr><td colspan="2" style="padding-left:10px">Total time: ' + E + '</td></tr>'
-			+ '<tr><td colspan="2"><b>Average execution time:</b></tr>'
-			+ '<tr><td colspan="2" style="padding-left:10px">HV STAT work time :' + avtime + ' ms / in battle :' + avtime2 + ' ms</td></tr>';
-		if (_settings.isCountPageLoadTime) {
-			x += '<tr><td colspan="2" style="padding-left:10px">In battle page load time :' + loadtime + ' ms | Including HV STAT : ' + (at) + 'ms (' + ((avtime2)*100/loadtime).toFixed(1) + '% more)</td></tr>'
-				+ '<tr><td colspan="2" style="padding-left:10px">Load time by hours:</td></tr>'
-				+ '<tr><td> 0-3 AM - ';
-			x += _ltc.pageLoad[4] > 0 ? loadtime03 + ' ms | ' + (at03) + 'ms (' + ((avtime2)*100/loadtime03).toFixed(1) + '% more)' : 'Not tracked yet';
-			x += '</td><td> 0-3 PM - ';
-			x += _ltc.pageLoad[12] > 0 ? loadtime15 + ' ms | ' + (at15) + 'ms (' + ((avtime2)*100/loadtime15).toFixed(1) + '% more)' : 'Not tracked yet';
-			x += '</td></tr><tr><td> 3-6 AM - ';
-			x += _ltc.pageLoad[6] > 0 ? loadtime06 + ' ms | ' + (at06) + 'ms (' + ((avtime2)*100/loadtime06).toFixed(1) + '% more)' : 'Not tracked yet';
-			x += '</td><td> 3-6 PM - ';
-			x += _ltc.pageLoad[14] > 0 ? loadtime18 + ' ms | ' + (at18) + 'ms (' + ((avtime2)*100/loadtime18).toFixed(1) + '% more)' : 'Not tracked yet';
-			x += '</td></tr><tr><td> 6-9 AM  - ';
-			x += _ltc.pageLoad[8] > 0 ? loadtime09 + ' ms | ' + (at09) + 'ms (' + ((avtime2)*100/loadtime09).toFixed(1) + '% more)' : 'Not tracked yet';
-			x += '</td><td> 6-9 PM - ';
-			x += _ltc.pageLoad[16] > 0 ? loadtime21 + ' ms | ' + (at21) + 'ms (' + ((avtime2)*100/loadtime21).toFixed(1) + '% more)' : 'Not tracked yet';
-			x += '</td></tr><tr><td> 9-12 AM  - ';
-			x += _ltc.pageLoad[10] > 0 ? loadtime12 + ' ms | ' + (at12) + 'ms (' + ((avtime2)*100/loadtime12).toFixed(1) + '% more)' : 'Not tracked yet';
-			x += '</td><td>9-12 PM - ';
-			x += _ltc.pageLoad[18] > 0 ? loadtime24 + ' ms | ' + (at24) + 'ms (' + ((avtime2)*100/loadtime24).toFixed(1) + '% more)' : 'Not tracked yet';
-			x += '</td></tr>';
-		}
-		x += '<tr><td colspan="2" style="padding-left:10px"><input type="button" class="_resetLTC" value="Reset execution time counters" /></td></tr>'
 			+ '<tr><td colspan="2"><b>Rounds completed:</b> ' + _overview.totalRounds + " (" + (M === 0 ? 0 : (_overview.totalRounds / M).toFixed()) + ' rounds per day)</td></tr>'
 			+ '<tr><td colspan="2" style="padding-left:10px">Hourly encounters: ' + _overview.roundArray[0] + ' (' + (_overview.roundArray[0] / _overview.totalRounds * 100).toFixed(2) + '% of total; ' + (M === 0 ? 0 : (_overview.roundArray[0] / M).toFixed()) + ' rounds per day); Last Hourly: ' + c + '</td></tr>'
 			+ '<tr><td colspan="2" style="padding-left:10px">Arena: ' + _overview.roundArray[1] + ' (' + (_overview.roundArray[1] / _overview.totalRounds * 100).toFixed(2) + '% of total)</td></tr>'
@@ -3854,12 +3529,12 @@ function getMonsterStatsHtml() {
 	h += '<div>';
 	h += '<h2>Administration</h2>';
 	h += '<h3>Export</h3>';
-	h += '<p>Monster scanning data and monster skill data can be exported as a TSV (tab-seperated-values) format text file. You can import the data using the exported file.</p>';
+	h += '<p>Monster scan results and monster skill data can be exported as a TSV (tab-seperated-values) format text file. You can import the data using the exported file.</p>';
 	h += '<div>';
 	h += '<table><tr>';
-	h += '<td><span style="font-weight: bold;">Monster Scanning Data</span></td>';
-	h += '<td><input type="button" id="exportMonsterScanInfo" value="Export" />';
-	h += '<a id="downloadLinkMonsterScanInfo" style="visibility:hidden;" href="#">Download</a></td>';
+	h += '<td><span style="font-weight: bold;">Monster Scan Results</span></td>';
+	h += '<td><input type="button" id="exportMonsterScanResults" value="Export" />';
+	h += '<a id="downloadLinkMonsterScanResults" style="visibility:hidden;" href="#">Download</a></td>';
 	h += '</tr><tr>';
 	h += '<td><span style="font-weight: bold;">Monster Skill Data</span></td>';
 	h += '<td><input type="button" id="exportMonsterSkills" value="Export" />';
@@ -3870,8 +3545,8 @@ function getMonsterStatsHtml() {
 	h += '<p>The contents of TSV file will be merged into the database. The rows of TSV file which have older date will be skipped.</p>';
 	h += '<div>';
 	h += '<table><tr>';
-	h += '<td><span style="font-weight: bold;">Monster Scanning Data</span></td>';
-	h += '<td><input type="file" id="importMonsterScanInfo" /></td>';
+	h += '<td><span style="font-weight: bold;">Monster Scan Results</span></td>';
+	h += '<td><input type="file" id="importMonsterScanResults" /></td>';
 	h += '</tr><tr>';
 	h += '<td><span style="font-weight: bold;">Monster Skill Data</span></td>';
 	h += '<td><input type="file" id="importMonsterSkills" /></td>';
@@ -3880,8 +3555,8 @@ function getMonsterStatsHtml() {
 	h += '<h3>Delete Data</h3>';
 	h += '<p>If you want to clean the database, delete data.</p>';
 	h += '<table><tr>';
-	h += '<td><span style="font-weight: bold;">Monster Scanning Data</span></td>';
-	h += '<td><input type="button" id="deleteMonsterScanInfo" value="Delete" /></td>';
+	h += '<td><span style="font-weight: bold;">Monster Scan Results</span></td>';
+	h += '<td><input type="button" id="deleteMonsterScanResults" value="Delete" /></td>';
 	h += '</tr><tr>';
 	h += '<td><span style="font-weight: bold;">Monster Skill Data</span></td>';
 	h += '<td><input type="button" id="deleteMonsterSkills" value="Delete" /></td>';
@@ -3977,9 +3652,6 @@ function initOverviewPane() {
 	$("#pane1").html(getReportOverviewHtml());
 	$("._resetOverview").click(function () {
 		if (confirm("Reset Overview tab?")) _overview.reset();
-	});
-	$("._resetLTC").click(function () {
-		if (confirm("You want to reset execution time counters?")) _ltc.reset();
 	});
 }
 function initStatsPane() {
@@ -4088,13 +3760,13 @@ function initShrinePane() {
 }
 function initMonsterStatsPane() {
 	$("#pane7").html(getMonsterStatsHtml());
-	$("#importMonsterScanInfo").change(function (event) {
+	$("#importMonsterScanResults").change(function (event) {
 		var file = event.target.files[0]; 
 		if (!file) {
 			alert("Failed to load file");
 		} else {
-			if (confirm("Are you sure to import the monster scanning data?")) {
-				HVStat.importMonsterScanInfo(file);
+			if (confirm("Are you sure to import the monster scan results?")) {
+				HVStat.importMonsterScanResults(file);
 			}
 		}
 	});
@@ -4108,16 +3780,16 @@ function initMonsterStatsPane() {
 			}
 		}
 	});
-	$("#exportMonsterScanInfo").click(function () {
-		HVStat.exportMonsterScanInfo(function () {
-			if (HVStat.nRowsMonsterScanInfoTSV === 0) {
-				alert("There is no monster scanning data.");
+	$("#exportMonsterScanResults").click(function () {
+		HVStat.exportMonsterScanResults(function () {
+			if (HVStat.nRowsMonsterScanResultsTSV === 0) {
+				alert("There is no monster scan result.");
 			} else {
-				var downloadLink = $("#downloadLinkMonsterScanInfo");
-				downloadLink.attr("href", HVStat.dataURIMonsterScanInfo);
+				var downloadLink = $("#downloadLinkMonsterScanResults");
+				downloadLink.attr("href", HVStat.dataURIMonsterScanResults);
 				downloadLink.attr("download", "hvstat_monster_scan.tsv");
 				downloadLink.css("visibility", "visible");
-				alert("Ready to export your monster scanning data.\nClick the download link.");
+				alert("Ready to export your monster scan results.\nClick the download link.");
 			}
 		});
 	});
@@ -4134,9 +3806,9 @@ function initMonsterStatsPane() {
 			}
 		});
 	});
-	$("#deleteMonsterScanInfo").click(function () {
-		if (confirm("Are you sure to delete your monster scanning data?")) {
-			HVStat.deleteAllObjectsInMonsterScanInfo();
+	$("#deleteMonsterScanResults").click(function () {
+		if (confirm("Are you sure to delete your monster scan results?")) {
+			HVStat.deleteAllObjectsInMonsterScanResults();
 		}
 	});
 	$("#deleteMonsterSkills").click(function () {
@@ -4162,61 +3834,21 @@ function initMonsterStatsPane() {
 	});
 }
 function initSettingsPane() {
-	var t0 = (_ltc.isbattle[1] / _ltc.isbattle[0]).toFixed();
-	var t0b = ((_ltc.main[1] - _ltc.isbattle[1]) / (_ltc.main[0] - _ltc.isbattle[0])).toFixed();
-	var t1 = (_ltc.main[1] / _ltc.main[0]).toFixed();
-	var t2 = (_ltc.collectRoundInfo[1] / _ltc.collectRoundInfo[0]).toFixed(1);
-	var t3 = (_ltc.hidelogo[1] / _ltc.hidelogo[0]).toFixed();
-	var t4 = (_ltc.highlightLogText[1] / _ltc.highlightLogText[0]).toFixed(1);
-	var t5 = (_ltc.addBattleLogDividers[1] / _ltc.addBattleLogDividers[0]).toFixed(1);
-	var t6 = (_ltc.showRoundCounter[1] / _ltc.showRoundCounter[0]).toFixed(1);
-	var t7 = (_ltc.displayPowerupBox[1] / _ltc.displayPowerupBox[0]).toFixed(1);
-	var t8 = (_ltc.showMonsterStats[1] / _ltc.showMonsterStats[0]).toFixed(1);
-	var t9 = (_ltc.showMonsterEffectsDuration[1] / _ltc.showMonsterEffectsDuration[0]).toFixed(1);
-	var t10 = (_ltc.showSelfEffectsDuration[1] / _ltc.showSelfEffectsDuration[0]).toFixed(1);
-	var t11 = (_ltc.showBattleEndStats[1] / _ltc.showBattleEndStats[0]).toFixed(1);
-	var t12 = (_ltc.healthWarning[1] / _ltc.healthWarning[0]).toFixed(1);
-	var t13 = (_ltc.showSidebarProfs[1] / _ltc.showSidebarProfs[0]).toFixed(1);
-	var t15 = (_ltc.isRememberScan[1] / _ltc.isRememberScan[0]).toFixed(1);
-	var t15b0 = ((_ltc.isbattle[1] + _ltc.isRememberScan[1]) / _ltc.isbattle[0]).toFixed();
-	var t15b = (_ltc.isRememberScan[1] / (_ltc.isRememberScan[0] +  _ltc.collectRoundInfo[0])).toFixed(1);
-	var t16 = (_ltc.isTrackStats[1] / _ltc.collectRoundInfo[0]).toFixed(1);
-	var t17 = (_ltc.isTrackItems[1] / _ltc.collectRoundInfo[0]).toFixed(1);
-	var t18 = (_ltc.saveStats[1] / _ltc.saveStats[0]).toFixed(1);
-	var t19 = (_ltc.showMonsterInfoFromDB[1] / _ltc.showMonsterStats[0]).toFixed(1);
-	var t20 = (_ltc.extendedHits[1] / _ltc.collectRoundInfo[0]).toFixed(1);
-	var t21 = (_ltc.changedMHits[1] / _ltc.collectRoundInfo[0]).toFixed(1);
-	var t22 = (_ltc.cast[1] /	_ltc.collectRoundInfo[0]).toFixed(1);
-	var t23 = (_ltc.effects[1] / _ltc.collectRoundInfo[0]).toFixed(1);
-	var t24 = (_ltc.hidetitle[1] / _ltc.hidetitle[0]).toFixed(1);
-	var t25 = (_ltc.showhp[1] / _ltc.showhp[0]).toFixed(1);
-	var t26 = (_ltc.showmp[1] / _ltc.showmp[0]).toFixed(1);
-	var t27 = (_ltc.showelem[1] / _ltc.showelem[0]).toFixed(1);
-	var t33 = (_ltc.showsp[1] / _ltc.showsp[0]).toFixed(1);
-	var t34 = (_ltc.monsterpopup[1] / _ltc.monsterpopup[0]).toFixed(1);
-	var t35 = (_ltc.showscanbutton[1] / _ltc.isbattle[0]).toFixed(1);
-	var t36 = (_ltc.taggingitems[1] / _ltc.taggingitems[0]).toFixed(1);
-	var t37 = (_ltc.startalerts[1] / _ltc.startalerts[0]).toFixed(1);
-	var t38 = (_ltc.showset[1] / _ltc.showset[0]).toFixed(1);
-	var t39 = (_ltc.botfunction[1] / _ltc.botfunction[0]).toFixed(1);
-	var tp1 = (_ltc.pageLoad[3] / _ltc.pageLoad[2]).toFixed(1);
 	var a = '<a style="color:red;padding-bottom:10px">All changes will take effect on next page load.</a>'
 		+ '<table class="_settings" cellspacing="0" cellpadding="2" style="width:100%">'
-		+ '<tr><td colspan="3"><b>General Options:</b></td><td align="center"><b>Average execution time: </b></td></tr>'
-		+ '<tr><td colspan="3"></td><td align="center" style="width:120px"><b>In battle: </b></td></tr>'
-		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isCountPageLoadTime" /></td><td colspan="3">Count page load time (it may have big impact on performance)</td></tr>'
-		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isShowSidebarProfs" /></td><td colspan="2">Show proficiencies in sidebar</td><td align="center" style="width:120px">' + t13 + ' ms (' + (t13*100/t0).toFixed(1) + '%)</td></tr>'
+		+ '<tr><td colspan="3"><b>General Options:</b></td><td></td></tr>'
+		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isShowSidebarProfs" /></td><td colspan="2">Show proficiencies in sidebar</td><td></td></tr>'
 		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isColumnInventory" /></td><td colspan="2">Use column view for item inventory (<span style="color:red">Downloadable/Custom Local Fonts only!</span>)</td></tr>'
-		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isHideHVLogo" /></td><td colspan="2">Hide HentaiVerse logo</td><td align="center" style="width:120px">' + t3 + ' ms (' + (t3*100/t0).toFixed(1) + '%)</td></tr>'
-		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isChangePageTitle" /></td><td colspan="2">Change HentaiVerse page title: <input type="text" name="customPageTitle" size="40" /></td><td align="center" style="width:120px">' + t24 + ' ms (' + (t24*100/t0).toFixed(1) + '%)</td></tr>'
-		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isStartAlert" /></td><td colspan="2">Warnings berfore starting Challenges when HP is below <input type="text" name="StartAlertHP" size="1" maxLength="2" style="text-align:right" />%, MP is below <input type="text" name="StartAlertMP" size="1" maxLength="2" style="text-align:right" />%, SP is below <input type="text" name="StartAlertSP" size="1" maxLength="2" style="text-align:right" />% or difficulty is over <select id="StartAlertDifficulty"><option id=diff1 value=1>Easy</option><option id=diff2 value=2>Normal</option><option id=diff3 value=3>Hard</option><option id=diff4 value=4>Heroic</option><option id=diff5 value=5>Nightmare</option><option id=diff6 value=6>Hell</option><option id=diff7 value=7>Nintendo</option><option id=diff8 value=8>Battletoads</option></select> (<span style="color:red">Downloadable/Custom Local Fonts only!</span>)</td><td align="center" style="width:120px">' + t37 + ' ms (' + (t37*100/t0b).toFixed(1) + '%)</td></tr>'
-		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isShowScanButton" /></td><td colspan="2">Show scan button</td><td align="center" style="width:120px">' + t35 + ' ms (' + (t35*100/t0).toFixed(1) + '%)</td></tr>'
-		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isEnableScanHotkey" /></td><td colspan="2">Enable Scan Hotkeys: numpad","/numpad delete</td><td align="center" style="width:120px"></td></tr>'
-		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isShowSkillButton" /></td><td colspan="2">Show skill button </td><td align="center" style="width:120px"></td></tr>'
-		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isEnableSkillHotkey" /></td><td colspan="2">Enable Weapon Skill Hotkeys: "+" / "=" and numpad"+" (Works without skillbutton)</td><td align="center" style="width:120px"></td></tr>'
-		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isShowEquippedSet" /></td><td colspan="2">Show equipped set number at left panel (<span style="color:red">Downloadable/Custom Local Fonts only!</span>)</td><td align="center" style="width:120px">' + t38 + ' ms (' + (t38*100/t0).toFixed(1) + '%)</td></tr>'
+		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isHideHVLogo" /></td><td colspan="2">Hide HentaiVerse logo</td><td></td></tr>'
+		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isChangePageTitle" /></td><td colspan="2">Change HentaiVerse page title: <input type="text" name="customPageTitle" size="40" /></td><td></td></tr>'
+		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isStartAlert" /></td><td colspan="2">Warnings berfore starting Challenges when HP is below <input type="text" name="StartAlertHP" size="1" maxLength="2" style="text-align:right" />%, MP is below <input type="text" name="StartAlertMP" size="1" maxLength="2" style="text-align:right" />%, SP is below <input type="text" name="StartAlertSP" size="1" maxLength="2" style="text-align:right" />% or difficulty is over <select id="StartAlertDifficulty"><option id=diff1 value=1>Easy</option><option id=diff2 value=2>Normal</option><option id=diff3 value=3>Hard</option><option id=diff4 value=4>Heroic</option><option id=diff5 value=5>Nightmare</option><option id=diff6 value=6>Hell</option><option id=diff7 value=7>Nintendo</option><option id=diff8 value=8>Battletoads</option></select> (<span style="color:red">Downloadable/Custom Local Fonts only!</span>)</td><td></td></tr>'
+		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isShowScanButton" /></td><td colspan="2">Show scan button</td><td></td></tr>'
+		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isEnableScanHotkey" /></td><td colspan="2">Enable Scan Hotkeys: numpad","/numpad delete</td><td></td></tr>'
+		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isShowSkillButton" /></td><td colspan="2">Show skill button </td><td></td></tr>'
+		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isEnableSkillHotkey" /></td><td colspan="2">Enable Weapon Skill Hotkeys: "+" / "=" and numpad"+" (Works without skillbutton)</td><td></td></tr>'
+		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isShowEquippedSet" /></td><td colspan="2">Show equipped set number at left panel (<span style="color:red">Downloadable/Custom Local Fonts only!</span>)</td><td></td></tr>'
 		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isDisableForgeHotKeys" /></td><td colspan="2">Disable hot keys in the Forge (<span style="color:red">Strongry recommended if use item tags</span>)</td><td></td></tr>'
-		+ '<tr><td colspan="3">Show item tags in:</td><td align="center" style="width:120px">' + t36 + ' ms by tagging</td></tr>'
+		+ '<tr><td colspan="3">Show item tags in:</td><td></td></tr>'
 		+ '<tr><td align="center" style="width:5px;padding-left:15px"><input type="checkbox" name="isShowTags0" /></td><td colspan="3" style="padding-left:15px">Equipment page </td></tr>'
 		+ '<tr><td align="center" style="width:5px;padding-left:15px"><input type="checkbox" name="isShowTags1" /></td><td colspan="3" style="padding-left:15px">Bazaar shop page </td></tr>'
 		+ '<tr><td align="center" style="width:5px;padding-left:15px"><input type="checkbox" name="isShowTags2" /></td><td colspan="3" style="padding-left:15px">Item World </td></tr>'
@@ -4224,13 +3856,13 @@ function initSettingsPane() {
 		+ '<tr><td align="center" style="width:5px;padding-left:15px"><input type="checkbox" name="isShowTags4" /></td><td colspan="3" style="padding-left:15px">Forge </td></tr>'
 		+ '<tr><td align="center" style="width:5px;padding-left:15px"><input type="checkbox" name="isShowTags5" /></td><td colspan="3" style="padding-left:15px">Inventory (<span style="color:red">Strongly suggested to turn it on and visit inventory once for a while</span>)</td></tr>'
 		+ '<tr><td colspan="2"><b>Battle Enhancement:</b></td></tr>'
-		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isShowHighlight" /></td><td colspan="2">Highlight battle log</td><td align="center" style="width:120px">' + t4 + ' ms (' + (t4*100/t0).toFixed(1) + '%)</td></tr>'
+		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isShowHighlight" /></td><td colspan="2">Highlight battle log</td><td></td></tr>'
 		+ '<tr><td align="center" style="width:5px;padding-left:20px"><input type="checkbox" name="isAltHighlight" /></td><td colspan="2" style="padding-left:10px">Use alternate highlighting</td></tr>'
-		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isShowDivider" /></td><td colspan="2">Show turn divider</td><td align="center" style="width:120px">' + t5 + ' ms (' + (t5*100/t0).toFixed(1) + '%)</td></tr>'
-		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isShowSelfDuration" /></td><td colspan="2">Show self effect durations</td><td align="center" style="width:120px">' + t10 + ' ms (' + (t10*100/t0).toFixed(1) + '%)</td></tr>'
+		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isShowDivider" /></td><td colspan="2">Show turn divider</td><td></td></tr>'
+		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isShowSelfDuration" /></td><td colspan="2">Show self effect durations</td><td></td></tr>'
 		+ '<tr><td align="center" style="width:5px;padding-left:30px"><input type="checkbox" name="isSelfEffectsWarnColor" /></td><td colspan="2" style="padding-left:10px">Highlight duration badges - <span style="color:orange">Orange</span>: on <input type="text" name="SelfWarnOrangeRounds" size="1" maxLength="2" style="text-align:right" /> rounds; <span style="color:red">Red</span>: on <input type="text" name="SelfWarnRedRounds" size="1" maxLength="1" style="text-align:right" /> rounds</td></tr>'
 		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isShowRoundReminder" /></td><td colspan="2">Final round reminder - minimum <input type="text" name="reminderMinRounds" size="1" maxLength="3" style="text-align:right" /> rounds; Alert <input type="text" name="reminderBeforeEnd" size="1" maxLength="1" style="text-align:right" /> rounds before end</td></tr>'
-		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isShowEndStats" /></td><td colspan="2">Show Battle Summary</td><td align="center" style="width:120px">' + t11 + ' ms (' + (t11*100/t0).toFixed(1) + '%)</td></tr>'
+		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isShowEndStats" /></td><td colspan="2">Show Battle Summary</td><td></td></tr>'
 		+ '<tr><td align="center" style="width:5px;padding-left:20px"><input type="checkbox" name="isShowEndProfs" /></td><td colspan="2" style="padding-left:10px">Show Proficiency Gain Summary</td><tr><td align="center" style="width:5px;padding-left:40px"><input type="checkbox" name="isShowEndProfsMagic" /></td><td colspan="2" style="padding-left:30px">Show Magic Proficiency</td></tr>'
 		+ '<tr><td align="center" style="width:5px;padding-left:40px"><input type="checkbox" name="isShowEndProfsArmor" /></td><td colspan="2" style="padding-left:30px">Show Armor Proficiency</td></tr>'
 		+ '<tr><td align="center" style="width:5px;padding-left:40px"><input type="checkbox" name="isShowEndProfsWeapon" /></td><td colspan="2" style="padding-left:30px">Show Weapon Proficiency</td></tr>'
@@ -4238,12 +3870,11 @@ function initSettingsPane() {
 		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isAlertOverchargeFull" /></td><td colspan="2">Alert when Overcharge is full</td></tr>'
 		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isShowMonsterNumber"></td><td colspan="2">Show Numbers instead of letters next to monsters.</td></tr>'
 		+ '<tr><td colspan="2" style="padding-left:10px">Display Monster Stats:</td></tr>'
-		+ '<tr><td align="center" style="width:5px;padding-left:20px"><input type="checkbox" name="showMonsterHP" /></td><td colspan="2">Show monster HP (<span style="color:red">Estimated</span>)</td><td align="center" style="width:120px">' + t25 + ' ms (' + (t25*100/t0).toFixed(1) + '%)</td></tr>'
+		+ '<tr><td align="center" style="width:5px;padding-left:20px"><input type="checkbox" name="showMonsterHP" /></td><td colspan="2">Show monster HP (<span style="color:red">Estimated</span>)</td><td></td></tr>'
 		+ '<tr><td align="center" style="width:5px;padding-left:40px"><input type="checkbox" name="showMonsterHPPercent" /></td><td colspan="2" style="padding-left:10px">Show monster HP in percentage</td></tr>'
-		+ '<tr><td align="center" style="width:5px;padding-left:20px"><input type="checkbox" name="showMonsterMP" /></td><td  colspan="2">Show monster MP percentage</td><td align="center" style="width:120px">' + t26 + ' ms (' + (t26*100/t0).toFixed(1) + '%)</td></tr>'
-		+ '<tr><td align="center" style="width:5px;padding-left:20px"><input type="checkbox" name="showMonsterSP" /></td><td colspan="2">Show monster SP percentage</td><td align="center" style="width:120px">' + t33 + ' ms (' + (t33*100/t0).toFixed(1) + '%)</td></tr>'
-		+ '<tr><td align="center" style="width:5px;padding-left:20px"><input type="checkbox" name="showMonsterDefence" /></td><td colspan="2">Show monster resistances</td><td align="center" style="width:120px">' + t27 + ' ms (' + (t27*100/t0).toFixed(1) + '%)</td></tr>'
-		+ '<tr><td align="center" style="width:5px;padding-left:40px"><input type="checkbox" name="showMonsterInfoFromDB" /></td><td colspan="2" style="padding-left:10px">Show monster info from database</td><td align="center" style="width:120px">' + t19 + ' ms (' + (t19*100/t0).toFixed(1) + '%)</td></tr>'
+		+ '<tr><td align="center" style="width:5px;padding-left:20px"><input type="checkbox" name="showMonsterMP" /></td><td  colspan="2">Show monster MP percentage</td><td></td></tr>'
+		+ '<tr><td align="center" style="width:5px;padding-left:20px"><input type="checkbox" name="showMonsterSP" /></td><td colspan="2">Show monster SP percentage</td><td></td></tr>'
+		+ '<tr><td align="center" style="width:5px;padding-left:40px"><input type="checkbox" name="showMonsterInfoFromDB" /></td><td colspan="2" style="padding-left:10px">Show monster info from database</td><td></td></tr>'
 		+ '<tr><td align="center" style="width:5px;padding-left:60px"><input type="checkbox" name="showMonsterClassFromDB" /></td><td colspan="2" style="padding-left:20px">Show monster class from database</td></tr>'
 		+ '<tr><td align="center" style="width:5px;padding-left:60px"><input type="checkbox" name="showMonsterPowerLevelFromDB" /></td><td colspan="2" style="padding-left:20px">Show monster power level from database</td></tr>'
 		+ '<tr><td align="center" style="width:5px;padding-left:60px"><input type="checkbox" name="showMonsterAttackTypeFromDB" /></td><td colspan="2" style="padding-left:20px">Show monster attack type from database</td></tr>'
@@ -4262,17 +3893,17 @@ function initSettingsPane() {
 		+ '<tr><td align="center" style="width:5px;padding-left:65px"><input type="checkbox" name="hideSpecificDamageType9" /></td><td colspan="2" style="padding-left:20px">Soul</td></tr>'
 		+ '<tr><td align="center" style="width:5px;padding-left:65px"><input type="checkbox" name="hideSpecificDamageType10" /></td><td colspan="2" style="padding-left:20px">Void</td></tr>'
 		+ '<tr><td align="center" style="width:5px;padding-left:60px"><input type="checkbox" name="ResizeMonsterInfo" /></td><td colspan="2" style="padding-left:20px">Resize Monster Info if longer than Info box</td></tr>'
-		+ '<tr><td align="center" style="width:5px;padding-left:40px"><input type="checkbox" name="isShowStatsPopup" /></td><td colspan="2" style="padding-left:10px">Show monster statistics on mouseover - delay: <input type="text" name="monsterPopupDelay" size="3" maxLength="4" style="text-align:right" />ms</td><td align="center" style="width:120px">' + t34 + ' ms (' + (t34*100/t0).toFixed(1) + '%)</td></tr>'
+		+ '<tr><td align="center" style="width:5px;padding-left:40px"><input type="checkbox" name="isShowStatsPopup" /></td><td colspan="2" style="padding-left:10px">Show monster statistics on mouseover - delay: <input type="text" name="monsterPopupDelay" size="3" maxLength="4" style="text-align:right" />ms</td><td></td></tr>'
 		+ '<tr><td align="center" style="width:5px;padding-left:50px"><input type="checkbox" name="isMonsterPopupPlacement" /></td><td colspan="2" style="padding-left:20px">Alternative placement for mouseover popup</td></tr></tr>'
-		+ '<tr><td align="center" style="width:5px;padding-left:20px"><input type="checkbox" name="isShowMonsterDuration" /></td><td colspan="2">Show monster effect durations</td><td align="center" style="width:120px">' + t9 + ' ms (' + (t9*100/t0).toFixed(1) + '%)</td></tr>'
+		+ '<tr><td align="center" style="width:5px;padding-left:20px"><input type="checkbox" name="isShowMonsterDuration" /></td><td colspan="2">Show monster effect durations</td><td></td></tr>'
 		+ '<tr><td align="center" style="width:5px;padding-left:30px"><input type="checkbox" name="isMonstersEffectsWarnColor" /></td><td colspan="2" style="padding-left:10px">Highlight duration badges - <span style="color:orange">Orange</span>: below <input type="text" name="MonstersWarnOrangeRounds" size="1" maxLength="2" style="text-align:right" /> rounds; <span style="color:red">Red</span>: below <input type="text" name="MonstersWarnRedRounds" size="1" maxLength="1" style="text-align:right" /> rounds</td></tr>'
 		+ '<tr><td colspan="2"><b>Tracking Functions:</b></td></tr>'
-		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isTrackStats" /></td><td colspan="2">Track Battle Statistics</td><td align="center" style="width:120px">' + t16 + ' ms (' + (t16*100/t0).toFixed(1) + '%)</td></tr>'
-		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isTrackItems" /></td><td colspan="2">Track Item Drops</td><td align="center" style="width:120px">' + t17 + ' ms (' + (t17*100/t0).toFixed(1) + '%)</td></tr>'
+		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isTrackStats" /></td><td colspan="2">Track Battle Statistics</td><td></td></tr>'
+		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isTrackItems" /></td><td colspan="2">Track Item Drops</td><td></td></tr>'
 		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isTrackRewards" /></td><td colspan="2">Track Arena Rewards</td></tr>'
 		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isTrackShrine" /></td><td colspan="2">Track Shrine (<span style="color:red">Downloadable/Custom Local Fonts only!</span>)</td></tr>'
 		+ '<tr><td style="padding-left:20px" colspan="2"><input type="button" class="_resetAll" value="Reset" title="Reset all tracking data." /></td></tr>'
-		+ '<tr><td colspan="3"><b>Warning System:</b></td><td align="center" style="width:120px">' + t12 + ' ms (' + (t12*100/t0).toFixed(1) + '%)</td></tr>'
+		+ '<tr><td colspan="3"><b>Warning System:</b></td><td></td></tr>'
 		+ '<tr><td colspan="2" style="padding-left:10px">Effects Expiring Warnings:</td></tr>'
 		+ '<tr><td align="center" style="width:5px;padding-left:5px"><input type="checkbox" name="isMainEffectsAlertSelf" /></td><td colspan="2">Alert when effects on yourself are expiring</td></tr>'
 		+ '<tr><td align="center" style="width:5px;padding-left:30px"><input type="checkbox" name="isEffectsAlertSelf6" /></td><td style="padding-left:10px">Channeling</td><td style="width:440px">- alert on <input type="text" name="EffectsAlertSelfRounds6" size="1" maxLength="3" style="text-align:right;font-size:11px;font-weight:bold"/>rounds remaining</td><td></td></tr>'
@@ -4297,7 +3928,7 @@ function initSettingsPane() {
 		+ '<tr><td align="center" style="width:5px;padding-left:30px"><input type="checkbox" name="isEffectsAlertMonsters8" /></td><td style="padding-left:10px">Nerfed</td><td style="width:440px">- alert on <input type="text" name="EffectsAlertMonstersRounds8" size="1" maxLength="3" style="text-align:right;font-size:11px;font-weight:bold" />rounds remaining</td><td></td></tr>'
 		+ '<tr><td align="center" style="width:5px;padding-left:30px"><input type="checkbox" name="isEffectsAlertMonsters9" /></td><td style="padding-left:10px">Magically Snared</td><td style="width:440px">- alert on <input type="text" name="EffectsAlertMonstersRounds9" size="1" maxLength="3" style="text-align:right;font-size:11px;font-weight:bold" />rounds remaining</td><td></td></tr>'
 		+ '<tr><td align="center" style="width:5px;padding-left:30px"><input type="checkbox" name="isEffectsAlertMonsters10" /></td><td style="padding-left:10px">Lifestream</td><td style="width:440px">- alert on <input type="text" name="EffectsAlertMonstersRounds10" size="1" maxLength="3" style="text-align:right;font-size:11px;font-weight:bold" />rounds remaining</td><td></td></tr>'
-		+ '<tr><td colspan="2" style="padding-left:10px">Specific Spell Warning:</td></tr>'
+		+ '<tr><td colspan="2" style="padding-left:10px">Specific Spell Warnings:</td></tr>'
 		+ '<tr><td align="center" style="width:5px;padding-left:20px"><input type="checkbox" name="isWarnAbsorbTrigger" /></td><td colspan="2">Alert when Absorbing Ward triggers</td></tr>'
 		+ '<tr><td align="center" style="width:5px;padding-left:20px"><input type="checkbox" name="isWarnSparkTrigger" /></td><td colspan="2">Alert when Spark of Life triggers</td></tr>'
 		+ '<tr><td align="center" style="width:5px;padding-left:20px"><input type="checkbox" name="isWarnSparkExpire" /></td><td colspan="2">Alert when Spark of Life expires</td></tr>'
@@ -4314,8 +3945,8 @@ function initSettingsPane() {
 		+ '<tr><td align="center" style="width:5px;padding-left:20px"><input type="checkbox" name="isWarnCF" /></td><td colspan="2" style="padding-left:10px">Crystfest</td></tr>'
 		+ '<tr><td align="center" style="width:5px;padding-left:20px"><input type="checkbox" name="isWarnIW" /></td><td colspan="2" style="padding-left:10px">Item World</td></tr>'
 		+ '<tr><td colspan="2"><b>Database Options:</b></td></tr>'
-		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isRememberScan" /></td><td colspan="2">Record monster scan results</td><td align="center" style="width:120px">' + t15 + ' ms by scan, ' + t15b + ' ms by round(' + (t15b*100/t15b0).toFixed(1) + '%)</td></tr>'
-		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isRememberSkillsTypes" /></td><td colspan="2">Record monster skills</td><td align="center" style="width:120px">' + t21 + ' ms (' + (t21*100/t0).toFixed(1) + '%)</td></tr>'
+		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isRememberScan" /></td><td colspan="2">Record monster scan results</td><td></td></tr>'
+		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isRememberSkillsTypes" /></td><td colspan="2">Record monster skills</td><td></td></tr>'
 		+ '</table><hr />'
 		+ '<table class="_settings" cellspacing="0" cellpadding="2" style="width:100%">'
 		+ '<tr><td align="center"><input type="button" class="_resetSettings" value="Default Settings" title="Reset settings to default."/></td><td align="center"><input type="button" class="_masterReset" value="MASTER RESET" title="Deletes all of STAT\'s saved data and settings."/></td></tr>'
@@ -4325,7 +3956,7 @@ function initSettingsPane() {
 	if (_settings.isAltHighlight) $("input[name=isAltHighlight]").attr("checked", "checked");
 	if (_settings.isShowDivider) $("input[name=isShowDivider]").attr("checked", "checked");
 	if (_settings.isShowEndStats) $("input[name=isShowEndStats]").attr("checked", "checked");
-//isShowEndProfs added by Ilirith
+	//isShowEndProfs added by Ilirith
 	if (_settings.isShowEndProfs) {
 		$("input[name=isShowEndProfs]").attr("checked", "checked");
 		if (_settings.isShowEndProfsMagic) $("input[name=isShowEndProfsMagic]").attr("checked", "checked");
@@ -4336,13 +3967,12 @@ function initSettingsPane() {
 		$("input[name=isShowEndProfsArmor]").removeAttr("checked");
 		$("input[name=isShowEndProfsWeapon]").removeAttr("checked");
 	}
-//isShowMonsterNumber stolen from HV Lite, and added by Ilirith
+	//isShowMonsterNumber stolen from HV Lite, and added by Ilirith
 	if (_settings.isShowMonsterNumber) $("input[name=isShowMonsterNumber]").attr("checked", "checked");
 	if (_settings.showMonsterHP) $("input[name=showMonsterHP]").attr("checked", "checked");
 	if (_settings.showMonsterHPPercent) $("input[name=showMonsterHPPercent]").attr("checked", "checked");
 	if (_settings.showMonsterMP) $("input[name=showMonsterMP]").attr("checked", "checked");
 	if (_settings.showMonsterSP) $("input[name=showMonsterSP]").attr("checked", "checked");
-	if (_settings.showMonsterDefence) $("input[name=showMonsterDefence]").attr("checked", "checked");
 	if (_settings.showMonsterClassFromDB) $("input[name=showMonsterClassFromDB]").attr("checked", "checked");
 	if (_settings.showMonsterAttackTypeFromDB) $("input[name=showMonsterAttackTypeFromDB]").attr("checked", "checked");
 	if (_settings.showMonsterWeaknessesFromDB) $("input[name=showMonsterWeaknessesFromDB]").attr("checked", "checked");
@@ -4400,7 +4030,6 @@ function initSettingsPane() {
 	if (_settings.isShowSkillButton) $("input[name=isShowSkillButton]").attr("checked", "checked");
 	if (_settings.isEnableScanHotkey) $("input[name=isEnableScanHotkey]").attr("checked", "checked");
 	if (_settings.isEnableSkillHotkey) $("input[name=isEnableSkillHotkey]").attr("checked", "checked");
-	if (_settings.isCountPageLoadTime) $("input[name=isCountPageLoadTime]").attr("checked", "checked");
 	$("input[name=customPageTitle]").attr("value", _settings.customPageTitle);
 	if (_settings.isColumnInventory) $("input[name=isColumnInventory]").attr("checked", "checked");
 	if (_settings.isTrackStats) $("input[name=isTrackStats]").attr("checked", "checked");
@@ -4485,7 +4114,6 @@ function initSettingsPane() {
 	$("input[name=showMonsterHPPercent]").click(saveSettings);
 	$("input[name=showMonsterMP]").click(saveSettings);
 	$("input[name=showMonsterSP]").click(saveSettings);
-	$("input[name=showMonsterDefence]").click(saveSettings);
 	$("input[name=showMonsterInfoFromDB]").click(saveSettings);
 	$("input[name=isShowStatsPopup]").click(saveSettings);
 	$("input[name=isMonsterPopupPlacement]").click(saveSettings);
@@ -4528,7 +4156,6 @@ function initSettingsPane() {
 	$("input[name=isShowSkillButton]").click(saveSettings);
 	$("input[name=isEnableSkillHotkey]").click(saveSettings);
 	$("input[name=isEnableScanHotkey]").click(saveSettings);
-	$("input[name=isCountPageLoadTime]").click(saveSettings);
 	$("input[name=isChangePageTitle]").click(saveSettings);
 	$("input[name=isStartAlert]").click(saveSettings);
 	$("input[name=isShowEquippedSet]").click(saveSettings);
@@ -4591,7 +4218,6 @@ function saveSettings() {
 	_settings.showMonsterHPPercent = $("input[name=showMonsterHPPercent]").get(0).checked;
 	_settings.showMonsterMP = $("input[name=showMonsterMP]").get(0).checked;
 	_settings.showMonsterSP = $("input[name=showMonsterSP]").get(0).checked;
-	_settings.showMonsterDefence = $("input[name=showMonsterDefence]").get(0).checked;
 	_settings.showMonsterInfoFromDB = $("input[name=showMonsterInfoFromDB]").get(0).checked;
 	_settings.isShowStatsPopup = $("input[name=isShowStatsPopup]").get(0).checked;
 	_settings.isMonsterPopupPlacement = $("input[name=isMonsterPopupPlacement]").get(0).checked;
@@ -4633,7 +4259,6 @@ function saveSettings() {
 	_settings.isShowSkillButton = $("input[name=isShowSkillButton]").get(0).checked;
 	_settings.isEnableScanHotkey = $("input[name=isEnableScanHotkey]").get(0).checked;
 	_settings.isEnableSkillHotkey = $("input[name=isEnableSkillHotkey]").get(0).checked;
-	_settings.isCountPageLoadTime = $("input[name=isCountPageLoadTime]").get(0).checked;
 	_settings.isChangePageTitle = $("input[name=isChangePageTitle]").get(0).checked;
 	_settings.isShowEquippedSet = $("input[name=isShowEquippedSet]").get(0).checked;
 	_settings.isDisableForgeHotKeys = $("input[name=isDisableForgeHotKeys]").get(0).checked;
@@ -5226,7 +4851,6 @@ function HVSettings() {
 	this.showMonsterHPPercent = false;
 	this.showMonsterMP = true;
 	this.showMonsterSP = true;
-	this.showMonsterDefence = false;
 	this.showMonsterInfoFromDB = false;
 	this.isShowStatsPopup = false;
 	this.showMonsterClassFromDB = false;
@@ -5267,7 +4891,6 @@ function HVSettings() {
 	this.isEnableScanHotkey = false;
 	this.isShowSkillButton = false;
 	this.isEnableSkillHotkey = false;
-	this.isCountPageLoadTime = false;
 	this.isShowEquippedSet = false;
 	this.isDisableForgeHotKeys = false;
 	//0-twohanded fighter; 1-elemental mage
@@ -5842,60 +5465,6 @@ function HVMonsterDatabase() {
 	this.datescan = [];
 	this.isLoaded = false;
 }
-function TimeCounter(a, b) {
-	var dtm = new Date();
-	if (a === 1) var b = dtm.getTime();
-	else if (a === 0) b = dtm.getTime() - b;
-	return b;
-}
-function HVLoadTimeCounters() {
-	this.load = function () { loadFromStorage(this, HV_LTC); };
-	this.save = function () { saveToStorage(this, HV_LTC); };
-	this.reset = function () { deleteFromStorage(HV_LTC); };
-	this.cloneFrom = clone;
-	this.collectRoundInfo = [0, 0];
-	this.main = [0, 0];
-	this.hidelogo = [0, 0];
-	this.highlightLogText = [0, 0];
-	this.addBattleLogDividers = [0, 0];
-	this.showRoundCounter = [0, 0];
-	this.displayPowerupBox = [0, 0];
-	this.showMonsterStats = [0, 0];
-	this.showMonsterEffectsDuration = [0, 0];
-	this.showSelfEffectsDuration = [0, 0];
-	this.showBattleEndStats = [0, 0];
-	this.healthWarning = [0, 0];
-	this.showSidebarProfs = [0, 0];
-	this.isRememberScan = [0, 0];
-	this.isTrackStats = [0, 0];
-	this.isTrackItems = [0, 0];
-	this.saveStats = [0, 0];
-	this.showMonsterInfoFromDB = [0, 0];
-	this.extendedHits = [0, 0];
-	this.changedMHits = [0, 0];
-	this.cast = [0, 0];
-	this.effects = [0, 0];
-	this.hidetitle = [0, 0];
-	this.showhp = [0, 0];
-	this.showmp = [0, 0];
-	this.showsp = [0, 0];
-	this.showelem = [0, 0];
-	this.isbattle = [0, 0];
-	this.pageLoad = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-	this.sel = [0, 0];
-	this.monsterpopup = [0, 0];
-	this.showscanbutton = [0, 0];
-	this.taggingitems = [0, 0];
-	this.startalerts = [0, 0];
-	this.showset = [0, 0];
-	this.botfunction = [0, 0];
-	this.isLoaded = false;
-}
-function loadLTCObject() {
-	if (_ltc !== null) return;
-	_ltc = new HVLoadTimeCounters();
-	_ltc.load();
-}
 function HVCharacterStatsSettings() {
 	this.load = function () { loadFromStorage(this, HV_CHSS); };
 	this.save = function () { saveToStorage(this, HV_CHSS); };
@@ -5979,8 +5548,7 @@ function Scanbutton() {
 	case "140003":
 		skillname[2] = "FreB";
 	}
-	var mkeymax = $("#monsterpane > div").length;
-	var n = mkeymax;
+	var n = HVStat.numberOfMonsters;
 	var num = 0;
 	var a = $("#mainpane");
 	document.addEventListener('keydown', function(a) {
@@ -6113,7 +5681,7 @@ function Scanbutton() {
 			}
 		}
 	});
-	var j = HVStat.monsters.length;
+	var j = HVStat.numberOfMonsters;
 	while (j--) {
 		var monsterElementId = HVStat.Monster.getDomElementId(j);
 		var u = $("#" + monsterElementId);
@@ -6280,10 +5848,7 @@ function AlertEffectsSelf() {
 			if (_settings.isEffectsAlertSelf[i]
 					&& allinfo[0].match(effectNames[i])
 					&& allinfo[2] === _settings.EffectsAlertSelfRounds[i]) {
-				var sec1 = TimeCounter(1);
 				alert(allinfo[0] + " is expiring");
-				_ltc.main[1] -= TimeCounter(0, sec1);
-				_ltc.isbattle[1] -= TimeCounter(0, sec1);
 			}
 		}
 	});
@@ -6307,18 +5872,9 @@ function AlertEffectsMonsters() {
 					&& allinfo[0].match(effectNames[i])
 					&& allinfo[2] === _settings.EffectsAlertMonstersRounds[i]) {
 				var monnum = $(this).parent().parent().attr("id").replace("mkey_", "");
-				var sec1 = TimeCounter(1);
 				alert(allinfo[0] + '\n on monster number "' + monnum + '" is expiring');
-				_ltc.main[1] -= TimeCounter(0, sec1);
-				_ltc.isbattle[1] -= TimeCounter(0, sec1);
 			}
 		}
-	});
-}
-function CheckForAction() {
-	$("#ckey_defend, #ckey_focus, .btm1, .btsd, .btii, .btqss, .btqi2").each(function (j) {
-		var onclickadded = $(this).attr("onclick");
-		if (onclickadded !== null) $(this).attr("onclick", "var data = [0, 0]; data[0] = 1; var dtm = new Date(); var b = dtm.getTime(); data[1] = b; if (typeof(GM_deleteValue) !== 'undefined') {GM_setValue('PLTC',JSON.stringify(data));} else {localStorage.setItem('PLTC',JSON.stringify(data));}" + onclickadded + ";");
 	});
 }
 function TaggingItems(clean) {
@@ -6438,9 +5994,188 @@ function TaggingItems(clean) {
 	}
 }
 
-if (HVStat.isChrome) {
-	document.addEventListener("DOMContentLoaded", main1, false);
-} else {
-	// Greasemonkey user script gets invoked when the DOMContentLoaded event fires
-	main1();
+//------------------------------------
+// main routine
+//------------------------------------
+HVStat.main1 = function () {
+	//console.log("main1: document.readyState = " + document.readyState);
+	//-- Hide Logo ASAP to avoid flashing.
+	if (_settings.isHideHVLogo){
+		var eStyle = document.createElement('style');
+		eStyle.type = 'text/css';
+		eStyle.appendChild(document.createTextNode('img.cw { visibility: hidden; }'));
+		document.childNodes[1].appendChild(eStyle);
+	}
+	if (_settings.isChangePageTitle && document.title === "The HentaiVerse") {
+		document.title = _settings.customPageTitle;
+	}
+	var waitingForDocumentInteractive = function () {
+		if (document.readyState === "loading") {
+			setTimeout(waitingForDocumentInteractive, 10);
+		} else {
+			setTimeout(HVStat.main2, 1);
+		}
+	};
+	waitingForDocumentInteractive();
 }
+
+HVStat.main2 = function () {
+	//console.log("main2: document.readyState = " + document.readyState);
+	// store DOM caches
+	HVStat.popupElement = document.getElementById("popup_box");
+	HVStat.monsterPaneElement = document.getElementById("monsterpane");
+	HVStat.battleLogElement = document.getElementById("togpane_log");
+
+	// store static values
+	if (HVStat.battleLogElement) {
+		HVStat.duringBattle = true;
+	}
+
+	// processes not require IndexedDB and not alert/confirm immediately
+	if (!HVStat.isChrome && !cssInserted()) {
+		GM_addStyle(GM_getResourceText("jQueryUICSS"));
+		cssAdded();
+	}
+	initUI();
+	if (HVStat.duringBattle) {
+		// store static values
+		HVStat.numberOfMonsters = $("#monsterpane > div").length;
+
+		if (_settings.isShowMonsterNumber) {
+			showMonsterNumber();
+		}
+		displayPowerupBox();
+		if (_settings.isShowDivider) {
+			addBattleLogDividers();
+		}
+		if (_settings.isShowHighlight) {
+			highlightLogText();
+		}
+		if (_settings.isShowSelfDuration) {
+			showSelfEffectsDuration();
+		}
+		if (_settings.isShowScanButton || _settings.isShowSkillButton || _settings.isEnableScanHotkey || _settings.isEnableSkillHotkey) {
+			Scanbutton();
+		}
+		if (_settings.isShowMonsterDuration) {
+			showMonsterEffectsDuration();
+		}
+	} else {
+		// equipment tag
+		if (isEquipmentInventoryPage() && _settings.isShowTags[0]) {
+			TaggingItems(false);
+		}
+		if (isAllInventoryPage() && _settings.isShowTags[5]) {
+			TaggingItems(true);
+		}
+		if (isShopPage() && _settings.isShowTags[1]) {
+			TaggingItems(false);
+		}
+		if (isItemWorldPage() && _settings.isShowTags[2]) {
+			TaggingItems(false);
+		}
+		if (isMoogleWrite() && _settings.isShowTags[3]) {
+			$("#mailform #leftpane").children().eq(3).children().eq(1).click(TaggingItems);
+		}
+		if (isForgePage() && _settings.isShowTags[4]) {
+			TaggingItems(false);
+			if (_settings.isDisableForgeHotKeys) {
+				document.onkeypress = null;
+			}
+		}
+	}
+	setTimeout(HVStat.main3, 1);
+}
+
+HVStat.main3 = function () {
+	//console.log("main3: document.readyState = " + document.readyState);
+	// open database
+	HVStat.openIndexedDB(HVStat.main4);
+}
+
+HVStat.main4 = function () {
+	//console.log("main4: document.readyState = " + document.readyState);
+	// processes require IndexedDB and not alert/confirm immediately
+	var waitingForDocumentComplete = function () {
+		if (document.readyState !== "complete") {
+			setTimeout(waitingForDocumentComplete, 10);
+		} else {
+			setTimeout(HVStat.main5, 1);
+		}
+	};
+	waitingForDocumentComplete();
+}
+
+HVStat.main5 = function () {
+	//console.log("main5: document.readyState = " + document.readyState);
+	// processes require IndexedDB or alert/confirm immediately
+	if (HVStat.duringBattle) {
+		HVStat.transaction = HVStat.idb.transaction(["MonsterScanResults", "MonsterSkills"], "readwrite");
+
+		if (_settings.isMainEffectsAlertSelf) {
+			AlertEffectsSelf();		// using alert
+		}
+		if (_settings.isMainEffectsAlertMonsters) {
+			AlertEffectsMonsters();		// using alert
+		}
+		collectRoundInfo();		// using alert
+		if (_settings.warnMode[_round.battleType]) {
+			healthWarning();		// using alert
+		}
+		if ((_round !== null) && (_round.currRound > 0)) {
+			showRoundCounter();	// requires _round
+		}
+		if ((_round !== null) && (HVStat.monsters.length > 0)){
+			showMonsterStats();	// requires _round, IndexedDB
+		}
+		if (isBattleOver()) {
+			if (_settings.isShowEndStats) {
+				showBattleEndStats();	// requires _round
+			}
+			saveStats();
+			_round.reset();
+		}
+		if (_settings.isShowStatsPopup) {
+			registerEventHandlersForMonsterPopup();	// requires _round, IndexedDB
+		}
+	} else {
+		if (_round) {
+			_round.reset();
+		}
+		if (_settings.isColumnInventory && isItemInventoryPage()) {
+			initItemsView();
+		} else if (isCharacterPage()) {
+			collectCurrentProfsData();
+		} else if (isShrinePage()) {
+			if (_settings.isTrackShrine) {
+				captureShrine();
+			}
+			if (HVStat.isChrome) {
+				window.document.onkeydown = null;	// workaround to make enable SPACE key
+			}
+		}
+	}
+	if (_settings.isShowSidebarProfs) {
+		showSidebarProfs();
+	}
+	var a = localStorage.getItem(HV_EQUIP);
+	var c = (a === null) ? false : JSON.parse(a);
+	if (c) inventoryWarning();
+
+	if (!HVStat.duringBattle) {
+		if ((_settings.isStartAlert || _settings.isShowEquippedSet) && !isHVFontEngine()) {
+			FindSettingsStats();
+		}
+		if (_settings.isStartAlert && !isHVFontEngine()) {
+			StartBattleAlerts();
+		}
+	}
+	if (!isHVFontEngine() && _settings.isShowEquippedSet) {
+		SetDisplay();
+	}
+}
+
+//------------------------------------
+// execute
+//------------------------------------
+HVStat.main1();
