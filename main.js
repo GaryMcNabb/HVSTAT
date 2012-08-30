@@ -4,14 +4,14 @@
 // @description      Collects data, analyzes statistics, and enhances the interface of the HentaiVerse
 // @include          http://hentaiverse.org/*
 // @author           Various (http://forums.e-hentai.org/index.php?showtopic=50962)
-// @version          5.4.1.15
+// @version          5.4.1.16
 // @require          https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js
 // @require          https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.21/jquery-ui.min.js
 // @resource         jQueryUICSS http://www.starfleetplatoon.com/~cmal/HVSTAT/jqueryui.css
 // ==/UserScript==
 
 /* ========== GLOBAL VARIABLES ========== */
-const VERSION = "5.4.1.15",
+const VERSION = "5.4.1.16",
 HV_OVERVIEW = "HVOverview",
 HV_STATS = "HVStats",
 HV_PROF = "HVProf",
@@ -298,7 +298,7 @@ function setLogCSS() {
 		
 	if (_settings.isAltHighlight){
 		bCSS = bTD+ "'gains the effect'], "+ bTD+ "'penetrated'], "+ bTD+ "'stun'], "+ bTD+ "'ripened soul']"
-		+ "{color:#800080}"
+		+ "{color:purple}"
 		+ bTD+ "'proficiency']"
 		+ "{color:#BA9E1C}"
 		+ bTD+ "'you resist'], "+ bTD+ "'you dodge'], "+ bTD+ "'you evade'], "+ bTD+ "'you block'], "+ bTD+ "'you parry'], "+ bTD+ "'misses'][title*='against you']"
@@ -308,12 +308,12 @@ function setLogCSS() {
 		+ bTD+ "'uses']"
 		+ "{color:blue}";
 	} else {
-		bCSS = bTD+ "'you hit'], "+ bTD+ "'you crit'], "+ bTD+ "'you counter'], "+ bTD+ "'your offhand hit'], "+ bTD+ "'your offhand crit'], "+ bTD+ "'unleash']"
-		+ "{color:blue}"
-		+ bTD+ "'procs the effect']"
-		+ "{color:#800080}"
-		+ bTD+ "'hits']:not([title*='hits you']), "+ bTD+ "'blasts'], "+ bTD+ "'crits']:not([title*='crits you'])"
+		bCSS = bTD+ "'hits']:not([title*='hits you']), "+ bTD+ "'blasts'], "+ bTD+ "'crits']:not([title*='crits you'])"
 		+ "{color:teal}"
+		+ bTD+ "'procs the effect']"
+		+ "{color:purple}"
+		+ bTD+ "'you hit'], "+ bTD+ "'you crit'], "+ bTD+ "'you counter'], "+ bTD+ "'your offhand hit'], "+ bTD+ "'your offhand crit'], "+ bTD+ "'unleash']"
+		+ "{color:blue !important}"
 		+ bTD+ "'you resist'], "+ bTD+ "'you dodge'], "+ bTD+ "'you evade'], "+ bTD+ "'you block'], "+ bTD+ "'you parry'], "+ bTD+ "'misses'][title*='against you'], "+ bTD+ "'misses its mark'][title^='your']"
 		+ "{color:#999}"
 		+ bTD+ "'you gain']:not([title*='drained'])"
@@ -326,7 +326,7 @@ function setLogCSS() {
 	+ bTD+ "'you cast'], "+ bTD+ "'explodes for']"
 	+ "{color:teal}"
 	+ bTD+ "'bleeding wound hits'], "+ bTD+ "'spreading poison hits'], "+ bTD+ "'your spike shield hits'], "+ bTD+ "'searing skin hits'], "+ bTD+ "'burning soul hits']"
-	+ "{color:#800080}"
+	+ "{color:purple !important}"
 	+ bTD+ "'restores'], "+ bTD+ "'you are healed'], "+ bTD+ "'recovered'], "+ bTD+ "'hostile spell is drained'], "+ bTD+ "'you drain'], "+ bTD+ "'ether theft drains'], "+ bTD+ "'lifestream drains']"
 	+ "{color:green}"
 	+ bTD+ "'enough mp']"
