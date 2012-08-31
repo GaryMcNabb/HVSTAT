@@ -2249,18 +2249,24 @@ function highlightLogText() {
 		}
 	}
 }
+/* =====
+ addBattleLogDividers
+ Adds a divider between Battle Log rounds.
+===== */
 function addBattleLogDividers() {
-	var logRows = document.getElementById('togpane_log').getElementsByTagName('tr');
-	var i = logRows.length;
-	var prevTurn = null;
-	var currTurn;
-	var parent;
-	var divider;
+	var doc = document,
+		logRows = doc.getElementById('togpane_log').getElementsByTagName('tr'),
+		i = logRows.length,
+		prevTurn = null,
+		currTurn = null,
+		parent = null,
+		divider = null;
+	
 	while (i--) {
 		currTurn = logRows[i].firstChild.innerHTML;
 		if (!isNaN(parseInt(currTurn))) {
 			if (prevTurn && prevTurn !== currTurn) {
-				divider = document.createElement('tr');
+				divider = doc.createElement('tr');
 				divider.innerHTML = "<td colspan='3'><hr style='border:0; height:1px; background-color:#666666; color:#666666' /></td>";
 				parent = logRows[i].firstChild.parentNode;
 				parent.parentNode.insertBefore(divider, parent.nextSibling);
@@ -2269,38 +2275,45 @@ function addBattleLogDividers() {
 		}
 	}
 }
+/* =====
+ showRoundCounter
+ Adds a Round counter to the Battle screen.
+===== */
 function showRoundCounter() {
-	var b = "";
-	var c = _round.currRound;
-	var a = _round.maxRound;
-	b = a > 0 ? c + "/" + a : "#" + c;
-	div = document.createElement('div');
+	var doc = document,
+		curRound = _round.currRound,
+		maxRound = _round.maxRound,
+		dispRound = maxRound > 0 ? curRound + "/" + maxRound : "#" + curRound,
+		div = doc.createElement('div');
+	
 	div.setAttribute('style', 'font-size:18px;font-weight:bold;font-family:arial,helvetica,sans-serif;text-align:right;position:absolute;top:6px;right:17px;');
-	div.innerHTML = "<div style='" + (c === a - 1 ? "color:orange;'>" : c === a ? "color:red;'>" : "'>") + b + "</div>";
-	document.getElementById('battleform').children[0].appendChild(div);
+	div.innerHTML = "<div style='" + (curRound === maxRound - 1 ? "color:orange;'>" : curRound === maxRound ? "color:red;'>" : "'>") + dispRound + "</div>";
+	doc.getElementById('battleform').children[0].appendChild(div);
 }
+/* =====
+ displayPowerupBox
+ Adds a Powerup box to the Battle screen.
+ Creates a shortcut to the powerup if one is available.
+===== */
 function displayPowerupBox() {
-	var a = $("div.btp");
-	var c = document.createElement("div");
-	c.setAttribute("style", "position:absolute;top:7px;right:5px;background-color:#EFEEDC;width:30px;height:32px;border-style:double;border-width:2px;border-color:#555555;");
-	var e = document.getElementById("ikey_p");
-	if (e === null)
-		c.innerHTML = "<span style='font-size:16px;font-weight:bold;font-family:arial,helvetica,sans-serif;text-align:center;line-height:32px;cursor:default'>P</span>";
+	var doc = document,
+		battleMenu = doc.getElementsByClassName("btp"),
+		powerBox = doc.createElement("div");
+		powerup = doc.getElementById("ikey_p");
+	
+	powerBox.setAttribute("style", "position:absolute;top:7px;right:5px;background-color:#EFEEDC;width:30px;height:32px;border-style:double;border-width:2px;border-color:#555555;");
+	if (powerup === null) powerBox.innerHTML = "<span style='font-size:16px;font-weight:bold;font-family:arial,helvetica,sans-serif;text-align:center;line-height:32px;cursor:default'>P</span>";
 	else {
-		var b = e.getAttribute("onmouseover").match(/set_infopane_item\('.+?'/img)[0].substring(18);
-		c.setAttribute("onmouseover", e.getAttribute("onmouseover"));
-		c.setAttribute("onmouseout", e.getAttribute("onmouseout"));
-		c.setAttribute("onclick", 'var e = createEvent("Events"); e.initEvent("keydown", true, true); e.altKey = false; e.ctrlKey = false; e.shiftKey = false; e.metaKey = false; e.keyCode = 80; document.dispatchEvent(e);');
-		if (b.match(/health/i))
-			c.innerHTML = "<img class='PowerupGemIcon' src='"+ I_HEALTHPOT+ "' id='healthgem'>";
-		else if (b.match(/mana/i))
-			c.innerHTML = "<img class='PowerupGemIcon' src='"+ I_MANAPOT+ "' id='managem'>";
-		else if (b.match(/spirit/i))
-			c.innerHTML = "<img class='PowerupGemIcon' src='"+ I_SPIRITPOT+ "' id='spiritgem'>";
-		else if (b.match(/mystic/i))
-			c.innerHTML = "<img class='PowerupGemIcon' src='"+ I_CHANNELING+ "' id='channelgem'>";
+		var powerInfo = powerup.getAttribute("onmouseover");
+		powerBox.setAttribute("onmouseover", powerInfo);
+		powerBox.setAttribute("onmouseout", powerup.getAttribute("onmouseout"));
+		powerBox.setAttribute("onclick", 'var e = createEvent("Events"); e.initEvent("keydown", true, true); e.altKey = false; e.ctrlKey = false; e.shiftKey = false; e.metaKey = false; e.keyCode = 80; document.dispatchEvent(e);');
+		if (powerInfo.indexOf('Health') > -1) powerBox.innerHTML = "<img class='PowerupGemIcon' src='"+ I_HEALTHPOT+ "' id='healthgem'>";
+		else if (powerInfo.indexOf('Mana') > -1) powerBox.innerHTML = "<img class='PowerupGemIcon' src='"+ I_MANAPOT+ "' id='managem'>";
+		else if (powerInfo.indexOf('Spirit') > -1) powerBox.innerHTML = "<img class='PowerupGemIcon' src='"+ I_SPIRITPOT+ "' id='spiritgem'>";
+		else if (powerInfo.indexOf('Mystic') > -1) powerBox.innerHTML = "<img class='PowerupGemIcon' src='"+ I_CHANNELING+ "' id='channelgem'>";
 	}
-	a.after(c);
+	battleMenu[0].appendChild(powerBox);
 }
 function showMonsterStats() {
 	for (var i = 0; i < HVStat.numberOfMonsters; i++) {
