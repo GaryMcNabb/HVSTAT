@@ -3022,7 +3022,6 @@ function RoundSave() {
 }
 
 function saveStats() {
-	if (!SAVE_STATS) return;
 	loadOverviewObject();
 	loadStatsObject();
 	loadRewardsObject();
