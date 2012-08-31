@@ -53,7 +53,10 @@ var HVStat = {
 	nRowsMonsterScanResultsTSV: 0,
 	nRowsMonsterSkillsTSV: 0,
 
-	// character-related
+	// page states
+	usingHVFont: true,
+
+	// character states
 	currHpRate: 0,
 	currMpRate: 0,
 	currSpRate: 0,
@@ -62,7 +65,7 @@ var HVStat = {
 	currMpPercent: 0,
 	currSpPercent: 0,
 
-	// battle-related
+	// battle states
 	duringBattle: false,
 	numberOfMonsters: 0,
 	monsters: []	// instances of HVStat.Monster
@@ -916,7 +919,6 @@ HVStat.Monster = (function () {
 
 			var nameOuterFrameElement = _baseElement.children().eq(1);
 			var nameInnerFrameElement = _baseElement.children().eq(1).children().eq(0);
-			var usingHVFont = nameInnerFrameElement.children().length > 1;
 			var hpBarBaseElement = _baseElement.children().eq(2).children().eq(0);
 			var mpBarBaseElement = _baseElement.children().eq(2).children().eq(1);
 			var spBarBaseElement = _baseElement.children().eq(2).children().eq(2);
@@ -1043,7 +1045,7 @@ HVStat.Monster = (function () {
 							statsHtml += ')';
 						}
 					}
-					if (usingHVFont) {
+					if (HVStat.usingHVFont) {
 						nameOuterFrameElement.css("width", "auto"); // tweak for Firefox
 						nameInnerFrameElement.css("width", "auto"); // tweak for Firefox
 						html = "<div style='font-family:arial; font-size:7pt; font-style:normal; font-weight:bold; cursor:default; position:relative; top:-1px; left:2px; padding:0 1px; margin-left:0px; white-space:nowrap;'>" + statsHtml + "</div>";
@@ -2453,7 +2455,7 @@ HVStat.resetHealthWarningStates = function () {
 }
 
 function collectCurrentProfsData() {
-	if (!isCharacterPage() || isHVFontEngine())
+	if (!isCharacterPage() || HVStat.usingHVFont)
 		return;
 	loadProfsObject();
 	var c = $(".eqm").children().eq(0).children().eq(1).children();
@@ -4456,7 +4458,6 @@ function isHentaiVerse() { return ($(".stuffbox").length); }
 function isShopPage() { return document.location.href.match(/s=Bazaar&ss=es/i); }
 function isForgePage() { return document.location.href.match(/s=Bazaar&ss=fr/i); }
 function isShrinePage() { return document.location.href.match(/s=Bazaar&ss=ss/i); }
-function isHVFontEngine() { return !$(".clb .cbl .fd10").eq(0).text().match(/Health points/i); }
 function loadOverviewObject() {
 	if (_overview !== null) return;
 	_overview = new HVCacheOverview();
@@ -6057,6 +6058,7 @@ HVStat.main2 = function () {
 	HVStat.charOcGaugeElement = document.getElementsByTagName("img")[11];
 
 	// store static values
+	HVStat.usingHVFont = document.getElementsByClassName('fd10')[0].textContent !== "Health points";
 	HVStat.currHpRate = HVStat.getGaugeRate(HVStat.charHpGaugeElement, HVStat.charGaugeMaxWidth);
 	HVStat.currMpRate = HVStat.getGaugeRate(HVStat.charMpGaugeElement, HVStat.charGaugeMaxWidth);
 	HVStat.currSpRate = HVStat.getGaugeRate(HVStat.charSpGaugeElement, HVStat.charGaugeMaxWidth);
@@ -6203,14 +6205,14 @@ HVStat.main5 = function () {
 	if (c) inventoryWarning();
 
 	if (!HVStat.duringBattle) {
-		if ((_settings.isStartAlert || _settings.isShowEquippedSet) && !isHVFontEngine()) {
+		if ((_settings.isStartAlert || _settings.isShowEquippedSet) && !HVStat.usingHVFont) {
 			FindSettingsStats();
 		}
-		if (_settings.isStartAlert && !isHVFontEngine()) {
+		if (_settings.isStartAlert && !HVStat.usingHVFont) {
 			StartBattleAlerts();
 		}
 	}
-	if (!isHVFontEngine() && _settings.isShowEquippedSet) {
+	if (!HVStat.usingHVFont && _settings.isShowEquippedSet) {
 		SetDisplay();
 	}
 }
