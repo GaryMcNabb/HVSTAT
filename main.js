@@ -863,7 +863,11 @@ HVStat.Monster = (function () {
 		var _currSpRate = currBarRate(2);
 		var _hasSpiritPoint = _healthBars.length > 2;
 		var _currHp = function () {
-			return Math.ceil(_currHpRate * _maxHp);
+			var v = Math.ceil(_currHpRate * _maxHp);
+			if (!_isDead && v === 0) {
+				v = 1;
+			}
+			return v;
 		};
 		var _waitingForDBResponse = function () {
 			return _waitingForGetResponseOfMonsterScanResults || _waitingForGetResponseOfMonsterSkills;
