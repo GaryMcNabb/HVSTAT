@@ -4,288 +4,2208 @@
 // @description      Collects data, analyzes statistics, and enhances the interface of the HentaiVerse
 // @include          http://hentaiverse.org/*
 // @author           Various (http://forums.e-hentai.org/index.php?showtopic=50962)
-// @version          5.4.1.16
+// @version          5.4.2.0
 // @require          https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js
 // @require          https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.21/jquery-ui.min.js
 // @resource         jQueryUICSS http://www.starfleetplatoon.com/~cmal/HVSTAT/jqueryui.css
+// @run-at           document-start
 // ==/UserScript==
 
-/* ========== GLOBAL VARIABLES ========== */
-const VERSION = "5.4.1.16",
-HV_OVERVIEW = "HVOverview",
-HV_STATS = "HVStats",
-HV_PROF = "HVProf",
-HV_REWARDS = "HVRewards",
-HV_SHRINE = "HVShrine",
-HV_DROPS = "HVDrops",
-HV_SETTINGS = "HVSettings",
-HV_ROUND = "HVRound",
-HV_ALERT = "critAlert",
-HV_ALERTMP = "critAlertMP",
-HV_ALERTSP = "critAlertSP",
-HV_ALERTOC = "fullAlertOC",
-HV_EQUIP = "inventoryAlert",
-HV_DBASE = "HVMonsterDatabase",
-HV_COLL = "HVCollectData",
-HV_LTC = "HVLoadTimeCounters",
-HV_CHSS = "HVCharacterSettingsandStats",
-HV_TAGS = "HVTags",
-HOURLY = 0,
-ARENA = 1,
-GRINDFEST = 2,
-ITEM_WORLD = 3,
-CRYSFEST = 4,
-/* ========== EMBEDDED IMAGES ========== */
-I_HVLOGO = "data:image/gif;base64,R0lGODlhlgBuAMQAAO/r3uXc0NzOwtK/tMiwpr+hmLWTiquEfKJ2b5lnYoVKRo9YVHIsKnw7OFUAAF8PDmgdHAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACwAAAAAlgBuAAAF/yAgjmRpnmiqrmzrvnAsz3Rt33iu73zv/8CgcEgsGo/IpHLJbDqf0Kh0Sq1ar9isdsvter/gsFgqIJQQiADAgBgADug4mgA3lwpyNEDARtgBAXEFJXUicHl+JX15B3t9fyQCiGgDgQgCI2gGIniImzAECg4PaiIGDg17owINDq6vEAatDgglCa+vCKe4DAEDEK8PJAuuabO4EIMjrLi4us29JAcPza4PBdQOf66pt80PtTIHxSMM2gDE4WWYZ7QkAQRuIgIHA6NmAcQLIgMFop8CmKkjwO4Eq0bwCM67B0gfCQQKMA0g8CeAAWDbUImAJ+/GOFIACGgMMKoUAnftwv+JEJmKxKl9CyGIaEWAgcwADxKcDLezhUiUL5c5kHliVgmaI7it1JhDVC2kPUWczJUJ5VIGKUm4mqlNJIFTBKJOJZfiJ0+rALYWVTsCqQilIXEpKEVDwKgCIx+AlIqqzUO0JB1kTSoYANIGDSCkEtu3IwqzfFWmLWzCKAmaYae2FAkBgbIbJ6kRyIc26l/JAMx9ujoCb0ukP80wRv2YrEisnJhWZss1FK7NunHgREWA2l6+DeRsOpk8jgGRD/C5MZc8ATVlbhFHRq68tlXqCKw7+HyUt+Fzb5lylnOA7gxio4GhHjsqDQD64NQUAMbgUz5gqHzmFkXb3YdLft4V9B//N+SVB1Nb6E0GHC4LFFQXbgMcN0YADDwYwykWMlFQiBuS+IJjY6So4oostujiizDGKOOMNNZo441OTERRPCiUsSNFJCb045BE7uiGkEOegCQkGxXpJJFKDuneO0SiyEIA3rzSkgn0kTUCAQBWI2YwaYA55mpfNlOCmWO2CdcIgWTzSgLe/QZKmFqi0KVVWLo5Zn59tokbCT+9AmeWfo7ZUZxiEmVCoXm2EGg1W7bTTDhsJkqmGpm2ySSkhXWqaTMwMdqmlXE1U6kKvom5alWXrvTkk3QVaQAxcq2pJgB4JjNrkaUMAIcCcjZD56OUwhBAAQsU+ypfsQYhgDmvWAgq/z/ZJDBlDQYU64qjhCYrA33PGhhtCc0wyUIzBVDrgIfXrnDMK+ouhIsAGVZjJajBvUCuntXQNhm9MaRb6HHxqjCvK/W+wQs/1Rwbrqoz/HvCngKnWzAuZuBqVcIpLBxhCe460Ai0sCBL8bh2XhzwCaRO0qBWHKvybZq4sCByvXbdC6e3KPJb7goWc/myCYkKTBjB6LzyCcgo7HzCOK8MirIrEi+1cgxFW+oMzIKiSjPTPau3q8LV1FvyyT8jo+vWMHT917ljH72CxiJ4bAbUa+EdSTMkdumY0BW3TLWbGdcMg99l78P3bn6PcLiYpJSN9cQtc91yyWMmzvQLkXtcxv/ZIadtAucvi5IyzpnHbaflbXrO8Maf2/zu4+VFbnubpOCFS0eEs5znAIiILPvILeju8cI6my4NMpP4hafEwWseqdF0Lz374ooLNWbzuq+tAn2OVu/69V5ThTQviLXvfvto6t60mOD77H21KsAuD78e+tv63F9b36gqhK7u3Y90USMVIR62gpIdi18mYoHcYBXAAiaKgALcXgk8ljN5AY5kuGBbCnZxs1S9on8vkEX7suaS9zUATW1x4fswWBT3oQp2o2CB6lzRvwC8L4Lv+CEA7GE/HM2PG0CEk7uSeAMSotBGPXuACFfAoXcNYRdMlNECGpDFEnCoi0184o22ZcT/MprxjGhMoxrXyMY2uvGNcIyjHOdIRxqQ8QRSisSvnoQJH+3RSC3w4x8BuYxBEgmMeCQGDPF4ILpMY1TI2MQjIfmtmcFJZKP6zCQpGYsZBOAAYQJXAtXHDEoOZROlNOUrLHlEUypgHpj0UydlQAAOOo1VjXyDtxI1y02q0hoo2KWmQOJLTc1SBvTApChzR44lDRJOhiRAAvBkwC8ZsluuGIQz/5iDmlRjkRALxh2HsCe02FEPT6ii207AQYHhriwIBKD67iCnZNDgnTtQ5y1LYDkNsc48LHgnDpUWgB2iApH/pIwQAoAnf7azTgBdAT6dh4JNSjEG+OQBqCTTzztu/3QSYhNoNcY5j5IxAJEfRYTYbIAfuiBKaSb8EytjqtD0OeCVLcAPOBnppmv8gKEBHI41xskvuZAUd0Kt3Qp+QSGSam1McwkCpEBCH5jSNBgzTego0Scpg55UojIlgkHTICd/vs1QoIhnK0exUhUg6gFtzagP+vlSsHbwBVAjTTN22gISjoKvcvWBLcVpV7TilXQD4JxPbeBX5Gk1CQIQplWfGlFc3hWHEHDqEKdoAoPClaeGRcKezKqy0PqEdI11wFdHyJAUIEq1oK3sEAZ62t/I0H0K+APUUrtYE0xOMTJEnQMWCarb4rZhNuAgaUubKAQ91iViYuFaTUmbov7JPmZzrWBhe4pdzEU0taplhw9/iYuZWfcb3f0BrpaZggEYt33pJYF73YcCFb4vIgBIwHv32wAFWHK+743vD4jI1zoWITEGdsJXEszgBjv4wRCOsIQnTOEKW/jCGM6whjfM4Q57+MMiCAEAOw==",
-I_HEALTHPOT = "data:image/gif;base64,R0lGODlhHgAgAOYAAPbt9ho9IwArCAArAAARAAhGCAgrCBFXERFGETR7NAgRCEaDRmmvacrkyvb/9uTt5BFXCDR7KxFGCBpXERpGEQgrABFXACtpGleVRhpXCE+nNBppABFGACt7ERErCDSMETR7GiuMABpXACt7CBpGCCtpETR7ETRpGkanETR7CCtpCE+MK4OvaafTjHKnT5XKcjR7ACtpAAgRAE+MGkZ7GnLBKytXAE+MEUZ7EU+MAHLBEcHklWCnAHKnK57bRq/bcnKnEZXKK57BT5XBGvb/28HkRnKMEa/TI9PtcuT2lfb2r9vTI/bt2wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACwAAAAAHgAgAAAH/4AzJioZhRsbEBkqiykmHSUrLhggKzMjLgwuLj0zLkJBKDc0H6QzpjNAQDcrP0o/QT89NURESUhFQR89PkeqMx83wagoOTk1SklBRz5BSERKSEdLRSMpNUW4KCY0JiZAoDdArUlAR83PRUfqQSU94UhJRZwzOTpHOjw6SURCQ0FBSoj80KFjSI8UHlwgAdIjCTIf+OwdGeJDiZIeQYA4+wGER6oZHCokeCakRyto6bAVcRgriBCBKFLkCKbigAEELwImmdHQIpKfKocYRBaER4gbKFCokGAARA8UP569WCHkVjp///4lSdILhQYgSpkucKWhBhJX4XQU+elw64+1Rf90hEpqAoGBkbR+oBAy0B7bgLR2HFmbMRyKDggITMjp4FkNHkPS+RgCpMgPh9CCYKPM48aGAgYuPHWxg0i6rTUgCvFpMt7gXp0RK1hAZMeLr0PO/vCBKwkAB0mCrY1chPKNEQgqRKDl4EE0h0UAE/mNJEcMfeaQCKkBJIWEChmE7KsVPR4RB+gBPPtx41jvJK9mkBiQAYhZZOUrMjmPvvFkaEc4RMsLFAwAASrNJOGDQ0I58xsRDzARREVI6HBDD+K1gIAAEsyAglpcrfSPgw9stVAr2OxQEgorQMChh9/cAuJltChRQw03AJRMRevNIIEABwZTGRL+tLWDgsUAwVL/Ribt90JyEJASzkrFRYcMEhlFhsRkK7G31wsBVBDlB6gUUUsqVWF2SxBCAeFDjT8IUVcFFkipj0CQvYZNEDrEGMt957GAgAx1AhPEPj00hM1E+WgGj0Wv+HBWCwEYkMFRN1S0Qw47MBHPLTFctuYR8JQay3clhFOZEiVN95MrMBBFWUGfrLUQBxkkmkNuSrjEBBMrsdoDNEAYkQMPMwFRkDkiiFBERwEmk4SnAPW6GkfB3ICDTB59ZMMQHkWHJS0++MDEDjq04gMQOeAwww0wwJBDKjfMUENRh9r4w68auZJuMtaZQkOxqahygwk35CBECy7c0EIDLWjwQwuJ/hDLCw0qmADCCfVmu20gADs=",
-I_MANAPOT = "data:image/gif;base64,R0lGODlhHgAgAOYAACMRGiMIGkYrRmlPafbT9ox7jGkrcvbT/5V7p0YrYD0aYBEIGq+ewWlPjD0acisaRkYrcntXuCMRRsq47QgAGkYrgysRchEARisaYIx7wZ6M0yMRYNvT9j0jpyMaRhEAYCMRcisacmBPpysag089pxEAexEIRisalSMaYAgARhEIYAgAYGBXuAAATwAARgAAGggIYAgIRhERPQgIGisrafb2/z1GaT1PjCMrRmlyjLjB05Wnnmlyaaeeg1dPPfbt5MGvp9uVeysaGoxyctPBwdvT0/b29gAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACwAAAAAHgAgAAAH/4AQGBImhTIyMSYSiw8YKBsVIiQhFRAeIiwiIg0QIggFNgkONKQQphADAwkVDD8MBQwNOUZGRURABTQNOz2qEDQJwag2AgI5P0UFPTsFREY/RD1BQB4POUC4NhgOGBgDoAkDrUUDPc3PQD3qBRsN4URFQJwQAjw9PD48RUYIQwUFP4ww4MFjSIMHKUQQGdCgCLId+Oz1GLLjx48GBQY4YzDARyoIFF6ceIagQSto6bABcRirAAKBNh4ICCYBhosVGQIWgdDQIpGfKocYRFbAB44ENmxISOEiRAMbDJ5lqIDgVjp///4VKdLLxo0BSpl2cHUjBxFX4XgA+elwK4O1QP94hEqKYYWLkbQY2EAw0B7bgLR09FibMZwNFCteqMhZ41kOH0PS7RgyAAgDh9AKYKPsI4EMFy5APBWhw0i6rTkgIvBpMt7gXp0Rt+hgREeGr0POMtiBq8iBGkWCrY0MhHICD4lH0KrBIZpDIICN/CYiAIA+c0QQ5BiA8IUJBPtqQY9npIb5A88YJDjWu8grCBe8DzCLbHxFAuXNN54MrYdDWhl88EIMqDRTxA4OCeXMb0ZwQEABFRHBQwINgKeBXSlAYINaXK30z4IcbLVQK9joUJINFcTgQoY2fHMLh5fR8kMOOSQAUDIVpQcBUwQGUxkR/rSlw4HFDMBSRibhl0H/YjGQEs5KxUGHDBEZRUbEZCupt1cGJQxYSmW1pFIVZrcUINQAO8jIAAJ1vTCDk/oIBNlr2BTAg4ux0FdeBIm9CUwB+zTQEDYT5aMZPBa9ssNZGpTggglHJVCRDgLoQEA8twBwWZk9wONpLCm8sEE4lf1QknQ/uSIEUZQV9MlaC1FggqAC5PaDSwQQsJKpDUAzgAEC+DDTAAWZs8ACQHTkXzJFXArQratxFEwCCsjk0UcBDOERdFTSssMOBOjAQys7DCCAAhAkIIQQAqSSAAQ5FAXojAzkqpEr4yZTnSkO/JqKKglgkIAACGggQgIaTKDBDQxoICgDsSQgAQYhWPDuBLTVBgIAOw==",
-I_SPIRITPOT = "data:image/gif;base64,R0lGODlhHgAgAOYAACsACFcRI//k9tvTlcq4Rvbkla+MEdOvI6eMK+TBRu3Tcv/tr8GVGv/2255yAIxpEcGVK4xyNNO4cnJPAO2vI6dyEXJPEYxPAMqVT08rAK9yK4xPEREIAGk0CIxPGns0AMGVcmkrAKdPEXs0CGk0EadyT9OnjEYaAGkrCIxPK3s0EYM0EVcaAEYaCGkrEad7aXs0GmkaAEYRACsRCIM0Gv/k21caCGkrGpVXRrh7aSsIAHsrGkYaEUYRCFcaEVcRCHs0KysAABEAAEYICCsICFcREUYREXs0NBEICINGRuTKyv/29u3k5AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACwAAAAAHgAgAAAH/4AeKig2hRkZLTYoiyMqJC4pJTgwKR4dJS8lJRoeJRgQDxs0FqQeph4VFRspEgsSEBIaCA0NBQoJEBYaBAeqHhYbwagPFxcICwUQBwQQCg0LCgcUCR0jCAm4Dyo0KioVoBsVrQUVB83PCQfqEC4a4QoFCZweFwYHBg4GBQ0YDBAQCxpIMGCAgYYRQ0ooqKChADIC+OwdYEBgwQINECo4k1DBQSoPMnQceYZBQyto6bAlcBgLAgaBD0ZcCIaCBxEjIAIW8NDQooKfKhkYRAbBwYQNDx6g6EEEhoYHEp6BSIHhVjp///4VKNDrQYQKSpkmcRUBgQJX4Qwk+Olwq4S1Cf8MhEqqwgiRkbQkPMAw0B7bgLQGHFibMdwDEkaE+Mi55BkCBwzSEWBQIYEEh9AgYKPsYEOGGURuPC0xoEG6rQggYvBpMt7gXp0RA0jSYACIrwzOSiCAq4CAJQWCrY2cgPKGDkZ0AKG1hEk0hwkAN/it4EIIfeYUYEBQYUQPHTYw7KsVPV6DJegFPJOw4VjvAq88/OBgo4JZZOUr1jiPvvFkaAc4RAsIRXDQAirNFECAQ0I581sDTNQAQUUKGLCBBuKZYAQSPXjwgFpcrfSPg0xstVAr2AxQ0gMptMChh9/cAuJltCyAAAIbAJRMRet50AMSBwZTmQL+tDWAgsVUwFL/RibtB0JyLZASzkrFRYeMAhlFpsBkK7G3FwgB6BClBagkUEsqVWF2CwRCVUBAjRJgUJcOJ0ipj0CQvYYNBAbEGMt95+VgRBB1AgPBPho0hM1E+WgGj0WvEHCWCQEQYcNRG1Q0wAUD1BDPLSFctuYB8JQay3cuhFPZAiVN95MrHxBFWUGfrLWQDDYkekFuC7hUQw0rsaoBNBWIcIEDM1VQkDkssJBARwEmU4CnAPW6GkfBbLCCTB59FAMDHkWHJS0EEFDDAAa0QkAFF6zgwQYffHBBKht4gEBRh9oowa8auZJuMtaZQkOxqaiygQobXICBCSVsYIISJkQggQmJShDLCwYoqADDDvVmu20gADs=",
-I_CHANNELING = "data:image/gif;base64,R0lGODlhHgAgAOYAAEYjNBEAESMRIzQjNEY0RgAAERERIzQ0VyMjNEZGVyM0RjRGV09yjHKVryNGV3KvyityjE+v00+VrwAaI3LT7U9yeyuVp0/K03Lt9gARERFPTytychErKyNXV0+vryNGRnLT00+MjIz29jRXV3Kvr6f//4zT0yM0NKft7bj//zRGRk9pabjt7cr//4yvr0ZXV3KMjK/T08rt7Wl7e4OVlae4uMrb20/t23Lt25Xt26f/7YPKuLj/7a/t2yNXRsr/7U+ngzRXRtv/7XKvjCtGNE9pV9Pt22CMaSM0I4yvjEZXRoOeg6e4p7jKuGl7YP//5CsRETQjI0Y0NHtpabi4uKenp4ODg3t7e2lpaVdXV0ZGRjQ0NCMjIxEREQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACwAAAAAHgAgAAAH/4AjHx0VhSEwiEuKS1cziDAhkZIhhR0bFRshOzs5KCw/P0KhNVY1SS4pJSKrIjk4ICAeHpghsCI6OjygPzEvTExNGySqrBivFBYRPpkmOLe5Py0/My9WT1Y0G8SrON2xHhwjITk5IiU6ny0yKytUVjYyHSisIt04Fx4bBh/jziWeLFq4+FDNShMjPnZse3XPw4kCHEJ0u+WJRwsYJ1RkuUIjxokQOlYZA3HjggQOBU54mIgCBQ9dLzhs2aKECJYTK+bVw3ChJLgMH0g405EihS4XTrJgQZKxChYVIVRhwADiwgULHDL4AFGOKA8WMIKc2IJlBhIVTbSc+LBDxNSqEf8sIMjQAcQqXCxmfNiiRYsKK1acEjmBYAEJVxcixJ1b9y6PITL5+tUyZSkSLgIyaIBl1eQJunZFtBxxgoCUmVxOdNFChAuXKAYm1Kp6NWvd0D1kSpGiZcsJAVqyvB4gQMCED7Rr0yUBwtkOAwMAmB6LGXPxLgYMcHggK0IILhkcPICVowIHLgOiuB6wpUvx69gN7PgGgUsXB7Bw5JhgQABmBAagh4AA7l3n2nyJbQDebSCEkB121vm3hX0BBNBFfLVYtcFcm4FAAgcPPkigawjY10WFXBhQAWcQMOYBCStkJ2OFFxbnmo0BdvGBCbC0GF4DG/wmowEXWhhAhAIcSSTpEcw1yEEXJzCgwAQCDFlAkfEVZ0CFBmSgBAywhMDBkTMgQOWQWxpQgIUnundhBl6uMJ+YGXBwwgEDohmAmgVcGcCa2HWRgRYrMEfnCRUokGd2ezLap599/pmBFE4MsUMIn/GzwqInNtpFAV70WaSkSKxQC6YZnBAkmmluCeqjFT7axQuanMSBCipcGGKanT4aaZ8GnODEETuQ8IEgCRB44bLLxuprn15wMEMRRwDxQAj5KIols70+mwFEHxQxLAncWeBAiVDoyuaovoYKEQfiVuDBtRB0MCCzkVZYoRf89hutTEocIYEEgQAAOw==";
+// Package
+var HVStat = {
+	//------------------------------------
+	// package scope global constants
+	//------------------------------------
+	isChrome: navigator.userAgent.indexOf("Chrome") >= 0,
+	indexedDB: window.indexedDB || window.webkitIndexedDB || window.mozIndexedDB,
+	IDBTransaction: window.IDBTransaction || window.webkitIDBTransaction,
+	IDBKeyRange: window.IDBKeyRange|| window.webkitIDBKeyRange,
+	IDBCursor: window.IDBCursor || window.webkitIDBCursor,
+	reMonsterScanResultsTSV: /^(\d+?)\t(.*?)\t(.*?)\t(.*?)\t(\d*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)$/gm,
+	reMonsterSkillsTSV: /^(\d+?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)$/gm,
+	charGaugeMaxWidth: 120,
+	monsterGaugeMaxWidth: 120,
 
-var millisecondsAll = TimeCounter(1),
-isBattle = false,
-isBattleOver = false,
-isChrome = false,
-isHVFont = false,
-isCharPage = false,
-_overview = null,
-_stats = null,
-_profs = null,
-_rewards = null,
-_shrine = null,
-_drops = null,
-_settings = null,
-_round = null,
-_backup = [null, null, null, null, null, null],
-_database = null,
-_collectdata = null,
-_charss = null,
-_ltc = null,
-_tags = null,
-_isMenuInitComplete = false,
-_equips = 0,
-_lastEquipName = "",
-_artifacts = 0,
-_lastArtName = "",
+	// page identification
+	isBattleItemsPage: document.location.search === "?s=Character&ss=it",
+	isInventoryPage: document.location.search === "?s=Character&ss=in",
+	isEquipmentPage: document.location.search.indexOf("?s=Character&ss=eq") > -1,
+	isItemWorldPage: document.location.search.indexOf("?s=Battle&ss=iw") > -1,
+	isMoogleWrite: document.location.search.indexOf("?s=Bazaar&ss=mm&filter=Write") > -1,
+	isShopPage: document.location.search.indexOf("?s=Bazaar&ss=es") > -1,
+	isForgePage: document.location.search.indexOf("?s=Bazaar&ss=fr") > -1,
+	isShrinePage: document.location.search === "?s=Bazaar&ss=ss",
+
+	// temporary localStorage keys (attach the prefix "HVStat" to avoid conflicts with other scripts)
+	key_hpAlertAlreadyShown: "HVStatHpAlertAlreadyShown",
+	key_mpAlertAlreadyShown: "HVStatMpAlertAlreadyShown",
+	key_spAlertAlreadyShown: "HVStatSpAlertAlreadyShown",
+	key_ocAlertAlreadyShown: "HVStatOcAlertAlreadyShown",
+
+	//------------------------------------
+	// DOM caches
+	//------------------------------------
+	popupElement: null,
+	quickcastBarElement: null,
+	battleLogElement: null,
+	monsterPaneElement: null,
+	charHpGaugeElement: null,
+	charMpGaugeElement: null,
+	charSpGaugeElement: null,
+	charOcGaugeElement: null,
+
+	//------------------------------------
+	// package scope global variables
+	//------------------------------------
+	idb: null,
+	transaction: null,
+	dataURIMonsterScanResults: null,
+	dataURIMonsterSkills: null,
+	nRowsMonsterScanResultsTSV: 0,
+	nRowsMonsterSkillsTSV: 0,
+
+	// page identification
+	isCharacterPage: false,
+
+	// page states
+	usingHVFont: true,
+
+	// character states
+	currHpRate: 0,
+	currMpRate: 0,
+	currSpRate: 0,
+	currOcRate: 0,
+	currHpPercent: 0,
+	currMpPercent: 0,
+	currSpPercent: 0,
+
+	// battle states
+	duringBattle: false,
+	isBattleOver: false,
+	numberOfMonsters: 0,
+	monsters: []	// instances of HVStat.Monster
+};
+
+// TODO: should be stored in the package to avoid conflicts with official HV page in the future
+HV_SETTINGS = "HVSettings";
+_settings = null;
+loadSettingsObject();
+
+//------------------------------------
+// basic classes
+//------------------------------------
+
+HVStat.Keyword = function (id, name, abbrNames) {
+	var _id = String(id);
+	var _name = String(name);
+	var i, _abbrNames = [];
+	if (abbrNames !== undefined) {
+		if (abbrNames instanceof Array) {
+			for (i = 0; i < abbrNames.length; i++) {
+				_abbrNames[i] = String(abbrNames[i]);
+			}
+		} else {
+			_abbrNames[0] = String(abbrNames);
+		}
+	}
+	return {
+		get id() { return _id; },
+		get name() { return _name; },
+		toString: function (abbrLevel) {
+			// if abbrLevel is not set or 0 then return name else return abbreviated name
+			abbrLevel = Number(abbrLevel);
+			if (isNaN(abbrLevel) || abbrLevel < 0) {
+				abbrLevel = 0;
+			} else if (abbrLevel >= _abbrNames.length) {
+				abbrLevel = _abbrNames.length;
+			}
+			return (abbrLevel === 0) ? _name : _abbrNames[abbrLevel - 1];
+		}
+	};
+}
+
+HVStat.MonsterClass = (function () {
+	var MonsterClass = {};
+	var kw = HVStat.Keyword;
+	var keywords = [
+		new kw("ARTHROPOD", "Arthropod", ["Arth", "Art"]),
+		new kw("AVION", "Avion", ["Avio", "Avi"]),
+		new kw("BEAST", "Beast", ["Beas", "Bea"]),
+		new kw("CELESTIAL", "Celestial", ["Cele", "Cel"]),
+		new kw("DAIMON", "Daimon", ["Daim", "Dai"]),
+		new kw("DRAGONKIN", "Dragonkin", ["Drag", "Dra"]),
+		new kw("ELEMENTAL", "Elemental", ["Elem", "Ele"]),
+		new kw("GIANT", "Giant", ["Gian", "Gia"]),
+		new kw("HUMANOID", "Humanoid", ["Huma", "Hum"]),
+		new kw("MECHANOID", "Mechanoid", ["Mech", "Mec"]),
+		new kw("REPTILIAN", "Reptilian", ["Rept", "Rep"]),
+		new kw("SPRITE", "Sprite", ["Spri", "Spr"]),
+		new kw("UNDEAD", "Undead", ["Unde", "Und"]),
+		new kw("COMMON", "Common", ["Comm", "Com"]),
+		new kw("UNCOMMON", "Uncommon", ["Unco", "Unc"]),
+		new kw("RARE", "Rare", ["Rare", "Rar"]),
+		new kw("LEGENDARY", "Legendary", ["Lege", "Leg"]),
+		new kw("ULTIMATE", "Ultimate", ["Ulti", "Ult"])
+	];
+	var i, keyword, len = keywords.length;
+	for (i = 0; i < len; i++) {
+		keyword = keywords[i];
+		MonsterClass[keyword.id] = keyword;
+	}
+	return MonsterClass;
+}());
+
+HVStat.SkillType = (function () {
+	var SkillType = {};
+	var kw = HVStat.Keyword;
+	var keywords = [
+		new kw("MANA", "Mana", [""]),
+		new kw("SPIRIT", "Spirit", ["Spirit", "S"])
+	];
+	var i, keyword, len = keywords.length;
+	for (i = 0; i < len; i++) {
+		keyword = keywords[i];
+		SkillType[keyword.id] = keyword;
+	}
+	return SkillType;
+}());
+
+HVStat.AttackType = (function () {
+	var AttackType = {};
+	var kw = HVStat.Keyword;
+	var keywords = [
+		new kw("PHYSICAL", "Physical", ["Phys", "Ph", "P"]),
+		new kw("MAGICAL", "Magical", ["Mag", "Ma", "M"])
+	];
+	var i, keyword, len = keywords.length;
+	for (i = 0; i < len; i++) {
+		keyword = keywords[i];
+		AttackType[keyword.id] = keyword;
+	}
+	return AttackType;
+}());
+
+HVStat.DamageType = (function () {
+	var DamageType = {};
+	var kw = HVStat.Keyword;
+	var keywords = [
+		new kw("CRUSHING", "Crushing", ["Crush", "Cr"]),
+		new kw("SLASHING", "Slashing", ["Slash", "Sl"]),
+		new kw("PIERCING", "Piercing", ["Pierc", "Pi"]),
+		new kw("FIRE", "Fire", ["Fire", "Fir", "Fi", "F"]),
+		new kw("COLD", "Cold", ["Cold", "Col", "Co", "C"]),
+		new kw("ELEC", "Elec", ["Elec", "Elc", "El", "E"]),
+		new kw("WIND", "Wind", ["Wind", "Win", "Wi", "W"]),
+		new kw("HOLY", "Holy", ["Holy", "Hol", "Ho", "H"]),
+		new kw("DARK", "Dark", ["Dark", "Dar", "Da", "D"]),
+		new kw("SOUL", "Soul", ["Soul", "Sou", "So", "S"]),
+		new kw("VOID", "Void", ["Void", "Voi", "Vo", "V"])
+	];
+	var i, keyword, len = keywords.length;
+	for (i = 0; i < len; i++) {
+		keyword = keywords[i];
+		DamageType[keyword.id] = keyword;
+	}
+	return DamageType;
+}());
+
+HVStat.GenericDamageType = (function () {
+	var GenericDamageType = {};
+	var kw = HVStat.Keyword;
+	var keywords = [
+		new kw("PHYSICAL", "Physical", ["Phys", "Ph"]),
+		new kw("ELEMENTAL", "Elemental", ["Elem", "El"])
+	];
+	var i, keyword, len = keywords.length;
+	for (i = 0; i < len; i++) {
+		keyword = keywords[i];
+		GenericDamageType[keyword.id] = keyword;
+	}
+	return GenericDamageType;
+}());
+
+HVStat.DefenceLevel = (function () {
+	var DefenceLevel = {};
+	var kw = HVStat.Keyword;
+	var keywords = [
+		new kw("WEAK", "Weak"),
+		new kw("AVERAGE", "Average"),
+		new kw("RESISTANT", "Resistant"),
+		new kw("IMPERVIOUS", "Impervious")
+	];
+	var i, keyword, len = keywords.length;
+	for (i = 0; i < len; i++) {
+		keyword = keywords[i];
+		DefenceLevel[keyword.id] = keyword;
+	}
+	return DefenceLevel;
+}());
+
+HVStat.Debuff = (function () {
+	var Debuff = {};
+	var kw = HVStat.Keyword;
+	var keywords = [
+		new kw("IMPERILED", "Imperiled"),
+		new kw("DEEP_BURNS", "Deep Burns"),
+		new kw("TURBULENT_AIR", "Turbulent Air"),
+		new kw("FREEZING_LIMBS", "Freezing Limbs"),
+		new kw("SEARING_SKIN", "Searing Skin"),
+		new kw("BREACHED_DEFENSE", "Breached Defense"),
+		new kw("BLUNTED_ATTACK", "Blunted Attack")
+	];
+	var i, keyword, len = keywords.length;
+	for (i = 0; i < len; i++) {
+		keyword = keywords[i];
+		Debuff[keyword.id] = keyword;
+	}
+	return Debuff;
+}());
+
+HVStat.delimiter = new HVStat.Keyword("DELIMITER", ", ", [","]);
+
+//------------------------------------
+// value objects
+//------------------------------------
+
+HVStat.DefenceLevelVO = function () {
+	var v = "AVERAGE";
+	return {
+		CRUSHING: v,
+		SLASHING: v,
+		PIERCING: v,
+		FIRE: v,
+		ELEC: v,
+		COLD: v,
+		WIND: v,
+		HOLY: v,
+		DARK: v,
+		SOUL: v,
+		VOID: v
+	};
+};
+
+HVStat.MonsterScanResultsVO = function (spec) {
+	this.id = null;
+	this.lastScanDate = null;
+	this.name = null;
+	this.monsterClass = null;
+	this.powerLevel = null;
+	this.trainer = null;
+	this.meleeAttack = null;
+	this.defenceLevel = new HVStat.DefenceLevelVO();
+	this.debuffsAffected = [];
+
+	var dl;
+	var debuffs, i, debuff;
+
+	if (spec) {
+		if (Number(spec.id)) {
+			this.id = Number(spec.id);
+		}
+		if (spec.lastScanDate) {
+			this.lastScanDate = spec.lastScanDate;
+		}
+		if (spec.name) {
+			this.name = spec.name;
+		}
+		if (spec.monsterClass) {
+			this.monsterClass = spec.monsterClass.toUpperCase();
+		}
+		if (Number(spec.powerLevel)) {
+			this.powerLevel = Number(spec.powerLevel);
+		}
+		if (spec.trainer) {
+			this.trainer = spec.trainer;
+		}
+		if (spec.meleeAttack) {
+			this.meleeAttack = spec.meleeAttack.toUpperCase();
+		}
+		dl = HVStat.DefenceLevel[spec.defCrushing.toUpperCase()];
+		if (dl) {
+			this.defenceLevel.CRUSHING = dl.id;
+		}
+		dl = HVStat.DefenceLevel[spec.defSlashing.toUpperCase()];
+		if (dl) {
+			this.defenceLevel.SLASHING = dl.id;
+		}
+		dl = HVStat.DefenceLevel[spec.defPiercing.toUpperCase()];
+		if (dl) {
+			this.defenceLevel.PIERCING = dl.id;
+		}
+		dl = HVStat.DefenceLevel[spec.defFire.toUpperCase()];
+		if (dl) {
+			this.defenceLevel.FIRE = dl.id;
+		}
+		dl = HVStat.DefenceLevel[spec.defCold.toUpperCase()];
+		if (dl) {
+			this.defenceLevel.COLD = dl.id;
+		}
+		dl = HVStat.DefenceLevel[spec.defElec.toUpperCase()];
+		if (dl) {
+			this.defenceLevel.ELEC = dl.id;
+		}
+		dl = HVStat.DefenceLevel[spec.defWind.toUpperCase()];
+		if (dl) {
+			this.defenceLevel.WIND = dl.id;
+		}
+		dl = HVStat.DefenceLevel[spec.defHoly.toUpperCase()];
+		if (dl) {
+			this.defenceLevel.HOLY = dl.id;
+		}
+		dl = HVStat.DefenceLevel[spec.defDark.toUpperCase()];
+		if (dl) {
+			this.defenceLevel.DARK = dl.id;
+		}
+		dl = HVStat.DefenceLevel[spec.defSoul.toUpperCase()];
+		if (dl) {
+			this.defenceLevel.SOUL = dl.id;
+		}
+		dl = HVStat.DefenceLevel[spec.defVoid.toUpperCase()];
+		if (dl) {
+			this.defenceLevel.VOID = dl.id;
+		}
+		if (spec.debuffsAffected) {
+			debuffs = spec.debuffsAffected.replace(" ", "").split(", ");
+			for (i = 0; i < debuffs.length; i++) {
+				debuff = HVStat.Debuff[debuffs[i].toUpperCase()];
+				if (debuff) {
+					this.debuffsAffected.push(debuff.id);
+				}
+			}
+		}
+	}
+};
+
+HVStat.MonsterSkillVO = function (spec) {
+	this.id = null;
+	this.name = null;
+	this.skillType = null;
+	this.attackType = null;
+	this.damageType = null;
+	this.lastUsedDate = null;
+
+	if (spec) {
+		if (Number(spec.id)) {
+			this.id = Number(spec.id);
+		}
+		if (spec.name) {
+			this.name = spec.name;
+		}
+		if (spec.skillType) {
+			this.skillType = spec.skillType.toUpperCase();
+		}
+		if (spec.attackType) {
+			this.attackType = spec.attackType.toUpperCase();
+		}
+		if (spec.damageType) {
+			this.damageType = spec.damageType.toUpperCase();
+		}
+		if (spec.lastUsedDate) {
+			this.lastUsedDate = spec.lastUsedDate;
+		}
+	}
+	this.createKey();
+};
+HVStat.MonsterSkillVO.prototype.createKey = function () {
+	this.key = [
+		this.id,
+		(this.name !== null) ? this.name : "",	// must not be null
+		this.skillType,
+		this.attackType,
+		this.damageType
+	];
+};
+
+HVStat.MonsterVO = function () {
+	return {
+		id: null,
+		name: null,
+		maxHp: null,
+		prevMpRate: null,
+		prevSpRate: null,
+		scanResult: null,
+		skills: [],
+	};
+};
+
+//------------------------------------
+// utility functions
+//------------------------------------
+
+HVStat.getDateTimeString = function (date) {
+	if (HVStat.isChrome) {
+		// see http://code.google.com/p/chromium/issues/detail?id=3607
+		return date.toLocaleDateString() + " " + date.toLocaleTimeString();
+	} else {
+		return date.toDateString() + " " + date.toTimeString();
+	}
+};
+
+HVStat.getElapsedFrom = function (date) {
+	if (!date) return "";
+	var mins = 0, hours = 0, days = 0;
+	var str;
+	mins = Math.floor(((new Date()).getTime() - date.getTime()) / (60 * 1000));
+	if (mins >= 60) {
+		hours = Math.floor(mins / 60);
+		mins = mins % 60;
+	}
+	if (hours >= 24) {
+		days = Math.floor(hours / 24);
+		hours = hours % 24;
+	}
+	str = String(mins) + " mins";
+	if (hours > 0) {
+		str = String(hours) + " hours, " + str;
+	}
+	if (days > 0) {
+		str = String(days) + " days, " + str;
+	}
+	return str;
+};
+
+HVStat.getGaugeRate = function (gaugeElement, gaugeMaxWidth) {
+	var reStyleWidth = /width\s*?:\s*?(\d+?)px/i;
+	var style = gaugeElement.getAttribute("style");
+	var result = reStyleWidth.exec(style);
+	var rate;
+	if (result && result.length >= 2) {
+		rate = Number(result[1]) / gaugeMaxWidth;
+	} else {
+		rate = gaugeElement.width / gaugeMaxWidth;
+	}
+	return rate;
+};
+
+//------------------------------------
+// classes
+//------------------------------------
+
+HVStat.MonsterSkill = (function () {
+	// constructor
+	function MonsterSkill(vo) {
+		var _name = vo.name || null;
+		var _lastUsedDate = vo.lastUsedDate ? new Date(vo.lastUsedDate) : null;
+		var _skillType = HVStat.SkillType[vo.skillType] || null;
+		var _attackType = HVStat.AttackType[vo.attackType] || null;
+		var _damageType = HVStat.DamageType[vo.damageType] || null;
+
+		return {
+			get name() { return _name; },
+			get lastUsedDate() { return _lastUsedDate; },
+			set lastUsedDate(date) { _lastUsedDate = date; },
+			get skillType() { return _skillType; },
+			get attackType() { return _attackType; },
+			get damageType() { return _damageType; },
+			get valueObject() {
+				var vo = new HVStat.MonsterSkillVO();
+				vo.name = _name;
+				vo.lastUsedDate = _lastUsedDate ? _lastUsedDate.toISOString() : null;
+				vo.skillType = _skillType ? _skillType.id : null;
+				vo.attackType = _attackType ? _attackType.id : null;
+				vo.damageType = _damageType ? _damageType.id : null;
+				vo.createKey();
+				return vo;
+			},
+			toString: function (abbrLevel) {
+				return _attackType.toString(abbrLevel) + "-" + (_damageType ? _damageType.toString(abbrLevel) : "?");
+			}
+		};
+	};
+
+	// public static method
+	MonsterSkill.fetchSkillLog = function (logUsed, logDamaged, skillType) {
+		var vo = new HVStat.MonsterSkillVO();
+		var r = / (uses|casts) ([^\.]+)/.exec(logUsed);
+		if (!r || r.length < 3) {
+			return null;
+		}
+		vo.name = r[2];
+		vo.skillType = skillType.id;
+		switch (r[1]) {
+		case "uses":
+			vo.attackType = HVStat.AttackType.PHYSICAL.id;
+			break;
+		case "casts":
+			vo.attackType = HVStat.AttackType.MAGICAL.id;
+			break;
+		default:
+			vo.attackType = null;
+		}
+		r = / ([A-Za-z]+) damage/.exec(logDamaged);
+		if (!r || r.length < 2) {
+			return null;
+		}
+		var dt = HVStat.DamageType[r[1].toUpperCase()];
+		vo.damageType = dt ? dt.id : null;
+		vo.lastUsedDate = new Date();
+		return new MonsterSkill(vo);
+	};
+
+	return MonsterSkill;
+}());
+
+HVStat.MonsterScanResults = (function () {
+	// private static variable
+	var _mappingToSettingsHideSpecificDamageType = [
+		HVStat.DamageType.CRUSHING,
+		HVStat.DamageType.SLASHING,
+		HVStat.DamageType.PIERCING,
+		HVStat.DamageType.FIRE,
+		HVStat.DamageType.COLD,
+		HVStat.DamageType.ELEC,
+		HVStat.DamageType.WIND,
+		HVStat.DamageType.HOLY,
+		HVStat.DamageType.DARK,
+		HVStat.DamageType.SOUL,
+		HVStat.DamageType.VOID
+	];
+	var _damageTypeGeneralizingTable = [
+		{
+			generic: HVStat.GenericDamageType.PHYSICAL,
+			elements: [
+				HVStat.DamageType.CRUSHING,
+				HVStat.DamageType.SLASHING,
+				HVStat.DamageType.PIERCING
+			]
+		},
+		{
+			generic: HVStat.GenericDamageType.ELEMENTAL,
+			elements: [
+				HVStat.DamageType.FIRE,
+				HVStat.DamageType.COLD,
+				HVStat.DamageType.ELEC,
+				HVStat.DamageType.WIND
+			]
+		}
+	];
+
+	var _damageTypesToBeHidden = [];
+	(function () {
+		var i, len = _mappingToSettingsHideSpecificDamageType.length;
+		for (i = 0; i < len; i++) {
+			if (_settings.hideSpecificDamageType[i]) {
+				_damageTypesToBeHidden.push(_mappingToSettingsHideSpecificDamageType[i]);
+			}
+		}
+	})();
+
+	// constructor
+	function MonsterScanResults(vo) {
+		var _lastScanDate;
+		var _monsterClass;
+		var _powerLevel;
+		var _trainer;
+		var _meleeAttack;
+		var _defenceLevel = {};
+		var _debuffsAffected = [];
+		var _defWeak = [];
+		var _defResistant = [];
+		var _defImpervious = [];
+		var damageTypeId, debuffId;
+
+		_powerLevel = vo.powerLevel || null;
+		_trainer = vo.trainer || null;
+		_lastScanDate = vo.lastScanDate ? new Date(vo.lastScanDate) : null;
+		_monsterClass = HVStat.MonsterClass[vo.monsterClass] || null;
+		_meleeAttack = HVStat.DamageType[vo.meleeAttack] || null;
+
+		for (damageTypeId in HVStat.DamageType) {
+			_defenceLevel[damageTypeId] = HVStat.DefenceLevel[vo.defenceLevel[damageTypeId]] || null;
+		}
+		for (damageTypeId in _defenceLevel) {
+			switch (_defenceLevel[damageTypeId]) {
+			case HVStat.DefenceLevel.WEAK:
+				_defWeak.push(HVStat.DamageType[damageTypeId]);
+				break;
+			case HVStat.DefenceLevel.RESISTANT:
+				_defResistant.push(HVStat.DamageType[damageTypeId]);
+				break;
+			case HVStat.DefenceLevel.IMPERVIOUS:
+				_defImpervious.push(HVStat.DamageType[damageTypeId]);
+				break;
+			}
+		}
+		for (var i in vo.debuffsAffected) {
+			_debuffsAffected.push(HVStat.Debuff[vo.debuffsAffected[i]]);
+		}
+
+		// private instance method
+		var _hideDamageTypes = function (source) {
+			var i, j;
+			var damageTypes = source.concat();
+			for (i = 0; i < _damageTypesToBeHidden.length; i++) {
+				for (j = damageTypes.length - 1; j >= 0; j--) {
+					if (damageTypes[j] === _damageTypesToBeHidden[i]) {
+						damageTypes.splice(j, 1);
+					}
+				}
+			}
+			return damageTypes;
+		}
+
+		var _generalizeDamageTypes = function (source, damageTypes) {
+			damageTypes = source.concat();
+			var i, lenTable, indices;
+			var j, lenTableElem, index;
+
+			lenTable = _damageTypeGeneralizingTable.length;
+			for (i = 0; i < _damageTypeGeneralizingTable.length; i++) {
+				indices = [];
+				lenTableElem = _damageTypeGeneralizingTable[i].elements.length
+				for (j = 0; j < lenTableElem; j++) {
+					index = damageTypes.indexOf(_damageTypeGeneralizingTable[i].elements[j]);
+					if (index >= 0) {
+						indices.push(index);
+					}
+				}
+				if (indices.length === lenTableElem) {
+					for (j = lenTableElem - 1; j >= 0; j--) {
+						if (j > 0) {
+							damageTypes.splice(indices[j], 1);
+						} else {
+							damageTypes[indices[j]] = _damageTypeGeneralizingTable[i].generic;
+						}
+					}
+				}
+			}
+			return damageTypes;
+		};
+
+		var _filterDamageTypes = function (damageTypes, hiding, generalizing) {
+			if (hiding) {
+				damageTypes = _hideDamageTypes(damageTypes);
+			}
+			if (generalizing) {
+				damageTypes = _generalizeDamageTypes(damageTypes);
+			}
+			return damageTypes;
+		};
+
+		var _StringifyDamageTypes = function (damageTypes, abbrLevel) {
+			var damageTypeStrings = [];
+			var delimiter = HVStat.delimiter.toString(abbrLevel);
+			for (i = 0; i < damageTypes.length; i++) {
+				damageTypeStrings[i] = damageTypes[i].toString(abbrLevel);
+			}
+			return damageTypeStrings.join(delimiter);
+		};
+
+		return {
+			get lastScanDate() { return _lastScanDate; },
+			get monsterClass() { return _monsterClass; },
+			get powerLevel() { return _powerLevel; },
+			get trainer() { return _trainer; },
+			get meleeAttack() { return _meleeAttack; },
+			get defenceLevel() {
+				var i, dl = {};
+				for (i in _defenceLevel) {
+					dl[i] = _defenceLevel[i];
+				}
+				return dl;
+			},
+			get debuffsAffected() { return _debuffsAffected.concat(); },
+			get defWeak() { return _defWeak.concat(); },
+			get defResistant() { return _defResistant.concat(); },
+			get defImpervious() { return _defImpervious.concat(); },
+			get valueObject() {
+				var i, len;
+				var vo = new HVStat.MonsterScanResultsVO();
+				vo.lastScanDate = _lastScanDate.toISOString();
+				vo.monsterClass = (_monsterClass ? _monsterClass.id : null);
+				vo.powerLevel = _powerLevel;
+				vo.trainer = _trainer;
+				vo.meleeAttack = (_meleeAttack ? _meleeAttack.id : null);
+				for (i in _defenceLevel) {
+					vo.defenceLevel[i] = _defenceLevel[i].id;
+				}
+				len = _debuffsAffected.length;
+				for (i = 0; i < len; i++) {
+					vo.debuffsAffected[i] = _debuffsAffected[i].id;
+				}
+				return vo;
+			},
+			getDefWeakString: function (hiding, generalizing, abbrLevel) {
+				var damageTypes = _filterDamageTypes(_defWeak, hiding, generalizing);
+				return _StringifyDamageTypes(damageTypes, abbrLevel);
+			},
+			getDefResistantString: function (hiding, generalizing, abbrLevel) {
+				var damageTypes = _filterDamageTypes(_defResistant, hiding, generalizing);
+				return _StringifyDamageTypes(damageTypes, abbrLevel);
+			},
+			getDefImperviousString: function (hiding, generalizing, abbrLevel) {
+				var damageTypes = _filterDamageTypes(_defImpervious, hiding, generalizing);
+				return _StringifyDamageTypes(damageTypes, abbrLevel);
+			}
+		};
+	};
+
+	// public static method
+	MonsterScanResults.fetchScanningLog = function (index, html) {
+		var reOfficial = /Monster Class:.*?<\/td><td.*?>(Common|Uncommon|Rare|Legendary|Ultimate)/;
+		var reCustom = /Monster Class:.*?<\/td><td.*?>([A-Za-z]+), Power Level (\d+).*?<\/td/;
+		var defWeak, defResistant, defImpervious;
+		var vo = new HVStat.MonsterScanResultsVO();
+		var r, array;
+		vo.lastScanDate = (new Date()).toISOString();
+		r = /Monster Trainer:.*?<\/td><td.*?>(.*?)<\/td/.exec(html);
+		vo.trainer = r && r[1] || null;
+		r = reOfficial.exec(html);
+		if (r) {
+			vo.monsterClass = r[1].toUpperCase() || null;
+			vo.powerLevel = null;
+		} else {
+			r = reCustom.exec(html);
+			if (r) {
+				vo.monsterClass = r[1].toUpperCase() || null;
+				vo.powerLevel = Number(r[2]) || null;
+			} else {
+				alert("HVSTAT: Unknown scanning format");
+				return null;
+			}
+		}
+		r = /Melee Attack:.*?<\/td><td.*?>(.+?)<\/td/.exec(html);
+		vo.meleeAttack = r && r[1].toUpperCase() || null;
+		r = /Weak against:.*?<\/td><td.*?>(.+?)<\/td/.exec(html);
+		defWeak = r && r[1] || null;
+		if (defWeak) {
+			array = defWeak.toUpperCase().split(", ");
+			array.forEach(function (element, index, array) {
+				if (element !== "NOTHING") {
+					vo.defenceLevel[element] = HVStat.DefenceLevel.WEAK.id;
+				}
+			});
+		}
+		r = /Resistant to:.*?<\/td><td.*?>(.+?)<\/td/.exec(html);
+		defResistant = r && r[1] || null;
+		if (defResistant) {
+			array = defResistant.toUpperCase().split(", ");
+			array.forEach(function (element, index, array) {
+				if (element !== "NOTHING") {
+					vo.defenceLevel[element] = HVStat.DefenceLevel.RESISTANT.id;
+				}
+			});
+		}
+		r = /Impervious to:.*?<\/td><td.*?>(.+?)<\/td/.exec(html);
+		defImpervious = r && r[1] || null;
+		if (defImpervious) {
+			array = defImpervious.toUpperCase().split(", ");
+			array.forEach(function (element, index, array) {
+				if (element !== "NOTHING") {
+					vo.defenceLevel[element] = HVStat.DefenceLevel.IMPERVIOUS.id;
+				}
+			});
+		}
+		vo.debuffsAffected = [];
+		$("#" + HVStat.Monster.getDomElementId(index) + " div.btm6 > img").each(function () {
+			var info = $(this).attr("onmouseover");
+			var debuffId;
+			for (debuffId in HVStat.Debuff) {
+				if (info.indexOf(HVStat.Debuff[debuffId].name) >= 0) {
+					vo.debuffsAffected.push(debuffId);
+				}
+			}
+		});
+		return new MonsterScanResults(vo);
+	}
+
+	return MonsterScanResults;
+}());
+
+HVStat.Monster = (function () {
+	// private static variable
+	var _domElementIds = [
+		"mkey_1", "mkey_2", "mkey_3", "mkey_4", "mkey_5",
+		"mkey_6", "mkey_7", "mkey_8", "mkey_9", "mkey_0"
+	];
+	var _maxBarWidth = HVStat.monsterGaugeMaxWidth;
+
+	// constructor
+	function Monster(index) {
+		if (isNaN(index) || index < 0 || _domElementIds.length <= index) {
+			alert("invalid index");
+			return null;
+		}
+
+		var _index = index;
+		var _baseElement = $("#" + _domElementIds[_index]);
+		var _healthBars = $("div.btm5", _baseElement);
+		var _isDead = $("img.chb2", _healthBars.eq(0)).length === 0;
+		var _waitingForGetResponseOfMonsterScanResults = false;
+		var _waitingForGetResponseOfMonsterSkills = false;
+
+		var _id;
+		var _name;
+		var _maxHp;
+		var _prevMpRate;
+		var _prevSpRate;
+		var _scanResult;
+		var _skills = [];
+
+		var currBarRate = function (barIndex) {
+			var v, style, bar = $("img.chb2", _healthBars.eq(barIndex));
+			if (!bar) {
+				v = 0;
+			} else {
+				style = bar.attr("style");
+				r = /width\s*?:\s*?(\d+?)px/i.exec(style);
+				if (r && r.length >= 2) {
+					v = Number(r[1]) / _maxBarWidth;
+				} else {
+					v = bar.width() / _maxBarWidth;
+				}
+			}
+			return v;
+		};
+
+		var _currHpRate = currBarRate(0);
+		var _currMpRate = currBarRate(1);
+		var _currSpRate = currBarRate(2);
+		var _hasSpiritPoint = _healthBars.length > 2;
+		var _currHp = function () {
+			var v = Math.ceil(_currHpRate * _maxHp);
+			if (!_isDead && v === 0) {
+				v = 1;
+			}
+			return v;
+		};
+		var _waitingForDBResponse = function () {
+			return _waitingForGetResponseOfMonsterScanResults || _waitingForGetResponseOfMonsterSkills;
+		};
+		var _getManaSkills = function () {
+			var manaSkills = [];
+			var i, skill;
+			var len = _skills.length
+			for (i = 0; i < len; i++) {
+				skill = _skills[i];
+				if (skill.skillType === HVStat.SkillType.MANA) {
+					manaSkills.push(skill);
+				}
+			}
+			return manaSkills;
+		};
+		var _getManaSkillTable = function () {
+			var manaSkills = _getManaSkills();
+			var damageTable = {
+				CRUSHING: false,
+				SLASHING: false,
+				PIERCING: false,
+				FIRE: false,
+				COLD: false,
+				ELEC: false,
+				WIND: false,
+				HOLY: false,
+				DARK: false,
+				SOUL: false,
+				VOID: false
+			};
+			var skillTable = {
+				PHYSICAL: { exists: false, damageTable: {} },
+				MAGICAL: { exists: false, damageTable: {} }
+			};
+			skillTable.PHYSICAL.damageTable = Object.create(damageTable);
+			skillTable.MAGICAL.damageTable = Object.create(damageTable);
+			var skillType, damageType;
+			for (var i = 0; i < manaSkills.length; i++) {
+				attackType = manaSkills[i].attackType.id;
+				damageType = manaSkills[i].damageType.id;
+				skillTable[attackType].exists = true;
+				skillTable[attackType].damageTable[damageType] = true;
+			}
+			return skillTable;
+		};
+		var _getSpiritSkill = function () {
+			var i, skill;
+			var len = _skills.length
+			for (i = 0; i < len; i++) {
+				skill = _skills[i];
+				if (skill.skillType === HVStat.SkillType.SPIRIT) {
+					return skill;
+				}
+			}
+			return null;
+		};
+		var _renderStats = function () {
+			if (_isDead) {
+				return;
+			}
+			if (!(_settings.showMonsterHP
+					|| _settings.showMonsterMP
+					|| _settings.showMonsterSP
+					|| _settings.showMonsterInfoFromDB)) {
+				return;
+			}
+
+			var nameOuterFrameElement = _baseElement.children().eq(1);
+			var nameInnerFrameElement = _baseElement.children().eq(1).children().eq(0);
+			var hpBarBaseElement = _baseElement.children().eq(2).children().eq(0);
+			var mpBarBaseElement = _baseElement.children().eq(2).children().eq(1);
+			var spBarBaseElement = _baseElement.children().eq(2).children().eq(2);
+			var maxAbbrLevel = _settings.ResizeMonsterInfo ? 5 : 1;
+			var maxStatsWidth = 315;
+
+			var hpIndicator = "";
+			var mpIndicator = "";
+			var spIndicator = "";
+			var html, statsHtml;
+			var statsElement;
+			var abbrLevel;
+
+			if (_settings.showMonsterHP || _settings.showMonsterHPPercent) {
+				if (_settings.showMonsterHPPercent) {
+					hpIndicator = (_currHpRate * 100).toFixed(2) + "%"
+				} else {
+					hpIndicator = _currHp() + " / " + _maxHp
+				}
+				html = '<div style="position:absolute;z-index:1074;top:-1px;font-size:8pt;font-family:arial,helvetica,sans-serif;font-weight:bolder;color:yellow;width:120px;text-align:center">' + hpIndicator + '</div>';
+				hpBarBaseElement.after(html);
+			}
+			if (_settings.showMonsterMP) {
+				mpIndicator = (_currMpRate * 100).toFixed(1);
+				html = '<div style="position:absolute;z-index:1074;top:11px;font-size:8pt;font-family:arial,helvetica,sans-serif;font-weight:bolder;color:yellow;width:120px;text-align:center">' + mpIndicator + '%</div>';
+				mpBarBaseElement.after(html);
+			}
+			if (_hasSpiritPoint && _settings.showMonsterSP) {
+				spIndicator = (_currSpRate * 100).toFixed(1);
+				html = '<div style="position:absolute;z-index:1074;top:23px;font-size:8pt;font-family:arial,helvetica,sans-serif;font-weight:bolder;color:yellow;width:120px;text-align:center">' + spIndicator + '%</div>';
+				spBarBaseElement.after(html);
+			}
+
+			if (_settings.showMonsterInfoFromDB) {
+				for (abbrLevel = 0; abbrLevel < maxAbbrLevel; abbrLevel++) {
+					statsHtml = '';
+					if (!_scanResult || !_scanResult.monsterClass) {
+						statsHtml = '[<span style="color:red;font-weight:bold">NEW</span>]';
+					} else {
+						// class and power level
+						if (_settings.showMonsterClassFromDB || _settings.showMonsterPowerLevelFromDB) {
+							statsHtml += '{<span style="color: blue;">';
+						}
+						if (_settings.showMonsterClassFromDB) {
+							statsHtml += _scanResult.monsterClass.toString(abbrLevel);
+						}
+						if (_settings.showMonsterPowerLevelFromDB && _scanResult.powerLevel) {
+							if (_settings.showMonsterClassFromDB) {
+								statsHtml += HVStat.delimiter.toString(abbrLevel);
+							}
+							statsHtml += _scanResult.powerLevel + '+';
+						}
+						if (_settings.showMonsterClassFromDB || _settings.showMonsterPowerLevelFromDB) {
+							statsHtml += '</span>}';
+						}
+						// weaknesses and resistances
+						if (_settings.showMonsterWeaknessesFromDB || _settings.showMonsterResistancesFromDB) {
+							statsHtml += '[';
+						}
+						if (_settings.showMonsterWeaknessesFromDB) {
+							statsHtml += '<span style="color: #3CB878;">';
+							statsHtml += (_scanResult.defWeak.length > 0) ? _scanResult.getDefWeakString(true, true, abbrLevel) : "-";
+							statsHtml += '</span>';
+						}
+						if (_settings.showMonsterResistancesFromDB) {
+							if (_settings.showMonsterWeaknessesFromDB) {
+								statsHtml += '|';
+							}
+							statsHtml += '<span style="color: #FF3300;">';
+							statsHtml += (_scanResult.defResistant.length > 0) ? _scanResult.getDefResistantString(true, true, abbrLevel) : '-';
+							statsHtml += '</span>';
+							if (_scanResult.defImpervious.length > 0) {
+								statsHtml += '|<span style="font-weight: bold; color: #990000; text-decoration: underline;">';
+								statsHtml += _scanResult.getDefImperviousString(true, true, abbrLevel);
+								statsHtml += '</span>';
+							}
+						}
+						if (_settings.showMonsterWeaknessesFromDB || _settings.showMonsterResistancesFromDB) {
+							statsHtml += "]";
+						}
+						// melee attack and skills
+						if (_settings.showMonsterAttackTypeFromDB) {
+							statsHtml += '(<span style="color: black;">' + _scanResult.meleeAttack.toString(abbrLevel > 0 ? abbrLevel : 1) + '</span>';
+							var manaSkills = _getManaSkills();
+							var manaSkillsExist = manaSkills.length > 0;
+							if (manaSkillsExist) {
+								statsHtml += ';<span style="color:blue">';
+							}
+							var skillTable = _getManaSkillTable();
+							var attackTypeCount, damageTypeCount
+							attackTypeCount = 0;
+							for (attackType in skillTable) {
+								if (skillTable[attackType].exists) {
+									if (attackTypeCount > 0) {
+										statsHtml += '|';
+									}
+									damageTypeCount = 0;
+									for (damageType in skillTable[attackType].damageTable) {
+										if (skillTable[attackType].damageTable[damageType]) {
+											if (damageTypeCount === 0) {
+												statsHtml += HVStat.AttackType[attackType].toString(abbrLevel > 0 ? abbrLevel : 1) + '-';
+											} else {
+												statsHtml += HVStat.delimiter.toString(abbrLevel);
+											}
+											statsHtml += HVStat.DamageType[damageType].toString(abbrLevel > 0 ? abbrLevel : 1);
+											damageTypeCount++;
+										}
+									}
+									attackTypeCount++;
+								}
+							}
+							if (manaSkillsExist) {
+								statsHtml += '</span>';
+							}
+							var spiritSkill = _getSpiritSkill();
+							if (spiritSkill) {
+								if (!manaSkillsExist) {
+									statsHtml += ';';
+								} else {
+									statsHtml += '|';
+								}
+								statsHtml += '<span style="color:red">' + spiritSkill.toString(abbrLevel > 0 ? abbrLevel : 1) + '</span>';
+							}
+							statsHtml += ')';
+						}
+					}
+					if (HVStat.usingHVFont) {
+						nameOuterFrameElement.css("width", "auto"); // tweak for Firefox
+						nameInnerFrameElement.css("width", "auto"); // tweak for Firefox
+						html = "<div style='font-family:arial; font-size:7pt; font-style:normal; font-weight:bold; cursor:default; position:relative; top:-1px; left:2px; padding:0 1px; margin-left:0px; white-space:nowrap;'>" + statsHtml + "</div>";
+						nameInnerFrameElement.after(html);
+						statsElement = nameInnerFrameElement.next();
+						//console.log("scrollWidth = " + statsElement.prop("scrollWidth"));
+						if (Number(nameOuterFrameElement.prop("scrollWidth")) <= maxStatsWidth) {	// does not work with Firefox without tweak
+							break;
+						} else if (abbrLevel < maxAbbrLevel - 1) {
+							// revert
+							statsElement.remove();
+						}
+					} else {
+						html = "<div style='font-family:arial; font-size:7pt; font-style:normal; font-weight:bold; display:inline; cursor:default; padding:0 1px; margin-left:1px; white-space:nowrap;'>" + statsHtml + "</div>";
+						var nameElement = nameInnerFrameElement.children().eq(0);
+						var name = nameElement.html();
+						nameOuterFrameElement.css("width", "auto"); // tweak for Firefox
+						nameInnerFrameElement.css("width", "auto"); // tweak for Firefox
+						nameElement.html(name + html);
+						nameElement.css("white-space", "nowrap");
+						//console.log("scrollWidth = " + nameElement.prop("scrollWidth"));
+						if (Number(nameElement.prop("scrollWidth")) <= maxStatsWidth) {	// does not work with Firefox without tweak
+							break;
+						} else if (_settings.ResizeMonsterInfo) {
+							// revert
+							nameElement.html(name);
+							if (abbrLevel >= maxAbbrLevel - 1) {
+								// reduce name length
+								for (var len = name.length - 2; len >= 6; len--) {
+									var reducedName = name.substring(0, len) + "...";
+									nameElement.html(reducedName + html);
+									//console.log("scrollWidth = " + nameElement.prop("scrollWidth"));
+									if (Number(nameElement.prop("scrollWidth")) <= maxStatsWidth) {	// does not work with Firefox without tweak
+										break;
+									}
+								}
+							}
+						}
+					}
+				}
+				nameOuterFrameElement.css("width", String(maxStatsWidth) + "px");
+			}
+		};
+
+		var _renderPopup = function () {
+			var i, len, skill, lastScanString;
+			var existsScanResult = _scanResult && _scanResult.monsterClass;
+			var html = '<table cellspacing="0" cellpadding="0" style="width:100%">'
+				+ '<tr class="monname"><td colspan="2"><b>' + _name + '</b></td></tr>'
+				+ '<tr><td width="33%">ID: </td><td>' + _id + '</td></tr>'
+				+ '<tr><td>Health: </td><td>' + _currHp() + ' / ' + _maxHp + '</td></tr>'
+				+ '<tr><td>Mana: </td><td>' + (_currMpRate * 100).toFixed(2) + '%</td></tr>';
+			if (_hasSpiritPoint) {
+				html += '<tr><td>Spirit: </td><td>' + (_currSpRate * 100).toFixed(2) + '%</td></tr>';
+			}
+			if (existsScanResult) {
+				html += '<tr><td>Class:</td><td>' + (_scanResult.monsterClass ? _scanResult.monsterClass : "") + '</td></tr>'
+					+ '<tr><td>Trainer:</td><td>' + (_scanResult.trainer ? _scanResult.trainer : "") + '</td></tr>';
+				if (_scanResult.powerLevel) {
+					html += '<tr><td>Power Level:</td><td>' + _scanResult.powerLevel + '</td></tr>';
+				}
+				html += '<tr><td>Melee Attack:</td><td>' + (_scanResult.meleeAttack ? _scanResult.meleeAttack : "") + '</td></tr>';
+			}
+			var manaSkills = _getManaSkills();
+			if (manaSkills && manaSkills.length > 0) {
+				html += '<tr><td valign="top">Skills:</td><td>';
+				len = manaSkills.length;
+				var skillTable = _getManaSkillTable();
+				var skillCount = 0;
+				for (attackType in skillTable) {
+					if (skillTable[attackType].exists) {
+						for (damageType in skillTable[attackType].damageTable) {
+							if (skillTable[attackType].damageTable[damageType]) {
+								if (skillCount > 0) {
+									html += '<br/>';
+								}
+								html += HVStat.AttackType[attackType].name + '-' + HVStat.DamageType[damageType].name;
+								skillCount++;
+							}
+						}
+					}
+				}
+				html += '</td></tr>';
+			}
+			var spiritSkill = _getSpiritSkill();
+			if (spiritSkill) {
+				html += '<tr><td>Spirit Skill:</td><td>';
+				html += spiritSkill.toString();
+				html += '</td></tr>';
+			}
+			if (existsScanResult) {
+				html += '<tr><td>Weak against:</td><td>' + (_scanResult.defWeak.length > 0 ? _scanResult.getDefWeakString(false, true, 0) : "-") + '</td></tr>'
+					+ '<tr><td>Resistant to:</td><td>' + (_scanResult.defResistant.length > 0 ? _scanResult.getDefResistantString(false, true, 0) : "-") + '</td></tr>'
+					+ '<tr><td>Impervious to:</td><td>' + (_scanResult.defImpervious.length > 0 ? _scanResult.getDefImperviousString(false, true, 0) : "-") + '</td></tr>'
+					+ '<tr><td>Debuffs affected:</td><td>' + (_scanResult.debuffsAffected.length > 0 ? _scanResult.debuffsAffected.join(", ") : "-") + '</td></tr>';
+				if (_scanResult.lastScanDate) {
+					lastScanString = HVStat.getDateTimeString(_scanResult.lastScanDate);
+				}
+			} else {
+				lastScanString = "Never";
+			}
+			html += '<tr><td valign="top">Last Scan:</td><td>' + lastScanString + '</td></tr>';
+			if (existsScanResult && _scanResult.lastScanDate) {
+				html += '<tr><td></td><td>' + HVStat.getElapsedFrom(_scanResult.lastScanDate) + ' ago</td></tr>';
+			}
+			html += '</table>';
+			return html;
+		};
+
+		return {
+			get id() { return _id; },
+			get name() { return _name; },
+			get maxHp() { return _maxHp; },
+			get currHp() { return _currHp(); },
+			get currHpRate() { return _currHpRate; },
+			get currMpRate() { return _currMpRate; },
+			get currSpRate() { return _currSpRate; },
+			get hasSpiritPoint() { return _hasSpiritPoint; },
+			get isDead() { return _isDead; },
+			get scanResult() { return _scanResult; },
+			get skills() { return _skills },
+			get valueObject() {
+				var vo = new HVStat.MonsterVO();
+				vo.id = _id;
+				vo.name = _name;
+				vo.maxHp = _maxHp;
+				vo.prevMpRate = _currMpRate;
+				vo.prevSpRate = _currSpRate;
+				vo.scanResult = _scanResult ? _scanResult.valueObject : null;
+				for (var i = 0; i < _skills.length; i++) {
+					vo.skills[i] = _skills[i].valueObject;
+				}
+				return vo;
+			},
+			get domElementId() { return _domElementIds[_index]; },
+			get baseElement() { return _baseElement; },
+
+			set id(id) { _id = id; },
+			set name(name) { _name = name; },
+			set maxHp(maxHp) { _maxHp = maxHp; },
+
+			// public instance methods
+			fetchStartingLog: function (html) {
+				var r;
+				r = /MID=(\d+)\s/.exec(html);
+				if (!r || r.length < 2) {
+					alert("HVSTAT: cannot identify MID");
+					return;
+				}
+				_id = Number(r[1]);
+				r = /\(([^\.\)]{0,30})\) LV/.exec(html);
+				if (r && r.length >= 2) {
+					_name = r[1];
+				}
+				r = /HP=(\d+\.?\d*)$/.exec(html);
+				if (r && r.length >= 2) {
+					_maxHp = Number(r[1]);
+				}
+			},
+			fetchScanningLog: function (html, transaction) {
+				_scanResult = HVStat.MonsterScanResults.fetchScanningLog(_index, html);
+				this.putScanResultToDB(transaction);
+			},
+			fetchSkillLog: function (used, damaged, transaction) {
+				var i;
+				var spiritSkillFound;
+				var skillType = (_prevSpRate <= _currSpRate) ? HVStat.SkillType.MANA : HVStat.SkillType.SPIRIT;
+				var skill = HVStat.MonsterSkill.fetchSkillLog(used, damaged, skillType);
+				if (skillType === HVStat.SkillType.SPIRIT) {
+					// spirit skill
+					// overwrite if exists
+					for (i = 0; i < _skills.length; i++) {
+						if (_skills[i].skillType ===  HVStat.SkillType.SPIRIT) {
+							break;
+						}
+					}
+					_skills[i] = skill;
+				} else {
+					// mana skill
+					// overwrite if same name or name is null
+					for (i = 0; i < _skills.length; i++) {
+						if (_skills[i].skillType ===  HVStat.SkillType.MANA
+								&& (_skills[i].name === skill.name
+									|| (_skills[i].name === null && _skills[i].attackType === skill.attackType && _skills[i].damageType === skill.damageType))) {
+							break;
+						}
+					}
+					_skills[i] = skill;
+				}
+				if (_settings.isRememberSkillsTypes) {
+					this.putSkillsToDB(transaction);
+				}
+			},
+			setFromValueObject: function (valueObject) {
+				var vo = valueObject;
+				_id = vo.id;
+				_name = vo.name;
+				_maxHp = vo.maxHp;
+				_prevMpRate = vo.prevMpRate;
+				_prevSpRate = vo.prevSpRate;
+				_scanResult = vo.scanResult ? new HVStat.MonsterScanResults(vo.scanResult) : null;
+				vo.skills.forEach(function (element, index, array) {
+					_skills.push(new HVStat.MonsterSkill(element));
+				});
+			},
+			getFromDB: function (transaction, callback) {
+				if (!_id) {
+					return;
+				}
+				var tx = transaction; 
+				var scanResultsStore = tx.objectStore("MonsterScanResults");
+				var skillsStore = tx.objectStore("MonsterSkills");
+				// MonsterScanResults
+				var reqGet = scanResultsStore.get(_id);
+				_waitingForGetResponseOfMonsterScanResults = true;
+				reqGet.onsuccess = function (event) {
+					_waitingForGetResponseOfMonsterScanResults = false;
+					if (event.target.result === undefined) {
+						//console.log("get from MonsterScanResults: not found: id = " + _id);
+					} else {
+						//console.log("get from MonsterScanResults: success: id = " + _id);
+						_scanResult = new HVStat.MonsterScanResults(event.target.result);
+					}
+				};
+				reqGet.onerror = function (event) {
+					_waitingForGetResponseOfMonsterScanResults = false;
+					console.log("get from MonsterScanResults: error");
+				};
+				// MonsterSkills
+				var reqGet = skillsStore.get(_id);
+				var idx = skillsStore.index("ix_id");
+				var range = HVStat.IDBKeyRange.bound(_id, _id);
+				var reqOpen = idx.openCursor(range, "next");
+				_waitingForGetResponseOfMonsterSkills = true;
+				reqOpen.onsuccess = function(){
+					var cursor = this.result;
+					if (cursor) {
+						_skills.push(new HVStat.MonsterSkill(cursor.value));
+						//console.log("get from MonsterSkills: id = " + _id);
+						cursor.continue();
+					} else {
+						_waitingForGetResponseOfMonsterSkills = false;
+						//console.log("get from MonsterSkills: finished: id = " + _id);
+					}
+				}
+				reqOpen.onerror = function(){
+					_waitingForGetResponseOfMonsterSkills = false;
+					console.log('request error.');
+				}
+				var doCallback = function () {
+					if (callback instanceof Function) {
+						if (!_waitingForDBResponse()) {
+							callback();
+						} else {
+							//console.log("waiting");
+							setTimeout(arguments.callee, 10);
+						}
+					}
+				};
+				doCallback();
+			},
+			putScanResultToDB: function (transaction) {
+				if (!_id) {
+					return;
+				}
+				var scanResultsStore = transaction.objectStore("MonsterScanResults");
+				var vo = _scanResult.valueObject;
+				vo.id = _id;
+				vo.name = _name;
+				var reqPut = scanResultsStore.put(vo);
+				reqPut.onsuccess = function (event) {
+					//console.log("putScanResultToDB: success: id = " + _id);
+				};
+				reqPut.onerror = function (event) {
+					console.log("putScanResultToDB: error: id = " + _id);
+				};
+			},
+			putSkillsToDB: function (transaction) {
+				if (!_id) {
+					return;
+				}
+				// put after delete
+				var skillsStore = transaction.objectStore("MonsterSkills");
+				var range = HVStat.IDBKeyRange.bound(_id, _id);
+				var reqOpen = skillsStore.openCursor(range, "next");
+				reqOpen.onsuccess = function () {
+					var i;
+					var vo;
+					var reqPut;
+					var cursor = this.result;
+					if (cursor) {
+						// delete
+						cursor.delete();
+						cursor.continue();
+					} else {
+						// put
+						for (i = 0; i < _skills.length; i++) {
+							vo = _skills[i].valueObject;
+							vo.id = _id;
+							vo.createKey();
+//							alert("Skill: id = " + vo.id + ", name = '" + vo.name + "', skillType = " + vo.skillType + ", attackType = " + vo.attackType + ", damageType = " + vo.damageType);
+							reqPut = skillsStore.put(vo);
+							reqPut.onsuccess = function (event) {
+								//console.log("putSkillsToDB: success: id = " + _id);
+							};
+							reqPut.onerror = function (event) {
+								console.log("putSkillsToDB: error: id = " + _id);
+							};
+						}
+					}
+				}
+				reqOpen.onerror = function () {
+					console.log('request error.');
+					alert('request error.');
+				}
+			},
+			renderStats: function () {
+				if (!_waitingForDBResponse()) {
+					_renderStats();
+				} else {
+					setTimeout(arguments.callee, 10);
+				}
+			},
+			renderPopup: function () {
+				return _renderPopup();
+			}
+		};
+	};
+
+	// public static method
+	Monster.getDomElementId = function (index) {
+		if (isNaN(index) || index < 0 || _domElementIds.length <= index) {
+			alert("Monster.getDomElementId: invalid index");
+			return null;
+		}
+		return _domElementIds[index];
+	};
+
+	return Monster;
+}());
+
+//------------------------------------
+// IndexedDB manipulators
+//------------------------------------
+
+HVStat.deleteIndexedDB = function () {
+	// close connection
+	HVStat.transaction = null;
+	HVStat.idb = null;
+
+	// delete database
+	var reqDelete = HVStat.indexedDB.deleteDatabase("HVStat");
+	reqDelete.onsuccess = function (event) {
+		alert("Your database has been deleted.");
+		//console.log("deleteIndexedDB: success");
+	};
+	reqDelete.onerror = function (event) {
+		alert("Error: Failed to delete your database");
+		//console.log("deleteIndexedDB: error");
+	};
+	reqDelete.onblocked = function (event) {
+		alert("Blocked: Please wait for a while or close the browser.");
+		//console.log("deleteIndexedDB: blocked");
+	};
+};
+
+HVStat.maintainObjectStores = function (event) {
+	var alertMessage = "IndexDB database operation has failed; see console log";
+//	var idb = event.target.source;  // does not work with Firefox
+	var idb = HVStat.idb;
+	var tx = event.target.transaction;
+	var oldVer = event.oldVersion;	// does not work with Chrome
+	var newVer = event.newVersion || Number(idb.version);
+	var store;
+	//console.log("maintainObjectStores: old version = " + oldVer);
+	//console.log("maintainObjectStores: new version = " + newVer);
+
+	if (newVer >= 1) {
+		// MonsterScanResults
+		try {
+			store = idb.createObjectStore("MonsterScanResults", { keyPath: "id", autoIncrement: false });
+		} catch (e) {
+			alert(alertMessage);
+			console.log(e.message + "\n" + e.stack);
+		}
+		try {
+			store.createIndex("ix_id", "id", { unique: true });
+		} catch (e) {
+			alert(alertMessage);
+			console.log(e.message + "\n" + e.stack);
+		}
+		try {
+			store.createIndex("ix_name", "name", { unique: true });
+		} catch (e) {
+			alert(alertMessage);
+			console.log(e.message + "\n" + e.stack);
+		}
+
+		// MonsterSkills
+		try {
+			store = idb.createObjectStore("MonsterSkills", { keyPath: "key", autoIncrement: false });
+		} catch (e) {
+			alert(alertMessage);
+			console.log(e.message + "\n" + e.stack);
+		}
+		try {
+			store.createIndex("ix_key", "key", { unique: true });
+		} catch (e) {
+			alert(alertMessage);
+			console.log(e.message + "\n" + e.stack);
+		}
+		try {
+			store.createIndex("ix_id", "id", { unique: false });
+		} catch (e) {
+			alert(alertMessage);
+			console.log(e.message + "\n" + e.stack);
+		}
+	}
+};
+
+HVStat.openIndexedDB = function (callback) {
+	var errorMessage;
+
+	var idbVersion = 1; // must be an integer
+	var reqOpen = HVStat.indexedDB.open("HVStat", idbVersion);
+	reqOpen.onerror = function (event) {
+		errorMessage = "Database open error: " + event.target.errorCode;
+		alert(errorMessage);
+		console.log(errorMessage);
+	};
+	// latest W3C draft (Firefox supports)
+	reqOpen.onupgradeneeded = function (event) {
+		console.log("onupgradeneeded");
+		HVStat.idb = reqOpen.result;
+		HVStat.maintainObjectStores(event);
+		// subsequently onsuccess event handler is called automatically
+	};
+	reqOpen.onsuccess = function (event) {
+		var idb = HVStat.idb = reqOpen.result;
+		if (Number(idb.version) === idbVersion) {
+			// always come here if Firefox
+			if (callback instanceof Function) {
+				callback(event);
+			}
+		} else {
+			// for Chrome ('setVersion' style will soon be obsolete)
+			var reqVersion = idb.setVersion(idbVersion);
+			reqVersion.onerror = function (event) {
+				errorMessage = "Database setVersion error: " + event.target.errorCode;
+				alert(errorMessage);
+				console.log(errorMessage);
+			};
+			reqVersion.onsuccess = function (event) {
+				HVStat.maintainObjectStores(event);
+				var tx = reqVersion.result;
+				if (callback instanceof Function) {
+					tx.oncomplete = callback;
+				}
+			};
+		}
+	};
+};
+
+HVStat.deleteAllObjectsInMonsterScanResults = function () {
+	var tx = HVStat.idb.transaction(["MonsterScanResults"], "readwrite");
+	var store = tx.objectStore("MonsterScanResults");
+	var range = null; // select all
+	var count = 0;
+
+	var req = store.openCursor(range, "next");
+	req.onsuccess = function () {
+		var cursor = this.result;
+		if (cursor) {
+			cursor.delete();
+			count++;
+			cursor.continue();
+		} else {
+			alert("Your monster scan results has been deleted.\nsuccess(es): " + count);
+		}
+	}
+	req.onerror = function () {
+		console.log('request error.');
+		alert('request error.');
+	}
+};
+
+HVStat.deleteAllObjectsInMonsterSkills = function () {
+	var tx = HVStat.idb.transaction(["MonsterSkills"], "readwrite");
+	var store = tx.objectStore("MonsterSkills");
+	var range = null; // select all
+	var count = 0;
+
+	var req = store.openCursor(range, "next");
+	req.onsuccess = function () {
+		var cursor = this.result;
+		if (cursor) {
+			cursor.delete();
+			count++;
+			cursor.continue();
+		} else {
+			alert("Your monster skill data has been deleted.\nsuccess(es): " + count);
+		}
+	}
+	req.onerror = function () {
+		console.log('request error.');
+		alert('request error.');
+	}
+};
+
+HVStat.exportMonsterScanResults = function (callback) {
+	var tx = HVStat.idb.transaction(["MonsterScanResults"], "readonly");
+	var store = tx.objectStore("MonsterScanResults");
+	var range = null; // select all
+	var count = 0;
+	var texts = [];
+	var tab = "%09";
+	var newline = "%0A"
+	texts[0] = "ID"
+		+ tab + "LAST_SCAN_DATE"
+		+ tab + "NAME"
+		+ tab + "MONSTER_CLASS"
+		+ tab + "POWER_LEVEL"
+		+ tab + "TRAINER"
+		+ tab + "MELEE_ATTACK"
+		+ tab + "DEF_CRUSHING"
+		+ tab + "DEF_SLASHING"
+		+ tab + "DEF_PIERCING"
+		+ tab + "DEF_FIRE"
+		+ tab + "DEF_COLD"
+		+ tab + "DEF_ELEC"
+		+ tab + "DEF_WIND"
+		+ tab + "DEF_HOLY"
+		+ tab + "DEF_DARK"
+		+ tab + "DEF_SOUL"
+		+ tab + "DEF_VOID"
+		+ tab + "DEBUFFS_AFFECTED";
+
+	var req = store.openCursor(range, "next");
+	req.onsuccess = function (event) {
+		var cursor = this.result;
+		var vo;
+		var text;
+		if (cursor) {
+			vo = cursor.value;
+			count++;
+			texts[count] = vo.id
+				+ tab + (vo.lastScanDate !== null ? vo.lastScanDate : "")
+				+ tab + (vo.name !== null ? vo.name : "")
+				+ tab + (vo.monsterClass !== null ? vo.monsterClass : "")
+				+ tab + (vo.powerLevel !== null ? vo.powerLevel : "")
+				+ tab + (vo.trainer !== null ? vo.trainer : "")
+				+ tab + (vo.meleeAttack !== null ? vo.meleeAttack : "")
+				+ tab + (vo.defenceLevel && vo.defenceLevel.CRUSHING ? vo.defenceLevel.CRUSHING : "")
+				+ tab + (vo.defenceLevel && vo.defenceLevel.SLASHING ? vo.defenceLevel.SLASHING : "")
+				+ tab + (vo.defenceLevel && vo.defenceLevel.PIERCING ? vo.defenceLevel.PIERCING : "")
+				+ tab + (vo.defenceLevel && vo.defenceLevel.FIRE ? vo.defenceLevel.FIRE : "")
+				+ tab + (vo.defenceLevel && vo.defenceLevel.COLD ? vo.defenceLevel.COLD : "")
+				+ tab + (vo.defenceLevel && vo.defenceLevel.ELEC ? vo.defenceLevel.ELEC : "")
+				+ tab + (vo.defenceLevel && vo.defenceLevel.WIND ? vo.defenceLevel.WIND : "")
+				+ tab + (vo.defenceLevel && vo.defenceLevel.HOLY ? vo.defenceLevel.HOLY : "")
+				+ tab + (vo.defenceLevel && vo.defenceLevel.DARK ? vo.defenceLevel.DARK : "")
+				+ tab + (vo.defenceLevel && vo.defenceLevel.SOUL ? vo.defenceLevel.SOUL : "")
+				+ tab + (vo.defenceLevel && vo.defenceLevel.VOID ? vo.defenceLevel.VOID : "")
+				+ tab + (vo.debuffsAffected ? vo.debuffsAffected.join(", ") : "");
+			cursor.continue();
+		} else {
+			HVStat.dataURIMonsterScanResults = "data:text/tsv;charset=utf-8," + texts.join(newline);
+			HVStat.nRowsMonsterScanResultsTSV = count;
+			if (callback instanceof Function) {
+				callback(event);
+			}
+		}
+	}
+	req.onerror = function (event) {
+		console.log('request error.');
+		alert('request error.');
+	}
+};
+
+HVStat.exportMonsterSkills = function (callback) {
+	var tx = HVStat.idb.transaction(["MonsterSkills"], "readonly");
+	var store = tx.objectStore("MonsterSkills");
+	var range = null; // select all
+	var count = 0;
+	var texts = [];
+	var tab = "%09";
+	var newline = "%0A"
+	texts[0] = "ID"
+		+ tab + "NAME"
+		+ tab + "SKILL_TYPE"
+		+ tab + "ATTACK_TYPE"
+		+ tab + "DAMAGE_TYPE"
+		+ tab + "LAST_USED_DATE";
+
+	var req = store.openCursor(range, "next");
+	req.onsuccess = function (event) {
+		var cursor = this.result;
+		var vo;
+		var text;
+		if (cursor) {
+			vo = cursor.value;
+			count++;
+			texts[count] = vo.id
+				+ tab + (vo.name !== null ? vo.name : "")
+				+ tab + (vo.skillType !== null ? vo.skillType : "")
+				+ tab + (vo.attackType !== null ? vo.attackType : "")
+				+ tab + (vo.damageType !== null ? vo.damageType : "")
+				+ tab + (vo.lastUsedDate !== null ? vo.lastUsedDate : "");
+			cursor.continue();
+		} else {
+			HVStat.dataURIMonsterSkills = "data:text/tsv;charset=utf-8," + texts.join(newline);
+			HVStat.nRowsMonsterSkillsTSV = count;
+			if (callback instanceof Function) {
+				callback(event);
+			}
+		}
+	}
+	req.onerror = function (event) {
+		console.log('request error.');
+		alert('request error.');
+	}
+};
+
+HVStat.importMonsterScanResults = function (file, callback) {
+	var reader = new FileReader();
+	reader.onload = function (event) {
+		var contents = event.target.result;
+		var rowCount, procCount;
+		var result;
+		var tx = HVStat.idb.transaction(["MonsterScanResults"], "readwrite");
+		var store = tx.objectStore("MonsterScanResults");
+		var skipCount = 0;
+		var successCount = 0;
+		var errorCount = 0;
+		var voExisting, voToPut, reqPut;
+
+		var report = function () {
+			if (procCount >= rowCount) {
+				alert(rowCount + " row(s) found, " + successCount + " row(s) imported, " + skipCount + " row(s) skipped, " + errorCount + " error(s)");
+			}
+		}
+
+		// prescan
+		HVStat.reMonsterScanResultsTSV.lastIndex = 0;
+		rowCount = 0;
+		while ((result = HVStat.reMonsterScanResultsTSV.exec(contents)) !== null) {
+			rowCount++;
+		}
+
+		// import
+		procCount = 0;
+		HVStat.reMonsterScanResultsTSV.lastIndex = 0;
+		while ((result = HVStat.reMonsterScanResultsTSV.exec(contents)) !== null) {
+			voToPut = new HVStat.MonsterScanResultsVO({
+				id: result[1],
+				lastScanDate: result[2],
+				name: result[3],
+				monsterClass: result[4],
+				powerLevel: result[5],
+				trainer: result[6],
+				meleeAttack: result[7],
+				defCrushing: result[8],
+				defSlashing: result[9],
+				defPiercing: result[10],
+				defFire: result[11],
+				defCold: result[12],
+				defElec: result[13],
+				defWind: result[14],
+				defHoly: result[15],
+				defDark: result[16],
+				defSoul: result[17],
+				defVoid: result[18],
+				debuffsAffected: result[19],
+			});
+			(function (voToPut) {
+				reqGet = store.get(voToPut.id);
+				reqGet.onsuccess = function (event) {
+					var doPut = false;
+					if (event.target.result === undefined) {
+						doPut = true;
+					} else {
+						voExisting = event.target.result;
+						if (voExisting.lastScanDate === null || voToPut.lastScanDate >= voExisting.lastScanDate) {
+							doPut = true;
+						} else {
+							//console.log("importMonsterScanResults: voToPut.id = [" + voToPut.id + "], voExisting.id  [" + voExisting.id + "]");
+							//console.log("importMonsterScanResults: voToPut.lastScanDate = [" + voToPut.lastScanDate + "], voExisting.lastScanDate  [" + voExisting.lastScanDate + "]");
+						}
+					}
+					if (!doPut) {
+						skipCount++;
+						procCount++;
+					} else {
+						reqPut = store.put(voToPut);
+						reqPut.onsuccess = function (event) {
+							successCount++;
+							procCount++;
+							report();
+						};
+						reqPut.onerror = function (event) {
+							console.log("importMonsterScanResults: put: error");
+							errorCount++;
+							procCount++;
+							report();
+						};
+					}
+				};
+				reqGet.onerror = function (event) {
+					console.log("importMonsterScanResults: get: error");
+					errorCount++;
+					procCount++;
+					report();
+				};
+			})(voToPut);
+		}
+	};
+	reader.onerror = function (event) {
+		alert("Failed to read file");
+	};
+	reader.readAsText(file, 'UTF-8');
+}
+
+HVStat.importMonsterSkills = function (file, callback) {
+	var reader = new FileReader();
+	reader.onload = function (event) {
+		var contents = event.target.result;
+		var rowCount, procCount;
+		var result;
+		var tx = HVStat.idb.transaction(["MonsterSkills"], "readwrite");
+		var store = tx.objectStore("MonsterSkills");
+		var skipCount = 0;
+		var successCount = 0;
+		var errorCount = 0;
+		var voExisting, voToPut, reqPut;
+
+		var report = function () {
+			if (procCount >= rowCount) {
+				alert(rowCount + " row(s) found, " + successCount + " row(s) imported, " + skipCount + " row(s) skipped, " + errorCount + " error(s)");
+			}
+		}
+
+		// prescan
+		HVStat.reMonsterSkillsTSV.lastIndex = 0;
+		rowCount = 0;
+		while ((result = HVStat.reMonsterSkillsTSV.exec(contents)) !== null) {
+			rowCount++;
+		}
+
+		// import
+		procCount = 0;
+		HVStat.reMonsterSkillsTSV.lastIndex = 0;
+		while ((result = HVStat.reMonsterSkillsTSV.exec(contents)) !== null) {
+			voToPut = new HVStat.MonsterSkillVO({
+				id: result[1],
+				name: result[2],
+				skillType: result[3],
+				attackType: result[4],
+				damageType: result[5],
+				lastUsedDate: result[6]
+			});
+			(function (voToPut) {
+				reqGet = store.get(voToPut.id);
+				reqGet.onsuccess = function (event) {
+					var doPut = false;
+					if (event.target.result === undefined) {
+						doPut = true;
+					} else {
+						voExisting = event.target.result;
+						if (voExisting.lastUsedDate === null || voToPut.lastUsedDate >= voExisting.lastUsedDate) {
+							doPut = true;
+						} else {
+							//console.log("importMonsterSkills: voToPut.id = [" + voToPut.id + "], voExisting.id  [" + voExisting.id + "]");
+							//console.log("importMonsterSkills: voToPut.lastUsedDate = [" + voToPut.lastUsedDate + "], voExisting.lastUsedDate  [" + voExisting.lastUsedDate + "]");
+						}
+					}
+					if (!doPut) {
+						skipCount++;
+						procCount++;
+					} else {
+						reqPut = store.put(voToPut);
+						reqPut.onsuccess = function (event) {
+							successCount++;
+							procCount++;
+							report();
+						};
+						reqPut.onerror = function (event) {
+							console.log("importMonsterSkills: put: error");
+							errorCount++;
+							procCount++;
+							report();
+						};
+					}
+				};
+				reqGet.onerror = function (event) {
+					console.log("importMonsterSkills: get: error");
+					errorCount++;
+					procCount++;
+					report();
+				};
+			})(voToPut);
+		}
+	};
+	reader.onerror = function (event) {
+		alert("Failed to read file");
+	};
+	reader.readAsText(file, 'UTF-8');
+}
+
+//------------------------------------
+// migration functions
+//------------------------------------
+// finally to be obsolete
+
+HVStat.migration = {};
+HVStat.migration.monsterClassFromCode = function (code) {
+	code = String(code);
+	var monsterClassTable = {
+		ARTHROPOD:	"1",
+		AVION:		"2",
+		BEAST:		"3",
+		CELESTIAL:	"4",
+		DAIMON:		"5",
+		DRAGONKIN:	"6",
+		ELEMENTAL:	"7",
+		GIANT:		"8",
+		HUMANOID:	"9",
+		MECHANOID:	"10",
+		REPTILIAN:	"11",
+		SPRITE:		"12",
+		UNDEAD:		"13",
+		COMMON:		"31",
+		UNCOMMON:	"32",
+		RARE:		"33",
+		LEGENDARY:	"34",
+		ULTIMATE:	"35"
+	};
+	var key, found = false;
+	for (key in monsterClassTable) {
+		if (monsterClassTable[key] === code) {
+			found = true;
+			break;
+		}
+	}
+	if (found) {
+		return HVStat.MonsterClass[key];
+	} else {
+		return null;
+	}
+};
+
+HVStat.migration.skillTypeFromCode = function (code) {
+	code = String(code);
+	var st = HVStat.SkillType;
+	switch (code) {
+	case "1":
+	case "2":
+		return st.MANA;
+	case "3":
+	case "4":
+		return st.SPIRIT;
+	default:
+		return null;
+	}
+};
+
+HVStat.migration.attackTypeFromCode = function (code) {
+	code = String(code);
+	var at = HVStat.AttackType;
+	switch (code) {
+	case "1":
+	case "3":
+		return at.MAGICAL;
+	case "2":
+	case "4":
+		return at.PHYSICAL;
+	default:
+		return null;
+	}
+};
+
+HVStat.migration.damageTypeFromCode = function (code) {
+	code = String(code);
+	var damageTypeTable = {
+		CRUSHING:	"52",
+		SLASHING:	"51",
+		PIERCING:	"53",
+		FIRE:		"61",
+		COLD:		"62",
+		ELEC:		"63",
+		WIND:		"64",
+		HOLY:		"71",
+		DARK:		"72",
+		SOUL:		"73",
+		VOID:		"74"
+	};
+	var array = [];
+	for (var i = 0; i < code.length; i += 2) {
+		var partialCode = code.substring(i, i + 2);
+		var key, found = false;
+		for (key in damageTypeTable) {
+			if (damageTypeTable[key] === partialCode) {
+				found = true;
+				break;
+			}
+		}
+		if (found) {
+			array.push(HVStat.DamageType[key]);
+		}
+	}
+	return array;
+};
+
+HVStat.migration.createMonsterScanResultsVOFromOldDB = function (oldDB, index) {
+	if (!oldDB.mclass[index]) {
+		return null;
+	}
+	var i, len, v, vo = new HVStat.MonsterScanResultsVO();
+	// id
+	vo.id = Number(index);
+	// lastScanDate
+	v = oldDB.datescan[index];
+	v = v ? new Date(v) : null;
+	vo.lastScanDate = v ? v.toISOString() : null;
+	// name
+	vo.name = null;
+	// monsterClass
+	v = HVStat.migration.monsterClassFromCode(oldDB.mclass[index]);
+	vo.monsterClass = v ? v.id : null;
+	// powerLevel
+	v = oldDB.mpl[index];
+	vo.powerLevel = (!isNaN(v) && v !== 0) ? Number(v) : null;
+	// trainer
+	vo.trainer = null;
+	// meleeAttack
+	v = HVStat.migration.damageTypeFromCode(oldDB.mattack[index]);
+	vo.meleeAttack = v[0] ? v[0].id : null;
+	// defenceLevel
+	vo.defenceLevel = new HVStat.DefenceLevelVO();
+	v = HVStat.migration.damageTypeFromCode(oldDB.mweak[index]);
+	len = v.length;
+	for (i = 0; i < len; i++) {
+		vo.defenceLevel[v[i].id] = HVStat.DefenceLevel.WEAK.id;
+	}
+	v = HVStat.migration.damageTypeFromCode(oldDB.mresist[index]);
+	len = v.length;
+	for (i = 0; i < len; i++) {
+		vo.defenceLevel[v[i].id] = HVStat.DefenceLevel.RESISTANT.id;
+	}
+	v = HVStat.migration.damageTypeFromCode(oldDB.mimperv[index]);
+	len = v.length;
+	for (i = 0; i < len; i++) {
+		vo.defenceLevel[v[i].id] = HVStat.DefenceLevel.IMPERVIOUS.id;
+	}
+	// debuffsAffected
+	vo.debuffsAffected = [];
+	return vo;
+};
+
+HVStat.migration.migrateMonsterScanResults = function () {
+	var tx = HVStat.idb.transaction(["MonsterScanResults"], "readwrite");
+	var store = tx.objectStore("MonsterScanResults");
+	var i, len = _database.mclass.length;
+	var successCount = 0;
+	var errorCount = 0;
+	var lastIndex, vo, reqPut;
+	var report = function () {
+		alert("Migration of the monster scan results has completed.\n" + successCount + " success(es), " + errorCount + " error(s)");
+	}
+	// prescan
+	for (i = 0; i < len; i++) {
+		if (_database.mclass[i]) {
+			lastIndex = i;
+		}
+	}
+	// migrate
+	for (i = 0; i < len; i++) {
+		if (_database.mclass[i]) {
+			vo = HVStat.migration.createMonsterScanResultsVOFromOldDB(_database, i);
+			if (vo) {
+				reqPut = store.put(vo);
+				if (i < lastIndex) {
+					reqPut.onsuccess = function (event) {
+						successCount++;
+					};
+					reqPut.onerror = function (event) {
+						errorCount++;
+					};
+				} else {
+					reqPut.onsuccess = function (event) {
+						successCount++;
+						report();
+					};
+					reqPut.onerror = function (event) {
+						errorCount++;
+						report();
+					};
+				}
+			}
+		}
+	}
+};
+
+HVStat.migration.createMonsterSkillVOsFromOldDB = function (oldDB, index) {
+	if (!oldDB.mskillspell[index]) {
+		return [];
+	}
+	var v, vo, voArray = [];
+	var code, codes = String(oldDB.mskillspell[index]);
+	var damageTypes, damageTypeCodes = String(oldDB.mskilltype[index]);
+	var damageTypeIndex = 0;
+
+	for (i = 0; i < codes.length; i++) {
+		code = codes.substring(i, i + 1);
+		damageTypes = HVStat.migration.damageTypeFromCode(damageTypeCodes);
+		if (code !== "0") {
+			vo = new HVStat.MonsterSkillVO({ id: index });
+			v = HVStat.migration.skillTypeFromCode(code);
+			vo.skillType = v ? v.id : null;
+			v = HVStat.migration.attackTypeFromCode(code);
+			vo.attackType = v ? v.id : null;
+			v = damageTypes[damageTypeIndex];
+			vo.damageType = v ? v.id : null;
+			vo.createKey();
+
+			voArray.push(vo);
+			damageTypeIndex++;
+		}
+	}
+	return voArray;
+};
+
+HVStat.migration.migrateMonsterSkills = function () {
+	var tx = HVStat.idb.transaction(["MonsterSkills"], "readwrite");
+	var store = tx.objectStore("MonsterSkills");
+	var i, j;
+	var len = _database.mskilltype.length;
+	var successCount = 0;
+	var errorCount = 0;
+	var lastIndex, voArray, reqPut;
+	var report = function () {
+		alert("Migration of the monster skill data has completed.\n" + successCount + " success(es), " + errorCount + " error(s)");
+	}
+	// prescan
+	for (i = 0; i < len; i++) {
+		if (_database.mskilltype[i]) {
+			lastIndex = i;
+		}
+	}
+	// migrate
+	for (i = 0; i < len; i++) {
+		if (_database.mskilltype[i]) {
+			voArray = HVStat.migration.createMonsterSkillVOsFromOldDB(_database, i);
+			for (j = 0; j < voArray.length; j++) {
+				reqPut = store.put(voArray[j]);
+				if (i < lastIndex || j < voArray.length - 1) {
+					reqPut.onsuccess = function (event) {
+						successCount++;
+					};
+					reqPut.onerror = function (event) {
+						errorCount++;
+					};
+				} else {
+					reqPut.onsuccess = function (event) {
+						successCount++;
+						report();
+					};
+					reqPut.onerror = function (event) {
+						errorCount++;
+						report();
+					};
+				}
+			}
+		}
+	}
+};
+
+HVStat.migration.migrateDatabase = function () {
+	loadDatabaseObject();
+	HVStat.migration.migrateMonsterScanResults();
+	HVStat.migration.migrateMonsterSkills();
+};
+
+HVStat.migration.deleteOldDatabase = function () {
+	localStorage.removeItem("HVMonsterDatabase");
+	alert("Your old monster database has been deleted.");
+};
+
+//------------------------------------
+// legacy codes
+//------------------------------------
+// TODO: should be stored in the package to avoid conflicts with official HV page in the future
+
+/* ========== GLOBAL VARIABLES ========== */
+VERSION = "5.4.2.0";
+HV_OVERVIEW = "HVOverview";
+HV_STATS = "HVStats";
+HV_PROF = "HVProf";
+HV_REWARDS = "HVRewards";
+HV_SHRINE = "HVShrine";
+HV_DROPS = "HVDrops";
+HV_ROUND = "HVRound";
+HV_EQUIP = "inventoryAlert";
+HV_DBASE = "HVMonsterDatabase";
+HV_COLL = "HVCollectData";
+HV_LTC = "HVLoadTimeCounters";
+HV_CHSS = "HVCharacterSettingsandStats";
+HV_TAGS = "HVTags";
+HOURLY = 0;
+ARENA = 1;
+GRINDFEST = 2;
+ITEM_WORLD = 3;
+CRYSFEST = 4;
+_overview = null;
+_stats = null;
+_profs = null;
+_rewards = null;
+_shrine = null;
+_drops = null;
+_round = null;
+_backup = [null, null, null, null, null, null];
+_database = null;
+_collectdata = null;
+_charss = null;
+_ltc = null;
+_tags = null;
+_isMenuInitComplete = false;
+_equips = 0;
+_lastEquipName = "";
+_artifacts = 0;
+_lastArtName = "";
 _tokenDrops = [0, 0, 0];
+
+/* ========== EMBEDDED IMAGES ========== */
+I_HEALTHPOT = "data:image/gif;base64,R0lGODlhHgAgAOYAAPbt9ho9IwArCAArAAARAAhGCAgrCBFXERFGETR7NAgRCEaDRmmvacrkyvb/9uTt5BFXCDR7KxFGCBpXERpGEQgrABFXACtpGleVRhpXCE+nNBppABFGACt7ERErCDSMETR7GiuMABpXACt7CBpGCCtpETR7ETRpGkanETR7CCtpCE+MK4OvaafTjHKnT5XKcjR7ACtpAAgRAE+MGkZ7GnLBKytXAE+MEUZ7EU+MAHLBEcHklWCnAHKnK57bRq/bcnKnEZXKK57BT5XBGvb/28HkRnKMEa/TI9PtcuT2lfb2r9vTI/bt2wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACwAAAAAHgAgAAAH/4AzJioZhRsbEBkqiykmHSUrLhggKzMjLgwuLj0zLkJBKDc0H6QzpjNAQDcrP0o/QT89NURESUhFQR89PkeqMx83wagoOTk1SklBRz5BSERKSEdLRSMpNUW4KCY0JiZAoDdArUlAR83PRUfqQSU94UhJRZwzOTpHOjw6SURCQ0FBSoj80KFjSI8UHlwgAdIjCTIf+OwdGeJDiZIeQYA4+wGER6oZHCokeCakRyto6bAVcRgriBCBKFLkCKbigAEELwImmdHQIpKfKocYRBaER4gbKFCokGAARA8UP569WCHkVjp///4lSdILhQYgSpkucKWhBhJX4XQU+elw64+1Rf90hEpqAoGBkbR+oBAy0B7bgLR2HFmbMRyKDggITMjp4FkNHkPS+RgCpMgPh9CCYKPM48aGAgYuPHWxg0i6rTUgCvFpMt7gXp0RK1hAZMeLr0PO/vCBKwkAB0mCrY1chPKNEQgqRKDl4EE0h0UAE/mNJEcMfeaQCKkBJIWEChmE7KsVPR4RB+gBPPtx41jvJK9mkBiQAYhZZOUrMjmPvvFkaEc4RMsLFAwAASrNJOGDQ0I58xsRDzARREVI6HBDD+K1gIAAEsyAglpcrfSPgw9stVAr2OxQEgorQMChh9/cAuJltChRQw03AJRMRevNIIEABwZTGRL+tLWDgsUAwVL/Ribt90JyEJASzkrFRYcMEhlFhsRkK7G31wsBVBDlB6gUUUsqVWF2SxBCAeFDjT8IUVcFFkipj0CQvYZNEDrEGMt957GAgAx1AhPEPj00hM1E+WgGj0Wv+HBWCwEYkMFRN1S0Qw47MBHPLTFctuYR8JQay3clhFOZEiVN95MrMBBFWUGfrLUQBxkkmkNuSrjEBBMrsdoDNEAYkQMPMwFRkDkiiFBERwEmk4SnAPW6GkfB3ICDTB59ZMMQHkWHJS0++MDEDjq04gMQOeAwww0wwJBDKjfMUENRh9r4w68auZJuMtaZQkOxqahygwk35CBECy7c0EIDLWjwQwuJ/hDLCw0qmADCCfVmu20gADs=";
+I_MANAPOT = "data:image/gif;base64,R0lGODlhHgAgAOYAACMRGiMIGkYrRmlPafbT9ox7jGkrcvbT/5V7p0YrYD0aYBEIGq+ewWlPjD0acisaRkYrcntXuCMRRsq47QgAGkYrgysRchEARisaYIx7wZ6M0yMRYNvT9j0jpyMaRhEAYCMRcisacmBPpysag089pxEAexEIRisalSMaYAgARhEIYAgAYGBXuAAATwAARgAAGggIYAgIRhERPQgIGisrafb2/z1GaT1PjCMrRmlyjLjB05Wnnmlyaaeeg1dPPfbt5MGvp9uVeysaGoxyctPBwdvT0/b29gAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACwAAAAAHgAgAAAH/4AQGBImhTIyMSYSiw8YKBsVIiQhFRAeIiwiIg0QIggFNgkONKQQphADAwkVDD8MBQwNOUZGRURABTQNOz2qEDQJwag2AgI5P0UFPTsFREY/RD1BQB4POUC4NhgOGBgDoAkDrUUDPc3PQD3qBRsN4URFQJwQAjw9PD48RUYIQwUFP4ww4MFjSIMHKUQQGdCgCLId+Oz1GLLjx48GBQY4YzDARyoIFF6ceIagQSto6bABcRirAAKBNh4ICCYBhosVGQIWgdDQIpGfKocYRFbAB44ENmxISOEiRAMbDJ5lqIDgVjp///4VKdLLxo0BSpl2cHUjBxFX4XgA+elwK4O1QP94hEqKYYWLkbQY2EAw0B7bgLR09FibMZwNFCteqMhZ41kOH0PS7RgyAAgDh9AKYKPsI4EMFy5APBWhw0i6rTkgIvBpMt7gXp0Rt+hgREeGr0POMtiBq8iBGkWCrY0MhHICD4lH0KrBIZpDIICN/CYiAIA+c0QQ5BiA8IUJBPtqQY9npIb5A88YJDjWu8grCBe8DzCLbHxFAuXNN54MrYdDWhl88EIMqDRTxA4OCeXMb0ZwQEABFRHBQwINgKeBXSlAYINaXK30z4IcbLVQK9joUJINFcTgQoY2fHMLh5fR8kMOOSQAUDIVpQcBUwQGUxkR/rSlw4HFDMBSRibhl0H/YjGQEs5KxUGHDBEZRUbEZCupt1cGJQxYSmW1pFIVZrcUINQAO8jIAAJ1vTCDk/oIBNlr2BTAg4ux0FdeBIm9CUwB+zTQEDYT5aMZPBa9ssNZGpTggglHJVCRDgLoQEA8twBwWZk9wONpLCm8sEE4lf1QknQ/uSIEUZQV9MlaC1FggqAC5PaDSwQQsJKpDUAzgAEC+DDTAAWZs8ACQHTkXzJFXArQratxFEwCCsjk0UcBDOERdFTSssMOBOjAQys7DCCAAhAkIIQQAqSSAAQ5FAXojAzkqpEr4yZTnSkO/JqKKglgkIAACGggQgIaTKDBDQxoICgDsSQgAQYhWPDuBLTVBgIAOw==";
+I_SPIRITPOT = "data:image/gif;base64,R0lGODlhHgAgAOYAACsACFcRI//k9tvTlcq4Rvbkla+MEdOvI6eMK+TBRu3Tcv/tr8GVGv/2255yAIxpEcGVK4xyNNO4cnJPAO2vI6dyEXJPEYxPAMqVT08rAK9yK4xPEREIAGk0CIxPGns0AMGVcmkrAKdPEXs0CGk0EadyT9OnjEYaAGkrCIxPK3s0EYM0EVcaAEYaCGkrEad7aXs0GmkaAEYRACsRCIM0Gv/k21caCGkrGpVXRrh7aSsIAHsrGkYaEUYRCFcaEVcRCHs0KysAABEAAEYICCsICFcREUYREXs0NBEICINGRuTKyv/29u3k5AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACwAAAAAHgAgAAAH/4AeKig2hRkZLTYoiyMqJC4pJTgwKR4dJS8lJRoeJRgQDxs0FqQeph4VFRspEgsSEBIaCA0NBQoJEBYaBAeqHhYbwagPFxcICwUQBwQQCg0LCgcUCR0jCAm4Dyo0KioVoBsVrQUVB83PCQfqEC4a4QoFCZweFwYHBg4GBQ0YDBAQCxpIMGCAgYYRQ0ooqKChADIC+OwdYEBgwQINECo4k1DBQSoPMnQceYZBQyto6bAlcBgLAgaBD0ZcCIaCBxEjIAIW8NDQooKfKhkYRAbBwYQNDx6g6EEEhoYHEp6BSIHhVjp///4VKNDrQYQKSpkmcRUBgQJX4Qwk+Olwq4S1Cf8MhEqqwgiRkbQkPMAw0B7bgLQGHFibMdwDEkaE+Mi55BkCBwzSEWBQIYEEh9AgYKPsYEOGGURuPC0xoEG6rQggYvBpMt7gXp0RA0jSYACIrwzOSiCAq4CAJQWCrY2cgPKGDkZ0AKG1hEk0hwkAN/it4EIIfeYUYEBQYUQPHTYw7KsVPV6DJegFPJOw4VjvAq88/OBgo4JZZOUr1jiPvvFkaAc4RAsIRXDQAirNFECAQ0I581sDTNQAQUUKGLCBBuKZYAQSPXjwgFpcrfSPg0xstVAr2AxQ0gMptMChh9/cAuJltCyAAAIbAJRMRet50AMSBwZTmQL+tDWAgsVUwFL/RibtB0JyLZASzkrFRYeMAhlFpsBkK7G3FwgB6BClBagkUEsqVWF2CwRCVUBAjRJgUJcOJ0ipj0CQvYYNBAbEGMt95+VgRBB1AgPBPho0hM1E+WgGj0WvEHCWCQEQYcNRG1Q0wAUD1BDPLSFctuYB8JQay3cuhFPZAiVN95MrHxBFWUGfrLWQDDYkekFuC7hUQw0rsaoBNBWIcIEDM1VQkDkssJBARwEmU4CnAPW6GkfBbLCCTB59FAMDHkWHJS0EEFDDAAa0QkAFF6zgwQYffHBBKht4gEBRh9oowa8auZJuMtaZQkOxqaiygQobXICBCSVsYIISJkQggQmJShDLCwYoqADDDvVmu20gADs=";
+I_CHANNELING = "data:image/gif;base64,R0lGODlhHgAgAOYAAEYjNBEAESMRIzQjNEY0RgAAERERIzQ0VyMjNEZGVyM0RjRGV09yjHKVryNGV3KvyityjE+v00+VrwAaI3LT7U9yeyuVp0/K03Lt9gARERFPTytychErKyNXV0+vryNGRnLT00+MjIz29jRXV3Kvr6f//4zT0yM0NKft7bj//zRGRk9pabjt7cr//4yvr0ZXV3KMjK/T08rt7Wl7e4OVlae4uMrb20/t23Lt25Xt26f/7YPKuLj/7a/t2yNXRsr/7U+ngzRXRtv/7XKvjCtGNE9pV9Pt22CMaSM0I4yvjEZXRoOeg6e4p7jKuGl7YP//5CsRETQjI0Y0NHtpabi4uKenp4ODg3t7e2lpaVdXV0ZGRjQ0NCMjIxEREQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACwAAAAAHgAgAAAH/4AjHx0VhSEwiEuKS1cziDAhkZIhhR0bFRshOzs5KCw/P0KhNVY1SS4pJSKrIjk4ICAeHpghsCI6OjygPzEvTExNGySqrBivFBYRPpkmOLe5Py0/My9WT1Y0G8SrON2xHhwjITk5IiU6ny0yKytUVjYyHSisIt04Fx4bBh/jziWeLFq4+FDNShMjPnZse3XPw4kCHEJ0u+WJRwsYJ1RkuUIjxokQOlYZA3HjggQOBU54mIgCBQ9dLzhs2aKECJYTK+bVw3ChJLgMH0g405EihS4XTrJgQZKxChYVIVRhwADiwgULHDL4AFGOKA8WMIKc2IJlBhIVTbSc+LBDxNSqEf8sIMjQAcQqXCxmfNiiRYsKK1acEjmBYAEJVxcixJ1b9y6PITL5+tUyZSkSLgIyaIBl1eQJunZFtBxxgoCUmVxOdNFChAuXKAYm1Kp6NWvd0D1kSpGiZcsJAVqyvB4gQMCED7Rr0yUBwtkOAwMAmB6LGXPxLgYMcHggK0IILhkcPICVowIHLgOiuB6wpUvx69gN7PgGgUsXB7Bw5JhgQABmBAagh4AA7l3n2nyJbQDebSCEkB121vm3hX0BBNBFfLVYtcFcm4FAAgcPPkigawjY10WFXBhQAWcQMOYBCStkJ2OFFxbnmo0BdvGBCbC0GF4DG/wmowEXWhhAhAIcSSTpEcw1yEEXJzCgwAQCDFlAkfEVZ0CFBmSgBAywhMDBkTMgQOWQWxpQgIUnundhBl6uMJ+YGXBwwgEDohmAmgVcGcCa2HWRgRYrMEfnCRUokGd2ezLap599/pmBFE4MsUMIn/GzwqInNtpFAV70WaSkSKxQC6YZnBAkmmluCeqjFT7axQuanMSBCipcGGKanT4aaZ8GnODEETuQ8IEgCRB44bLLxuprn15wMEMRRwDxQAj5KIols70+mwFEHxQxLAncWeBAiVDoyuaovoYKEQfiVuDBtRB0MCCzkVZYoRf89hutTEocIYEEgQAAOw==";
 
 jQuery.fn.outerHTML = function () {
 	return $("<div>").append(this.eq(0).clone()).html();
 };
-Array.prototype.init = function (b) {
-	if (b === undefined) b = 0;
-	var a = this.length;
-	while (a--) this[a] = b;
-};
-
-if (navigator.userAgent.indexOf('Chrome') > -1) isChrome = true;
-loadSettingsObject();
-loadLTCObject();
-evDomLoad();
-
-function evDomLoad(){
-	var doc = document,
-		docSearch = doc.location.search,
-		timer = 0,
-		invAlert = localStorage.getItem(HV_EQUIP),
-		invFull = (invAlert === null) ? false : JSON.parse(invAlert);
-	
-	if (doc.getElementsByClassName('fd10')[0].textContent !== "Health points") isHVFont = true;
-	if (doc.getElementById('pattrform')) isCharPage = true;
-	if (doc.getElementsByClassName('btcp').length > 0) isBattleOver = true;
-	if (!isChrome && !doc.getElementById('cssdiv')) {
-		GM_addStyle(GM_getResourceText("jQueryUICSS"));
-		var a = doc.createElement("div");
-		a.setAttribute("id", "cssdiv");
-		a.setAttribute("style", "visibility:hidden");
-		doc.documentElement.appendChild(a);
-	}
-	if (_settings.isChangePageTitle && document.title === "The HentaiVerse") {
-		timer = TimeCounter(1);
-		document.title = _settings.customPageTitle;
-		_ltc.hidetitle[0]++;
-		_ltc.hidetitle[1] += (TimeCounter(0, timer));
-	}
-	if (doc.getElementById("togpane_log")) isBattle = true;
-	if (isBattle) {
-		collectRoundInfo();
-		if (_settings.isShowMonsterNumber) showMonsterNumber();
-		if (_settings.isMainEffectsAlertSelf) AlertEffectsSelf();
-		if (_settings.isMainEffectsAlertMonsters) AlertEffectsMonsters();
-		if (_settings.isShowHighlight) {
-			timer = TimeCounter(1);
-			setLogCSS();
-			highlightLogText();
-			_ltc.highlightLogText[0]++;
-			_ltc.highlightLogText[1] += (TimeCounter(0, timer));
-		}
-		if (_settings.warnMode[_round.battleType]) {
-			timer = TimeCounter(1);
-			healthWarning();
-			_ltc.healthWarning[0]++;
-			_ltc.healthWarning[1] += (TimeCounter(0, timer));
-		}
-		if ((_round !== null) && (_round.currRound > 0) && _settings.isShowRoundCounter) {
-			timer = TimeCounter(1);
-			showRoundCounter();
-			_ltc.showRoundCounter[0]++;
-			_ltc.showRoundCounter[1] += (TimeCounter(0, timer));
-		}
-		if (_settings.isShowPowerupBox) displayPowerupBox();
-		if (_settings.isShowDivider) {
-			timer = TimeCounter(1);
-			addBattleLogDividers();
-			_ltc.addBattleLogDividers[0]++;
-			_ltc.addBattleLogDividers[1] += (TimeCounter(0, timer));
-		}
-		if (_settings.isShowSelfDuration) {
-			timer = TimeCounter(1);
-			showSelfEffectsDuration();
-			_ltc.showSelfEffectsDuration[0]++;
-			_ltc.showSelfEffectsDuration[1] += (TimeCounter(0, timer));
-		}
-		if ((_round !== null) && (_round.monsters.length > 0)){
-			timer = TimeCounter(1);
-			showMonsterStats();
-			_ltc.showMonsterStats[0]++;
-			_ltc.showMonsterStats[1] += (TimeCounter(0, timer));
-		}
-		if (isBattleOver) {
-			if (_settings.isShowEndStats) {
-				timer = TimeCounter(1);
-				showBattleEndStats();
-				_ltc.showBattleEndStats[1] += (TimeCounter(0, timer));
-			}
-			saveStats();
-			_round.reset();
-		}
-		if (_settings.isShowStatsPopup) {
-			timer = TimeCounter(1);
-			MonsterPopup();
-			_ltc.monsterpopup[0]++;
-			_ltc.monsterpopup[1] += TimeCounter(0, timer);
-		}
-		if (_settings.isShowScanButton || _settings.isShowSkillButton || _settings.isEnableScanHotkey || _settings.isEnableSkillHotkey) {
-			timer = TimeCounter(1);
-			Scanbutton();
-			_ltc.showscanbutton[0]++;
-			_ltc.showscanbutton[1] += TimeCounter(0, timer);
-		}
-	} else {
-		if (!isBattle && (_round !== null)) _round.reset();
-		else if (_settings.isColumnInventory && docSearch === "?s=Character&ss=it") initItemsView();
-		else if (isCharPage) collectCurrentProfsData();
-		else if (docSearch === "?s=Bazaar&ss=ss") {
-			if (_settings.isTrackShrine) captureShrine();
-			if (isChrome) window.document.onkeydown = null;	// workaround to make enable SPACE key
-		}
-	}
-	if (_settings.isShowSidebarProfs) {
-		timer = TimeCounter(1);
-		showSidebarProfs();
-		_ltc.showSidebarProfs[0]++;
-		_ltc.showSidebarProfs[1] += (TimeCounter(0, timer));
-	}
-	if (invFull) inventoryWarning();
-	initUI();
-	
-	if (isBattle) {
-		if (_settings.isCountPageLoadTime) {
-			var clickedLTC = localStorage.getItem('PLTC');
-			if (clickedLTC !== null) {
-				if (clickedLTC[1] === 1) {
-					localStorage.removeItem('PLTC');
-					_ltc.pageLoad[0] = 1;
-					var treadyload = (TimeCounter(0, clickedLTC.slice(3, 16)) - TimeCounter(0, millisecondsAll));
-					if (treadyload < 3000) {
-						_ltc.pageLoad[2]++;
-						_ltc.pageLoad[3] += treadyload;
-					}
-					var d45 = new Date();
-					d45.setTime(clickedLTC.slice(3, 16));
-					var ltchour = d45.getHours();
-					var n11 = 1;
-					while (n11 < 9) {
-						if (ltchour < (n11 * 3)) {
-							if (treadyload < 3000) {
-								_ltc.pageLoad[2 + (n11 * 2)]++;
-								_ltc.pageLoad[3 + (n11 * 2)] += treadyload;
-							}
-							break;
-						}
-						n11++;
-					}
-				}
-			}
-			CheckForAction();
-		}
-		_ltc.isbattle[0]++;
-		_ltc.isbattle[1] += TimeCounter(0, millisecondsAll);
-	} else {
-		if (docSearch === "?s=Character&ss=eq" && _settings.isShowTags[0]) {
-			timer = TimeCounter(1);
-			TaggingItems(false);
-			_ltc.taggingitems[0]++;
-			_ltc.taggingitems[1] += TimeCounter(0, timer);
-		}
-		if (docSearch === "?s=Character&ss=in" && _settings.isShowTags[5]) {
-			timer = TimeCounter(1);
-			TaggingItems(true);
-			_ltc.taggingitems[0]++;
-			_ltc.taggingitems[1] += TimeCounter(0, timer);
-		}
-		if (docSearch.indexOf("?s=Bazaar&ss=es") > -1 && _settings.isShowTags[1]) {
-			timer = TimeCounter(1);
-			TaggingItems(false);
-			_ltc.taggingitems[0]++;
-			_ltc.taggingitems[1] += TimeCounter(0, timer);
-		}
-		if (docSearch.indexOf("?s=Battle&ss=iw") > -1 && _settings.isShowTags[2]) {
-			timer = TimeCounter(1);
-			TaggingItems(false);
-			_ltc.taggingitems[0]++;
-			_ltc.taggingitems[1] += TimeCounter(0, timer);
-		}
-		if (docSearch.indexOf("?s=Bazaar&ss=mm&filter=Write") > -1 && _settings.isShowTags[3]) {
-			timer = TimeCounter(1);
-			$("#mailform #leftpane").children().eq(3).children().eq(1).click(TaggingItems);
-			_ltc.taggingitems[0]++;
-			_ltc.taggingitems[1] += TimeCounter(0, timer);
-		}
-		if (docSearch.indexOf("?s=Bazaar&ss=fr") > -1 && _settings.isShowTags[4]) {
-			timer = TimeCounter(1);
-			TaggingItems(false);
-			if (_settings.isDisableForgeHotKeys) document.onkeypress = null;
-			_ltc.taggingitems[0]++;
-			_ltc.taggingitems[1] += TimeCounter(0, timer);
-		}
-		if (_settings.isRememberSkillsTypes) {
-			loadCollectdataObject();
-			if (_collectdata.skillmid.length > 3) SaveToDatabase(2);
-		}
-		if ((_settings.isStartAlert || _settings.isShowEquippedSet) && !isHVFont) {
-			timer = TimeCounter(1);
-			FindSettingsStats();
-			_ltc.startalerts[0]++;
-			_ltc.startalerts[1] += TimeCounter(0, timer);
-		}
-		if (_settings.isStartAlert && !isHVFont) {
-			timer = TimeCounter(1);
-			StartBattleAlerts();
-			_ltc.startalerts[0]++;
-			_ltc.startalerts[1] += TimeCounter(0, timer);
-		}
-	}
-	if (!isHVFont && _settings.isShowEquippedSet) {
-		timer = TimeCounter(1);
-		SetDisplay();
-		_ltc.showset[0]++;
-		_ltc.showset[1] += TimeCounter(0, timer);
-	}
-	_ltc.main[0]++;
-	_ltc.main[1] += TimeCounter(0, millisecondsAll);
-	_ltc.save();
-}
 
 /* =====
  setLogCSS
@@ -426,493 +2346,18 @@ function displayPowerupBox() {
 	}
 	battleMenu[0].appendChild(powerBox);
 }
-/* =====
- showMonsterStats
- Displays monsters HP, MP, SP.
- If the monster has been scanned, extra stats like weaknesses and resistances are displayed.
-===== */
 function showMonsterStats() {
-	if (!(_settings.isShowMonsterHP || _settings.isShowMonsterMP || _settings.isShowMonsterSP || _settings.isShowMonsterElements || _settings.isShowMonsterDuration || _settings.isShowStatsPopup)) return;
-	var monElem = new ElementalStats(),
-		monPane = document.getElementById('monsterpane'),
-		monList = monPane.getElementsByClassName('btm1'),
-		i = monList.length,
-		timer = 0,
-		timer1 = 0
-		monCurrent = null,
-		monNameDiv = null,
-		monInfo = null,
-		monHP = null,
-		monMP = null,
-		monSP = null;
-	
-	while (i--){
-		monCurrent = monList[i];
-		monInfo = _round.monsters[i];
-		if (monInfo === undefined) continue;
-		monNameDiv = monCurrent.children[1].children[0]
-		monHP = monCurrent.children[2].children[0];
-		monMP = monCurrent.children[2].children[1];
-		monSP = monCurrent.children[2].children[2];
-		
-		if (monHP.innerHTML.indexOf('bardead') > -1){
-			monInfo.currHp = 0;
-			continue;
-		};
-		if (_settings.isShowMonsterHP || _settings.isShowMonsterHPPercent || _settings.isShowStatsPopup) {
-			timer = TimeCounter(1);
-			var maxHP = monInfo.maxHp,
-				adjHP = 0,
-				dispHP = "",
-				partHP = monHP.getElementsByTagName("img")[1].getAttribute("style").slice(6,-2) / 120;
-			if (_settings.isShowMonsterHPPercent) dispHP = (partHP * 100).toFixed(2) + "%"
-			else {
-				adjHP = Math.floor(partHP * maxHP);
-				dispHP = (adjHP > 0 ? adjHP : 1) + " / " + maxHP;
-			}
-			monHP.innerHTML += "<div style='position:absolute;z-index:1074;top:-1px;font-size:8pt;font-family:arial,helvetica,sans-serif;font-weight:bolder;color:yellow;width:120px;text-align:center'>" + dispHP + "</div>";
-			_ltc.showhp[0]++;
-			_ltc.showhp[1] += TimeCounter(0, timer);
-		}
-		if (_settings.isShowMonsterMP || _settings.isShowStatsPopup) {
-			timer = TimeCounter(1);
-			var adjMP = ((monMP.getElementsByTagName("img")[1].getAttribute("style").slice(6,-2) / 120) * 100).toFixed(1);
-			monMP.innerHTML += "<div style='position:absolute;z-index:1074;top:11px;font-size:8pt;font-family:arial,helvetica,sans-serif;font-weight:bolder;color:yellow;width:120px;text-align:center'>" 
-				+ adjMP
-				+ "%</div>";
-			_ltc.showmp[0]++;
-			_ltc.showmp[1] += TimeCounter(0, timer);
-		}
-		if (monSP && (_settings.isShowMonsterSP || _settings.isShowStatsPopup)) {
-			timer = TimeCounter(1);
-			monSP.innerHTML += "<div style='position:absolute;z-index:1074;top:23px;font-size:8pt;font-family:arial,helvetica,sans-serif;font-weight:bolder;color:yellow;width:120px;text-align:center'>" 
-				+ ((monSP.getElementsByTagName("img")[1].getAttribute("style").slice(6,-2) / 120) * 100).toFixed(1) 
-				+ "%</div>";
-			_ltc.showsp[0]++;
-			_ltc.showsp[1] += TimeCounter(0, timer);
-		}
-		if (_settings.isShowStatsPopup) {
-			timer = TimeCounter(1);
-			monInfo.currHp = adjHP > 0 ? adjHP : Math.floor(partHP * maxHP);
-			monInfo.currmp = adjMP;
-			_round.save();
-			_ltc.monsterpopup[1] += TimeCounter(0, timer);
-		}
-		timer = TimeCounter(1);
-		/* CLEANUP MARKER */
-		if (_settings.isShowMonsterElements && (monInfo.id < 1000 || _settings.isShowElemHvstatStyle)) {
-			getMonsterElementsById(monElem, monInfo.id);
-			var t = "",
-				d = (monElem.majWeak === "-" ? "" : "[<span style='color:#005826'>" + monElem.majWeak + "</span>")
-				+ (monElem.minWeak === "-" ? "" : ";<span style='color:#3CB878'>" + monElem.minWeak + "</span>")
-				+ (monElem.resist === "-" ? "" : ";<span style='color:red'>" + monElem.resist + "</span>")
-				+ (monElem.imperv === "-" ? "" : ";<span style='color:black'>" + monElem.imperv + "</span>]");
-			
-			if (_settings.isShowElemHvstatStyle) {
-				timer1 = TimeCounter(1);
-				var monName = monNameDiv.children[0],
-					monNameLength = monName.innerHTML.length,
-					mclass = "",
-					mpl = "",
-					mweak = "",
-					mresist = "",
-					mimperv = "",
-					mskilltype = "",
-					mskillspell = "",
-					mskilltype2 = "",
-					mskillspell2 = "",
-					mskilltype3 = "",
-					mskillspell3 = "",
-					mspirittype = "",
-					mspiritsksp = "",
-					mattack = "",
-					allm = 0,
-					allm1 = 0;
-				
-				mclass = monInfo.mclass;
-				allm += 2;
-				if (_settings.isShowPLHvstatStyle) {
-					mpl = monInfo.mpl;
-					if (mpl !== 0) allm += 2;
-				}
-				if (_settings.isShowWeakHvstatStyle) {
-					mweak = MElemNum(monInfo.mweak, 1);
-					allm += 2;
-				}
-				if (_settings.isShowResHvstatStyle) {
-					mresist = MElemNum(monInfo.mresist, 1);
-					mimperv = MElemNum(monInfo.mimperv, 1);
-					allm += _settings.isShowWeakHvstatStyle ? 2 : 3;
-				}
-				if (_settings.isShowAttackHvstatStyle) {
-					if (monInfo.mskillspell !== undefined) {
-						var sk = String(monInfo.mskillspell);
-						if (sk.length === 1 || sk.match("9")) {
-							if (monInfo.mskillspell < 3 || sk.match("9")) {
-								mskilltype = MElemNum(monInfo.mskilltype, 1);
-								mskillspell = MElemNum(monInfo.mskillspell, 1);
-							} else {
-								mspirittype = MElemNum(monInfo.mskilltype, 1);
-								mspiritsksp = MElemNum(monInfo.mskillspell, 1);
-								allm -= 7;
-							}
-						} else {
-							var mskillspellarray = sk.split("0"),
-								mskilltypearray = String(MElemNum(monInfo.mskilltype, 1)).split(", "),
-								sk34 = sk.replace("0","").search(/(3|4)/),
-								other1 = 0,
-								other2 = 0;
-							
-							if (sk.length === 3) {
-								if (sk34 >= 0) {
-									other = sk34 > 0 ? 0 : 1;
-									mspirittype = mskilltypearray[sk34];
-									mspiritsksp = MElemNum(parseInt(mskillspellarray[sk34]), 1);
-									mskillspell = MElemNum(parseInt(mskillspellarray[other1]), 1);
-									mskilltype = mskilltypearray[other1];
-								} else {
-									mskillspell = MElemNum(parseInt(mskillspellarray[0]), 1);
-									mskilltype = mskilltypearray[0];
-									mskillspell2 = MElemNum(parseInt(mskillspellarray[1]), 1);
-									mskilltype2 = mskilltypearray[1];
-								}
-								allm += 2;
-								if (mskillspell === mskillspell2) {
-									mskillspell2 = "";
-									mskilltype = mskilltype + ", " + mskilltype2;
-									mskilltype2 = "";
-									allm -= 2;
-								} else if (mskilltype === mskilltype2) {
-									mskillspell = mskillspell + ", " + mskillspell2;
-									mskillspell2 = "";
-									mskilltype2 = "";
-									allm -= 2;
-								}
-							} else if (sk.length === 5) {
-								if (sk34 >= 0) {
-									other1 = sk34 > 0 ? 0 : 1;
-									other2 = sk34 > 1 ? 1 : 2;
-									mspirittype = mskilltypearray[sk34];
-									mspiritsksp = MElemNum(parseInt(mskillspellarray[sk34]), 1);
-									mskillspell = MElemNum(parseInt(mskillspellarray[other1]), 1);
-									mskilltype = mskilltypearray[other1];
-									mskillspell2 = MElemNum(parseInt(mskillspellarray[other2]), 1);
-									mskilltype2 = mskilltypearray[other2];
-								} else {
-									mskillspell = MElemNum(parseInt(mskillspellarray[0]), 1);
-									mskilltype = mskilltypearray[0];
-									mskillspell2 = MElemNum(parseInt(mskillspellarray[1]), 1);
-									mskilltype2 = mskilltypearray[1];
-									mskillspell3 = MElemNum(parseInt(mskillspellarray[2]), 1);
-									mskilltype3 = mskilltypearray[2];
-								}
-								allm += 4;
-								if (mskillspell === mskillspell2) {
-									mskillspell2 = "";
-									mskilltype = mskilltype + ", " + mskilltype2;
-									mskilltype2 = "";
-									allm -= 2;
-								} else if (mskillspell === mskillspell3) {
-									mskillspell3 = "";
-									mskilltype = mskilltype + ", " + mskilltype3;
-									mskilltype3 = "";
-									allm -= 2;
-								} else if (mskillspell2 === mskillspell3) {
-									mskillspell3 = "";
-									mskilltype2 = mskilltype2 + ", " + mskilltype3;
-									mskilltype3 = "";
-									allm -= 2;
-								} else if (mskilltype === mskilltype2) {
-									mskillspell = mskillspell + ", " + mskillspell2;
-									mskillspell2 = "";
-									mskilltype2 = "";
-									allm -= 2;
-								} else if (mskilltype === mskilltype3) {
-									mskillspell = mskillspell + ", " + mskillspell3;
-									mskillspell3 = "";
-									mskilltype3 = "";
-									allm -= 2;
-								} else if (mskilltype2 === mskilltype3) {
-									mskillspell2 = mskillspell2 + ", " + mskillspell3;
-									mskillspell3 = "";
-									mskilltype3 = "";
-									allm -= 2;
-								}
-							}
-						}
-					}
-					mattack = MElemNum(monInfo.mattack, 1);
-					allm += 4;
-				}
-				if (mpl === undefined || mpl === null) {
-					mpl = 0;
-					allm -= 2;
-				}
-				if (mskillspell === undefined || mskillspell === null || mskillspell === 0 || mskillspell === "0"){
-					mskillspell = "";
-					allm -= 1;
-				}
-				if (mskilltype === undefined || mskilltype === null || mskilltype === 0 || mskilltype === "0"){
-					mskilltype = "";
-					allm -= 1;
-				}
-				if (mclass !== undefined) mclass = mclass > 30 ? "-" : MClassNum(mclass, 1);
-						
-				mclass = String(mclass);
-				mweak = String(mweak);
-				mresist = String(mresist);
-				mimperv = String(mimperv);
-				mskilltype = String(mskilltype);
-				mskillspell = String(mskillspell);
-				mskilltype2 = String(mskilltype2);
-				mskillspell2 = String(mskillspell2);
-				mskilltype3 = String(mskilltype3);
-				mskillspell3 = String(mskillspell3);
-				mspirittype = String(mspirittype);
-				mspiritsksp = String(mspiritsksp);
-				mattack = String(mattack);
-
-				//== Hide Specific Stats
-				if (_settings.HideThisResHvstatStyle[0] || _settings.HideThisResHvstatStyle[1] || _settings.HideThisResHvstatStyle[2]) {
-					mweak = mweak.replace(", Phys", "Slash, Crush, Pierc").replace("?Phys", "Slash, Crush, Pierc").replace("Phys", "Slash, Crush, Pierc");
-					mresist = mresist.replace(", Phys", "Slash, Crush, Pierc").replace("?Phys", "Slash, Crush, Pierc").replace("Phys", "Slash, Crush, Pierc");
-					mimperv = mimperv.replace(", Phys", "Slash, Crush, Pierc").replace("?Phys", "Slash, Crush, Pierc").replace("Phys", "Slash, Crush, Pierc");
-				}
-				if (_settings.HideThisResHvstatStyle[3] || _settings.HideThisResHvstatStyle[4] || _settings.HideThisResHvstatStyle[5] || _settings.HideThisResHvstatStyle[6]) {
-					mweak = mweak.replace(", Elem", "Fire, Cold, Elec, Wind").replace("?Elem", "Fire, Cold, Elec, Wind").replace("Elem", "Fire, Cold, Elec, Wind");
-					mresist = mresist.replace(", Elem", "Fire, Cold, Elec, Wind").replace("?Elem", "Fire, Cold, Elec, Wind").replace("Elem", "Fire, Cold, Elec, Wind");
-					mimperv = mimperv.replace(", Elem", "Fire, Cold, Elec, Wind").replace("?Elem", "Fire, Cold, Elec, Wind").replace("Elem", "Fire, Cold, Elec, Wind");
-				}
-				if (_settings.HideThisResHvstatStyle[0]) {
-					mweak = mweak.replace(", Slashing", "").replace(", Slash", "").replace("Slashing", "").replace("Slash", "");
-					mresist = mresist.replace(", Slashing", "").replace(", Slash", "").replace("Slashing", "").replace("Slash", "");
-					mimperv = mimperv.replace(", Slashing", "").replace(", Slash", "").replace("Slashing", "").replace("Slash", "");
-				}
-				if (_settings.HideThisResHvstatStyle[1]) {
-					mweak = mweak.replace(", Crushing", "").replace(", Crush", "").replace("Crushing", "").replace("Crush", "");
-					mresist = mresist.replace(", Crushing", "").replace(", Crush", "").replace("Crushing", "").replace("Crush", "");
-					mimperv = mimperv.replace(", Crushing", "").replace(", Crush", "").replace("Crushing", "").replace("Crush", "");
-				}
-				if (_settings.HideThisResHvstatStyle[2]) {
-					mweak = mweak.replace(", Piercing", "").replace(", Pierc", "").replace("Piercing", "").replace("Pierc", "");
-					mresist = mresist.replace(", Piercing", "").replace(", Pierc", "").replace("Piercing", "").replace("Pierc", "");
-					mimperv = mimperv.replace(", Piercing", "").replace(", Pierc", "").replace("Piercing", "").replace("Pierc", "");
-				}
-				if (_settings.HideThisResHvstatStyle[3]) {
-					mweak = mweak.replace(", Fire", "").replace("Fire", "");
-					mresist = mresist.replace(", Fire", "").replace("Fire", "");
-					mimperv = mimperv.replace(", Fire", "").replace("Fire", "");
-				}
-				if (_settings.HideThisResHvstatStyle[4]) {
-					mweak = mweak.replace(", Cold", "").replace("Cold", "");
-					mresist = mresist.replace(", Cold", "").replace("Cold", "");
-					mimperv = mimperv.replace(", Cold", "").replace("Cold", "");
-				}
-				if (_settings.HideThisResHvstatStyle[5]) {
-					mweak = mweak.replace(", Elec", "").replace("Elec", "");
-					mresist = mresist.replace(", Elec", "").replace("Elec", "");
-					mimperv = mimperv.replace(", Elec", "").replace("Elec", "");
-				}
-				if (_settings.HideThisResHvstatStyle[6]) {
-					mweak = mweak.replace(", Wind", "").replace("Wind", "");
-					mresist = mresist.replace(", Wind", "").replace("Wind", "");
-					mimperv = mimperv.replace(", Wind", "").replace("Wind", "");
-				}
-				if (_settings.HideThisResHvstatStyle[7]) {
-					mweak = mweak.replace(", Holy", "").replace("Holy", "");
-					mresist = mresist.replace(", Holy", "").replace("Holy", "");
-					mimperv = mimperv.replace(", Holy", "").replace("Holy", "");
-				}
-				if (_settings.HideThisResHvstatStyle[8]) {
-					mweak = mweak.replace(", Dark", "").replace("Dark", "");
-					mresist = mresist.replace(", Dark", "").replace("Dark", "");
-					mimperv = mimperv.replace(", Dark", "").replace("Dark", "");
-				}
-				if (_settings.HideThisResHvstatStyle[9]) {
-					mweak = mweak.replace(", Soul", "").replace("Soul", "");
-					mresist = mresist.replace(", Soul", "").replace("Soul", "");
-					mimperv = mimperv.replace(", Soul", "").replace("Soul", "");
-				}
-				if (_settings.HideThisResHvstatStyle[10]) {
-					mweak = mweak.replace(", Void", "").replace("Void", "");
-					mresist = mresist.replace(", Void", "").replace("Void", "");
-					mimperv = mimperv.replace(", Void", "").replace("Void", "");
-				}
-
-				if (_settings.ResizeMonsterInfo){
-					var maxchar = (12 - monNameLength) * (monNameLength <= 12 ? 0.7 : 1.4) + 46;
-					allm1 = allm + mclass.length + mskillspell.length + mskilltype.length + mimperv.length + mresist.length + mweak.length + mattack.length + String(mpl).length + mskillspell2.length + mskilltype2.length + mskillspell3.length + mskilltype3.length + mspiritsksp.length + mspirittype.length;
-					if (allm1 > maxchar) {
-						if (monNameLength > 12 && !isHVFont) {
-							monName.css("font-size", 12);
-							monName.css("font-weight", "bold")
-						}
-						if (monNameLength >= 17 && !isHVFont) monName.html(monName.html().slice(0,15) + "...");
-						monNameLength = monName.html().length;
-						if (monNameLength <= 5) maxchar =  (12 - monNameLength)*1.9 + 46;
-						else if (monNameLength <= 12) maxchar =  (12 - monNameLength)*1.95 + 46;
-						else if (monNameLength < 17) maxchar =  (17 - monNameLength)*0.8 + 46;
-						else maxchar =  (18 - monNameLength)*1.2 + 46;
-					}
-					if (allm1 > maxchar) {
-						mimperv = mimperv.replace(/\s/g, "");
-						mresist = mresist.replace(/\s/g, "");
-						mweak = mweak.replace(/\s/g, "");
-						mskilltype = mskilltype.replace(/\s/g, "");
-						mskilltype2 = mskilltype2.replace(/\s/g, "");
-						mskillspell = mskillspell.replace(/\s/g, "");
-						mskillspell2 = mskillspell2.replace(/\s/g, "");
-						allm1 = allm + mclass.length + mskillspell.length + mskilltype.length + mimperv.length + mresist.length + mweak.length + mattack.length + String(mpl).length + mskillspell2.length + mskilltype2.length + mskillspell3.length + mskilltype3.length + mspiritsksp.length + mspirittype.length;
-					}
-					if (allm1 > maxchar) {
-						mskilltype = mskilltype.replace("Slash", "Sl").replace("Crush", "Cr").replace("Pierc", "Pi");
-						mskilltype2 = mskilltype2.replace("Slash", "Sl").replace("Crush", "Cr").replace("Pierc", "Pi");
-						mskilltype3 = mskilltype3.replace("Slash", "Sl").replace("Crush", "Cr").replace("Pierc", "Pi");
-						mspirittype = mspirittype.replace("Slash", "Sl").replace("Crush", "Cr").replace("Pierc", "Pi");
-						mspiritsksp = mspiritsksp.replace("Spirit:", "S:");
-						mattack = mattack.replace("Slash", "Sl").replace("Crush", "Cr").replace("Pierc", "Pi");
-						allm1 = allm + mclass.length + mskillspell.length + mskilltype.length + mimperv.length + mresist.length + mweak.length + mattack.length + String(mpl).length + mskillspell2.length + mskilltype2.length + mskillspell3.length + mskilltype3.length + mspiritsksp.length + mspirittype.length;
-					}
-					if (allm1 > maxchar) {
-						mimperv = mimperv.replace("Slash", "Sl").replace("Crush", "Cr").replace("Pierc", "Pi");
-						mresist = mresist.replace("Slash", "Sl").replace("Crush", "Cr").replace("Pierc", "Pi");
-						allm1 = allm + mclass.length + mskillspell.length + mskilltype.length + mimperv.length + mresist.length + mweak.length + mattack.length + String(mpl).length + mskillspell2.length + mskilltype2.length + mskillspell3.length + mskilltype3.length + mspiritsksp.length + mspirittype.length;
-					}
-					if (allm1 > maxchar) {
-						mweak = mweak.replace("Slash", "Sl").replace("Crush", "Cr").replace("Pierc", "Pi");
-						mspiritsksp = mspiritsksp.replace("S:", "");
-						allm1 = allm + mclass.length + mskillspell.length + mskilltype.length + mimperv.length + mresist.length + mweak.length + mattack.length + String(mpl).length + mskillspell2.length + mskilltype2.length + mskillspell3.length + mskilltype3.length + mspiritsksp.length + mspirittype.length;
-					}
-					if (allm1 > maxchar) {
-						mclass = mclass.slice(0, 4);
-						allm1 = allm + mclass.length + mskillspell.length + mskilltype.length + mimperv.length + mresist.length + mweak.length + mattack.length + String(mpl).length + mskillspell2.length + mskilltype2.length + mskillspell3.length + mskilltype3.length + mspiritsksp.length + mspirittype.length;
-					}
-					if (allm1 > maxchar) {
-						mclass = mclass.slice(0, 3);
-						allm1 = allm + mclass.length + mskillspell.length + mskilltype.length + mimperv.length + mresist.length + mweak.length + mattack.length + String(mpl).length + mskillspell2.length + mskilltype2.length + mskillspell3.length + mskilltype3.length + mspiritsksp.length + mspirittype.length;
-					}
-					if (allm1 > maxchar) {
-						mskilltype = mskilltype.replace("Fire", "Fir").replace("Cold", "Col").replace("Elec", "Ele").replace("Wind", "Win").replace("Holy", "Hol").replace("Dark", "Dar").replace("Soul", "Sou").replace("Slash", "Sl").replace("Crush", "Cr").replace("Pierc", "Pi");
-						mskilltype2 = mskilltype2.replace("Fire", "Fir").replace("Cold", "Col").replace("Elec", "Ele").replace("Wind", "Win").replace("Holy", "Hol").replace("Dark", "Dar").replace("Soul", "Sou").replace("Slash", "Sl").replace("Crush", "Cr").replace("Pierc", "Pi");
-						mskilltype3 = mskilltype3.replace("Fire", "Fir").replace("Cold", "Col").replace("Elec", "Ele").replace("Wind", "Win").replace("Holy", "Hol").replace("Dark", "Dar").replace("Soul", "Sou").replace("Slash", "Sl").replace("Crush", "Cr").replace("Pierc", "Pi");
-						mspirittype = mspirittype.replace("Fire", "Fir").replace("Cold", "Col").replace("Elec", "Ele").replace("Wind", "Win").replace("Holy", "Hol").replace("Dark", "Dar").replace("Soul", "Sou").replace("Slash", "Sl").replace("Crush", "Cr").replace("Pierc", "Pi");
-						mattack = mattack.replace("Fire", "Fir").replace("Cold", "Col").replace("Elec", "Ele").replace("Wind", "Win").replace("Holy", "Hol").replace("Dark", "Dar").replace("Soul", "Sou").replace("Slash", "Sl").replace("Crush", "Cr").replace("Pierc", "Pi");
-						allm1 = allm + mclass.length + mskillspell.length + mskilltype.length + mimperv.length + mresist.length + mweak.length + mattack.length + String(mpl).length + mskillspell2.length + mskilltype2.length + mskillspell3.length + mskilltype3.length + mspiritsksp.length + mspirittype.length;
-					}
-					if (allm1 > maxchar) {
-						mresist = mresist.replace("Fire", "Fir").replace("Cold", "Col").replace("Elec", "Ele").replace("Wind", "Win").replace("Holy", "Hol").replace("Dark", "Dar").replace("Soul", "Sou").replace("Slash", "Sl").replace("Crush", "Cr").replace("Pierc", "Pi");
-						mimperv = mimperv.replace("Fire", "Fir").replace("Cold", "Col").replace("Elec", "Ele").replace("Wind", "Win").replace("Holy", "Hol").replace("Dark", "Dar").replace("Soul", "Sou").replace("Slash", "Sl").replace("Crush", "Cr").replace("Pierc", "Pi");
-						allm1 = allm + mclass.length + mskillspell.length + mskilltype.length + mimperv.length + mresist.length + mweak.length + mattack.length + String(mpl).length + mskillspell2.length + mskilltype2.length + mskillspell3.length + mskilltype3.length + mspiritsksp.length + mspirittype.length;
-					}
-					if (allm1 > maxchar) {
-						mweak = mweak.replace("Fire", "Fir").replace("Cold", "Col").replace("Elec", "Ele").replace("Wind", "Win").replace("Holy", "Hol").replace("Dark", "Dar").replace("Soul", "Sou").replace("Slash", "Sl").replace("Crush", "Cr").replace("Pierc", "Pi");
-						allm1 = allm + mclass.length + mskillspell.length + mskilltype.length + mimperv.length + mresist.length + mweak.length + mattack.length + String(mpl).length + mskillspell2.length + mskilltype2.length + mskillspell3.length + mskilltype3.length + mspiritsksp.length + mspirittype.length;
-					}
-					if (allm1 > maxchar) {
-						mskillspell = mskillspell.replace("Mag", "Ma").replace("Phys", "Ph");
-						mskillspell2 = mskillspell2.replace("Mag", "Ma").replace("Phys", "Ph");
-						mskillspell3 = mskillspell3.replace("Mag", "Ma").replace("Phys", "Ph");
-						mspiritsksp = mspiritsksp.replace("Mag", "Ma").replace("Phys", "Ph");
-						allm1 = allm + mclass.length + mskillspell.length + mskilltype.length + mimperv.length + mresist.length + mweak.length + mattack.length + String(mpl).length + mskillspell2.length + mskilltype2.length + mskillspell3.length + mskilltype3.length + mspiritsksp.length + mspirittype.length;
-					}
-					if (allm1 > maxchar) {
-						mattack = mattack.replace("Fir", "Fi").replace("Col", "Co").replace("Ele", "El").replace("Win", "Wi").replace("Hol", "Ho").replace("Dar", "Da").replace("Sou", "So").replace("Elm", "Elem");
-						mskilltype = mskilltype.replace("Fir", "Fi").replace("Col", "Co").replace("Ele", "El").replace("Win", "Wi").replace("Hol", "Ho").replace("Dar", "Da").replace("Sou", "So").replace("Elm", "Elem");
-						mskilltype2 = mskilltype2.replace("Fir", "Fi").replace("Col", "Co").replace("Ele", "El").replace("Win", "Wi").replace("Hol", "Ho").replace("Dar", "Da").replace("Sou", "So").replace("Elm", "Elem");
-						mskilltype3 = mskilltype3.replace("Fir", "Fi").replace("Col", "Co").replace("Ele", "El").replace("Win", "Wi").replace("Hol", "Ho").replace("Dar", "Da").replace("Sou", "So").replace("Elm", "Elem");
-						mspirittype = mspirittype.replace("Fir", "Fi").replace("Col", "Co").replace("Ele", "El").replace("Win", "Wi").replace("Hol", "Ho").replace("Dar", "Da").replace("Sou", "So").replace("Elm", "Elem");
-						allm1 = allm + mclass.length + mskillspell.length + mskilltype.length + mimperv.length + mresist.length + mweak.length + mattack.length + String(mpl).length + mskillspell2.length + mskilltype2.length + mskillspell3.length + mskilltype3.length + mspiritsksp.length + mspirittype.length;
-					}
-					if (allm1 > maxchar) {
-						mresist = mresist.replace("Fir", "Fi").replace("Col", "Co").replace("Ele", "El").replace("Win", "Wi").replace("Hol", "Ho").replace("Dar", "Da").replace("Sou", "So").replace("Elm", "Elem");
-						mimperv = mimperv.replace("Fir", "Fi").replace("Col", "Co").replace("Ele", "El").replace("Win", "Wi").replace("Hol", "Ho").replace("Dar", "Da").replace("Sou", "So").replace("Elm", "Elem");
-						allm1 = allm + mclass.length + mskillspell.length + mskilltype.length + mimperv.length + mresist.length + mweak.length + mattack.length + String(mpl).length + mskillspell2.length + mskilltype2.length + mskillspell3.length + mskilltype3.length + mspiritsksp.length + mspirittype.length;
-					}
-					if (allm1 > maxchar) {
-						mweak = mweak.replace("Fir", "Fi").replace("Col", "Co").replace("Ele", "El").replace("Win", "Wi").replace("Hol", "Ho").replace("Dar", "Da").replace("Sou", "So").replace("Elm", "Elem");
-						allm1 = allm + mclass.length + mskillspell.length + mskilltype.length + mimperv.length + mresist.length + mweak.length + mattack.length + String(mpl).length + mskillspell2.length + mskilltype2.length + mskillspell3.length + mskilltype3.length + mspiritsksp.length + mspirittype.length;
-					}
-					if (allm1 > maxchar) {
-						mattack = mattack.replace("Fi", "F").replace("Co", "C").replace("El", "E").replace("Wi", "W").replace("Ho", "H").replace("Da", "D").replace("So", "S").replace("Eem", "Elem");
-						mskilltype = mskilltype.replace("Fi", "F").replace("Co", "C").replace("El", "E").replace("Wi", "W").replace("Ho", "H").replace("Da", "D").replace("So", "S").replace("Eem", "Elem");
-						mskilltype2 = mskilltype2.replace("Fi", "F").replace("Co", "C").replace("El", "E").replace("Wi", "W").replace("Ho", "H").replace("Da", "D").replace("So", "S").replace("Eem", "Elem");
-						mskilltype3 = mskilltype3.replace("Fi", "F").replace("Co", "C").replace("El", "E").replace("Wi", "W").replace("Ho", "H").replace("Da", "D").replace("So", "S").replace("Eem", "Elem");
-						mspirittype = mspirittype.replace("Fi", "F").replace("Co", "C").replace("El", "E").replace("Wi", "W").replace("Ho", "H").replace("Da", "D").replace("So", "S").replace("Eem", "Elem");
-						allm1 = allm + mclass.length + mskillspell.length + mskilltype.length + mimperv.length + mresist.length + mweak.length + mattack.length + String(mpl).length + mskillspell2.length + mskilltype2.length + mskillspell3.length + mskilltype3.length + mspiritsksp.length + mspirittype.length;
-					}
-					if (allm1 > maxchar) {
-						mskillspell = mskillspell.replace("Ma", "M").replace("Ph", "P");
-						mskillspell2 = mskillspell2.replace("Ma", "M").replace("Ph", "P");
-						mskillspell3 = mskillspell3.replace("Ma", "M").replace("Ph", "P");
-						mspiritsksp = mspiritsksp.replace("Ma", "M").replace("Ph", "P");
-						allm1 = allm + mclass.length + mskillspell.length + mskilltype.length + mimperv.length + mresist.length + mweak.length + mattack.length + String(mpl).length + mskillspell2.length + mskilltype2.length + mskillspell3.length + mskilltype3.length + mspiritsksp.length + mspirittype.length;
-					}
-					if (allm1 > maxchar) {
-						mresist = mresist.replace("Fi", "F").replace("Co", "C").replace("El", "E").replace("Wi", "W").replace("Ho", "H").replace("Da", "D").replace("So", "S").replace("Eem", "Elem");
-						mimperv = mimperv.replace("Fi", "F").replace("Co", "C").replace("El", "E").replace("Wi", "W").replace("Ho", "H").replace("Da", "D").replace("So", "S").replace("Eem", "Elem");
-						allm1 = allm + mclass.length + mskillspell.length + mskilltype.length + mimperv.length + mresist.length + mweak.length + mattack.length + String(mpl).length + mskillspell2.length + mskilltype2.length + mskillspell3.length + mskilltype3.length + mspiritsksp.length + mspirittype.length;
-					}
-					if (allm1 > maxchar) {
-						mweak = mweak.replace("Fi", "F").replace("Co", "C").replace("El", "E").replace("Wi", "W").replace("Ho", "H").replace("Da", "D").replace("So", "S").replace("Eem", "Elem");
-					}
-				}
-
-				if (mclass !== "0" && mclass !== "undefined" && mclass !== "unde" && mclass !== "und") {
-					d = "";
-					if (_settings.isShowClassHvstatStyle){
-						d = "{<span style='color:blue'>" + mclass;
-						d += _settings.isShowPLHvstatStyle ? ", " + mpl + "+</span>}" : "</span>}";
-					} else if (_settings.isShowPLHvstatStyle) d = "{<span style='color:blue'>" + mpl + "+</span>}";
-					if (_settings.isShowWeakHvstatStyle) {
-						d += mweak === "0" ? "" : "[<span style='color:#3CB878'>" + mweak + "</span>";
-						if (!_settings.isShowResHvstatStyle) d += "]";
-					}
-					if (_settings.isShowResHvstatStyle) {
-						if (!_settings.isShowWeakHvstatStyle) d += "[";
-						d += mresist === "-" ? "" : "|<span style='color:#FF3300'>" + mresist + "</span>";
-						d += mimperv === "-" ? "" : "|<b><u><span style='color:#990000'>" + mimperv + "</span></u></b>";
-						d += "]";
-					}
-					if (_settings.isShowAttackHvstatStyle) {
-						d += mattack === "0" ? "(" : "(<span style='color:black'>" + mattack + "</span>";
-						d += mskillspell === "" ? "" : ";<span style='color:blue'>" + mskillspell + "</span>";
-						d += mskilltype === "" ? "" : "-<span style='color:blue'>" + mskilltype + "</span>";
-						d += mskillspell2 === "" ? "" : "|<span style='color:blue'>" + mskillspell2 + "</span>";
-						d += mskilltype2 === "" ? "" : "-<span style='color:blue'>" + mskilltype2 + "</span>";
-						d += mskillspell3 === "" ? "" : "|<span style='color:blue'>" + mskillspell3 + "</span>";
-						d += mskilltype3 === "" ? "" : "-<span style='color:blue'>" + mskilltype3 + "</span>";
-						d += mspiritsksp === "" ? "" : "|<span style='color:red'>" + mspiritsksp + "</span>";
-						d += mspirittype === "" ? "" : "-<span style='color:red'>" + mspirittype + "</span>";
-						d += ")";
-					}
-				} else d = "[<span style='color:blue;font-weight:bold'>NEW</span>]";
-				_ltc.isShowElemHvstatStyle[0]++;
-				_ltc.isShowElemHvstatStyle[1] += TimeCounter(0, timer1);
-			}
-			if (isHVFont) {
-				t = "<div style='cursor:default;position:relative;top:-2px;left:2px;padding:0 1px;margin-left:0px;white-space:nowrap'>" + d + "</span></div>";
-				monNameDiv.innerHTML += t;
-			} else {
-				t = "<div style='font-family:arial;font-size:7pt;font-style:normal;font-weight:bold;display:inline;cursor:default;padding:0 1px;margin-left:1px;white-space:nowrap'>" + d + "</span></div>";
-				monNameDiv.children[0].innerHTML += t;
-				monNameDiv.children[0].style.whiteSpace = "nowrap";
-			}
-		}
-		_ltc.showelem[0]++;
-		_ltc.showelem[1] += TimeCounter(0, timer);
-		if (_settings.isShowMonsterDuration) {
-			timer = TimeCounter(1);
-			showMonsterEffectsDuration(monCurrent);
-			_ltc.showMonsterEffectsDuration[0]++;
-			_ltc.showMonsterEffectsDuration[1] += TimeCounter(0, timer);
-		}
+	for (var i = 0; i < HVStat.numberOfMonsters; i++) {
+		HVStat.monsters[i].renderStats();
 	}
-	_ltc.save();
 }
-function showMonsterEffectsDuration(a) {
-	var array = a.children[3].getElementsByTagName("img");
-	var i = array.length
-	while(i--)createDurationBadge(array[i], i);
+function showMonsterEffectsDuration() {
+	for (var i = 0; i < HVStat.numberOfMonsters; i++) {
+		var baseElement = document.getElementById(HVStat.Monster.getDomElementId(i));
+		var array = baseElement.children[3].getElementsByTagName("img");
+		var j = array.length
+		while(j--)createDurationBadge(array[j], j);
+	}
 }
 function showSelfEffectsDuration() {
 	var array = document.getElementsByClassName("btps")[0].getElementsByTagName("img");
@@ -920,6 +2365,11 @@ function showSelfEffectsDuration() {
 	while(i--)createDurationBadge(array[i], i);
 }
 function createDurationBadge(a, x) {
+	var SELF_EFF_TOP = 34;
+	var SELF_EFF_LEFT = 8;
+	var MON_EFF_TOP = -3;
+	var MON_EFF_LEFT = 5;
+	var FIRST_EFF = 33;
 	var e = a;
 	var g, d;
 	var c, f;
@@ -927,8 +2377,8 @@ function createDurationBadge(a, x) {
 	if (d !== null) g = d[0].replace(")", "").replace(" ", "");
 	if (g >= 0) {
 		var h = e.parentNode.parentNode.parentNode.id === "monsterpane";
-		c = h ? -3 : 34;
-		f = (h ? 5 : 8) + 33 * x;
+		c = h ? MON_EFF_TOP : SELF_EFF_TOP;
+		f = (h ? MON_EFF_LEFT : SELF_EFF_LEFT) + FIRST_EFF * x;
 		var b = "<div style='position:absolute;";
 		if (h) {
 			if (_settings.isMonstersEffectsWarnColor) {
@@ -963,97 +2413,90 @@ function showMonsterNumber() {
 	style2.innerHTML = style;
 	document.head.appendChild(style2);
 }
-function healthWarning() {
-	var barFrameWidth = 120;
-	var c = document.getElementsByTagName("img")[2];
-//	var e = document.getElementsByTagName("img")[3];
-	var cmp = document.getElementsByTagName("img")[5];
-//	var emp = document.getElementsByTagName("img")[6];
-	var csp = document.getElementsByTagName("img")[8];
-//	var esp = document.getElementsByTagName("img")[9];
-	var elemOCBar = document.getElementsByTagName("img")[11];
-//	var elemOCFrame = document.getElementsByTagName("img")[12];
-	var b = c.width / barFrameWidth;
-	var bmp = cmp.width / barFrameWidth;
-	var bsp = csp.width / barFrameWidth;
-	var overchargeRate = elemOCBar.width / barFrameWidth;
-	var d = localStorage.getItem(HV_ALERT);
-	var dmp = localStorage.getItem(HV_ALERTMP);
-	var dsp = localStorage.getItem(HV_ALERTSP);
-	var overchargeAlertState = localStorage.getItem(HV_ALERTOC);
-	var f = (d === null) ? false : JSON.parse(d);
-	var fmp = (dmp === null) ? false : JSON.parse(dmp);
-	var fsp = (dsp === null) ? false : JSON.parse(dsp);
-	var overchargeAlertAlreadyShown = overchargeAlertState === null ? false : JSON.parse(overchargeAlertState);
-	var g = parseFloat(_settings.warnOrangeLevel / 100);
-	var i = parseFloat(_settings.warnRedLevel / 100);
-	var h = parseFloat(_settings.warnAlertLevel / 100);
-	var gmp = parseFloat(_settings.warnOrangeLevelMP / 100);
-	var imp = parseFloat(_settings.warnRedLevelMP / 100);
-	var hmp = parseFloat(_settings.warnAlertLevelMP / 100);
-	var gsp = parseFloat(_settings.warnOrangeLevelSP / 100);
-	var isp = parseFloat(_settings.warnRedLevelSP / 100);
-	var hsp = parseFloat(_settings.warnAlertLevelSP / 100);
-	var a = h + 0.1;
-	var amp = hmp + 0.1;
-	var asp = hsp + 0.1;
-	if ((b <= g) && _settings.isHighlightQC)
-		document.getElementById("quickbar").style.backgroundColor = b > i ? "orange" : "red";
-	else if ((bmp <= gmp) && _settings.isHighlightQC)
-		document.getElementById("quickbar").style.backgroundColor = bmp > imp ? "blue" : "darkblue";
-	else if ((bsp <= gsp) && _settings.isHighlightQC)
-		document.getElementById("quickbar").style.backgroundColor = bsp > isp ? "lime" : "green";
-	if (!isBattleOver && _settings.isShowPopup && (b <= h) && (!f || _settings.isNagHP)) {
-		var sec1 = TimeCounter(1);
-		alert("Your health is dangerously low!");
-		_ltc.healthWarning[1] -= TimeCounter(0, sec1);
-		_ltc.main[1] -= TimeCounter(0, sec1);
-		_ltc.isbattle[1] -= TimeCounter(0, sec1);
-		f = true;
-		localStorage.setItem(HV_ALERT, JSON.stringify(f));
+
+HVStat.highlightQuickcast = function () {
+	var hpHighlightLevel1 = Number(_settings.warnOrangeLevel);
+	var hpHighlightLevel2 = Number(_settings.warnRedLevel);
+	var mpHighlightLevel1 = Number(_settings.warnOrangeLevelMP);
+	var mpHighlightLevel2 = Number(_settings.warnRedLevelMP);
+	var spHighlightLevel1 = Number(_settings.warnOrangeLevelSP);
+	var spHighlightLevel2 = Number(_settings.warnRedLevelSP);
+	if (HVStat.currHpPercent <= hpHighlightLevel1) {
+		HVStat.quickcastBarElement.style.backgroundColor = (HVStat.currHpPercent > hpHighlightLevel2) ? "orange" : "red";
+	} else if (HVStat.currMpPercent <= mpHighlightLevel1) {
+		HVStat.quickcastBarElement.style.backgroundColor = (HVStat.currMpPercent > mpHighlightLevel2) ? "blue" : "darkblue";
+	} else if (HVStat.currSpPercent <= spHighlightLevel1) {
+		HVStat.quickcastBarElement.style.backgroundColor = (HVStat.currSpPercent > spHighlightLevel2) ? "lime" : "green";
 	}
-	if (!isBattleOver && _settings.isShowPopup && (bmp <= hmp) && (!fmp || _settings.isNagMP)) {
-		var sec1 = TimeCounter(1);
-		alert("Your mana is dangerously low!");
-		_ltc.healthWarning[1] -= TimeCounter(0, sec1);
-		_ltc.main[1] -= TimeCounter(0, sec1);
-		_ltc.isbattle[1] -= TimeCounter(0, sec1);
-		fmp = true;
-		localStorage.setItem(HV_ALERTMP, JSON.stringify(fmp));
-	}
-	if (!isBattleOver && _settings.isShowPopup && (bsp <= hsp) && (!fsp || _settings.isNagSP)) {
-		var sec1 = TimeCounter(1);
-		alert("Your spirit is dangerously low!");
-		_ltc.healthWarning[1] -= TimeCounter(0, sec1);
-		_ltc.main[1] -= TimeCounter(0, sec1);
-		_ltc.isbattle[1] -= TimeCounter(0, sec1);
-		fsp = true;
-		localStorage.setItem(HV_ALERTSP, JSON.stringify(fsp));
-	}
-	if (!isBattleOver && _settings.isAlertOverchargeFull && overchargeRate >= 1.0 && !overchargeAlertAlreadyShown) {
-		var sec1 = TimeCounter(1);
-		alert("Your overcharge is full.");
-		overchargeAlertAlreadyShown = true;
-		localStorage.setItem(HV_ALERTOC, JSON.stringify(overchargeAlertAlreadyShown));
-		_ltc.main[1] -= TimeCounter(0, sec1);
-		_ltc.isbattle[1] -= TimeCounter(0, sec1);
-	}
-	if (_settings.isShowPopup) {
-		if (f && b > a) localStorage.removeItem(HV_ALERT);
-		if (fmp && bmp > amp) localStorage.removeItem(HV_ALERTMP);
-		if (fsp && bsp > asp) localStorage.removeItem(HV_ALERTSP);
-	}
-	if (overchargeAlertAlreadyShown && overchargeRate < 1.0)
-		localStorage.removeItem(HV_ALERTOC);
 }
+
+HVStat.warnHealthStatus = function () {
+	var hpAlertAlreadyShown = !!localStorage.getItem(HVStat.key_hpAlertAlreadyShown);
+	var mpAlertAlreadyShown = !!localStorage.getItem(HVStat.key_mpAlertAlreadyShown);
+	var spAlertAlreadyShown = !!localStorage.getItem(HVStat.key_spAlertAlreadyShown);
+	var ocAlertAlreadyShown = !!localStorage.getItem(HVStat.key_ocAlertAlreadyShown);
+	var hpWarningLevel = Number(_settings.warnAlertLevel);
+	var mpWarningLevel = Number(_settings.warnAlertLevelMP);
+	var spWarningLevel = Number(_settings.warnAlertLevelSP);
+	var hpWarningResumeLevel = hpWarningLevel + 10;
+	var mpWarningResumeLevel = mpWarningLevel + 10;
+	var spWarningResumeLevel = spWarningLevel + 10;
+	if (!HVStat.isBattleOver) {
+		if (_settings.isShowPopup) {
+			if (HVStat.currHpPercent <= hpWarningLevel && (!hpAlertAlreadyShown || _settings.isNagHP)) {
+				alert("Your health is dangerously low!");
+				hpAlertAlreadyShown = true;
+				localStorage.setItem(HVStat.key_hpAlertAlreadyShown, "true");
+			}
+			if (HVStat.currMpPercent <= mpWarningLevel && (!mpAlertAlreadyShown || _settings.isNagMP)) {
+				alert("Your mana is dangerously low!");
+				mpAlertAlreadyShown = true;
+				localStorage.setItem(HVStat.key_mpAlertAlreadyShown, "true");
+			}
+			if (HVStat.currSpPercent <= spWarningLevel && (!spAlertAlreadyShown || _settings.isNagSP)) {
+				alert("Your spirit is dangerously low!");
+				spAlertAlreadyShown = true;
+				localStorage.setItem(HVStat.key_spAlertAlreadyShown, "true");
+			}
+		}
+		if (_settings.isAlertOverchargeFull && HVStat.currOcRate >= 1.0 && !ocAlertAlreadyShown) {
+			alert("Your overcharge is full.");
+			ocAlertAlreadyShown = true;
+			localStorage.setItem(HVStat.key_ocAlertAlreadyShown, "true");
+		}
+	}
+	if (hpWarningLevel > hpWarningResumeLevel) {
+		localStorage.removeItem(HVStat.key_hpAlertAlreadyShown);
+	}
+	if (mpWarningLevel > mpWarningResumeLevel) {
+		localStorage.removeItem(HVStat.key_mpAlertAlreadyShown);
+	}
+	if (spWarningLevel > spWarningResumeLevel) {
+		localStorage.removeItem(HVStat.key_spAlertAlreadyShown);
+	}
+	if (HVStat.currOcRate < 1.0) {
+		localStorage.removeItem(HVStat.key_ocAlertAlreadyShown);
+	}
+}
+
+HVStat.resetHealthWarningStates = function () {
+	localStorage.removeItem(HVStat.key_hpAlertAlreadyShown);
+	localStorage.removeItem(HVStat.key_mpAlertAlreadyShown);
+	localStorage.removeItem(HVStat.key_spAlertAlreadyShown);
+	localStorage.removeItem(HVStat.key_ocAlertAlreadyShown);
+}
+
 function collectCurrentProfsData() {
-	if (!isCharPage || isHVFont) return;
+	if (!HVStat.isCharacterPage || HVStat.usingHVFont)
+		return;
 	loadProfsObject();
 	var c = $(".eqm").children().eq(0).children().eq(1).children();
 	var b = _profs.weapProfTotals.length;
-	while (b--) _profs.weapProfTotals[b] = parseFloat(c.eq(0).children().eq(1).find(".fd12").eq(b * 2 + 1).text());
+	while (b--)
+		_profs.weapProfTotals[b] = parseFloat(c.eq(0).children().eq(1).find(".fd12").eq(b * 2 + 1).text());
 	b = _profs.armorProfTotals.length;
-	while (b--) _profs.armorProfTotals[b] = parseFloat(c.eq(0).children().eq(1).find(".fd12").eq(b * 2 + 7).text());
+	while (b--)
+		_profs.armorProfTotals[b] = parseFloat(c.eq(0).children().eq(1).find(".fd12").eq(b * 2 + 7).text());
 	var a = c.eq(1).children().eq(1).find(".fd12");
 	_profs.elemTotal = parseFloat(a.eq(1).text());
 	_profs.divineTotal = parseFloat(a.eq(3).text());
@@ -1066,13 +2509,14 @@ function collectCurrentProfsData() {
 }
 function showSidebarProfs() {
 	loadProfsObject();
-	if (!isProfTotalsRecorded()) return;
+	if (!isProfTotalsRecorded())
+		return;
 	var b = $(".stuffbox").height() - 31;
 	GM_addStyle(".prof_sidebar td {font-family:arial,helvetica,sans-serif; font-size:9pt; font-weight:normal; text-align:left}.prof_sidebar_top td {font-family:arial,helvetica,sans-serif; font-size:10pt; font-weight:bold; text-align:center}");
 	var a = "<div id='_profbutton' class='ui-corner-all' style='position:absolute;top:" + b + "px;border:1px solid;margin-left:5px;padding:2px;width:132px;font-size:10pt;font-weight:bold;text-align:center;cursor:default;'>Proficiency</div>";
 	$(".clb").append(a);
 	$("#_profbutton").mouseover(function () {
-		var c = document.getElementById("popup_box");
+		var c = HVStat.popupElement;
 		var d = $("#_profbutton").offset();
 		c.style.left = d.left + 145 + "px";
 		c.style.top = d.top - 126 + "px";
@@ -1090,7 +2534,7 @@ function showSidebarProfs() {
 		c.style.visibility = "visible";
 	});
 	$("#_profbutton").mouseout(function () {
-		document.getElementById("popup_box").style.visibility = "hidden";
+		HVStat.popupElement.style.visibility = "hidden";
 	});
 }
 function isProfTotalsRecorded() {
@@ -1111,77 +2555,40 @@ function inventoryWarning() {
 	});
 }
 function collectRoundInfo() {
-	var milliseconds1 = TimeCounter(1);
 	var e = "";
 	var a = 0;
 	var ac = 0;
 	var c = "";
 	var d;
 	var b = false;
+	// create monster objects
+	for (var i = 0; i < HVStat.numberOfMonsters; i++) {
+		HVStat.monsters.push(new HVStat.Monster(i));
+	}
 	loadRoundObject();
-	if (_settings.isRememberSkillsTypes) loadCollectdataObject();
-	if (_settings.isTrackItems) loadDropsObject();
-	if (_settings.isTrackRewards) loadRewardsObject();
-	if (!_round.isLoaded) {
-		// create monster objects
-		$("#monsterpane > div").each(function () {
-			var monster = new HVMonster();
-			_round.monsters.push(monster);
-		});
-	}
-	if (_settings.isSpellsSkillsDifference || _settings.isShowStatsPopup) {
-		var t74 = TimeCounter(1);
-		var i = _round.monsters.length;
-		while (i--) {
-			var e = $("#" + getMonsterElementId(i)).children().eq(2).children();
-			if (e.filter(".btm5").length > 2) {
-				_round.monsters[i].hasspbar = true;
-			}
-			if (_round.monsters[i].hasspbar) {
-				var spbar = e.eq(2);
-				// get current SP percent
-				_round.monsters[i].sp1 = spbar.children().eq(0).children("img").eq(1).width() / 120;
-			}
-		}
-		_ltc.changedMHits[1] += TimeCounter(0, t74);
-	}
-	var index = _round.monsters.length - 1;
+	if (_settings.isTrackItems)
+		loadDropsObject();
+	if (_settings.isTrackRewards)
+		loadRewardsObject();
+	var index = HVStat.monsters.length - 1;
 	$("#togpane_log td:first-child").each(function (j) {
+		var reResult;
 		var g = $(this);
 		var k = g.next().next();
 		if (j === 0) {
 			e = g.html();
 		}
 		c = k.html();
-		var t87 = TimeCounter(1);
 		var kline = g.html();
 		var kline2 = parseInt(g.next().html()) - 1;
 		var sel0 = $(".t1:contains(" + kline + ")");
 		var sel = sel0.next().filter(":contains(" + kline2 + ")").next().html();
 		var selall = $(".t1:contains(" + kline + ")").next().next().text();
-		_ltc.sel[0]++;
-		_ltc.sel[1] += TimeCounter(0, t87);
-		if (!_round.isLoaded) {
+		if (!_round.isLoaded) { // -> if turn 0
 			if (c.match(/HP=/)) {
-				var h = _round.monsters[index];
-				h.maxHp = parseInt(c.match(/HP=\d+(\.)?[0-9]+?$/)[0].replace("HP=", ""));
-				h.currHp = h.maxHp;
-				var mid = parseInt(c.match(/MID=\d+?\s/)[0].replace("MID=", ""));
-				h.id = mid;
-				h.name = c.match(/\([^\.\)]{0,30}\) LV/i)[0].replace("(", "").replace(")", "").replace(" LV", "");
-				if (_settings.isShowElemHvstatStyle) {
-					var t43 = TimeCounter(1);
-					loadDatabaseObject();
-					h.mclass = _database.mclass[mid];
-					h.mpl = _database.mpl[mid];
-					h.mattack = _database.mattack[mid];
-					h.mweak = _database.mweak[mid];
-					h.mresist = _database.mresist[mid];
-					h.mimperv = _database.mimperv[mid];
-					h.mskilltype = _database.mskilltype[mid];
-					h.mskillspell = _database.mskillspell[mid];
-					h.datescan = _database.datescan[mid];
-					_ltc.isShowElemHvstatStyle[1] += TimeCounter(0, t43);
+				HVStat.monsters[index].fetchStartingLog(c);
+				if (_settings.showMonsterInfoFromDB) {
+					HVStat.monsters[index].getFromDB(HVStat.transaction, RoundSave);
 				}
 				if (_settings.isTrackItems) {
 					_round.dropChances++;
@@ -1196,16 +2603,12 @@ function collectRoundInfo() {
 				}
 			}
 			if (_settings.isShowRoundReminder && (_round.maxRound >= _settings.reminderMinRounds) && (_round.currRound === _round.maxRound - _settings.reminderBeforeEnd) && !b) {
-				var sec1 = TimeCounter(1);
 				if (_settings.reminderBeforeEnd === 0) {
 					alert("This is final round");
 				} else {
 					alert("The final round is approaching.");
 				}
 				b = true;
-				_ltc.collectRoundInfo[1] -= TimeCounter(0, sec1);
-				_ltc.main[1] -= TimeCounter(0, sec1);
-				_ltc.isbattle[1] -= TimeCounter(0, sec1);
 			}
 			if (c.match(/random encounter/)) {
 				_round.battleType = HOURLY;
@@ -1219,38 +2622,22 @@ function collectRoundInfo() {
 			} else if (c.match(/CrysFest/)) {
 				_round.battleType = CRYSFEST;
 			}
-			_round.save();
+			RoundSave();
 		}
 		if (g.html() !== e) {
 			return false;
 		}
 		if (_settings.isAlertGem && c.match(/drops a (.*) Gem/)) {
-			var sec1 = TimeCounter(1);
 			alert("You picked up a " + RegExp.$1 + " Gem.");
-			_ltc.collectRoundInfo[1] -= TimeCounter(0, sec1);
-			_ltc.main[1] -= TimeCounter(0, sec1);
-			_ltc.isbattle[1] -= TimeCounter(0, sec1);
 		}
 		if (_settings.isWarnAbsorbTrigger && /The spell is absorbed/.test(c)) {
-			var sec1 = TimeCounter(1);
 			alert("Absorbing Ward has triggered.");
-			_ltc.collectRoundInfo[1] -= TimeCounter(0, sec1);
-			_ltc.main[1] -= TimeCounter(0, sec1);
-			_ltc.isbattle[1] -= TimeCounter(0, sec1);
 		}
 		if (_settings.isWarnSparkTrigger && c.match(/spark of life.*defeat/ig)) {
-			var sec1 = TimeCounter(1);
 			alert("Spark of Life has triggered!!");
-			_ltc.collectRoundInfo[1] -= TimeCounter(0, sec1);
-			_ltc.main[1] -= TimeCounter(0, sec1);
-			_ltc.isbattle[1] -= TimeCounter(0, sec1);
 		}
 		if (_settings.isWarnSparkExpire && c.match(/spark of life.*expired/ig)) {
-			var sec1 = TimeCounter(1);
 			alert("Spark of Life has expired!!");
-			_ltc.collectRoundInfo[1] -= TimeCounter(0, sec1);
-			_ltc.main[1] -= TimeCounter(0, sec1);
-			_ltc.isbattle[1] -= TimeCounter(0, sec1);
 		}
 		if ((_settings.isShowSidebarProfs || _settings.isTrackStats) && c.match(/0.0(\d+) points of (.*?) proficiency/ig)) {
 			var p = (RegExp.$1) / 100;
@@ -1301,53 +2688,26 @@ function collectRoundInfo() {
 			_profs.save();
 		}
 		if (_settings.isRememberScan) {
-			if (c.match(/scanning/i)) {
-				var milliseconds3 = TimeCounter(1);
-				_round.scan[0] = c.match(/scanning [^\.]{1,30}\.{3,}/i)[0].replace("Scanning ", "").replace("...", "");
-				var scanname = c.match(/scanning [^\.]{1,30}\.{3,}/i)[0].replace("Scanning ", "").replace("...", "");
-				var i = _round.monsters.length;
-				while (i--) {
-					if (_round.monsters[i].name === scanname) {
-						_round.scan[0] = _round.monsters[i].id;
-						break;
+			if (c.indexOf("Scanning") >= 0) {
+				(function () {
+					var scanningMonsterName;
+					var scanningMonsterIndex = -1;
+					var r = /Scanning ([^\.]{0,30})\.{3,}/.exec(c);
+					var i, len, monster;
+					if (r && r.length >= 2) {
+						scanningMonsterName = r[1];
+						len = HVStat.monsters.length;
+						for (i = 0; i < len; i++) {
+							monster = HVStat.monsters[i];
+							if (monster.name === scanningMonsterName) {
+								monster.fetchScanningLog(c, HVStat.transaction);
+							}
+						}
 					}
-				}
-				if (c.match(/Monster Class.{1,37}(Common|Uncommon|Rare|Legendary|Ultimate)/i)) {
-					_round.scan[1] = c.match(/Monster Class.{1,37}(Common|Uncommon|Rare|Legendary|Ultimate)/i)[0].replace("Monster Class:</strong></td><td style=\"width:60%\">", "");
-					_round.scan[2] = 0;
-				} else {	
-					_round.scan[1] = c.match(/[a-z]+. Power Level/i)[0].replace(", Power Level", "");
-					_round.scan[2] = parseInt(c.match(/Power Level \d+/i)[0].replace("Power Level ", ""));
-				}
-				_round.scan[3] = c.match(/melee attack.{1,19}[a-z]+/i)[0].replace("Melee Attack:</strong></td><td>", "");
-				_round.scan[4] = c.match(/weak against.{1,19}[a-z]+(\, [a-z]+)*/i)[0].replace("Weak against:</strong></td><td>", "");
-				_round.scan[5] = c.match(/resistant to.{1,19}[a-z]+(\, [a-z]+)*/i)[0].replace("Resistant to:</strong></td><td>", "");
-				_round.scan[6] = c.match(/impervious to.{1,19}[a-z]+(\, [a-z]+)*/i)[0].replace("Impervious to:</strong></td><td>", "");
-				_round.scan[7] = (new Date()).getTime();
-				if (_settings.isRememberSkillsTypes) {
-					SaveToDatabase(0);
-				} else {
-					SaveToDatabase(1);
-				}
-				var mid = parseInt(_round.scan[0]);
-				_round.monsters[i].mclass = _database.mclass[mid];
-				_round.monsters[i].mpl = _database.mpl[mid];
-				_round.monsters[i].mattack = _database.mattack[mid];
-				_round.monsters[i].mweak = _database.mweak[mid];
-				_round.monsters[i].mresist = _database.mresist[mid];
-				_round.monsters[i].mimperv = _database.mimperv[mid];
-				_round.monsters[i].mskilltype = _database.mskilltype[mid];
-				_round.monsters[i].mskillspell = _database.mskillspell[mid];
-				_round.monsters[i].datescan = _database.datescan[mid];
-				_ltc.isRememberScan[0]++;
-				_ltc.isRememberScan[1] += TimeCounter(0, milliseconds3);
-				_ltc.collectRoundInfo[1] -= TimeCounter(0, milliseconds3);
-				_ltc.main[1] -= TimeCounter(0, milliseconds3);
-				_ltc.isbattle[1] -= TimeCounter(0,milliseconds3);
+				})();
 			}
 		}
 		if (_settings.isTrackStats || _settings.isShowEndStats) {
-			var milliseconds4 = TimeCounter(1);
 			var o = 0;
 			if (c.match(/\s(\d+)\s/)) {
 				o = parseInt(RegExp.$1);
@@ -1374,7 +2734,6 @@ function collectRoundInfo() {
 					_round.effectPoison[1] += o;
 					_round.effectPoison[0]++;
 				} else {
-					var milliseconds20 = TimeCounter(1);
 					if (c.match(/(searing skin|freezing limbs|deep burns|turbulent air|burning soul|breached defence|blunted attack) (hits|blasts|explodes)/i) && !c.match(/(hits you |crits you )/i)) {
 						_round.elemEffects[1]++;
 						_round.elemEffects[2] += o;
@@ -1394,8 +2753,6 @@ function collectRoundInfo() {
 						_round.forbidSpells[1]++;
 						_round.forbidSpells[2] += o
 					}
-					_ltc.extendedHits[0]++;
-					_ltc.extendedHits[1] += TimeCounter(0, milliseconds20);
 				}
 			} else if (c.match(/(hits you )|(crits you )/i)) {
 				_round.mAttempts++;
@@ -1412,34 +2769,14 @@ function collectRoundInfo() {
 						_round.pskills[4] += o;
 					}
 					if (_settings.isRememberSkillsTypes) {
-						var milliseconds21 = TimeCounter(1);
-						var j = _round.monsters.length;
+						var j = HVStat.monsters.length;
 						while (j--) {
-							if (sel.match(/[^\.]{1,30} (uses|casts) /i)[0].replace(" uses ","").replace(" casts ","") === _round.monsters[j].name) {
-								var mid = parseInt(_round.monsters[j].id);
-								var stype = c.match(/[a-z]{1,10} damage/i)[0].replace(" damage","");
-								_collectdata.skillmid.push(mid);
-								_collectdata.skilltype.push(stype);
-								var spdiff = _round.monsters[j].sp1 - _round.monsters[j].sp2;
-								if (sel.match(/ casts /i)) {
-									if (spdiff < 0) {
-										_collectdata.mskillspell.push(3);
-									} else {
-										_collectdata.mskillspell.push(1);
-									}
-								} else {
-									if (spdiff < 0) {
-										_collectdata.mskillspell.push(4);
-									} else {
-										_collectdata.mskillspell.push(2);
-									}
-								}
-								_collectdata.save();
+							reResult = /([^\.]{1,30}) (?:uses|casts) /.exec(sel);
+							if (reResult && reResult.length >= 2 && reResult[1] === HVStat.monsters[j].name && reResult[1].indexOf("Unnamed ") !== 0) {
+								HVStat.monsters[j].fetchSkillLog(sel, c, HVStat.transaction);
 								break;
 							}
 						}
-						_ltc.changedMHits[0]++;
-						_ltc.changedMHits[1] += TimeCounter(0, milliseconds21);
 					}
 				}
 			} else if (c.match(/you (dodge|evade|block|parry|resist)|(misses.*?against you)/i)) {
@@ -1460,7 +2797,6 @@ function collectRoundInfo() {
 					_round.mAttempts++;
 					_round.mSpells++;
 				} else if (c.match(/you cast/i)) {
-					var milliseconds22 = TimeCounter(1);
 					if (c.match(/(poison|slow|weaken|sleep|confuse|imperil|blind|silence|nerf|x.nerf|magnet|lifestream)/i)) {
 						_round.depSpells[0]++;
 						_round.sAttempts++
@@ -1494,8 +2830,6 @@ function collectRoundInfo() {
 							_round.cureCounts[c.match(/cure\./i) ? 0 : c.match(/cure ii\./i) ? 1 : 2]++
 						}
 					}
-					_ltc.cast[0]++;
-					_ltc.cast[1] += TimeCounter(0, milliseconds22);
 				}
 			} else if (c.match(/The spell is absorbed. You gain (\d+) Magic Points/)) {
 				_round.absArry[1]++;
@@ -1516,7 +2850,6 @@ function collectRoundInfo() {
 				} else if (c.match(/gain the effect Channeling/i)) {
 					_round.channel++;
 				} else {
-					var milliseconds23 = TimeCounter(1);
 					if (c.match(/gains the effect (searing skin|freezing limbs|deep burns|turbulent air|breached defence|blunted attack|burning soul|rippened soul)/i)) {
 						_round.elemEffects[0]++;
 					} else if (c.match(/gains the effect (spreading poison|slowed|weakened|sleep|confused|imperiled|blinded|silenced|nerfed|magically snared|lifestream)/i)) {
@@ -1534,8 +2867,6 @@ function collectRoundInfo() {
 					} else if (c.match(/gains the effect ether theft/i)) {
 						_round.weaponprocs[3]++;
 					}
-					_ltc.effects[0]++;
-					_ltc.effects[1] += TimeCounter(0, milliseconds23);
 				}
 			} else if (c.match(/uses?/i)) {
 				if (c.match(/uses/i)) {
@@ -1552,23 +2883,10 @@ function collectRoundInfo() {
 					_round.weaponprocs[6]++;
 				}
 			}
-			if (_settings.isTrackStats && !_settings.isShowEndStats) {
-				_ltc.isTrackStats[0]++;
-				_ltc.isTrackStats[1] += TimeCounter(0, milliseconds4);
-			} else if (_settings.isShowEndStats && !_settings.isTrackStats) {
-				_ltc.showBattleEndStats[0]++;
-				_ltc.showBattleEndStats[1] += TimeCounter(0, milliseconds4);
-			} else {
-				_ltc.isTrackStats[0]++;
-				_ltc.isTrackStats[1] += parseInt((TimeCounter(0, milliseconds4) / 2).toFixed());
-				_ltc.showBattleEndStats[0]++;
-				_ltc.showBattleEndStats[1] += parseInt((TimeCounter(0, milliseconds4) / 2).toFixed());
-			}
 		}
 		var l = /\[.*?\]/i;
 		var n;
 		var t = 1;
-		var milliseconds5 = TimeCounter(1);
 		if (c.match(/dropped.*?color:.*?red.*?\[.*?\]/ig)) {
 			_equips++;
 			var q = c.match(l)[0];
@@ -1622,8 +2940,6 @@ function collectRoundInfo() {
 			_drops.dropChances--;
 			_drops.dropChancesbyBT[_round.battleType]--;
 		}
-		_ltc.isTrackItems[0]++;
-		_ltc.isTrackItems[1] += TimeCounter(0, milliseconds5);
 		if (c.match(/(clear bonus).*?color:.*?red.*?\[.*?\]/ig)) {
 			_equips++;
 			var s = c.match(l)[0];
@@ -1696,23 +3012,18 @@ function collectRoundInfo() {
 	if (e > _round.lastTurn) {
 		_round.lastTurn = e;
 	}
-	if (_settings.isSpellsSkillsDifference) {
-		var t74 = TimeCounter(1);
-		var i = _round.monsters.length;
-		while (i--) {
-			if (_round.monsters[i].hasspbar) {
-				_round.monsters[i].sp2 = _round.monsters[i].sp1;
-			}
-		}
-		_ltc.changedMHits[1] += TimeCounter(0, t74);
-	}
-	_round.save();
-	_ltc.collectRoundInfo[0]++;
-	_ltc.collectRoundInfo[1] += TimeCounter(0, milliseconds1);
-	_ltc.save();
+	RoundSave();
 }
+
+function RoundSave() {
+	_round.monsters = [];
+	HVStat.monsters.forEach(function (element, index, array) {
+		_round.monsters[index] = element.valueObject;
+	});
+	_round.save();
+}
+
 function saveStats() {
-	var milliseconds1 = TimeCounter(1);
 	loadOverviewObject();
 	loadStatsObject();
 	loadRewardsObject();
@@ -1875,9 +3186,6 @@ function saveStats() {
 	_stats.save();
 	_rewards.save();
 	_drops.save();
-	_ltc.saveStats[0]++;
-	_ltc.saveStats[1] += TimeCounter(0, milliseconds1);
-	_ltc.save();
 }
 function getBattleEndStatsHtml() {
 	var f = _round.sHits[0] + _round.sHits[1] + _round.depSpells[1] + _round.sResists;
@@ -1956,6 +3264,7 @@ function getReportOverviewHtml() {
 	var j = "";
 	var y = "";
 	var m = _settings.isColumnInventory ? a : w;
+	var p = _settings.isHideHVLogo ? a : w;
 	var b = _settings.isShowSidebarProfs ? a : w;
 	var o = _settings.isShowRoundReminder ? a : w;
 	var h = _settings.isShowHighlight ? a : w;
@@ -1963,13 +3272,11 @@ function getReportOverviewHtml() {
 	var D = _settings.isShowSelfDuration ? a : w;
 	var G = _settings.isShowEndStats ? a : w;
 	var J = _settings.isAlertGem ? a : w;
-	y = _settings.isShowMonsterHP ? '<span style="color:green"><b>HP</b></span>' : I;
+	y = _settings.showMonsterHP ? '<span style="color:green"><b>HP</b></span>' : I;
 	y += N;
-	y += _settings.isShowMonsterMP ? '<span style="color:green"><b>MP</b></span>' : I;
+	y += _settings.showMonsterMP ? '<span style="color:green"><b>MP</b></span>' : I;
 	y += N;
-	y += _settings.isShowMonsterSP ? '<span style="color:green"><b>SP</b></span>' : I;
-	y += N;
-	y += _settings.isShowMonsterElements ? '<span style="color:green"><b>Resistance</b></span>' : I;
+	y += _settings.showMonsterSP ? '<span style="color:green"><b>SP</b></span>' : I;
 	y += N;
 	y += _settings.isShowMonsterDuration ? '<span style="color:green"><b>Duration</b></span>' : I;
 	B = _settings.isTrackStats ? a : _stats.isLoaded && _stats.rounds > 0 ? q : w;
@@ -2019,7 +3326,7 @@ function getReportOverviewHtml() {
 		else E = K + " days, " + Math.floor((v / 60) - (K * 24)) + " hours, " + (v % 60).toFixed() + " mins";
 		var e = f.toLocaleString();
 		var z = r.toLocaleString();
-		if (isChrome) {
+		if (HVStat.isChrome) {
 			e = f.toLocaleDateString() + " " + f.toLocaleTimeString();
 			z = r.toLocaleDateString() + " " + r.toLocaleTimeString();
 		}
@@ -2041,26 +3348,6 @@ function getReportOverviewHtml() {
 		var t = 0;
 		var s = "none yet!";
 		var H = "N/A";
-		var avtime = (_ltc.main[1] / _ltc.main[0]).toFixed();
-		var avtime2 = (_ltc.isbattle[1] / _ltc.isbattle[0]).toFixed(1);
-		var loadtime = (_ltc.pageLoad[3] / _ltc.pageLoad[2]).toFixed(1);
-		var at = (_ltc.isbattle[1]/_ltc.isbattle[0] + _ltc.pageLoad[3]/_ltc.pageLoad[2]).toFixed(1);
-		var loadtime03 = (_ltc.pageLoad[5] / _ltc.pageLoad[4]).toFixed(1);
-		var at03 = (_ltc.isbattle[1]/_ltc.isbattle[0] + _ltc.pageLoad[5]/_ltc.pageLoad[4]).toFixed(1);
-		var loadtime06 = (_ltc.pageLoad[7] / _ltc.pageLoad[6]).toFixed(1);
-		var at06 = (_ltc.isbattle[1]/_ltc.isbattle[0] + _ltc.pageLoad[7]/_ltc.pageLoad[6]).toFixed(1);
-		var loadtime09 = (_ltc.pageLoad[9] / _ltc.pageLoad[8]).toFixed(1);
-		var at09 = (_ltc.isbattle[1]/_ltc.isbattle[0] + _ltc.pageLoad[9]/_ltc.pageLoad[8]).toFixed(1);
-		var loadtime12 = (_ltc.pageLoad[11] / _ltc.pageLoad[10]).toFixed(1);
-		var at12 = (_ltc.isbattle[1]/_ltc.isbattle[0] + _ltc.pageLoad[11]/_ltc.pageLoad[10]).toFixed(1);
-		var loadtime15 = (_ltc.pageLoad[13] / _ltc.pageLoad[12]).toFixed(1);
-		var at15 = (_ltc.isbattle[1]/_ltc.isbattle[0] + _ltc.pageLoad[13]/_ltc.pageLoad[12]).toFixed(1);
-		var loadtime18 = (_ltc.pageLoad[15] / _ltc.pageLoad[14]).toFixed(1);
-		var at18 = (_ltc.isbattle[1]/_ltc.isbattle[0] + _ltc.pageLoad[15]/_ltc.pageLoad[14]).toFixed(1);
-		var loadtime21 = (_ltc.pageLoad[17] / _ltc.pageLoad[16]).toFixed(1);
-		var at21 = (_ltc.isbattle[1]/_ltc.isbattle[0] + _ltc.pageLoad[17]/_ltc.pageLoad[16]).toFixed(1);
-		var loadtime24 = (_ltc.pageLoad[19] / _ltc.pageLoad[18]).toFixed(1);
-		var at24 = (_ltc.isbattle[1]/_ltc.isbattle[0] + _ltc.pageLoad[19]/_ltc.pageLoad[18]).toFixed(1);
 		if (_overview.artifacts > 0) {
 			t = (_overview.totalRounds / _overview.artifacts).toFixed(1);
 			s = _overview.lastArtName;
@@ -2069,30 +3356,6 @@ function getReportOverviewHtml() {
 		x = '<table class="_UI" cellspacing="0" cellpadding="2" style="width:100%">'
 			+ '<tr><td colspan="2"><b>Reporting period:</b> ' + e + " to " + z + '</td></tr>'
 			+ '<tr><td colspan="2" style="padding-left:10px">Total time: ' + E + '</td></tr>'
-			+ '<tr><td colspan="2"><b>Average execution time:</b></tr>'
-			+ '<tr><td colspan="2" style="padding-left:10px">HV STAT work time :' + avtime + ' ms / in battle :' + avtime2 + ' ms</td></tr>';
-		if (_settings.isCountPageLoadTime) {
-			x += '<tr><td colspan="2" style="padding-left:10px">In battle page load time :' + loadtime + ' ms | Including HV STAT : ' + (at) + 'ms (' + ((avtime2)*100/loadtime).toFixed(1) + '% more)</td></tr>'
-				+ '<tr><td colspan="2" style="padding-left:10px">Load time by hours:</td></tr>'
-				+ '<tr><td> 0-3 AM - ';
-			x += _ltc.pageLoad[4] > 0 ? loadtime03 + ' ms | ' + (at03) + 'ms (' + ((avtime2)*100/loadtime03).toFixed(1) + '% more)' : 'Not tracked yet';
-			x += '</td><td> 0-3 PM - ';
-			x += _ltc.pageLoad[12] > 0 ? loadtime15 + ' ms | ' + (at15) + 'ms (' + ((avtime2)*100/loadtime15).toFixed(1) + '% more)' : 'Not tracked yet';
-			x += '</td></tr><tr><td> 3-6 AM - ';
-			x += _ltc.pageLoad[6] > 0 ? loadtime06 + ' ms | ' + (at06) + 'ms (' + ((avtime2)*100/loadtime06).toFixed(1) + '% more)' : 'Not tracked yet';
-			x += '</td><td> 3-6 PM - ';
-			x += _ltc.pageLoad[14] > 0 ? loadtime18 + ' ms | ' + (at18) + 'ms (' + ((avtime2)*100/loadtime18).toFixed(1) + '% more)' : 'Not tracked yet';
-			x += '</td></tr><tr><td> 6-9 AM  - ';
-			x += _ltc.pageLoad[8] > 0 ? loadtime09 + ' ms | ' + (at09) + 'ms (' + ((avtime2)*100/loadtime09).toFixed(1) + '% more)' : 'Not tracked yet';
-			x += '</td><td> 6-9 PM - ';
-			x += _ltc.pageLoad[16] > 0 ? loadtime21 + ' ms | ' + (at21) + 'ms (' + ((avtime2)*100/loadtime21).toFixed(1) + '% more)' : 'Not tracked yet';
-			x += '</td></tr><tr><td> 9-12 AM  - ';
-			x += _ltc.pageLoad[10] > 0 ? loadtime12 + ' ms | ' + (at12) + 'ms (' + ((avtime2)*100/loadtime12).toFixed(1) + '% more)' : 'Not tracked yet';
-			x += '</td><td>9-12 PM - ';
-			x += _ltc.pageLoad[18] > 0 ? loadtime24 + ' ms | ' + (at24) + 'ms (' + ((avtime2)*100/loadtime24).toFixed(1) + '% more)' : 'Not tracked yet';
-			x += '</td></tr>';
-		}
-		x += '<tr><td colspan="2" style="padding-left:10px"><input type="button" class="_resetLTC" value="Reset execution time counters" /></td></tr>'
 			+ '<tr><td colspan="2"><b>Rounds completed:</b> ' + _overview.totalRounds + " (" + (M === 0 ? 0 : (_overview.totalRounds / M).toFixed()) + ' rounds per day)</td></tr>'
 			+ '<tr><td colspan="2" style="padding-left:10px">Hourly encounters: ' + _overview.roundArray[0] + ' (' + (_overview.roundArray[0] / _overview.totalRounds * 100).toFixed(2) + '% of total; ' + (M === 0 ? 0 : (_overview.roundArray[0] / M).toFixed()) + ' rounds per day); Last Hourly: ' + c + '</td></tr>'
 			+ '<tr><td colspan="2" style="padding-left:10px">Arena: ' + _overview.roundArray[1] + ' (' + (_overview.roundArray[1] / _overview.totalRounds * 100).toFixed(2) + '% of total)</td></tr>'
@@ -2147,7 +3410,7 @@ function getReportOverviewHtml() {
 			+ '<td style="padding-left:10px;width:34%">Powerup Alerts: ' + J + '</td>'
 			+ '<td></td>'
 		+ '</tr><tr>'
-//			+ '<td style="padding-left:10px;width:33%">Hide HV Logo: ' + p + '</td>'
+			+ '<td style="padding-left:10px;width:33%">Hide HV Logo: ' + p + '</td>'
 			+ '<td style="padding-left:10px;width:34%">Overcharge Alert: ' + (_settings.isAlertOverchargeFull ? a : w) + '</td>'
 			+ '<td></td>'
 		+ '</tr></table>';
@@ -2182,7 +3445,7 @@ function getReportStatsHtml() {
 		var forall = _stats.forbidSpells[1] + _stats.forbidSpells[3];
 		var offhand = _stats.aOffhands[0] + _stats.aOffhands[2];
 		var offhanddam = _stats.aOffhands[1] + _stats.aOffhands[3];
-		if (isChrome) dst1 = dst.toLocaleDateString() + " " + dst.toLocaleTimeString();
+		if (HVStat.isChrome) dst1 = dst.toLocaleDateString() + " " + dst.toLocaleTimeString();
 		c += '<tr><td colspan="2"><b>Rounds tracked:</b> ' + _stats.rounds + ' <b>Since: </b>' + dst1 + '</td></tr><tr><td colspan="2"><b>Monsters killed:</b> ' + _stats.kills + '</td></tr><tr><td colspan="2"><b>Offensive Statistics:</b></td></tr><tr><td style="padding-left:10px"><b>Physical:</b></td><td style="padding-left:10px"><b>Magical:</b></td></tr><tr><td style="padding-left:20px">Accuracy: ' + (_stats.aAttempts === 0 ? 0 : (f / _stats.aAttempts * 100).toFixed(2)) + '%</td><td style="padding-left:20px">Accuracy: ' + (h === 0 ? 0 : (g / h * 100).toFixed(2)) + '%</td></tr><tr><td style="padding-left:20px">Crit chance: ' + (f === 0 ? 0 : (_stats.aHits[1] / f * 100).toFixed(2)) + '%</td><td style="padding-left:20px">Crit chance: ' + (e === 0 ? 0 : (_stats.sHits[1] / e * 100).toFixed(2)) + '%</td></tr><tr><td style="padding-left:20px">Overwhelming Strikes chance: ' + (f === 0 ? 0 : (_stats.overStrikes / f * 100).toFixed(2)) + '%</td></tr><tr><td style="padding-left:20px">Counter chance on block/parry: ' + (bp === 0 ? 0 : (_stats.aCounters[0]*100/bp).toFixed(2)) + '%</td></tr><tr><td style="padding-left:30px">Number of counters in turn:</td></tr>';
 		c +=  '<tr><td colspan="2" style="padding-left:30px">One - ' + (c1 === 0 ? 0 : (c1*100/call).toFixed(2)) + '% | Two - ' + (_stats.aCounters[2] === 0 ? 0 : (_stats.aCounters[2]*100/call).toFixed(2)) + '% | Three - ' + (_stats.aCounters[3] === 0 ? 0 :(_stats.aCounters[3]*100/call).toFixed(2));
 		c += '%</td></tr>';
@@ -2279,9 +3542,12 @@ function getReportRewardHtml() {
 }
 function getReportShrineHtml() {
 	var c = "Tracking disabled.";
-	if (_settings.isTrackShrine && _shrine.totalRewards === 0) c = "No data found. Make an offering at Snowflake's Shrine to begin tracking.";
-	else if (_settings.isTrackShrine && _shrine.isLoaded && _shrine.totalRewards > 0) c = '<table class="_UI" cellspacing="0" cellpadding="1" style="width:100%">';
-	else if (!_settings.isTrackShrine && _shrine.isLoaded && _shrine.totalRewards > 0) c = '<table class="_UI" cellspacing="0" cellpadding="1" style="width:100%"><tr><td align="center"><div align="center" class="ui-state-error ui-corner-all" style="padding:4px;margin:4px"><span class="ui-icon ui-icon-pause"></span><b>TRACKING PAUSED</b></div></td></tr>';
+	if (_settings.isTrackShrine && _shrine.totalRewards === 0)
+		c = "No data found. Make an offering at Snowflake's Shrine to begin tracking.";
+	else if (_settings.isTrackShrine && _shrine.isLoaded && _shrine.totalRewards > 0)
+		c = '<table class="_UI" cellspacing="0" cellpadding="1" style="width:100%">';
+	else if (!_settings.isTrackShrine && _shrine.isLoaded && _shrine.totalRewards > 0)
+		c = '<table class="_UI" cellspacing="0" cellpadding="1" style="width:100%"><tr><td align="center"><div align="center" class="ui-state-error ui-corner-all" style="padding:4px;margin:4px"><span class="ui-icon ui-icon-pause"></span><b>TRACKING PAUSED</b></div></td></tr>';
 	if (_shrine.isLoaded && _shrine.totalRewards > 0) {
 		var g = 0;
 		var d = 0;
@@ -2304,7 +3570,7 @@ function getReportShrineHtml() {
 			+ '<tr><td style="padding-left:10px">Attributes: ' + _shrine.artifactStat + ' (' + b + '% chance)</td></tr>'
 			+ '<tr><td style="padding-left:10px">Hath: ' + _shrine.artifactHathTotal + ' (' + a + '% chance; ' + e + ' Hath per Artifact)</td></tr>'
 			+ '<tr><td style="padding-left:10px">Crystals: ' + _shrine.artifactCrystal + ' (' + h + '% chance)</td></tr>'
-			+ '<tr><td style="padding-left:10px">Energy Drinks: ' + _shrine.artifactItem + ' (' + f + "% chance)</td></tr>"
+			+ '<tr><td style="padding-left:10px">Energy Drinks: ' + _shrine.artifactItem + ' (' + f + '% chance)</td></tr>'
 			+ '<tr><td ><b>Trophies:</b> ' + _shrine.trophyArray.length + ' traded</td></tr>';
 		var b = _shrine.trophyArray.length;
 		while (b--)
@@ -2313,6 +3579,68 @@ function getReportShrineHtml() {
 	}
 	c += "</table>";
 	return c;
+}
+function getMonsterStatsHtml() {
+	var oldDatabaseSize = localStorage.HVMonsterDatabase ? localStorage.HVMonsterDatabase.length : 0;
+	var h = "";
+	h += '<div>';
+	h += '<h2>Administration</h2>';
+	h += '<h3>Export</h3>';
+	h += '<p>Monster scan results and monster skill data can be exported as a TSV (tab-seperated-values) format text file. You can import the data using the exported file.</p>';
+	h += '<div>';
+	h += '<table><tr>';
+	h += '<td><span style="font-weight: bold;">Monster Scan Results</span></td>';
+	h += '<td><input type="button" id="exportMonsterScanResults" value="Export" />';
+	h += '<a id="downloadLinkMonsterScanResults" style="visibility:hidden;" href="#">Download</a></td>';
+	h += '</tr><tr>';
+	h += '<td><span style="font-weight: bold;">Monster Skill Data</span></td>';
+	h += '<td><input type="button" id="exportMonsterSkills" value="Export" />';
+	h += '<a id="downloadLinkMonsterSkills" style="visibility:hidden;" href="#">Download</a></td>';
+	h += '</tr></table>';
+	h += '</div>';
+	h += '<h3>Import</h3>';
+	h += '<p>The contents of TSV file will be merged into the database. The rows of TSV file which have older date will be skipped.</p>';
+	h += '<div>';
+	h += '<table><tr>';
+	h += '<td><span style="font-weight: bold;">Monster Scan Results</span></td>';
+	h += '<td><input type="file" id="importMonsterScanResults" /></td>';
+	h += '</tr><tr>';
+	h += '<td><span style="font-weight: bold;">Monster Skill Data</span></td>';
+	h += '<td><input type="file" id="importMonsterSkills" /></td>';
+	h += '</tr></table>';
+	h += '</div>';
+	h += '<h3>Delete Data</h3>';
+	h += '<p>If you want to clean the database, delete data.</p>';
+	h += '<table><tr>';
+	h += '<td><span style="font-weight: bold;">Monster Scan Results</span></td>';
+	h += '<td><input type="button" id="deleteMonsterScanResults" value="Delete" /></td>';
+	h += '</tr><tr>';
+	h += '<td><span style="font-weight: bold;">Monster Skill Data</span></td>';
+	h += '<td><input type="button" id="deleteMonsterSkills" value="Delete" /></td>';
+	h += '</tr></table>';
+	h += '</div>';
+	h += '<h3>Delete Database</h3>';
+	h += '<div>';
+	h += '<p>If you are facing a problem with database, and the problem can not be resolved, delete the database.</p>';
+	h += '<p>In order to re-create database, reload the page. After that, you can import data previously exported.</p>';
+	h += '<input type="button" id="deleteDatabase" value="Delete Database" />';
+	h += '</div>';
+	h += '<h2>Migration</h2>';
+	h += '<h3>Migrate to New Database</h3>';
+	h += '<div>';
+	h += '<p>HVSTAT will now use the new IndexedDB database instead of the localStorage database. You can migrate your old database into the new database.</p>'
+	h += '<p><span style="color: red;">If you have already scanned, note that this operation will overwrite existing data on the new database.</span></p>';
+	h += '<input type="button" id="migrateDatabase" value="Migrate" />';
+	h += '</div>';
+	h += '<h3>Delete Old Database (localStorage)</h3>';
+	h += '<div>';
+	h += '<p>Currently your old database occupies <span id="oldDatabaseSize" style="font-weight: bold;">'
+		+ (oldDatabaseSize / 1024 / 1024 * (HVStat.isChrome ? 2 : 1)).toFixed(2)
+		+ '</span> MB on the localStorage. In order to free up space for other HV scripts, delete the old database after migration.</p>';
+	h += '<p><span style="color: red;"></span></p>';
+	h += '<input type="button" id="deleteOldDatabase" value="Delete" />';
+	h += '</div>';
+	return h;
 }
 function initUI() {
 	var d = 4;
@@ -2327,7 +3655,7 @@ function initUI() {
 }
 function initMainMenu() {
 	if (_isMenuInitComplete) return;
-	var b = "[STAT] HentaiVerse Statistics, Tracking, and Analysis Tool v." + VERSION + (isChrome ? " (Chrome Edition)" : "");
+	var b = "[STAT] HentaiVerse Statistics, Tracking, and Analysis Tool v." + VERSION + (HVStat.isChrome ? " (Chrome Edition)" : "");
 	var c = document.createElement("div");
 	$(c).addClass("_mainMenu").css("text-align", "left");
 	var a = '<div id="tabs"><ul>'
@@ -2336,10 +3664,11 @@ function initMainMenu() {
 		+ '<li><a href="#pane3"><span>Item Drops</span></a></li>'
 		+ '<li><a href="#pane4"><span>Arena Rewards</span></a></li>'
 		+ '<li><a href="#pane5"><span>Shrine</span></a></li>'
+		+ '<li><a href="#pane7"><span>Monster Stats</span></a></li>'
 		+ '<li><a href="#pane6"><span>Settings</span></a></li>'
 		+ '</ul><div id="pane1">Tab 1 Error</div><div id="pane2">Tab 2 Error</div>'
 		+ '<div id="pane3">Tab 3 Error</div><div id="pane4">Tab 4 Error</div>'
-		+ '<div id="pane5">Tab 5 Error</div><div id="pane6">Tab 6 Error</div></div>';
+		+ '<div id="pane5">Tab 5 Error</div><div id="pane7">Tab 7 Error</div><div id="pane6">Tab 6 Error</div></div>';
 	$(c).html(a);
 	$("body").append(c);
 	$(c).dialog({
@@ -2365,6 +3694,7 @@ function initMainMenu() {
 	initRewardsPane();
 	initShrinePane();
 	initSettingsPane();
+	initMonsterStatsPane();
 	$("._mainButton").unbind("click", initMainMenu);
 	$("._mainButton").click(function () {
 		if ($(c).dialog("isOpen"))
@@ -2379,9 +3709,6 @@ function initOverviewPane() {
 	$("#pane1").html(getReportOverviewHtml());
 	$("._resetOverview").click(function () {
 		if (confirm("Reset Overview tab?")) _overview.reset();
-	});
-	$("._resetLTC").click(function () {
-		if (confirm("You want to reset execution time counters?")) _ltc.reset();
 	});
 }
 function initStatsPane() {
@@ -2404,12 +3731,12 @@ function initStatsPane() {
 			if (_backup[i].datesave !== 0) {
 				nd.setTime( _backup[i].datesave);
 				ds[i] = nd.toLocaleString();
-				if (isChrome) ds[i] = nd.toLocaleDateString() + " " + nd.toLocaleTimeString();
+				if (HVStat.isChrome) ds[i] = nd.toLocaleDateString() + " " + nd.toLocaleTimeString();
 			}
 			if (_backup[i].datestart !== 0) {
 				nd.setTime( _backup[i].datestart);
 				d[i] = nd.toLocaleString();
-				if (isChrome) d[i] = nd.toLocaleDateString() + " " + nd.toLocaleTimeString();
+				if (HVStat.isChrome) d[i] = nd.toLocaleDateString() + " " + nd.toLocaleTimeString();
 			}
 			
 		}
@@ -2478,7 +3805,8 @@ function initRewardsPane() {
 function initShrinePane() {
 	$("#pane5").html(getReportShrineHtml());
 	$("._resetShrine").click(function () {
-		if (confirm("Reset Shrine tab?")) _shrine.reset();
+		if (confirm("Reset Shrine tab?"))
+			_shrine.reset();
 	});
 	$("._clearTrophies").click(function () {
 		if (confirm("Clear Trophy list?")) {
@@ -2487,61 +3815,97 @@ function initShrinePane() {
 		}
 	});
 }
+function initMonsterStatsPane() {
+	$("#pane7").html(getMonsterStatsHtml());
+	$("#importMonsterScanResults").change(function (event) {
+		var file = event.target.files[0]; 
+		if (!file) {
+			alert("Failed to load file");
+		} else {
+			if (confirm("Are you sure to import the monster scan results?")) {
+				HVStat.importMonsterScanResults(file);
+			}
+		}
+	});
+	$("#importMonsterSkills").change(function (event) {
+		var file = event.target.files[0]; 
+		if (!file) {
+			alert("Failed to load file");
+		} else {
+			if (confirm("Are you sure to import the monster skill data?")) {
+				HVStat.importMonsterSkills(file);
+			}
+		}
+	});
+	$("#exportMonsterScanResults").click(function () {
+		HVStat.exportMonsterScanResults(function () {
+			if (HVStat.nRowsMonsterScanResultsTSV === 0) {
+				alert("There is no monster scan result.");
+			} else {
+				var downloadLink = $("#downloadLinkMonsterScanResults");
+				downloadLink.attr("href", HVStat.dataURIMonsterScanResults);
+				downloadLink.attr("download", "hvstat_monster_scan.tsv");
+				downloadLink.css("visibility", "visible");
+				alert("Ready to export your monster scan results.\nClick the download link.");
+			}
+		});
+	});
+	$("#exportMonsterSkills").click(function () {
+		HVStat.exportMonsterSkills(function () {
+			var downloadLink = $("#downloadLinkMonsterSkills");
+			if (HVStat.nRowsMonsterSkillsTSV === 0) {
+				alert("There is no monster skill data.");
+			} else {
+				downloadLink.attr("href", HVStat.dataURIMonsterSkills);
+				downloadLink.attr("download", "hvstat_monster_skill.tsv");
+				downloadLink.css("visibility", "visible");
+				alert("Ready to export your monster skill data.\nClick the download link.");
+			}
+		});
+	});
+	$("#deleteMonsterScanResults").click(function () {
+		if (confirm("Are you sure to delete your monster scan results?")) {
+			HVStat.deleteAllObjectsInMonsterScanResults();
+		}
+	});
+	$("#deleteMonsterSkills").click(function () {
+		if (confirm("Are you sure to delete your monster skill data?")) {
+			HVStat.deleteAllObjectsInMonsterSkills();
+		}
+	});
+	$("#deleteDatabase").click(function () {
+		if (confirm("Are you really sure to delete your database?")) {
+			HVStat.deleteIndexedDB();
+		}
+	});
+	$("#migrateDatabase").click(function () {
+		if (confirm("Are you sure to migrate your monster database?")) {
+			HVStat.migration.migrateDatabase();
+		}
+	});
+	$("#deleteOldDatabase").click(function () {
+		if (confirm("Are you really sure to delete your old monster database?")) {
+			HVStat.migration.deleteOldDatabase();
+			// TODO: update Monster Stats pane
+		}
+	});
+}
 function initSettingsPane() {
-	var t0 = (_ltc.isbattle[1] / _ltc.isbattle[0]).toFixed();
-	var t0b = ((_ltc.main[1] - _ltc.isbattle[1]) / (_ltc.main[0] - _ltc.isbattle[0])).toFixed();
-	var t1 = (_ltc.main[1] / _ltc.main[0]).toFixed();
-	var t2 = (_ltc.collectRoundInfo[1] / _ltc.collectRoundInfo[0]).toFixed(1);
-	var t3 = (_ltc.hidelogo[1] / _ltc.hidelogo[0]).toFixed();
-	var t4 = (_ltc.highlightLogText[1] / _ltc.highlightLogText[0]).toFixed(1);
-	var t5 = (_ltc.addBattleLogDividers[1] / _ltc.addBattleLogDividers[0]).toFixed(1);
-	var t6 = (_ltc.showRoundCounter[1] / _ltc.showRoundCounter[0]).toFixed(1);
-	var t7 = (_ltc.displayPowerupBox[1] / _ltc.displayPowerupBox[0]).toFixed(1);
-	var t8 = (_ltc.showMonsterStats[1] / _ltc.showMonsterStats[0]).toFixed(1);
-	var t9 = (_ltc.showMonsterEffectsDuration[1] / _ltc.showMonsterEffectsDuration[0]).toFixed(1);
-	var t10 = (_ltc.showSelfEffectsDuration[1] / _ltc.showSelfEffectsDuration[0]).toFixed(1);
-	var t11 = (_ltc.showBattleEndStats[1] / _ltc.showBattleEndStats[0]).toFixed(1);
-	var t12 = (_ltc.healthWarning[1] / _ltc.healthWarning[0]).toFixed(1);
-	var t13 = (_ltc.showSidebarProfs[1] / _ltc.showSidebarProfs[0]).toFixed(1);
-	var t15 = (_ltc.isRememberScan[1] / _ltc.isRememberScan[0]).toFixed(1);
-	var t15b0 = ((_ltc.isbattle[1] + _ltc.isRememberScan[1]) / _ltc.isbattle[0]).toFixed();
-	var t15b = (_ltc.isRememberScan[1] / (_ltc.isRememberScan[0] +  _ltc.collectRoundInfo[0])).toFixed(1);
-	var t16 = (_ltc.isTrackStats[1] / _ltc.collectRoundInfo[0]).toFixed(1);
-	var t17 = (_ltc.isTrackItems[1] / _ltc.collectRoundInfo[0]).toFixed(1);
-	var t18 = (_ltc.saveStats[1] / _ltc.saveStats[0]).toFixed(1);
-	var t19 = (_ltc.isShowElemHvstatStyle[1] / _ltc.showMonsterStats[0]).toFixed(1);
-	var t20 = (_ltc.extendedHits[1] / _ltc.collectRoundInfo[0]).toFixed(1);
-	var t21 = (_ltc.changedMHits[1] / _ltc.collectRoundInfo[0]).toFixed(1);
-	var t22 = (_ltc.cast[1] /	_ltc.collectRoundInfo[0]).toFixed(1);
-	var t23 = (_ltc.effects[1] / _ltc.collectRoundInfo[0]).toFixed(1);
-	var t24 = (_ltc.hidetitle[1] / _ltc.hidetitle[0]).toFixed(1);
-	var t25 = (_ltc.showhp[1] / _ltc.showhp[0]).toFixed(1);
-	var t26 = (_ltc.showmp[1] / _ltc.showmp[0]).toFixed(1);
-	var t27 = (_ltc.showelem[1] / _ltc.showelem[0]).toFixed(1);
-	var t33 = (_ltc.showsp[1] / _ltc.showsp[0]).toFixed(1);
-	var t34 = (_ltc.monsterpopup[1] / _ltc.monsterpopup[0]).toFixed(1);
-	var t35 = (_ltc.showscanbutton[1] / _ltc.isbattle[0]).toFixed(1);
-	var t36 = (_ltc.taggingitems[1] / _ltc.taggingitems[0]).toFixed(1);
-	var t37 = (_ltc.startalerts[1] / _ltc.startalerts[0]).toFixed(1);
-	var t38 = (_ltc.showset[1] / _ltc.showset[0]).toFixed(1);
-	var t39 = (_ltc.botfunction[1] / _ltc.botfunction[0]).toFixed(1);
-	var tp1 = (_ltc.pageLoad[3] / _ltc.pageLoad[2]).toFixed(1);
 	var a = '<a style="color:red;padding-bottom:10px">All changes will take effect on next page load.</a>'
 		+ '<table class="_settings" cellspacing="0" cellpadding="2" style="width:100%">'
-		+ '<tr><td colspan="3"><b>General Options:</b></td><td align="center"><b>Average execution time: </b></td></tr>'
-		+ '<tr><td colspan="3"></td><td align="center" style="width:120px"><b>In battle: </b></td></tr>'
-		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isCountPageLoadTime" /></td><td colspan="3">Count page load time (it may have big impact on performance)</td></tr>'
-		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isShowSidebarProfs" /></td><td colspan="2">Show proficiencies in sidebar</td><td align="center" style="width:120px">' + t13 + ' ms (' + (t13*100/t0).toFixed(1) + '%)</td></tr>'
+		+ '<tr><td colspan="3"><b>General Options:</b></td><td></td></tr>'
+		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isShowSidebarProfs" /></td><td colspan="2">Show proficiencies in sidebar</td><td></td></tr>'
 		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isColumnInventory" /></td><td colspan="2">Use column view for item inventory (<span style="color:red">Downloadable/Custom Local Fonts only!</span>)</td></tr>'
-		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isChangePageTitle" /></td><td colspan="2">Change HentaiVerse page title: <input type="text" name="customPageTitle" size="40" /></td><td align="center" style="width:120px">' + t24 + ' ms (' + (t24*100/t0).toFixed(1) + '%)</td></tr>'
-		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isStartAlert" /></td><td colspan="2">Warnings berfore starting Challenges when HP is below <input type="text" name="StartAlertHP" size="1" maxLength="2" style="text-align:right" />%, MP is below <input type="text" name="StartAlertMP" size="1" maxLength="2" style="text-align:right" />%, SP is below <input type="text" name="StartAlertSP" size="1" maxLength="2" style="text-align:right" />% or difficulty is over <select id="StartAlertDifficulty"><option id=diff1 value=1>Easy</option><option id=diff2 value=2>Normal</option><option id=diff3 value=3>Hard</option><option id=diff4 value=4>Heroic</option><option id=diff5 value=5>Nightmare</option><option id=diff6 value=6>Hell</option><option id=diff7 value=7>Nintendo</option><option id=diff8 value=8>Battletoads</option></select> (<span style="color:red">Downloadable/Custom Local Fonts only!</span>)</td><td align="center" style="width:120px">' + t37 + ' ms (' + (t37*100/t0b).toFixed(1) + '%)</td></tr>'
-		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isShowScanButton" /></td><td colspan="2">Show scan button</td><td align="center" style="width:120px">' + t35 + ' ms (' + (t35*100/t0).toFixed(1) + '%)</td></tr>'
-		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isEnableScanHotkey" /></td><td colspan="2">Enable Scan Hotkeys: numpad","/numpad delete</td><td align="center" style="width:120px"></td></tr>'
-		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isShowSkillButton" /></td><td colspan="2">Show skill button </td><td align="center" style="width:120px"></td></tr>'
-		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isEnableSkillHotkey" /></td><td colspan="2">Enable Weapon Skill Hotkeys: "+" / "=" and numpad"+" (Works without skillbutton)</td><td align="center" style="width:120px"></td></tr>'
-		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isShowEquippedSet" /></td><td colspan="2">Show equipped set number at left panel (<span style="color:red">Downloadable/Custom Local Fonts only!</span>)</td><td align="center" style="width:120px">' + t38 + ' ms (' + (t38*100/t0).toFixed(1) + '%)</td></tr>'
+		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isHideHVLogo" /></td><td colspan="2">Hide HentaiVerse logo</td><td></td></tr>'
+		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isChangePageTitle" /></td><td colspan="2">Change HentaiVerse page title: <input type="text" name="customPageTitle" size="40" /></td><td></td></tr>'
+		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isStartAlert" /></td><td colspan="2">Warnings berfore starting Challenges when HP is below <input type="text" name="StartAlertHP" size="1" maxLength="2" style="text-align:right" />%, MP is below <input type="text" name="StartAlertMP" size="1" maxLength="2" style="text-align:right" />%, SP is below <input type="text" name="StartAlertSP" size="1" maxLength="2" style="text-align:right" />% or difficulty is over <select id="StartAlertDifficulty"><option id=diff1 value=1>Easy</option><option id=diff2 value=2>Normal</option><option id=diff3 value=3>Hard</option><option id=diff4 value=4>Heroic</option><option id=diff5 value=5>Nightmare</option><option id=diff6 value=6>Hell</option><option id=diff7 value=7>Nintendo</option><option id=diff8 value=8>Battletoads</option></select> (<span style="color:red">Downloadable/Custom Local Fonts only!</span>)</td><td></td></tr>'
+		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isShowScanButton" /></td><td colspan="2">Show scan button</td><td></td></tr>'
+		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isEnableScanHotkey" /></td><td colspan="2">Enable Scan Hotkeys: numpad","/numpad delete</td><td></td></tr>'
+		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isShowSkillButton" /></td><td colspan="2">Show skill button </td><td></td></tr>'
+		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isEnableSkillHotkey" /></td><td colspan="2">Enable Weapon Skill Hotkeys: "+" / "=" and numpad"+" (Works without skillbutton)</td><td></td></tr>'
+		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isShowEquippedSet" /></td><td colspan="2">Show equipped set number at left panel (<span style="color:red">Downloadable/Custom Local Fonts only!</span>)</td><td></td></tr>'
 		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isDisableForgeHotKeys" /></td><td colspan="2">Disable hot keys in the Forge (<span style="color:red">Strongry recommended if use item tags</span>)</td><td></td></tr>'
-		+ '<tr><td colspan="3">Show item tags in:</td><td align="center" style="width:120px">' + t36 + ' ms by tagging</td></tr>'
+		+ '<tr><td colspan="3">Show item tags in:</td><td></td></tr>'
 		+ '<tr><td align="center" style="width:5px;padding-left:15px"><input type="checkbox" name="isShowTags0" /></td><td colspan="3" style="padding-left:15px">Equipment page </td></tr>'
 		+ '<tr><td align="center" style="width:5px;padding-left:15px"><input type="checkbox" name="isShowTags1" /></td><td colspan="3" style="padding-left:15px">Bazaar shop page </td></tr>'
 		+ '<tr><td align="center" style="width:5px;padding-left:15px"><input type="checkbox" name="isShowTags2" /></td><td colspan="3" style="padding-left:15px">Item World </td></tr>'
@@ -2549,57 +3913,56 @@ function initSettingsPane() {
 		+ '<tr><td align="center" style="width:5px;padding-left:15px"><input type="checkbox" name="isShowTags4" /></td><td colspan="3" style="padding-left:15px">Forge </td></tr>'
 		+ '<tr><td align="center" style="width:5px;padding-left:15px"><input type="checkbox" name="isShowTags5" /></td><td colspan="3" style="padding-left:15px">Inventory (<span style="color:red">Strongly suggested to turn it on and visit inventory once for a while</span>)</td></tr>'
 		+ '<tr><td colspan="2"><b>Battle Enhancement:</b></td></tr>'
-		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isShowHighlight" /></td><td colspan="2">Highlight battle log</td><td align="center" style="width:120px">' + t4 + ' ms (' + (t4*100/t0).toFixed(1) + '%)</td></tr>'
+		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isShowHighlight" /></td><td colspan="2">Highlight battle log</td><td></td></tr>'
 		+ '<tr><td align="center" style="width:5px;padding-left:20px"><input type="checkbox" name="isAltHighlight" /></td><td colspan="2" style="padding-left:10px">Use alternate highlighting</td></tr>'
-		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isShowDivider" /></td><td colspan="2">Show turn divider</td><td align="center" style="width:120px">' + t5 + ' ms (' + (t5*100/t0).toFixed(1) + '%)</td></tr>'
-		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isShowSelfDuration" /></td><td colspan="2">Show self effect durations</td><td align="center" style="width:120px">' + t10 + ' ms (' + (t10*100/t0).toFixed(1) + '%)</td></tr>'
+		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isShowDivider" /></td><td colspan="2">Show turn divider</td><td></td></tr>'
+		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isShowSelfDuration" /></td><td colspan="2">Show self effect durations</td><td></td></tr>'
 		+ '<tr><td align="center" style="width:5px;padding-left:30px"><input type="checkbox" name="isSelfEffectsWarnColor" /></td><td colspan="2" style="padding-left:10px">Highlight duration badges - <span style="color:orange">Orange</span>: on <input type="text" name="SelfWarnOrangeRounds" size="1" maxLength="2" style="text-align:right" /> rounds; <span style="color:red">Red</span>: on <input type="text" name="SelfWarnRedRounds" size="1" maxLength="1" style="text-align:right" /> rounds</td></tr>'
 		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isShowRoundReminder" /></td><td colspan="2">Final round reminder - minimum <input type="text" name="reminderMinRounds" size="1" maxLength="3" style="text-align:right" /> rounds; Alert <input type="text" name="reminderBeforeEnd" size="1" maxLength="1" style="text-align:right" /> rounds before end</td></tr>'
-		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isShowEndStats" /></td><td colspan="2">Show Battle Summary</td><td align="center" style="width:120px">' + t11 + ' ms (' + (t11*100/t0).toFixed(1) + '%)</td></tr>'
+		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isShowEndStats" /></td><td colspan="2">Show Battle Summary</td><td></td></tr>'
 		+ '<tr><td align="center" style="width:5px;padding-left:20px"><input type="checkbox" name="isShowEndProfs" /></td><td colspan="2" style="padding-left:10px">Show Proficiency Gain Summary</td><tr><td align="center" style="width:5px;padding-left:40px"><input type="checkbox" name="isShowEndProfsMagic" /></td><td colspan="2" style="padding-left:30px">Show Magic Proficiency</td></tr>'
 		+ '<tr><td align="center" style="width:5px;padding-left:40px"><input type="checkbox" name="isShowEndProfsArmor" /></td><td colspan="2" style="padding-left:30px">Show Armor Proficiency</td></tr>'
 		+ '<tr><td align="center" style="width:5px;padding-left:40px"><input type="checkbox" name="isShowEndProfsWeapon" /></td><td colspan="2" style="padding-left:30px">Show Weapon Proficiency</td></tr>'
 		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isAlertGem" /></td><td colspan="2">Alert on Powerup drops</td></tr>'
 		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isAlertOverchargeFull" /></td><td colspan="2">Alert when Overcharge is full</td></tr>'
-		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isShowMonsterNumber"></td><td colspan="2">Show Numbers intead of letters next to monsters.</td></tr>'
+		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isShowMonsterNumber"></td><td colspan="2">Show Numbers instead of letters next to monsters.</td></tr>'
 		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isShowRoundCounter"></td><td colspan="2">Show Round Counter.</td></tr>'
 		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isShowPowerupBox"></td><td colspan="2">Show Powerup Box.</td></tr>'
 		+ '<tr><td colspan="2" style="padding-left:10px">Display Monster Stats:</td></tr>'
-		+ '<tr><td align="center" style="width:5px;padding-left:20px"><input type="checkbox" name="isShowMonsterHP" /></td><td colspan="2">Show monster HP (<span style="color:red">Estimated</span>)</td><td align="center" style="width:120px">' + t25 + ' ms (' + (t25*100/t0).toFixed(1) + '%)</td></tr>'
-		+ '<tr><td align="center" style="width:5px;padding-left:40px"><input type="checkbox" name="isShowMonsterHPPercent" /></td><td colspan="2" style="padding-left:10px">Show monster HP in percentage</td></tr>'
-		+ '<tr><td align="center" style="width:5px;padding-left:20px"><input type="checkbox" name="isShowMonsterMP" /></td><td  colspan="2">Show monster MP percentage</td><td align="center" style="width:120px">' + t26 + ' ms (' + (t26*100/t0).toFixed(1) + '%)</td></tr>'
-		+ '<tr><td align="center" style="width:5px;padding-left:20px"><input type="checkbox" name="isShowMonsterSP" /></td><td colspan="2">Show monster SP percentage</td><td align="center" style="width:120px">' + t33 + ' ms (' + (t33*100/t0).toFixed(1) + '%)</td></tr>'
-		+ '<tr><td align="center" style="width:5px;padding-left:20px"><input type="checkbox" name="isShowMonsterElements" /></td><td colspan="2">Show monster resistances</td><td align="center" style="width:120px">' + t27 + ' ms (' + (t27*100/t0).toFixed(1) + '%)</td></tr>'
-		+ '<tr><td align="center" style="width:5px;padding-left:40px"><input type="checkbox" name="isShowElemHvstatStyle" /></td><td colspan="2" style="padding-left:10px">Show monster info from database</td><td align="center" style="width:120px">' + t19 + ' ms (' + (t19*100/t0).toFixed(1) + '%)</td></tr>'
-		+ '<tr><td align="center" style="width:5px;padding-left:60px"><input type="checkbox" name="isShowClassHvstatStyle" /></td><td colspan="2" style="padding-left:20px">Show monster class from database</td></tr>'
-		+ '<tr><td align="center" style="width:5px;padding-left:60px"><input type="checkbox" name="isShowAttackHvstatStyle" /></td><td colspan="2" style="padding-left:20px">Show monster attack type from database</td></tr>'
-		+ '<tr><td align="center" style="width:5px;padding-left:60px"><input type="checkbox" name="isShowWeakHvstatStyle" /></td><td colspan="2" style="padding-left:20px">Show monster weaknesses from database</td></tr>'
-		+ '<tr><td align="center" style="width:5px;padding-left:60px"><input type="checkbox" name="isShowResHvstatStyle" /></td><td colspan="2" style="padding-left:20px">Show monster resistances from database</td></tr>'
+		+ '<tr><td align="center" style="width:5px;padding-left:20px"><input type="checkbox" name="showMonsterHP" /></td><td colspan="2">Show monster HP (<span style="color:red">Estimated</span>)</td><td></td></tr>'
+		+ '<tr><td align="center" style="width:5px;padding-left:40px"><input type="checkbox" name="showMonsterHPPercent" /></td><td colspan="2" style="padding-left:10px">Show monster HP in percentage</td></tr>'
+		+ '<tr><td align="center" style="width:5px;padding-left:20px"><input type="checkbox" name="showMonsterMP" /></td><td  colspan="2">Show monster MP percentage</td><td></td></tr>'
+		+ '<tr><td align="center" style="width:5px;padding-left:20px"><input type="checkbox" name="showMonsterSP" /></td><td colspan="2">Show monster SP percentage</td><td></td></tr>'
+		+ '<tr><td align="center" style="width:5px;padding-left:40px"><input type="checkbox" name="showMonsterInfoFromDB" /></td><td colspan="2" style="padding-left:10px">Show monster info from database</td><td></td></tr>'
+		+ '<tr><td align="center" style="width:5px;padding-left:60px"><input type="checkbox" name="showMonsterClassFromDB" /></td><td colspan="2" style="padding-left:20px">Show monster class from database</td></tr>'
+		+ '<tr><td align="center" style="width:5px;padding-left:60px"><input type="checkbox" name="showMonsterPowerLevelFromDB" /></td><td colspan="2" style="padding-left:20px">Show monster power level from database</td></tr>'
+		+ '<tr><td align="center" style="width:5px;padding-left:60px"><input type="checkbox" name="showMonsterAttackTypeFromDB" /></td><td colspan="2" style="padding-left:20px">Show monster attack type from database</td></tr>'
+		+ '<tr><td align="center" style="width:5px;padding-left:60px"><input type="checkbox" name="showMonsterWeaknessesFromDB" /></td><td colspan="2" style="padding-left:20px">Show monster weaknesses from database</td></tr>'
+		+ '<tr><td align="center" style="width:5px;padding-left:60px"><input type="checkbox" name="showMonsterResistancesFromDB" /></td><td colspan="2" style="padding-left:20px">Show monster resistances from database</td></tr>'
 		+ '<tr><td colspan="3" style="padding-left:85px">Hide specific weaknesses/resitances: </td></tr>'
-		+ '<tr><td align="center" style="width:5px;padding-left:65px"><input type="checkbox" name="HideThisResHvstatStyle0" /></td><td colspan="2" style="padding-left:20px">Slashing</td></tr>'
-		+ '<tr><td align="center" style="width:5px;padding-left:65px"><input type="checkbox" name="HideThisResHvstatStyle1" /></td><td colspan="2" style="padding-left:20px">Crushing</td></tr>'
-		+ '<tr><td align="center" style="width:5px;padding-left:65px"><input type="checkbox" name="HideThisResHvstatStyle2" /></td><td colspan="2" style="padding-left:20px">Piercing</td></tr>'
-		+ '<tr><td align="center" style="width:5px;padding-left:65px"><input type="checkbox" name="HideThisResHvstatStyle3" /></td><td colspan="2" style="padding-left:20px">Fire</td></tr>'
-		+ '<tr><td align="center" style="width:5px;padding-left:65px"><input type="checkbox" name="HideThisResHvstatStyle4" /></td><td colspan="2" style="padding-left:20px">Cold</td></tr>'
-		+ '<tr><td align="center" style="width:5px;padding-left:65px"><input type="checkbox" name="HideThisResHvstatStyle5" /></td><td colspan="2" style="padding-left:20px">Elec</td></tr>'
-		+ '<tr><td align="center" style="width:5px;padding-left:65px"><input type="checkbox" name="HideThisResHvstatStyle6" /></td><td colspan="2" style="padding-left:20px">Wind</td></tr>'
-		+ '<tr><td align="center" style="width:5px;padding-left:65px"><input type="checkbox" name="HideThisResHvstatStyle7" /></td><td colspan="2" style="padding-left:20px">Holy</td></tr>'
-		+ '<tr><td align="center" style="width:5px;padding-left:65px"><input type="checkbox" name="HideThisResHvstatStyle8" /></td><td colspan="2" style="padding-left:20px">Dark</td></tr>'
-		+ '<tr><td align="center" style="width:5px;padding-left:65px"><input type="checkbox" name="HideThisResHvstatStyle9" /></td><td colspan="2" style="padding-left:20px">Soul</td></tr>'
-		+ '<tr><td align="center" style="width:5px;padding-left:65px"><input type="checkbox" name="HideThisResHvstatStyle10" /></td><td colspan="2" style="padding-left:20px">Void</td></tr>'
+		+ '<tr><td align="center" style="width:5px;padding-left:65px"><input type="checkbox" name="hideSpecificDamageType0" /></td><td colspan="2" style="padding-left:20px">Crushing</td></tr>'
+		+ '<tr><td align="center" style="width:5px;padding-left:65px"><input type="checkbox" name="hideSpecificDamageType1" /></td><td colspan="2" style="padding-left:20px">Slashing</td></tr>'
+		+ '<tr><td align="center" style="width:5px;padding-left:65px"><input type="checkbox" name="hideSpecificDamageType2" /></td><td colspan="2" style="padding-left:20px">Piercing</td></tr>'
+		+ '<tr><td align="center" style="width:5px;padding-left:65px"><input type="checkbox" name="hideSpecificDamageType3" /></td><td colspan="2" style="padding-left:20px">Fire</td></tr>'
+		+ '<tr><td align="center" style="width:5px;padding-left:65px"><input type="checkbox" name="hideSpecificDamageType4" /></td><td colspan="2" style="padding-left:20px">Cold</td></tr>'
+		+ '<tr><td align="center" style="width:5px;padding-left:65px"><input type="checkbox" name="hideSpecificDamageType5" /></td><td colspan="2" style="padding-left:20px">Elec</td></tr>'
+		+ '<tr><td align="center" style="width:5px;padding-left:65px"><input type="checkbox" name="hideSpecificDamageType6" /></td><td colspan="2" style="padding-left:20px">Wind</td></tr>'
+		+ '<tr><td align="center" style="width:5px;padding-left:65px"><input type="checkbox" name="hideSpecificDamageType7" /></td><td colspan="2" style="padding-left:20px">Holy</td></tr>'
+		+ '<tr><td align="center" style="width:5px;padding-left:65px"><input type="checkbox" name="hideSpecificDamageType8" /></td><td colspan="2" style="padding-left:20px">Dark</td></tr>'
+		+ '<tr><td align="center" style="width:5px;padding-left:65px"><input type="checkbox" name="hideSpecificDamageType9" /></td><td colspan="2" style="padding-left:20px">Soul</td></tr>'
+		+ '<tr><td align="center" style="width:5px;padding-left:65px"><input type="checkbox" name="hideSpecificDamageType10" /></td><td colspan="2" style="padding-left:20px">Void</td></tr>'
 		+ '<tr><td align="center" style="width:5px;padding-left:60px"><input type="checkbox" name="ResizeMonsterInfo" /></td><td colspan="2" style="padding-left:20px">Resize Monster Info if longer than Info box</td></tr>'
-		+ '<tr><td align="center" style="width:5px;padding-left:60px"><input type="checkbox" name="isShowPLHvstatStyle" /></td><td colspan="2" style="padding-left:20px">Show monster power levels from database</td></tr>'
-		+ '<tr><td align="center" style="width:5px;padding-left:40px"><input type="checkbox" name="isShowStatsPopup" /></td><td colspan="2" style="padding-left:10px">Show monster statistics on mouseover - delay: <input type="text" name="monsterPopupDelay" size="3" maxLength="4" style="text-align:right" />ms</td><td align="center" style="width:120px">' + t34 + ' ms (' + (t34*100/t0).toFixed(1) + '%)</td></tr>'
+		+ '<tr><td align="center" style="width:5px;padding-left:40px"><input type="checkbox" name="isShowStatsPopup" /></td><td colspan="2" style="padding-left:10px">Show monster statistics on mouseover - delay: <input type="text" name="monsterPopupDelay" size="3" maxLength="4" style="text-align:right" />ms</td><td></td></tr>'
 		+ '<tr><td align="center" style="width:5px;padding-left:50px"><input type="checkbox" name="isMonsterPopupPlacement" /></td><td colspan="2" style="padding-left:20px">Alternative placement for mouseover popup</td></tr></tr>'
-		+ '<tr><td align="center" style="width:5px;padding-left:20px"><input type="checkbox" name="isShowMonsterDuration" /></td><td colspan="2">Show monster effect durations</td><td align="center" style="width:120px">' + t9 + ' ms (' + (t9*100/t0).toFixed(1) + '%)</td></tr>'
+		+ '<tr><td align="center" style="width:5px;padding-left:20px"><input type="checkbox" name="isShowMonsterDuration" /></td><td colspan="2">Show monster effect durations</td><td></td></tr>'
 		+ '<tr><td align="center" style="width:5px;padding-left:30px"><input type="checkbox" name="isMonstersEffectsWarnColor" /></td><td colspan="2" style="padding-left:10px">Highlight duration badges - <span style="color:orange">Orange</span>: below <input type="text" name="MonstersWarnOrangeRounds" size="1" maxLength="2" style="text-align:right" /> rounds; <span style="color:red">Red</span>: below <input type="text" name="MonstersWarnRedRounds" size="1" maxLength="1" style="text-align:right" /> rounds</td></tr>'
 		+ '<tr><td colspan="2"><b>Tracking Functions:</b></td></tr>'
-		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isTrackStats" /></td><td colspan="2">Track Battle Statistics</td><td align="center" style="width:120px">' + t16 + ' ms (' + (t16*100/t0).toFixed(1) + '%)</td></tr>'
-		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isTrackItems" /></td><td colspan="2">Track Item Drops</td><td align="center" style="width:120px">' + t17 + ' ms (' + (t17*100/t0).toFixed(1) + '%)</td></tr>'
+		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isTrackStats" /></td><td colspan="2">Track Battle Statistics</td><td></td></tr>'
+		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isTrackItems" /></td><td colspan="2">Track Item Drops</td><td></td></tr>'
 		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isTrackRewards" /></td><td colspan="2">Track Arena Rewards</td></tr>'
 		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isTrackShrine" /></td><td colspan="2">Track Shrine (<span style="color:red">Downloadable/Custom Local Fonts only!</span>)</td></tr>'
 		+ '<tr><td style="padding-left:20px" colspan="2"><input type="button" class="_resetAll" value="Reset" title="Reset all tracking data." /></td></tr>'
-		+ '<tr><td colspan="3"><b>Warning System:</b></td><td align="center" style="width:120px">' + t12 + ' ms (' + (t12*100/t0).toFixed(1) + '%)</td></tr>'
+		+ '<tr><td colspan="3"><b>Warning System:</b></td><td></td></tr>'
 		+ '<tr><td colspan="2" style="padding-left:10px">Effects Expiring Warnings:</td></tr>'
 		+ '<tr><td align="center" style="width:5px;padding-left:5px"><input type="checkbox" name="isMainEffectsAlertSelf" /></td><td colspan="2">Alert when effects on yourself are expiring</td></tr>'
 		+ '<tr><td align="center" style="width:5px;padding-left:30px"><input type="checkbox" name="isEffectsAlertSelf6" /></td><td style="padding-left:10px">Channeling</td><td style="width:440px">- alert on <input type="text" name="EffectsAlertSelfRounds6" size="1" maxLength="3" style="text-align:right;font-size:11px;font-weight:bold"/>rounds remaining</td><td></td></tr>'
@@ -2624,7 +3987,7 @@ function initSettingsPane() {
 		+ '<tr><td align="center" style="width:5px;padding-left:30px"><input type="checkbox" name="isEffectsAlertMonsters8" /></td><td style="padding-left:10px">Nerfed</td><td style="width:440px">- alert on <input type="text" name="EffectsAlertMonstersRounds8" size="1" maxLength="3" style="text-align:right;font-size:11px;font-weight:bold" />rounds remaining</td><td></td></tr>'
 		+ '<tr><td align="center" style="width:5px;padding-left:30px"><input type="checkbox" name="isEffectsAlertMonsters9" /></td><td style="padding-left:10px">Magically Snared</td><td style="width:440px">- alert on <input type="text" name="EffectsAlertMonstersRounds9" size="1" maxLength="3" style="text-align:right;font-size:11px;font-weight:bold" />rounds remaining</td><td></td></tr>'
 		+ '<tr><td align="center" style="width:5px;padding-left:30px"><input type="checkbox" name="isEffectsAlertMonsters10" /></td><td style="padding-left:10px">Lifestream</td><td style="width:440px">- alert on <input type="text" name="EffectsAlertMonstersRounds10" size="1" maxLength="3" style="text-align:right;font-size:11px;font-weight:bold" />rounds remaining</td><td></td></tr>'
-		+ '<tr><td colspan="2" style="padding-left:10px">Specific Spell Warning:</td></tr>'
+		+ '<tr><td colspan="2" style="padding-left:10px">Specific Spell Warnings:</td></tr>'
 		+ '<tr><td align="center" style="width:5px;padding-left:20px"><input type="checkbox" name="isWarnAbsorbTrigger" /></td><td colspan="2">Alert when Absorbing Ward triggers</td></tr>'
 		+ '<tr><td align="center" style="width:5px;padding-left:20px"><input type="checkbox" name="isWarnSparkTrigger" /></td><td colspan="2">Alert when Spark of Life triggers</td></tr>'
 		+ '<tr><td align="center" style="width:5px;padding-left:20px"><input type="checkbox" name="isWarnSparkExpire" /></td><td colspan="2">Alert when Spark of Life expires</td></tr>'
@@ -2641,16 +4004,18 @@ function initSettingsPane() {
 		+ '<tr><td align="center" style="width:5px;padding-left:20px"><input type="checkbox" name="isWarnCF" /></td><td colspan="2" style="padding-left:10px">Crystfest</td></tr>'
 		+ '<tr><td align="center" style="width:5px;padding-left:20px"><input type="checkbox" name="isWarnIW" /></td><td colspan="2" style="padding-left:10px">Item World</td></tr>'
 		+ '<tr><td colspan="2"><b>Database Options:</b></td></tr>'
-		+ '<tr><td colspan="3"><input type="button" class="_startdatabase" value="Save Original Monsters" /><input type="button" class="_assumemonsterstats" value="Assume Monster Stats" /></td></tr>'
-		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isRememberScan" /></td><td colspan="2">Save scan results</td><td align="center" style="width:120px">' + t15 + ' ms by scan, ' + t15b + ' ms by round(' + (t15b*100/t15b0).toFixed(1) + '%)</td></tr>'
-		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isRememberSkillsTypes" /></td><td colspan="2">Save skill types (elements) while used in  battle (data updated on scan and outside of battle)</td><td align="center" style="width:120px">' + t21 + ' ms (' + (t21*100/t0).toFixed(1) + '%)</td></tr>'
-		+ '<tr><td align="center" style="width:5px;padding-left:10px"><input type="checkbox" name="isSpellsSkillsDifference" /></td><td colspan="2" style="padding-left:10px">Save monster\'s physical/magical skills usage and damage separetly </td></tr></table><hr /><table class="_settings" cellspacing="0" cellpadding="2" style="width:100%"><tr><td align="center"><input type="button" class="_resetSettings" value="Default Settings" title="Reset settings to default."/></td><td align="center"><input type="button" class="_masterReset" value="MASTER RESET" title="Deletes all of STAT\'s saved data and settings."/></td></tr></table>';
+		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isRememberScan" /></td><td colspan="2">Record monster scan results</td><td></td></tr>'
+		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isRememberSkillsTypes" /></td><td colspan="2">Record monster skills</td><td></td></tr>'
+		+ '</table><hr />'
+		+ '<table class="_settings" cellspacing="0" cellpadding="2" style="width:100%">'
+		+ '<tr><td align="center"><input type="button" class="_resetSettings" value="Default Settings" title="Reset settings to default."/></td><td align="center"><input type="button" class="_masterReset" value="MASTER RESET" title="Deletes all of STAT\'s saved data and settings."/></td></tr>'
+		+ '</table>';
 	$("#pane6").html(a);
 	if (_settings.isShowHighlight) $("input[name=isShowHighlight]").attr("checked", "checked");
 	if (_settings.isAltHighlight) $("input[name=isAltHighlight]").attr("checked", "checked");
 	if (_settings.isShowDivider) $("input[name=isShowDivider]").attr("checked", "checked");
 	if (_settings.isShowEndStats) $("input[name=isShowEndStats]").attr("checked", "checked");
-//isShowEndProfs added by Ilirith
+	//isShowEndProfs added by Ilirith
 	if (_settings.isShowEndProfs) {
 		$("input[name=isShowEndProfs]").attr("checked", "checked");
 		if (_settings.isShowEndProfsMagic) $("input[name=isShowEndProfsMagic]").attr("checked", "checked");
@@ -2661,33 +4026,32 @@ function initSettingsPane() {
 		$("input[name=isShowEndProfsArmor]").removeAttr("checked");
 		$("input[name=isShowEndProfsWeapon]").removeAttr("checked");
 	}
-//isShowMonsterNumber stolen from HV Lite, and added by Ilirith
+	//isShowMonsterNumber stolen from HV Lite, and added by Ilirith
 	if (_settings.isShowMonsterNumber) $("input[name=isShowMonsterNumber]").attr("checked", "checked");
 	if (_settings.isShowRoundCounter) $("input[name=isShowRoundCounter]").attr("checked", "checked");
 	if (_settings.isShowPowerupBox) $("input[name=isShowPowerupBox]").attr("checked", "checked");
-	if (_settings.isShowMonsterHP) $("input[name=isShowMonsterHP]").attr("checked", "checked");
-	if (_settings.isShowMonsterHPPercent) $("input[name=isShowMonsterHPPercent]").attr("checked", "checked");
-	if (_settings.isShowMonsterMP) $("input[name=isShowMonsterMP]").attr("checked", "checked");
-	if (_settings.isShowMonsterSP) $("input[name=isShowMonsterSP]").attr("checked", "checked");
-	if (_settings.isShowMonsterElements) $("input[name=isShowMonsterElements]").attr("checked", "checked");
-	if (_settings.isShowClassHvstatStyle) $("input[name=isShowClassHvstatStyle]").attr("checked", "checked");
-	if (_settings.isShowAttackHvstatStyle) $("input[name=isShowAttackHvstatStyle]").attr("checked", "checked");
-	if (_settings.isShowWeakHvstatStyle) $("input[name=isShowWeakHvstatStyle]").attr("checked", "checked");
-	if (_settings.isShowResHvstatStyle) $("input[name=isShowResHvstatStyle]").attr("checked", "checked");
-	if (_settings.HideThisResHvstatStyle[0]) $("input[name=HideThisResHvstatStyle0]").attr("checked", "checked");
-	if (_settings.HideThisResHvstatStyle[1]) $("input[name=HideThisResHvstatStyle1]").attr("checked", "checked");
-	if (_settings.HideThisResHvstatStyle[2]) $("input[name=HideThisResHvstatStyle2]").attr("checked", "checked");
-	if (_settings.HideThisResHvstatStyle[3]) $("input[name=HideThisResHvstatStyle3]").attr("checked", "checked");
-	if (_settings.HideThisResHvstatStyle[4]) $("input[name=HideThisResHvstatStyle4]").attr("checked", "checked");
-	if (_settings.HideThisResHvstatStyle[5]) $("input[name=HideThisResHvstatStyle5]").attr("checked", "checked");
-	if (_settings.HideThisResHvstatStyle[6]) $("input[name=HideThisResHvstatStyle6]").attr("checked", "checked");
-	if (_settings.HideThisResHvstatStyle[7]) $("input[name=HideThisResHvstatStyle7]").attr("checked", "checked");
-	if (_settings.HideThisResHvstatStyle[8]) $("input[name=HideThisResHvstatStyle8]").attr("checked", "checked");
-	if (_settings.HideThisResHvstatStyle[9]) $("input[name=HideThisResHvstatStyle9]").attr("checked", "checked");
-	if (_settings.HideThisResHvstatStyle[10]) 	$("input[name=HideThisResHvstatStyle10]").attr("checked", "checked");
+	if (_settings.showMonsterHP) $("input[name=showMonsterHP]").attr("checked", "checked");
+	if (_settings.showMonsterHPPercent) $("input[name=showMonsterHPPercent]").attr("checked", "checked");
+	if (_settings.showMonsterMP) $("input[name=showMonsterMP]").attr("checked", "checked");
+	if (_settings.showMonsterSP) $("input[name=showMonsterSP]").attr("checked", "checked");
+	if (_settings.showMonsterClassFromDB) $("input[name=showMonsterClassFromDB]").attr("checked", "checked");
+	if (_settings.showMonsterAttackTypeFromDB) $("input[name=showMonsterAttackTypeFromDB]").attr("checked", "checked");
+	if (_settings.showMonsterWeaknessesFromDB) $("input[name=showMonsterWeaknessesFromDB]").attr("checked", "checked");
+	if (_settings.showMonsterResistancesFromDB) $("input[name=showMonsterResistancesFromDB]").attr("checked", "checked");
+	if (_settings.hideSpecificDamageType[0]) $("input[name=hideSpecificDamageType0]").attr("checked", "checked");
+	if (_settings.hideSpecificDamageType[1]) $("input[name=hideSpecificDamageType1]").attr("checked", "checked");
+	if (_settings.hideSpecificDamageType[2]) $("input[name=hideSpecificDamageType2]").attr("checked", "checked");
+	if (_settings.hideSpecificDamageType[3]) $("input[name=hideSpecificDamageType3]").attr("checked", "checked");
+	if (_settings.hideSpecificDamageType[4]) $("input[name=hideSpecificDamageType4]").attr("checked", "checked");
+	if (_settings.hideSpecificDamageType[5]) $("input[name=hideSpecificDamageType5]").attr("checked", "checked");
+	if (_settings.hideSpecificDamageType[6]) $("input[name=hideSpecificDamageType6]").attr("checked", "checked");
+	if (_settings.hideSpecificDamageType[7]) $("input[name=hideSpecificDamageType7]").attr("checked", "checked");
+	if (_settings.hideSpecificDamageType[8]) $("input[name=hideSpecificDamageType8]").attr("checked", "checked");
+	if (_settings.hideSpecificDamageType[9]) $("input[name=hideSpecificDamageType9]").attr("checked", "checked");
+	if (_settings.hideSpecificDamageType[10]) 	$("input[name=hideSpecificDamageType10]").attr("checked", "checked");
 	if (_settings.ResizeMonsterInfo) $("input[name=ResizeMonsterInfo]").attr("checked", "checked");
-	if (_settings.isShowPLHvstatStyle) $("input[name=isShowPLHvstatStyle]").attr("checked", "checked");
-	if (_settings.isShowElemHvstatStyle) $("input[name=isShowElemHvstatStyle]").attr("checked", "checked");
+	if (_settings.showMonsterPowerLevelFromDB) $("input[name=showMonsterPowerLevelFromDB]").attr("checked", "checked");
+	if (_settings.showMonsterInfoFromDB) $("input[name=showMonsterInfoFromDB]").attr("checked", "checked");
 	if (_settings.isShowStatsPopup) $("input[name=isShowStatsPopup]").attr("checked", "checked");
 	if (_settings.isMonsterPopupPlacement) $("input[name=isMonsterPopupPlacement]").attr("checked", "checked");
 	$("input[name=monsterPopupDelay]").attr("value", _settings.monsterPopupDelay);
@@ -2702,12 +4066,12 @@ function initSettingsPane() {
 	if (_settings.isShowSidebarProfs) $("input[name=isShowSidebarProfs]").attr("checked", "checked");
 	if (_settings.isRememberScan) $("input[name=isRememberScan]").attr("checked", "checked");
 	if (_settings.isRememberSkillsTypes) $("input[name=isRememberSkillsTypes]").attr("checked", "checked");
-	if (_settings.isSpellsSkillsDifference) $("input[name=isSpellsSkillsDifference]").attr("checked", "checked");
 	if (_settings.isShowRoundReminder) $("input[name=isShowRoundReminder]").attr("checked", "checked");
 	$("input[name=reminderMinRounds]").attr("value", _settings.reminderMinRounds);
 	if (_settings.isAlertGem) $("input[name=isAlertGem]").attr("checked", "checked");
 	if (_settings.isAlertOverchargeFull) $("input[name=isAlertOverchargeFull]").attr("checked", "checked");
 	$("input[name=reminderBeforeEnd]").attr("value", _settings.reminderBeforeEnd);
+	if (_settings.isHideHVLogo) $("input[name=isHideHVLogo]").attr("checked", "checked");
 	if (_settings.isChangePageTitle) $("input[name=isChangePageTitle]").attr("checked", "checked");
 	if (_settings.isStartAlert) $("input[name=isStartAlert]").attr("checked", "checked");
 	if (_settings.isShowEquippedSet) $("input[name=isShowEquippedSet]").attr("checked", "checked");
@@ -2727,7 +4091,6 @@ function initSettingsPane() {
 	if (_settings.isShowSkillButton) $("input[name=isShowSkillButton]").attr("checked", "checked");
 	if (_settings.isEnableScanHotkey) $("input[name=isEnableScanHotkey]").attr("checked", "checked");
 	if (_settings.isEnableSkillHotkey) $("input[name=isEnableSkillHotkey]").attr("checked", "checked");
-	if (_settings.isCountPageLoadTime) $("input[name=isCountPageLoadTime]").attr("checked", "checked");
 	$("input[name=customPageTitle]").attr("value", _settings.customPageTitle);
 	if (_settings.isColumnInventory) $("input[name=isColumnInventory]").attr("checked", "checked");
 	if (_settings.isTrackStats) $("input[name=isTrackStats]").attr("checked", "checked");
@@ -2808,32 +4171,31 @@ function initSettingsPane() {
 	$("input[name=isShowEndProfsMagic]").click(saveSettings); //isShowEndProfs added by Ilirith
 	$("input[name=isShowEndProfsArmor]").click(saveSettings); //isShowEndProfs added by Ilirith
 	$("input[name=isShowEndProfsWeapon]").click(saveSettings); //isShowEndProfs added by Ilirith
-	$("input[name=isShowMonsterHP]").click(saveSettings);
-	$("input[name=isShowMonsterHPPercent]").click(saveSettings);
-	$("input[name=isShowMonsterMP]").click(saveSettings);
-	$("input[name=isShowMonsterSP]").click(saveSettings);
-	$("input[name=isShowMonsterElements]").click(saveSettings);
-	$("input[name=isShowElemHvstatStyle]").click(saveSettings);
+	$("input[name=showMonsterHP]").click(saveSettings);
+	$("input[name=showMonsterHPPercent]").click(saveSettings);
+	$("input[name=showMonsterMP]").click(saveSettings);
+	$("input[name=showMonsterSP]").click(saveSettings);
+	$("input[name=showMonsterInfoFromDB]").click(saveSettings);
 	$("input[name=isShowStatsPopup]").click(saveSettings);
 	$("input[name=isMonsterPopupPlacement]").click(saveSettings);
 	$("input[name=monsterPopupDelay]").change(saveSettings);
-	$("input[name=isShowClassHvstatStyle]").click(saveSettings);
-	$("input[name=isShowAttackHvstatStyle]").click(saveSettings);
-	$("input[name=isShowWeakHvstatStyle]").click(saveSettings);
-	$("input[name=isShowResHvstatStyle]").click(saveSettings);
-	$("input[name=HideThisResHvstatStyle0]").click(saveSettings);
-	$("input[name=HideThisResHvstatStyle1]").click(saveSettings);
-	$("input[name=HideThisResHvstatStyle2]").click(saveSettings);
-	$("input[name=HideThisResHvstatStyle3]").click(saveSettings);
-	$("input[name=HideThisResHvstatStyle4]").click(saveSettings);
-	$("input[name=HideThisResHvstatStyle5]").click(saveSettings);
-	$("input[name=HideThisResHvstatStyle6]").click(saveSettings);
-	$("input[name=HideThisResHvstatStyle7]").click(saveSettings);
-	$("input[name=HideThisResHvstatStyle8]").click(saveSettings);
-	$("input[name=HideThisResHvstatStyle9]").click(saveSettings);
-	$("input[name=HideThisResHvstatStyle10]").click(saveSettings);
+	$("input[name=showMonsterClassFromDB]").click(saveSettings);
+	$("input[name=showMonsterAttackTypeFromDB]").click(saveSettings);
+	$("input[name=showMonsterWeaknessesFromDB]").click(saveSettings);
+	$("input[name=showMonsterResistancesFromDB]").click(saveSettings);
+	$("input[name=hideSpecificDamageType0]").click(saveSettings);
+	$("input[name=hideSpecificDamageType1]").click(saveSettings);
+	$("input[name=hideSpecificDamageType2]").click(saveSettings);
+	$("input[name=hideSpecificDamageType3]").click(saveSettings);
+	$("input[name=hideSpecificDamageType4]").click(saveSettings);
+	$("input[name=hideSpecificDamageType5]").click(saveSettings);
+	$("input[name=hideSpecificDamageType6]").click(saveSettings);
+	$("input[name=hideSpecificDamageType7]").click(saveSettings);
+	$("input[name=hideSpecificDamageType8]").click(saveSettings);
+	$("input[name=hideSpecificDamageType9]").click(saveSettings);
+	$("input[name=hideSpecificDamageType10]").click(saveSettings);
 	$("input[name=ResizeMonsterInfo]").click(saveSettings);
-	$("input[name=isShowPLHvstatStyle]").click(saveSettings);
+	$("input[name=showMonsterPowerLevelFromDB]").click(saveSettings);
 	$("input[name=isShowMonsterDuration]").click(saveSettings);
 	$("input[name=isMonstersEffectsWarnColor]").click(saveSettings);
 	$("input[name=MonstersWarnOrangeRounds]").change(saveSettings);
@@ -2845,17 +4207,16 @@ function initSettingsPane() {
 	$("input[name=isShowSidebarProfs]").click(reminderAndSaveSettings);
 	$("input[name=isRememberScan]").click(reminderAndSaveSettings);
 	$("input[name=isRememberSkillsTypes]").click(reminderAndSaveSettings);
-	$("input[name=isSpellsSkillsDifference]").click(reminderAndSaveSettings);
 	$("input[name=isShowRoundReminder]").click(saveSettings);
 	$("input[name=reminderMinRounds]").change(saveSettings);
 	$("input[name=reminderBeforeEnd]").change(saveSettings);
 	$("input[name=isAlertGem]").click(saveSettings);
 	$("input[name=isAlertOverchargeFull]").click(saveSettings);
+	$("input[name=isHideHVLogo]").click(saveSettings);
 	$("input[name=isShowScanButton]").click(saveSettings);
 	$("input[name=isShowSkillButton]").click(saveSettings);
 	$("input[name=isEnableSkillHotkey]").click(saveSettings);
 	$("input[name=isEnableScanHotkey]").click(saveSettings);
-	$("input[name=isCountPageLoadTime]").click(saveSettings);
 	$("input[name=isChangePageTitle]").click(saveSettings);
 	$("input[name=isStartAlert]").click(saveSettings);
 	$("input[name=isShowEquippedSet]").click(saveSettings);
@@ -2903,9 +4264,6 @@ function initSettingsPane() {
 	$("input[name=isShowMonsterNumber]").click(saveSettings);
 	$("input[name=isShowPowerupBox]").click(saveSettings);
 	$("input[name=isShowRoundCounter]").click(saveSettings);
-	$("._startdatabase").click(function (){ if (confirm("Write original bestiary monsters into database?")) StartDatabase(); })
-	$("._assumemonsterstats").click(function (){ if (confirm("Write assumed stats based on custom monsters classes into database?")) AssumeResistances(); })
-	$("._minimizedatabase").click(function (){ if (confirm("Minimize Size of Monsters Database?")) MinimalizeDatabaseSize(); })
 	$("._resetSettings").click(function (){ if (confirm("Reset Settings to default?")) _settings.reset(); })
 	$("._resetAll").click(function (){ if (confirm("Reset All Tracking data?")) HVResetTracking(); })
 	$("._masterReset").click(function (){ if (confirm("This will delete ALL HV data saved in localStorage.\nAre you sure you want to do this?")) HVMasterReset(); })
@@ -2919,31 +4277,30 @@ function saveSettings() {
 	_settings.isShowEndProfsMagic = $("input[name=isShowEndProfsMagic]").get(0).checked; //isShowEndProfs added by Ilirith
 	_settings.isShowEndProfsArmor = $("input[name=isShowEndProfsArmor]").get(0).checked; //isShowEndProfs added by Ilirith
 	_settings.isShowEndProfsWeapon = $("input[name=isShowEndProfsWeapon]").get(0).checked; //isShowEndProfs added by Ilirith
-	_settings.isShowMonsterHP = $("input[name=isShowMonsterHP]").get(0).checked;
-	_settings.isShowMonsterHPPercent = $("input[name=isShowMonsterHPPercent]").get(0).checked;
-	_settings.isShowMonsterMP = $("input[name=isShowMonsterMP]").get(0).checked;
-	_settings.isShowMonsterSP = $("input[name=isShowMonsterSP]").get(0).checked;
-	_settings.isShowMonsterElements = $("input[name=isShowMonsterElements]").get(0).checked;
-	_settings.isShowElemHvstatStyle = $("input[name=isShowElemHvstatStyle]").get(0).checked;
+	_settings.showMonsterHP = $("input[name=showMonsterHP]").get(0).checked;
+	_settings.showMonsterHPPercent = $("input[name=showMonsterHPPercent]").get(0).checked;
+	_settings.showMonsterMP = $("input[name=showMonsterMP]").get(0).checked;
+	_settings.showMonsterSP = $("input[name=showMonsterSP]").get(0).checked;
+	_settings.showMonsterInfoFromDB = $("input[name=showMonsterInfoFromDB]").get(0).checked;
 	_settings.isShowStatsPopup = $("input[name=isShowStatsPopup]").get(0).checked;
 	_settings.isMonsterPopupPlacement = $("input[name=isMonsterPopupPlacement]").get(0).checked;
-	_settings.isShowClassHvstatStyle = $("input[name=isShowClassHvstatStyle]").get(0).checked;
-	_settings.isShowAttackHvstatStyle = $("input[name=isShowAttackHvstatStyle]").get(0).checked;
-	_settings.isShowWeakHvstatStyle = $("input[name=isShowWeakHvstatStyle]").get(0).checked;
-	_settings.isShowResHvstatStyle = $("input[name=isShowResHvstatStyle]").get(0).checked;
-	_settings.HideThisResHvstatStyle[0] = $("input[name=HideThisResHvstatStyle0]").get(0).checked;
-	_settings.HideThisResHvstatStyle[1] = $("input[name=HideThisResHvstatStyle1]").get(0).checked;
-	_settings.HideThisResHvstatStyle[2] = $("input[name=HideThisResHvstatStyle2]").get(0).checked;
-	_settings.HideThisResHvstatStyle[3] = $("input[name=HideThisResHvstatStyle3]").get(0).checked;
-	_settings.HideThisResHvstatStyle[4] = $("input[name=HideThisResHvstatStyle4]").get(0).checked;
-	_settings.HideThisResHvstatStyle[5] = $("input[name=HideThisResHvstatStyle5]").get(0).checked;
-	_settings.HideThisResHvstatStyle[6] = $("input[name=HideThisResHvstatStyle6]").get(0).checked;
-	_settings.HideThisResHvstatStyle[7] = $("input[name=HideThisResHvstatStyle7]").get(0).checked;
-	_settings.HideThisResHvstatStyle[8] = $("input[name=HideThisResHvstatStyle8]").get(0).checked;
-	_settings.HideThisResHvstatStyle[9] = $("input[name=HideThisResHvstatStyle9]").get(0).checked;
-	_settings.HideThisResHvstatStyle[10] = $("input[name=HideThisResHvstatStyle10]").get(0).checked;
+	_settings.showMonsterClassFromDB = $("input[name=showMonsterClassFromDB]").get(0).checked;
+	_settings.showMonsterAttackTypeFromDB = $("input[name=showMonsterAttackTypeFromDB]").get(0).checked;
+	_settings.showMonsterWeaknessesFromDB = $("input[name=showMonsterWeaknessesFromDB]").get(0).checked;
+	_settings.showMonsterResistancesFromDB = $("input[name=showMonsterResistancesFromDB]").get(0).checked;
+	_settings.hideSpecificDamageType[0] = $("input[name=hideSpecificDamageType0]").get(0).checked;
+	_settings.hideSpecificDamageType[1] = $("input[name=hideSpecificDamageType1]").get(0).checked;
+	_settings.hideSpecificDamageType[2] = $("input[name=hideSpecificDamageType2]").get(0).checked;
+	_settings.hideSpecificDamageType[3] = $("input[name=hideSpecificDamageType3]").get(0).checked;
+	_settings.hideSpecificDamageType[4] = $("input[name=hideSpecificDamageType4]").get(0).checked;
+	_settings.hideSpecificDamageType[5] = $("input[name=hideSpecificDamageType5]").get(0).checked;
+	_settings.hideSpecificDamageType[6] = $("input[name=hideSpecificDamageType6]").get(0).checked;
+	_settings.hideSpecificDamageType[7] = $("input[name=hideSpecificDamageType7]").get(0).checked;
+	_settings.hideSpecificDamageType[8] = $("input[name=hideSpecificDamageType8]").get(0).checked;
+	_settings.hideSpecificDamageType[9] = $("input[name=hideSpecificDamageType9]").get(0).checked;
+	_settings.hideSpecificDamageType[10] = $("input[name=hideSpecificDamageType10]").get(0).checked;
 	_settings.ResizeMonsterInfo = $("input[name=ResizeMonsterInfo]").get(0).checked;
-	_settings.isShowPLHvstatStyle = $("input[name=isShowPLHvstatStyle]").get(0).checked;
+	_settings.showMonsterPowerLevelFromDB = $("input[name=showMonsterPowerLevelFromDB]").get(0).checked;
 	_settings.isShowMonsterDuration = $("input[name=isShowMonsterDuration]").get(0).checked;
 	_settings.isMonstersEffectsWarnColor = $("input[name=isMonstersEffectsWarnColor]").get(0).checked;
 	_settings.MonstersWarnOrangeRounds = $("input[name=MonstersWarnOrangeRounds]").get(0).value;
@@ -2955,17 +4312,16 @@ function saveSettings() {
 	_settings.isShowSidebarProfs = $("input[name=isShowSidebarProfs]").get(0).checked;
 	_settings.isRememberScan = $("input[name=isRememberScan]").get(0).checked;
 	_settings.isRememberSkillsTypes = $("input[name=isRememberSkillsTypes]").get(0).checked;
-	_settings.isSpellsSkillsDifference = $("input[name=isSpellsSkillsDifference]").get(0).checked;
 	_settings.isShowRoundReminder = $("input[name=isShowRoundReminder]").get(0).checked;
 	_settings.reminderMinRounds = $("input[name=reminderMinRounds]").get(0).value;
 	_settings.reminderBeforeEnd = $("input[name=reminderBeforeEnd]").get(0).value;
 	_settings.isAlertGem = $("input[name=isAlertGem]").get(0).checked;
 	_settings.isAlertOverchargeFull = $("input[name=isAlertOverchargeFull]").get(0).checked;
+	_settings.isHideHVLogo = $("input[name=isHideHVLogo]").get(0).checked;
 	_settings.isShowScanButton = $("input[name=isShowScanButton]").get(0).checked;
 	_settings.isShowSkillButton = $("input[name=isShowSkillButton]").get(0).checked;
 	_settings.isEnableScanHotkey = $("input[name=isEnableScanHotkey]").get(0).checked;
 	_settings.isEnableSkillHotkey = $("input[name=isEnableSkillHotkey]").get(0).checked;
-	_settings.isCountPageLoadTime = $("input[name=isCountPageLoadTime]").get(0).checked;
 	_settings.isChangePageTitle = $("input[name=isChangePageTitle]").get(0).checked;
 	_settings.isShowEquippedSet = $("input[name=isShowEquippedSet]").get(0).checked;
 	_settings.isDisableForgeHotKeys = $("input[name=isDisableForgeHotKeys]").get(0).checked;
@@ -3132,7 +4488,6 @@ function captureShrine() {
 	}
 	return;
 }
-
 function loadOverviewObject() {
 	if (_overview !== null) return;
 	_overview = new HVCacheOverview();
@@ -3172,201 +4527,9 @@ function loadRoundObject() {
 	if (_round !== null) return;
 	_round = new HVRound();
 	_round.load();
-}
-function getMonsterElementsById(a, b) {
-	switch (b) {
-		case 1:
-			a.imperv = "-";
-			a.resist = "Wind,Holy";
-			a.majWeak = "Fire,Cold";
-			a.minWeak = "-";
-			break;
-		case 2:
-			a.imperv = "-";
-			a.resist = "Holy,Dark";
-			a.majWeak = "Fire,Elec";
-			a.minWeak = "-";
-			break;
-		case 3:
-			a.imperv = "-";
-			a.resist = "Fire,Holy";
-			a.majWeak = "Cold,Elec";
-			a.minWeak = "-";
-			break;
-		case 4:
-			a.imperv = "-";
-			a.resist = "Cold,Elec";
-			a.majWeak = "Holy,Dark";
-			a.minWeak = "Fire";
-			break;
-		case 5:
-			a.imperv = "-";
-			a.resist = "Cold,Wind";
-			a.majWeak = "Fire,Dark";
-			a.minWeak = "-";
-			break;
-		case 6:
-			a.imperv = "-";
-			a.resist = "Fire,Dark";
-			a.majWeak = "Cold,Holy";
-			a.minWeak = "-";
-			break;
-		case 7:
-			a.imperv = "-";
-			a.resist = "Wind,Dark";
-			a.majWeak = "Fire,Holy";
-			a.minWeak = "-";
-			break;
-		case 8:
-			a.imperv = "-";
-			a.resist = "Fire,Cold";
-			a.majWeak = "Elec,Holy";
-			a.minWeak = "Wind";
-			break;
-		case 9:
-			a.imperv = "-";
-			a.resist = "Cold,Holy";
-			a.majWeak = "Wind";
-			a.minWeak = "Fire";
-			break;
-		case 10:
-			a.imperv = "-";
-			a.resist = "Fire,Elec";
-			a.majWeak = "Wind,Dark";
-			a.minWeak = "Holy";
-			break;
-		case 11:
-			a.imperv = "-";
-			a.resist = "Fire,Wind";
-			a.majWeak = "Cold,Elec";
-			a.minWeak = "-";
-			break;
-		case 12:
-			a.imperv = "-";
-			a.resist = "Fire,Elec,Holy";
-			a.majWeak = "Dark";
-			a.minWeak = "Wind";
-			break;
-		case 13:
-			a.imperv = "-";
-			a.resist = "Elec,Dark";
-			a.majWeak = "Fire,Holy";
-			a.minWeak = "Cold";
-			break;
-		case 14:
-			a.imperv = "-";
-			a.resist = "Cold,Holy";
-			a.majWeak = "Elec,Dark";
-			a.minWeak = "Fire";
-			break;
-		case 15:
-			a.imperv = "-";
-			a.resist = "Cold,Dark";
-			a.majWeak = "Fire,Holy";
-			a.minWeak = "Wind";
-			break;
-		case 16:
-			a.imperv = "-";
-			a.resist = "Cold,Elec,Wind,Holy,Dark";
-			a.majWeak = "Fire";
-			a.minWeak = "Soul";
-			break;
-		case 17:
-			a.imperv = "-";
-			a.resist = "Fire,Elec,Wind,Holy,Dark";
-			a.majWeak = "Cold";
-			a.minWeak = "-";
-			break;
-		case 18:
-			a.imperv = "-";
-			a.resist = "Fire,Cold,Elec,Wind,Dark";
-			a.majWeak = "Holy";
-			a.minWeak = "Soul";
-			break;
-		case 19:
-			a.imperv = "-";
-			a.resist = "Fire,Cold,Wind,Holy,Dark";
-			a.majWeak = "Elec";
-			a.minWeak = "Soul";
-			break;
-		case 20:
-			a.imperv = "-";
-			a.resist = "Fire,Cold,Elec,Holy,Dark";
-			a.majWeak = "Wind";
-			a.minWeak = "Soul";
-			break;
-		case 21:
-			a.imperv = "-";
-			a.resist = "Elem,Crush,Slash";
-			a.majWeak = "Holy,Dark,Pierce";
-			a.minWeak = "-";
-			break;
-		case 22:
-			a.imperv = "-";
-			a.resist = "Elem,Crush,Pierce";
-			a.majWeak = "Holy,Dark,Slash";
-			a.minWeak = "-";
-			break;
-		case 23:
-			a.imperv = "-";
-			a.resist = "Elem,Slash,Pierce";
-			a.majWeak = "Holy,Dark,Crush";
-			a.minWeak = "-";
-			break;
-		case 24:
-			a.imperv = "-";
-			a.resist = "Elem,Holy,Dark,Phys";
-			a.majWeak = "-";
-			a.minWeak = "Soul";
-			break;
-		case 25:
-			a.imperv = "-";
-			a.resist = "Fire,Holy";
-			a.majWeak = "Wind,Dark";
-			a.minWeak = "Elec";
-			break;
-		case 26:
-			a.imperv = "-";
-			a.resist = "Wind,Dark";
-			a.majWeak = "Fire,Holy";
-			a.minWeak = "Elec";
-			break;
-		case 27:
-			a.imperv = "-";
-			a.resist = "Fire,Cold,Wind,Holy,Dark";
-			a.majWeak = "Soul,Elec";
-			a.minWeak = "-";
-			break;
-		case 28:
-			a.imperv = "-";
-			a.resist = "Fire,Elec,Wind,Holy,Dark";
-			a.majWeak = "Soul,Cold";
-			a.minWeak = "-";
-			break;
-		case 29:
-			a.imperv = "-";
-			a.resist = "Fire,Cold,Elec,Holy,Dark";
-			a.majWeak = "Soul,Wind";
-			a.minWeak = "-";
-			break;
-		case 30:
-			a.imperv = "-";
-			a.resist = "Cold,Elec,Wind,Holy,Dark";
-			a.majWeak = "Soul,Fire";
-			a.minWeak = "-";
-			break;
-		case 31:
-			a.imperv = "Elem,Holy,Phys";
-			a.resist = "Soul";
-			a.majWeak = "Dark";
-			a.minWeak = "-";
-			break;
-		case 32:
-			a.imperv = "Elem,Dark,Phys";
-			a.resist = "Soul";
-			a.majWeak = "Holy";
-			a.minWeak = "-";
-	}
+	_round.monsters.forEach(function (element, index, array) {
+		HVStat.monsters[index].setFromValueObject(element);
+	});
 }
 function getRelativeTime(b) {
 	var a = (arguments.length > 1) ? arguments[1] : new Date();
@@ -3379,12 +4542,11 @@ function getRelativeTime(b) {
 	if (c < (48 * 60 * 60)) return "1 day ago";
 	return (parseInt(c / 86400)).toString() + " days ago";
 }
-if (isChrome) {	//=== Clones a few GreaseMonkey functions for Chrome Users.
+if (HVStat.isChrome) {	//=== Clones a few GreaseMonkey functions for Chrome Users.
 	unsafeWindow = window;
 	function GM_addStyle(styleCSS) {
 		var doc = document,
 		newStyle = doc.createElement("style");
-		
 		newStyle.textContent = styleCSS;
 		doc.documentElement.insertBefore(newStyle);
 	}
@@ -3414,7 +4576,6 @@ function HVMasterReset() {
 	deleteFromStorage(HV_DROPS);
 	deleteFromStorage(HV_SETTINGS);
 	deleteFromStorage(HV_ROUND);
-	deleteFromStorage(HV_ALERT);
 	deleteFromStorage(HV_EQUIP);
 	deleteFromStorage(HV_DATA);
 	deleteFromStorage("HVBackup1");
@@ -3422,6 +4583,10 @@ function HVMasterReset() {
 	deleteFromStorage("HVBackup3");
 	deleteFromStorage("HVBackup4");
 	deleteFromStorage("HVBackup5")
+	deleteFromStorage(key_hpAlertAlreadyShown);
+	deleteFromStorage(key_mpAlertAlreadyShown);
+	deleteFromStorage(key_spAlertAlreadyShown);
+	deleteFromStorage(key_ocAlertAlreadyShown);
 }
 function clone(a) {
 	if (a === null || typeof(a) !== "object") return a;
@@ -3674,7 +4839,9 @@ function HVCacheDrops() {
 		"[Featherweight Shard]", " "
 	];
 	this.itemQtyArry = new Array(this.itemArry.length);
-	this.itemQtyArry.init(0);
+	i = this.itemArry.length;
+	while (i--)
+		this.itemQtyArry[i] = 0;
 	this.itemDrop = 0;
 	this.eqArray = [];
 	this.eqDrop = 0;
@@ -3729,20 +4896,19 @@ function HVSettings() {
 	this.isShowEndProfsMagic = true;
 	this.isShowEndProfsArmor = true;
 	this.isShowEndProfsWeapon = true;
-	this.isShowMonsterHP = true;
-	this.isShowMonsterHPPercent = false;
-	this.isShowMonsterMP = true;
-	this.isShowMonsterSP = true;
-	this.isShowMonsterElements = false;
-	this.isShowElemHvstatStyle = false;
+	this.showMonsterHP = true;
+	this.showMonsterHPPercent = false;
+	this.showMonsterMP = true;
+	this.showMonsterSP = true;
+	this.showMonsterInfoFromDB = false;
 	this.isShowStatsPopup = false;
-	this.isShowClassHvstatStyle = false;
-	this.isShowAttackHvstatStyle = false;
-	this.isShowWeakHvstatStyle = false;
-	this.isShowResHvstatStyle = false;
-	this.HideThisResHvstatStyle = [false, false, false, false, false, false, false, false, false, false, false];
+	this.showMonsterClassFromDB = false;
+	this.showMonsterAttackTypeFromDB = false;
+	this.showMonsterWeaknessesFromDB = false;
+	this.showMonsterResistancesFromDB = false;
+	this.hideSpecificDamageType = [false, false, false, false, false, false, false, false, false, false, false];
 	this.ResizeMonsterInfo = false;
-	this.isShowPLHvstatStyle = false;
+	this.showMonsterPowerLevelFromDB = false;
 	this.isShowMonsterDuration = true;
 	this.isMonstersEffectsWarnColor = false;
 	this.MonstersWarnOrangeRounds = 5;
@@ -3754,12 +4920,12 @@ function HVSettings() {
 	this.isShowSidebarProfs = false;
 	this.isRememberScan = false;
 	this.isRememberSkillsTypes = false;
-	this.isSpellsSkillsDifference = false;
 	this.isShowRoundReminder = false;
 	this.reminderMinRounds = 3;
 	this.reminderBeforeEnd = 1;
 	this.isAlertGem = true;
 	this.isAlertOverchargeFull = false;
+	this.isHideHVLogo = false;
 	this.isChangePageTitle = false;
 	this.customPageTitle = "HV";
 	this.isColumnInventory = false;
@@ -3774,7 +4940,6 @@ function HVSettings() {
 	this.isEnableScanHotkey = false;
 	this.isShowSkillButton = false;
 	this.isEnableSkillHotkey = false;
-	this.isCountPageLoadTime = false;
 	this.isShowEquippedSet = false;
 	this.isDisableForgeHotKeys = false;
 	//0-twohanded fighter; 1-elemental mage
@@ -3783,31 +4948,6 @@ function HVSettings() {
 	this.isShowMonsterNumber = false;
 	this.isShowPowerupBox = false;
 	this.isShowRoundCounter = false;
-}
-function HVMonster() {
-	this.id = 0;
-	this.maxHp = 0;
-	this.currHp = 0;
-	this.name = "";
-	this.mclass = 0;
-	this.mpl = 0;
-	this.mattack = 0;
-	this.mweak = 0;
-	this.mresist = 0;
-	this.mimperv = 0;
-	this.mskilltype = 0;
-	this.mskillspell = 0;
-	this.datesave = 0;
-	this.hasspbar = false;
-	this.sp1 = 0;
-	this.sp2 = 0;
-	this.currmp = 0;
-}
-function ElementalStats() {
-	this.resist = "";
-	this.imperv = "";
-	this.majWeak = "";
-	this.minWeak = "";
 }
 function saveStatsBackup(back) {
 	loadStatsObject();
@@ -4376,700 +5516,6 @@ function HVMonsterDatabase() {
 	this.datescan = [];
 	this.isLoaded = false;
 }
-function StartDatabase() {
-	var sec = TimeCounter(1);
-	loadDatabaseObject();
-	_database.mclass[1] = 31;
-	_database.mattack[1] = 52;
-	_database.mweak[1] = 6162;
-	_database.mresist[1] = 6471;
-	_database.mimperv[1] = 99;
-	_database.mskillspell[1] = 1;
-	_database.mskilltype[1] = 64;
-	_database.mclass[2] = 31;
-	_database.mattack[2] = 53;
-	_database.mweak[2] = 6163;
-	_database.mresist[2] = 7172;
-	_database.mimperv[2] = 99;
-	_database.mskillspell[2] = 1;
-	_database.mskilltype[2] = 72;
-	_database.mclass[3] = 31;
-	_database.mattack[3] = 53;
-	_database.mweak[3] = 6263;
-	_database.mresist[3] = 6171;
-	_database.mimperv[3] = 99;
-	_database.mskillspell[3] = 1;
-	_database.mskilltype[3] = 61;
-	_database.mclass[4] = 31;
-	_database.mattack[4] = 53;
-	_database.mweak[4] = 617172;
-	_database.mresist[4] = 6263;
-	_database.mimperv[4] = 99;
-	_database.mskillspell[4] = 2;
-	_database.mskilltype[4] = 53;
-	_database.mclass[5] = 31;
-	_database.mattack[5] = 51;
-	_database.mweak[5] = 6172;
-	_database.mresist[5] = 6264;
-	_database.mimperv[5] = 99;
-	_database.mskillspell[5] = 2;
-	_database.mskilltype[5] = 53;
-	_database.mclass[6] = 31;
-	_database.mattack[6] = 51;
-	_database.mweak[6] = 6271;
-	_database.mresist[6] = 6172;
-	_database.mimperv[6] = 99;
-	_database.mskillspell[6] = 2;
-	_database.mskilltype[6] = 61;
-	_database.mclass[7] = 31;
-	_database.mattack[7] = 74;
-	_database.mweak[7] = 6171;
-	_database.mresist[7] = 6472;
-	_database.mimperv[7] = 99;
-	_database.mskillspell[7] = 1;
-	_database.mskilltype[7] = 72;
-	_database.mclass[8] = 31;
-	_database.mattack[8] = 53;
-	_database.mweak[8] = 636471;
-	_database.mresist[8] = 6162;
-	_database.mimperv[8] = 99;
-	_database.mskillspell[8] = 2;
-	_database.mskilltype[8] = 72;
-	_database.mclass[9] = 31;
-	_database.mattack[9] = 51;
-	_database.mweak[9] = 6164;
-	_database.mresist[9] = 6271;
-	_database.mimperv[9] = 99;
-	_database.mskillspell[9] = 2;
-	_database.mskilltype[9] = 51;
-	_database.mclass[10] = 31;
-	_database.mattack[10] = 52;
-	_database.mweak[10] = 647271;
-	_database.mresist[10] = 6163;
-	_database.mimperv[10] = 99;
-	_database.mskillspell[10] = 1;
-	_database.mskilltype[10] = 71;
-	_database.mclass[11] = 32;
-	_database.mattack[11] = 51;
-	_database.mweak[11] = 626371;
-	_database.mresist[11] = 6164;
-	_database.mimperv[11] = 99;
-	_database.mskillspell[11] = 1;
-	_database.mskilltype[11] = 64;
-	_database.mclass[12] = 32;
-	_database.mattack[12] = 51;
-	_database.mweak[12] = 6472;
-	_database.mresist[12] = 616371;
-	_database.mimperv[12] = 99;
-	_database.mskillspell[12] = 2;
-	_database.mskilltype[12] = 51;
-	_database.mclass[13] = 32;
-	_database.mattack[13] = 52;
-	_database.mweak[13] = 616271;
-	_database.mresist[13] = 6372;
-	_database.mimperv[13] = 99;
-	_database.mskillspell[13] = 1;
-	_database.mskilltype[13] = 63;
-	_database.mclass[14] = 32;
-	_database.mattack[14] = 52;
-	_database.mweak[14] = 616372;
-	_database.mresist[14] = 6271;
-	_database.mimperv[14] = 99;
-	_database.mskillspell[14] = 2;
-	_database.mskilltype[14] = 52;
-	_database.mclass[15] = 32;
-	_database.mattack[15] = 53;
-	_database.mweak[15] = 616471;
-	_database.mresist[15] = 6272;
-	_database.mimperv[15] = 99;
-	_database.mskillspell[15] = 1;
-	_database.mskilltype[15] = 62;
-	_database.mclass[16] = 33;
-	_database.mattack[16] = 51;
-	_database.mweak[16] = 61;
-	_database.mresist[16] = 6263647172;
-	_database.mimperv[16] = 99;
-	_database.mskillspell[16] = 203;
-	_database.mskilltype[16] = 7361;
-	_database.mclass[17] = 33;
-	_database.mattack[17] = 53;
-	_database.mweak[17] = 62;
-	_database.mresist[17] = 6163647172;
-	_database.mimperv[17] = 99;
-	_database.mskillspell[17] = 104;
-	_database.mskilltype[17] = 7371;
-	_database.mclass[18] = 33;
-	_database.mattack[18] = 51;
-	_database.mweak[18] = 71;
-	_database.mresist[18] = 6162636472;
-	_database.mimperv[18] = 99;
-	_database.mskillspell[18] = 104;
-	_database.mskilltype[18] = 7364;
-	_database.mclass[19] = 33;
-	_database.mattack[19] = 53;
-	_database.mweak[19] = 63;
-	_database.mresist[19] = 6162647172;
-	_database.mimperv[19] = 99;
-	_database.mskillspell[19] = 104;
-	_database.mskilltype[19] = 7361;
-	_database.mclass[20] = 34;
-	_database.mattack[20] = 52;
-	_database.mweak[20] = 64;
-	_database.mresist[20] = 616263717273;
-	_database.mimperv[20] = 99;
-	_database.mskillspell[20] = 104;
-	_database.mskilltype[20] = 7352;
-	_database.mclass[21] = 34;
-	_database.mattack[21] = 53;
-	_database.mweak[21] = 537172;
-	_database.mresist[21] = 515261626364;
-	_database.mimperv[21] = 99;
-	_database.mskillspell[21] = 103;
-	_database.mskilltype[21] = 7372;
-	_database.mclass[22] = 34;
-	_database.mattack[22] = 51;
-	_database.mweak[22] = 517172;
-	_database.mresist[22] = 525361626364;
-	_database.mimperv[22] = 99;
-	_database.mskillspell[22] = 204;
-	_database.mskilltype[22] = 7362;
-	_database.mclass[23] = 34;
-	_database.mattack[23] = 52;
-	_database.mweak[23] = 527172;
-	_database.mresist[23] = 515361626364;
-	_database.mimperv[23] = 99;
-	_database.mskillspell[23] = 103;
-	_database.mskilltype[23] = 7372;
-	_database.mclass[24] = 35;
-	_database.mattack[24] = 73;
-	_database.mweak[24] = 99;
-	_database.mresist[24] = 51525373;
-	_database.mimperv[24] = 616263647172;
-	_database.mskillspell[24] = 203;
-	_database.mskilltype[24] = 7373;
-	_database.mclass[25] = 31;
-	_database.mattack[25] = 53;
-	_database.mweak[25] = 636472;
-	_database.mresist[25] = 6171;
-	_database.mimperv[25] = 99;
-	_database.mskillspell[25] = 102;
-	_database.mskilltype[25] = 7353;
-	_database.mclass[26] = 31;
-	_database.mattack[26] = 52;
-	_database.mweak[26] = 616371;
-	_database.mresist[26] = 6472;
-	_database.mimperv[26] = 99;
-	_database.mskillspell[26] = 102;
-	_database.mskilltype[26] = 7373;
-	_database.mclass[27] = 34;
-	_database.mattack[27] = 52;
-	_database.mweak[27] = 6373;
-	_database.mresist[27] = 6162647172;
-	_database.mimperv[27] = 99;
-	_database.mskillspell[27] = 104;
-	_database.mskilltype[27] = 6373;
-	_database.mclass[28] = 34;
-	_database.mattack[28] = 53;
-	_database.mweak[28] = 6273;
-	_database.mresist[28] = 6163647172;
-	_database.mimperv[28] = 99;
-	_database.mskillspell[28] = 104;
-	_database.mskilltype[28] = 6273;
-	_database.mclass[29] = 34;
-	_database.mattack[29] = 51;
-	_database.mweak[29] = 6473;
-	_database.mresist[29] = 6162637172;
-	_database.mimperv[29] = 99;
-	_database.mskillspell[29] = 104;
-	_database.mskilltype[29] = 6473;
-	_database.mclass[30] = 34;
-	_database.mattack[30] = 73;
-	_database.mweak[30] = 6173;
-	_database.mresist[30] = 6263647172;
-	_database.mimperv[30] = 99;
-	_database.mskillspell[30] = 0;
-	_database.mskilltype[30] = 0;
-	_database.mclass[31] = 35;
-	_database.mattack[31] = 71;
-	_database.mweak[31] = 72;
-	_database.mresist[31] = 51525373;
-	_database.mimperv[31] = 6162636471;
-	_database.mskillspell[31] = 203;
-	_database.mskilltype[31] = 7173;
-	_database.mclass[32] = 35;
-	_database.mattack[32] = 72;
-	_database.mweak[32] = 71;
-	_database.mresist[32] = 51525373;
-	_database.mimperv[32] = 6162636472;
-	_database.mskillspell[32] = 203;
-	_database.mskilltype[32] = 7273;
-	_database.mclass[8223] = 34;
-	_database.mattack[8223] = 52;
-	_database.mweak[8223] = 62;
-	_database.mresist[8223] = 52616364717273;
-	_database.mimperv[8223] = 99;
-	_database.mskillspell[8223] = 203;
-	_database.mskilltype[8223] = 6161;
-	_database.mclass[8224] = 34;
-	_database.mattack[8224] = 52;
-	_database.mweak[8224] = 62;
-	_database.mresist[8224] = 52616364717273;
-	_database.mimperv[8224] = 99;
-	_database.mskillspell[8224] = 203;
-	_database.mskilltype[8224] = 6161;
-	_database.mclass[8225] = 34;
-	_database.mattack[8225] = 52;
-	_database.mweak[8225] = 71;
-	_database.mresist[8225] = 51616263647273;
-	_database.mimperv[8225] = 99;
-	_database.mskillspell[8225] = 203;
-	_database.mskilltype[8225] = 7274;
-	_database.save();
-	alert("Done");
-	_ltc.main[1] -= TimeCounter(0, sec);
-	if (isBattle) _ltc.isbattle[1] -= TimeCounter(0, sec);
-	_ltc.save();
-}
-function MinimalizeDatabaseSize() {
-	loadDatabaseObject();
-	var mid = 0;
-	while (_database.mclass[mid] !== undefined) {
-		_database.mclass[mid] = _database.mclass[mid] === null ? 0 : _database.mclass[mid] = MClassNum(_database.mclass[mid], 0);
-		_database.mattack[mid] = MElemNum(_database.mattack[mid], 0);
-		_database.mweak[mid] = MElemNum(_database.mweak[mid], 0);
-		_database.mresist[mid] = MElemNum(_database.mresist[mid], 0);
-		_database.mimperv[mid] = MElemNum(_database.mimperv[mid], 0);
-		_database.mskilltype[mid] = MElemNum(_database.mskilltype[mid], 0);
-		if (_database.mskillspell[mid] === null) _database.mskillspell[mid] = 0;
-		else if (String(_database.mskillspell[mid]).match(/ma/i)) _database.mskillspell[mid] = 1;
-		else if (String(_database.mskillspell[mid]).match(/ph/i)) _database.mskillspell[mid] = 2;
-		if (_database.mpl[mid] === null) _database.mpl[mid] = 0;
-		if (mid === 10) alert("It is working 10");
-		if (mid === 100) alert("It is working 100");
-		if (mid === 1000) alert("It is working 1000");
-		mid++;
-	}
-	_database.save();
-	alert("Done");
-}
-function MElemNum(a, b) {
-	if (a === null || a === 0) {
-		a = 0;
-		return a;
-	}
-	if ((b === 0 || b === null || b === undefined) && String(a).match(/\d/ig)) return a;
-	if (b === 0 || b === null || b === undefined) {
-		a = a.replace(/\?/ig, "");
-		if (a.length < 10) {
-			switch (a) {
-			case "Nothing":
-			case "nothing":
-			case "":
-					a = 99; break;
-			case "Slashing":
-			case "slashing":
-			case "Sl":
-					a = 51; break;
-			case "Crushing":
-			case "crushing":
-			case "Cr":
-					a = 52; break;
-			case "Piercing":
-			case "piercing":
-			case "Pi":
-					a = 53; break;
-			case "Fire":
-			case "fire":
-					a = 61; break;
-			case "Cold":
-			case "cold":
-					a = 62; break;
-			case "Elec":
-			case "elec":
-					a = 63; break;
-			case "Wind":
-			case"wind":
-					a = 64; break;
-			case "Holy":
-			case "holy":
-					a = 71; break;
-			case "Dark":
-			case "dark":
-					a = 72; break;
-			case "Soul":
-			case "soul":
-					a = 73; break;
-			case "Void":
-			case "void":
-					a = 74; break;
-			case "Elemental":
-			case "elemental":
-			case "Elem":
-			case "elem":
-				a = 61626364;
-			}
-		} else {
-			a = a.replace(/\,\s/ig, "").replace(/slashing/ig, "51").replace(/sl/ig, "51").replace(/crushing/ig, "52").replace(/cr/ig, "52").replace(/piercing/ig, "53").replace(/pi/ig, "53").replace(/physical/ig,"515253").replace(/phys/ig,"515253").replace(/ph/ig,"515253");
-			a = a.replace(/fire/ig,"61").replace(/cold/ig,"62").replace(/elec/ig,"63").replace(/wind/ig,"64").replace(/elemental/ig,"61626364").replace(/elem/ig,"61626364").replace(/el/ig,"61626364");
-			a = a.replace(/holy/ig,"71").replace(/dark/ig,"72").replace(/soul/ig,"73").replace(/void/ig,"74");
-			a = parseInt(a);
-		}
-	} else {
-		if (a < 100) {
-			switch (a) {
-				case 99:
-					a = "-"; break;
-				case 51:
-					a = "Slash"; break;
-				case 52:
-					a = "Crush"; break;
-				case 53:
-					a = "Pierc"; break;
-				case 61:
-					a = "Fire"; break;
-				case 62:
-					a = "Cold"; break;
-				case 63:
-					a = "Elec"; break;
-				case 64:
-					a = "Wind"; break;
-				case 71:
-					a = "Holy"; break;
-				case 72:
-					a = "Dark"; break;
-				case 73:
-					a = "Soul"; break;
-				case 74:
-					a = "Void"; break;
-				case 1:
-					a = "Mag"; break;
-				case 91:
-					a = "?Mag"; break;
-				case 2:
-					a = "Phys"; break;
-				case 92:
-					a = "?Phys"; break;
-				case 3:
-					a = "Spirit:Mag"; break;
-				case 4:
-					a = "Spirit:Phys";
-			}
-		} else {
-			a = String(a);
-			a = a.replace(/61626364/,", Elem").replace(/515253/,", Phys").replace(/525153/,", Phys").replace(/51852/,", ?Sl/Cr").replace(/52853/,", ?Cr/Pi").replace(/51853/,", ?Cr/Pi").replace(/9/,"?");
-			a = a.replace(/61/g,", Fire").replace(/62/g,", Cold").replace(/63/g,", Elec").replace(/64/g,", Wind");
-			a = a.replace(/71/g,", Holy").replace(/72/g,", Dark").replace(/73/g,", Soul").replace(/74/g,", Void");
-			a = a.replace(/51/g, ", Slash").replace(/52/g, ", Crush").replace(/53/g, ", Pierc");
-			a = a.replace(/1/, ", Mag").replace(/2/, ", Phys").replace(/3/, ", Spirit:Mag").replace(/4/, ", Spirit:Phys").replace(", ", "");
-		}
-	}
-	return a;
-}
-function MClassNum(a, b) {
-	if (b === 1 || String(b).match(/rev/)) {
-		switch (a) {
-			case 1:
-				a = "Arthropod"; break;
-			case 2:
-				a = "Avion"; break;
-			case 3:
-				a = "Beast"; break;
-			case 4:
-				a = "Celestial"; break;
-			case 5:
-				a = "Daimon"; break;
-			case 6:
-				a = "Dragonkin"; break;
-			case 7:
-				a = "Elemental"; break;
-			case 8:
-				a = "Giant"; break;
-			case 9:
-				a = "Humanoid"; break;
-			case 10:
-				a = "Mechanoid"; break;
-			case 11:
-				a = "Reptilian"; break;
-			case 12:
-				a = "Sprite"; break;
-			case 13:
-				a = "Undead"; break;
-			case 31:
-				a = "Common"; break;
-			case 32:
-				a = "Uncommon"; break;
-			case 33:
-				a = "Rare"; break;
-			case 34:
-				a = "Legendary"; break;
-			case 35:
-				a = "Ultimate"; break;
-			default:
-				a = 0;
-		}
-	} else {
-		if (!String(a).match(/\d/)){
-			switch (a) {
-				case "Arthropod":
-					a = 1; break;
-				case "Avion":
-					a = 2; break;
-				case "Beast":
-					a = 3; break;
-				case "Celestial":
-					a = 4; break;
-				case "Daimon":
-					a = 5; break;
-				case "Dragonkin":
-					a = 6; break;
-				case "Elemental":
-					a = 7; break;
-				case "Giant":
-					a = 8; break;
-				case "Humanoid":
-					a = 9; break;
-				case "Mechanoid":
-					a = 10; break;
-				case "Reptilian":
-					a = 11; break;
-				case "Sprite":
-					a = 12; break;
-				case "Undead":
-					a = 13; break;
-				case "Common":
-					a = 31; break;
-				case "Uncommon":
-					a = 32; break;
-				case "Rare":
-					a = 33; break;
-				case "Legendary":
-					a = 34; break;
-				case "Ultimate":
-					a = 35; break;
-				default:
-					a = 0;
-			}
-		}
-	}
-	return a;
-}
-function HVCollectData() {
-	this.load = function () { loadFromStorage(this, HV_COLL); };
-	this.save = function () { saveToStorage(this, HV_COLL); };
-	this.reset = function () { deleteFromStorage(HV_COLL); };
-	this.cloneFrom = clone;
-	this.skillmid = [];
-	this.skilltype = [];
-	this.mskillspell = [];
-	this.isLoaded = false;
-}
-function loadCollectdataObject() {
-	if (_collectdata === null) {
-		_collectdata = new HVCollectData();
-		_collectdata.load();
-	}
-}
-function SaveToDatabase(a) {
-	loadDatabaseObject();
-	if (a === 1 || a === 0) {
-		var dmid = parseInt(_round.scan[0]);
-		_database.mclass[dmid] = MClassNum(_round.scan[1], 0);
-		if (_round.scan[2] === null) _database.mpl[mid] = 0;
-		else _database.mpl[dmid] = _round.scan[2];
-		_database.mattack[dmid] = MElemNum(_round.scan[3], 0);
-		_database.mweak[dmid] = MElemNum(_round.scan[4], 0);
-		_database.mresist[dmid] = MElemNum(_round.scan[5], 0);
-		_database.mimperv[dmid] = MElemNum(_round.scan[6], 0);
-		_database.datescan[dmid] = _round.scan[7];
-	}
-	if (a === 2 || a === 0) {
-		loadCollectdataObject();
-		var n = 0;
-		while (_collectdata.skillmid[n] !== undefined) {
-			var mid = _collectdata.skillmid[n];
-			if (_database.mskilltype[mid] === 0 || _database.mskilltype[mid] === null || _database.mskilltype[mid] === undefined) {
-				_database.mskillspell[mid] = _collectdata.mskillspell[n];
-				_database.mskilltype[mid] = MElemNum(_collectdata.skilltype[n], 0);
-			} else if (String(_database.mskillspell[mid]).length === 1) {
-				if ((_database.mskillspell[mid] !== _collectdata.mskillspell[n]) || (_database.mskilltype[mid] !== MElemNum(_collectdata.skilltype[n], 0))) {
-					_database.mskillspell[mid] = parseInt(String(_database.mskillspell[mid]) + '0' + String(_collectdata.mskillspell[n]));
-					_database.mskilltype[mid] = parseInt(String(_database.mskilltype[mid]) + String(MElemNum(_collectdata.skilltype[n], 0)));
-				}
-			} else if (String(_database.mskillspell[mid]).length === 3) {
-				if (((parseInt(String(_database.mskillspell[mid]).slice(0, 1)) !== _collectdata.mskillspell[n]) || (parseInt(String(_database.mskilltype[mid]).slice(0, 2)) !== MElemNum(_collectdata.skilltype[n], 0)))
-					&& ((parseInt(String(_database.mskillspell[mid]).slice(-1)) !== _collectdata.mskillspell[n] || parseInt(String(_database.mskilltype[mid]).slice(-2)) !== MElemNum( _collectdata.skilltype[n], 0 ))))
-				{
-					_database.mskillspell[mid] = parseInt(String(_database.mskillspell[mid]) + '0' + String(_collectdata.mskillspell[n]));
-					_database.mskilltype[mid] = parseInt(String(_database.mskilltype[mid]) + String(MElemNum(_collectdata.skilltype[n], 0)));
-				}
-			}
-			n++;
-		}
-		_collectdata.reset();
-	}
-	_database.save()
-}
-function AssumeResistances() {
-	var sec = TimeCounter(1);
-	loadDatabaseObject();
-	var n = 0;
-	while (_database.mclass[n] !== undefined) {
-		if ((_database.mclass[n] !== null) && (_database.mweak[n] === null) && (_database.mattack[n] === null)) {
-			switch (_database.mclass[n]){
-				case 1: 	//Arthropod
-					_database.mattack[n] = 52853;
-					_database.mweak[n] = 95262;
-					_database.mresist[n] = 51616364;
-					_database.mimperv[n] = 99;
-					if (_database.mskillspell[n] === null) _database.mskillspell[n] = 9515253;
-					break;
-				case 2: 	//Avion
-					_database.mattack[n] = 51853;
-					_database.mweak[n] = 96164;
-					_database.mresist[n] = 63;
-					_database.mimperv[n] = 99;
-					if (_database.mskillspell[n] === null) _database.mskillspell[n] = 9515253;
-					break;
-				case 3: 	//Beast
-					_database.mattack[n] = 51853;
-					_database.mweak[n] = 961;
-					_database.mresist[n] = 526264;
-					_database.mimperv[n] = 99;
-					if (_database.mskillspell[n] === null) _database.mskillspell[n] = 9515253;
-					break;
-				case 4: 	//Celestial
-					_database.mattack[n] = 51852;
-					_database.mweak[n] = 95152537273;
-					_database.mresist[n] = 6162636471;
-					_database.mimperv[n] = 99;
-					if (_database.mskillspell[n] === null) _database.mskillspell[n] = 9515253;
-					break;
-				case 5: 	//Daimon
-					_database.mattack[n] = 51853;
-					_database.mweak[n] = 95152537173;
-					_database.mresist[n] = 6162636472;
-					_database.mimperv[n] = 99;
-					if (_database.mskillspell[n] === null) _database.mskillspell[n] = 9515253;
-					break;
-				case 6: 	//Dragonkin
-					_database.mattack[n] = 52853;
-					_database.mweak[n] = 96264;
-					_database.mresist[n] = 51526163;
-					_database.mimperv[n] = 99;
-					if (_database.mskillspell[n] === null) _database.mskillspell[n] = 9515253;
-					break;
-				case 7: 	//Elemental
-					_database.mattack[n] = 961626364;
-					_database.mweak[n] = 9525373;
-					_database.mresist[n] = 616263647172;
-					_database.mimperv[n] = 99;
-					if (_database.mskillspell[n] === null) _database.mskillspell[n] = 961626364;
-					break;
-				case 8: 	//Giant
-					_database.mattack[n] = 52;
-					_database.mweak[n] = 96364;
-					_database.mresist[n] = 51526162;
-					_database.mimperv[n] = 99;
-					if (_database.mskillspell[n] === null) _database.mskillspell[n] = 9515253;
-					break;
-				case 9: 	//Humanoid
-					_database.mattack[n] = 9515253;
-					_database.mweak[n] = 972;
-					_database.mresist[n] = 99;
-					_database.mimperv[n] = 99;
-					if (_database.mskillspell[n] === null) _database.mskillspell[n] = 9515253;
-					break;
-				case 10:	//Mechanoid
-					_database.mattack[n] = 51853;
-					_database.mweak[n] = 963;
-					_database.mresist[n] = 51536162647173;
-					_database.mimperv[n] = 99;
-					if (_database.mskillspell[n] === null) _database.mskillspell[n] = 9515253;
-					break;
-				case 11:	//Retilian
-					_database.mattack[n] = 51853;
-					_database.mweak[n] = 962;
-					_database.mresist[n] = 51526163;
-					_database.mimperv[n] = 99;
-					if (_database.mskillspell[n] === null) _database.mskillspell[n] = 9515253;
-					break;
-				case 12:	//Sprite
-					_database.mattack[n] = 51853;
-					_database.mweak[n] = 95272;
-					_database.mresist[n] = 536162636471;
-					_database.mimperv[n] = 99;
-					if (_database.mskillspell[n] === null) _database.mskillspell[n] = 9515253;
-					break;
-				case 13:	//Undead
-					_database.mattack[n] = 51852;
-					_database.mweak[n] = 96171;
-					_database.mresist[n] = 525362636472;
-					_database.mimperv[n] = 99;
-					if (_database.mskillspell[n] === null) _database.mskillspell[n] = 9515253;
-			}
-		}
-		n++;
-	}
-	alert("Done");
-	_database.save();
-	_ltc.main[1] -= TimeCounter(0, sec);
-	if (isBattle) _ltc.isbattle[1] -= TimeCounter(0, sec);
-	_ltc.save();
-}
-function TimeCounter(a, b) {
-	var dtm = new Date();
-	if (a === 1) var b = dtm.getTime();
-	else if (a === 0) b = dtm.getTime() - b;
-	return b;
-}
-function HVLoadTimeCounters() {
-	this.load = function () { loadFromStorage(this, HV_LTC); };
-	this.save = function () { saveToStorage(this, HV_LTC); };
-	this.reset = function () { deleteFromStorage(HV_LTC); };
-	this.cloneFrom = clone;
-	this.collectRoundInfo = [0, 0];
-	this.main = [0, 0];
-	this.hidelogo = [0, 0];
-	this.highlightLogText = [0, 0];
-	this.addBattleLogDividers = [0, 0];
-	this.showRoundCounter = [0, 0];
-	this.displayPowerupBox = [0, 0];
-	this.showMonsterStats = [0, 0];
-	this.showMonsterEffectsDuration = [0, 0];
-	this.showSelfEffectsDuration = [0, 0];
-	this.showBattleEndStats = [0, 0];
-	this.healthWarning = [0, 0];
-	this.showSidebarProfs = [0, 0];
-	this.isRememberScan = [0, 0];
-	this.isTrackStats = [0, 0];
-	this.isTrackItems = [0, 0];
-	this.saveStats = [0, 0];
-	this.isShowElemHvstatStyle = [0, 0];
-	this.extendedHits = [0, 0];
-	this.changedMHits = [0, 0];
-	this.cast = [0, 0];
-	this.effects = [0, 0];
-	this.hidetitle = [0, 0];
-	this.showhp = [0, 0];
-	this.showmp = [0, 0];
-	this.showsp = [0, 0];
-	this.showelem = [0, 0];
-	this.isbattle = [0, 0];
-	this.pageLoad = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-	this.sel = [0, 0];
-	this.monsterpopup = [0, 0];
-	this.showscanbutton = [0, 0];
-	this.taggingitems = [0, 0];
-	this.startalerts = [0, 0];
-	this.showset = [0, 0];
-	this.botfunction = [0, 0];
-	this.isLoaded = false;
-}
-function loadLTCObject() {
-	if (_ltc !== null) return;
-	_ltc = new HVLoadTimeCounters();
-	_ltc.load();
-}
 function HVCharacterStatsSettings() {
 	this.load = function () { loadFromStorage(this, HV_CHSS); };
 	this.save = function () { saveToStorage(this, HV_CHSS); };
@@ -5153,11 +5599,9 @@ function Scanbutton() {
 	case "140003":
 		skillname[2] = "FreB";
 	}
-	var mkeymax = $("#monsterpane > div").length;
-	var n = mkeymax;
+	var n = HVStat.numberOfMonsters;
 	var num = 0;
 	var a = $("#mainpane");
-	var ischromeSTAT = isChrome;
 	document.addEventListener('keydown', function(a) {
 		var key = a.keyCode ? a.keyCode : a.which;
 		if (_settings.isEnableScanHotkey) {
@@ -5165,14 +5609,14 @@ function Scanbutton() {
 				if (!window.pressedScanbySTAT) {
 					if (window.pressedSkillbySTAT === 0) {
 						// open skill menu
-						if (ischromeSTAT) {
+						if (HVStat.isChrome) {
 							document.getElementById("ckey_skills").onclick();
 						} else {
 							location.href = 'javascript:document.getElementById("ckey_skills").onclick(); void(0);';
 						}
 					}
 					// select scan
-					if (ischromeSTAT) {
+					if (HVStat.isChrome) {
 						document.getElementById("100020").onclick();
 					} else {
 						location.href = 'javascript:document.getElementById("100020").onclick(); void(0);';
@@ -5180,7 +5624,7 @@ function Scanbutton() {
 					window.pressedScanbySTAT = true;
 				} else {
 					// close skill menu
-					if (ischromeSTAT) {
+					if (HVStat.isChrome) {
 						document.getElementById("ckey_skills").onclick();
 					} else {
 						location.href = 'javascript:document.getElementById("ckey_skills").onclick(); void(0);';
@@ -5195,14 +5639,14 @@ function Scanbutton() {
 				if (window.pressedSkillbySTAT === 0) {
 					if (!window.pressedScanbySTAT) {
 						// open skill menu
-						if (ischromeSTAT) {
+						if (HVStat.isChrome) {
 							document.getElementById("ckey_skills").onclick();
 						} else {
 							location.href = 'javascript:document.getElementById("ckey_skills").onclick(); void(0);';
 						}
 					}
 					if (!cooldown[0]) {
-						if (ischromeSTAT) {
+						if (HVStat.isChrome) {
 							document.getElementById(skillnum[0]).onclick();
 						} else {
 							location.href = 'javascript:document.getElementById("' + skillnum[0] + '").onclick(); void(0);';
@@ -5215,7 +5659,7 @@ function Scanbutton() {
 							window.pressedSkillbySTAT = 3;
 						}
 					} else if (!cooldown[1]) {
-						if (ischromeSTAT) {
+						if (HVStat.isChrome) {
 							document.getElementById(skillnum[1]).onclick();
 						} else {
 							location.href = 'javascript:document.getElementById("' + skillnum[1] + '").onclick(); void(0);';
@@ -5226,7 +5670,7 @@ function Scanbutton() {
 							window.pressedSkillbySTAT = 3;
 						}
 					} else if (!cooldown[2]) {
-						if (ischromeSTAT) {
+						if (HVStat.isChrome) {
 							document.getElementById(skillnum[2]).onclick();
 						} else {
 							location.href = 'javascript:document.getElementById("' + skillnum[2] + '").onclick(); void(0);';
@@ -5234,7 +5678,7 @@ function Scanbutton() {
 						window.pressedSkillbySTAT = 3;
 					} else if (window.pressedScanbySTAT) {
 						// close skill menu
-						if (ischromeSTAT) {
+						if (HVStat.isChrome) {
 							document.getElementById("ckey_skills").onclick();
 						} else {
 							location.href = 'javascript:document.getElementById("ckey_skills").onclick(); void(0);';
@@ -5244,7 +5688,7 @@ function Scanbutton() {
 					}
 				} else if (window.pressedSkillbySTAT === 1) {
 					if (!cooldown[1]) {
-						if (ischromeSTAT) {
+						if (HVStat.isChrome) {
 							document.getElementById(skillnum[1]).onclick();
 						} else {
 							location.href = 'javascript:document.getElementById("' + skillnum[1] + '").onclick(); void(0);';
@@ -5255,7 +5699,7 @@ function Scanbutton() {
 							window.pressedSkillbySTAT = 3;
 						}
 					} else if (!cooldown[2]) {
-						if (ischromeSTAT) {
+						if (HVStat.isChrome) {
 							document.getElementById(skillnum[2]).onclick();
 						} else {
 							location.href = 'javascript:document.getElementById("' + skillnum[2] + '").onclick(); void(0);';
@@ -5266,7 +5710,7 @@ function Scanbutton() {
 					}
 				} else if (window.pressedSkillbySTAT === 2) {
 					if (!cooldown[2]) {
-						if (ischromeSTAT) {
+						if (HVStat.isChrome) {
 							document.getElementById(skillnum[2]).onclick();
 						} else {
 							location.href = 'javascript:document.getElementById("' + skillnum[2] + '").onclick(); void(0);';
@@ -5277,7 +5721,7 @@ function Scanbutton() {
 					}
 				} else if (window.pressedSkillbySTAT === 3) {
 					// close skill menu
-					if (ischromeSTAT) {
+					if (HVStat.isChrome) {
 						document.getElementById("ckey_skills").onclick();
 					} else {
 						location.href = 'javascript:document.getElementById("ckey_skills").onclick(); void(0);';
@@ -5288,9 +5732,9 @@ function Scanbutton() {
 			}
 		}
 	});
-	var j = _round.monsters.length;
+	var j = HVStat.numberOfMonsters;
 	while (j--) {
-		var monsterElementId = getMonsterElementId(j);
+		var monsterElementId = HVStat.Monster.getDomElementId(j);
 		var u = $("#" + monsterElementId);
 		var e = u.children().eq(2).children().eq(0);
 		var dead = e.html().match(/bardead/i);
@@ -5328,218 +5772,40 @@ function Scanbutton() {
 		}
 	}
 }
-function MonsterPopup() {
-	$('.btm1').unbind('mouseover');
-	$('.btm1').unbind('mouseout');
-	var id = 0;
-	var c = document.getElementById("popup_box");
-	var name = "";
-	var maxhp = "";
-	var currhp = "";
-	var currmp = "";
-	var currsp = "";
-	var mclass = "";
-	var mpl = "";
-	var mweak = "";
-	var mresist = "";
-	var mimperv = "";
-	var mskilltype = "";
-	var mskillspell = "";
-	var mattack = "";
-	var datescan = 0;
-	var mskilltype2 = "";
-	var mskillspell2 = "";
-	var mskilltype3 = "";
-	var mskillspell3 = "";
-	var mspirittype = "";
-	var mspiritsksp = "";
+function registerEventHandlersForMonsterPopup() {
 	var delay = _settings.monsterPopupDelay;
-	var delay2 = Math.floor(delay * 0.5);
-	var placement = _settings.isMonsterPopupPlacement;
-	var leftpixels = placement ? 955 : 300;
-	var elemMonsterPane = $("#monsterpane");
-	loadRoundObject();
-	var i = _round.monsters.length;
-	while (i--) {
-		var q = _round.monsters[i];
-		mskilltype = "";
-		mskillspell = "";
-		mattack = "";
-		mskilltype2 = "";
-		mskillspell2 = "";
-		mskilltype3 = "";
-		mskillspell3 = "";
-		mspirittype = "";
-		mspiritsksp = "";
-		if (q.mweak !== undefined) mweak = MElemNum(q.mweak, 1);
-		if (q.mresist !== undefined && q.mimperv !== undefined) {
-			mresist = MElemNum(q.mresist, 1);
-			mimperv = MElemNum(q.mimperv, 1);
-		}
-		if (q.mskillspell !== undefined) {
-			mattack = MElemNum(q.mattack, 1);
-			var sk = String(q.mskillspell);
-			if (sk.length === 1 || sk.match("9")) {
-				if (q.mskillspell < 3 || sk.match("9")) {
-					mskilltype = MElemNum(q.mskilltype, 1);
-					mskillspell = MElemNum(q.mskillspell, 1);
-				} else {
-					mspirittype = MElemNum(q.mskilltype, 1);
-					mspiritsksp = MElemNum(q.mskillspell, 1);
-					allm -= 7;
-				}
-			} else {
-				var mskillspellarray = sk.split("0");
-				var mskilltypearray = String(MElemNum(q.mskilltype, 1)).split(", ");
-				var sk34 = sk.replace("0","").search(/(3|4)/);
-				var other1 = 0;
-				var other2 = 0;
-				if (sk.length === 3) {
-					if (sk34 >= 0) {
-						other1 = sk34 > 0 ? 0 : 1;
-						mspirittype = mskilltypearray[sk34];
-						mspiritsksp = MElemNum(parseInt(mskillspellarray[sk34]), 1);
-						mskillspell = MElemNum(parseInt(mskillspellarray[other1]), 1);
-						mskilltype = mskilltypearray[other1];
-					} else {
-						mskillspell = MElemNum(parseInt(mskillspellarray[0]), 1);
-						mskilltype = mskilltypearray[0];
-						mskillspell2 = MElemNum(parseInt(mskillspellarray[1]), 1);
-						mskilltype2 = mskilltypearray[1];
-					}
-				} else if (sk.length === 5) {
-					if (sk34 >= 0) {
-						other1 = sk34 > 0 ? 0 : 1;
-						other2 = sk34 > 1 ? 1 : 2;
-						mspirittype = mskilltypearray[sk34];
-						mspiritsksp = MElemNum(parseInt(mskillspellarray[sk34]), 1);
-						mskillspell = MElemNum(parseInt(mskillspellarray[other1]), 1);
-						mskilltype = mskilltypearray[other1];
-						mskillspell2 = MElemNum(parseInt(mskillspellarray[other2]), 1);
-						mskilltype2 = mskilltypearray[other2];
-					} else {
-						mskillspell = MElemNum(parseInt(mskillspellarray[0]), 1);
-						mskilltype = mskilltypearray[0];
-						mskillspell2 = MElemNum(parseInt(mskillspellarray[1]), 1);
-						mskilltype2 = mskilltypearray[1];
-						mskillspell3 = MElemNum(parseInt(mskillspellarray[2]), 1);
-						mskilltype3 = mskilltypearray[2];
-					}
-				}
-			}
-		}
-		if (q.mskilltype === null ||q.mskilltype === 0 ||q.mskilltype === "0") mskilltype = "";
-		if (q.mattack !== undefined) mattack = MElemNum(q.mattack, 1);
-		var dst = new Date();
-		var dst1 = 0;
-		datescan = q.datescan;
-		if (datescan === undefined || datescan === null || datescan === 0) {
-			datescan = dst.getTime();
-			dst1 = 1;
-		}
-		var k = dst.getTime();
-		if (dst1 === 1) dst1 = "Never";
-		else {
-			dst.setTime(datescan);
-			dst1 = dst.toLocaleString();
-			if (isChrome) dst1 = dst.toLocaleDateString() + " " + dst.toLocaleTimeString();
-		}
-		var d = ((k - datescan) / (60 * 60 * 1000));
-		var E = "";
-		var v = (60 * d).toFixed();
-		var K = Math.floor(v / (60 * 24));
-		var M = v / (60 * 24);
-		if (d < 1) {
-			E = v + " mins";
-			if (d === 0) E = "-";
-		} else E = d < 24 ? Math.floor(v / 60) + " hours, " + (v % 60).toFixed() + " mins" : K + " days, " + Math.floor((v / 60) - (K * 24)) + " hours, " + (v % 60).toFixed() + " mins";
-		mpl = q.mpl;
-		if (mpl === undefined || mpl === null || mpl === 0 || mpl === "0") mpl = "";
-		mclass = q.mclass;
-		if (mclass !== undefined) mclass = MClassNum(mclass, 1);
-		var monsterElementId = getMonsterElementId(i);
-		name = q.name;
-		maxhp = q.maxHp;
-		currhp = q.currHp;
-		if (currhp === null || currhp === undefined || isNaN(currhp) || currhp === 0) continue;
-		currmp = q.currmp;
-		if (currmp === null || currmp === undefined || isNaN(currmp)) currmp = 0;
-		currsp = (q.sp2 * 100).toFixed(2);
-
-		function formatAttackType(s) {
-			if (s === undefined) {
-				return "undefined";
-			} else if (typeof(s) === "number") {
-				return s.toString();
-			}
-			f = s.replace(/Slash|Sl/g, "Slashing")
-				.replace(/Crush|Cr/g, "Crushing")
-				.replace(/Pierc|Pi/g, "Piercing")
-				.replace(/Phys|Ph/ig, "Physical")
-				.replace(/Mag|Ma/ig, "Magical")
-				.replace("?", "Presumably: ")
-				.replace("/", " or ");
-			return f;
-		}
-
-		//alert("["+mweak+"]["+mresist+"]["+mskilltype+"]["+mskillspell+"]["+mskilltype2+"]["+mskillspell2+"]["+mskilltype3+"]["+mspirittype+"]["+mattack+"]");
-		mweak = formatAttackType(mweak);
-		mresist = formatAttackType(mresist);
-		mskilltype = formatAttackType(mskilltype);
-		mskillspell = formatAttackType(mskillspell);
-		mskilltype2 = formatAttackType(mskilltype2);
-		mskillspell2 = formatAttackType(mskillspell2);
-		mskilltype3 = formatAttackType(mskilltype3);
-		mskillspell3 = formatAttackType(mskillspell3);
-		mspirittype = formatAttackType(mspirittype);
-		if (mspiritsksp === undefined) {
-			mspiritsksp = "?";
-		} else {
-			mspiritsksp = mspiritsksp.replace(/Spirit:/g, "");
-			mspiritsksp = formatAttackType(mspiritsksp);
-		}
-		mattack = formatAttackType(mattack);
-		$("#" + monsterElementId).bind('mouseover', {h:i, na:name, mhp:maxhp, chp:currhp, cmp:currmp, csp:currsp, cl:mclass, pl:mpl, at:mattack, sk:mskilltype, sksp:mskillspell, sk2:mskilltype2, sksp2:mskillspell2, sk3:mskilltype3, sksp3:mskillspell3,spty:mspirittype,spss:mspiritsksp, res:mresist, imp:mimperv, we:mweak, scd:dst1, scago:E}, function (r) {
-			var popupHeight = 220;
-			var popupTopOffset = elemMonsterPane.offset().top + (r.data.h - 1) * ((elemMonsterPane.height() - popupHeight) / 9);
-			c.style.left = leftpixels + "px";
-			setTimeoutByledalej1 = setTimeout('document.getElementById("popup_box").style.top = ' + popupTopOffset + ' + "px"', delay);
-			c.style.width = "270px";
-			c.style.height = String(popupHeight) + "px";
-			var fi = "<table></table>";
-			if (r.data.cl !== undefined && r.data.cl !== 0) {
-				fi = '<table class="info_' + r.data.h + '" cellspacing="0" cellpadding="0" style="width:100%">'
-					+ '<tr class="monname"><td colspan="2"><b>' + r.data.na + '</b></td></tr>'
-					+ '<tr><td style="width:27%">Health: </td><td>' + r.data.chp + '/' + r.data.mhp + '</td></tr>'
-					+ '<tr><td style="width:27%">Mana: </td><td>' + r.data.cmp + '%</td></tr>'
-					+ '<tr><td style="width:27%">Spirit: </td><td>' + r.data.csp + '%</td></tr>'
-					+ '<tr><td style="width:27%">Class:</td><td>' + r.data.cl + '</td></tr>'
-					+ '<tr><td style="width:27%">Power level:</td><td>' + r.data.pl + '</td></tr>'
-					+ '<tr><td style="width:27%">Attack:</td><td>' + r.data.at + '</td></tr>'
-					+ '<tr><td style="width:27%">Skill:</td><td>' + r.data.sk + '-' + r.data.sksp + (r.data.sksp2 === "" ? "" :(' | ' + r.data.sk2 + '-' + r.data.sksp2)) + (r.data.sksp3 === "" ? "" :(' | ' + r.data.sk3 + '-' + r.data.sksp3)) + '</td></tr>'
-					+ '<tr><td style="width:27%">Spirit attack:</td><td>' + (r.data.spss === "" ? "" :(r.data.spty + '-' + r.data.spss)) + '</td></tr>'
-					+ '<tr><td style="width:25%">Weak to:</td><td>' + r.data.we + '</td></tr>'
-					+ '<tr><td style="width:20%">Resistant to:</td><td>' + r.data.res + '</td></tr>'
-					+ '<tr><td style="width:25%">Impervious to:</td><td>' + r.data.imp + '</td></tr>'
-					+ '<tr><td style="width:27%">Last scan:</td><td>' + r.data.scd + '</td></tr>'
-					+ '<tr><td></td><td>' + r.data.scago + ' ago</td></tr></table>';
-			} else {
-				fi = '<table class="info_' + r.data.h + '" cellspacing="0" cellpadding="0" style="width:100%">'
-					+ '<tr class="monname"><td colspan="2"><b>' + r.data.na + '</b></td></tr>'
-					+ '<tr><td style="width:27%">Health: </td><td>' + r.data.chp + '/' + r.data.mhp + '</td></tr>'
-					+ '<tr><td style="width:27%">Mana: </td><td>' + r.data.cmp +  '%</td></tr>'
-					+ '<tr><td style="width:27%">Spirit: </td><td>' + r.data.csp + '%</td></tr>'
-					+ '<tr><td style="width:27%">Last scan:</td><td>' + r.data.scd + '</td></tr>';
-			}
-			setTimeoutByledalej2 = setTimeout("document.getElementById('popup_box').innerHTML='" + fi + "'", delay);
-			setTimeoutByledalej3 = setTimeout('document.getElementById("popup_box").style.visibility="visible"', delay);
-		});
-		$("#" + monsterElementId).bind('mouseout', function () {
-			setTimeout('document.getElementById("popup_box").style.visibility="hidden"', delay);
-			clearTimeout(window.setTimeoutByledalej1);
-			clearTimeout(window.setTimeoutByledalej2);
-			clearTimeout(window.setTimeoutByledalej3);
-		});
+	var popupLeftOffset = _settings.isMonsterPopupPlacement ? 955 : 300;
+	var showPopup = function (index) {
+		var html = HVStat.monsters[index].renderPopup();
+		HVStat.popupElement.style.width = "270px";
+		HVStat.popupElement.style.height = "auto";
+		HVStat.popupElement.innerHTML = html;
+		var popupTopOffset = HVStat.monsterPaneElement.offsetTop
+			+ index * ((HVStat.monsterPaneElement.scrollHeight - HVStat.popupElement.scrollHeight) / 9);
+		HVStat.popupElement.style.top = popupTopOffset + "px";
+		HVStat.popupElement.style.left = popupLeftOffset + "px";
+		HVStat.popupElement.style.visibility = "visible";
+	};
+	var hidePopup = function () {
+		HVStat.popupElement.style.visibility = "hidden";
+	};
+	var timerId;
+	var prepareForShowingPopup = function (event) {
+		(function (index) {
+			timerId = setTimeout(function () {
+				showPopup(index);
+			}, delay);
+		})(event.data.index);
+	};
+	var prepareForHidingPopup = function (event) {
+		setTimeout(hidePopup, delay);
+		clearTimeout(timerId);
+	};
+	var i, len = HVStat.monsters.length;
+	for (i = 0; i < len; i++) {
+		var monsterElement = $("#" + HVStat.monsters[i].domElementId);
+		monsterElement.bind('mouseover', { index: i }, prepareForShowingPopup);
+		monsterElement.bind('mouseout', prepareForHidingPopup);
 	}
 }
 function StartBattleAlerts () {
@@ -5628,15 +5894,12 @@ function AlertEffectsSelf() {
 			"Protection", "Hastened", "Shadow Veil", "Regen", "Absorbing Ward",
 			"Spark of Life", "Channeling", "Arcane Focus", "Heartseeker", "Spirit Shield"
 		];
-		var n = effectNames.length;
-		while (n--) {
-			if (_settings.isEffectsAlertSelf[n]
-					&& allinfo[0].match(effectNames[n])
-					&& allinfo[2] === _settings.EffectsAlertSelfRounds[n]) {
-				var sec1 = TimeCounter(1);
+		var i, len = effectNames.length;
+		for (i = 0; i < len; i++) {
+			if (_settings.isEffectsAlertSelf[i]
+					&& allinfo[0].match(effectNames[i])
+					&& allinfo[2] === _settings.EffectsAlertSelfRounds[i]) {
 				alert(allinfo[0] + " is expiring");
-				_ltc.main[1] -= TimeCounter(0, sec1);
-				_ltc.isbattle[1] -= TimeCounter(0, sec1);
 			}
 		}
 	});
@@ -5654,24 +5917,15 @@ function AlertEffectsMonsters() {
 			"Imperiled", "Blinded", "Silenced", "Nerfed", "Magically Snared",
 			"Lifestream", "Coalesced Mana"
 		];
-		var n = effectNames.length;
-		while (n--) {
-			if (_settings.isEffectsAlertMonsters[n]
-					&& allinfo[0].match(effectNames[n])
-					&& allinfo[2] === _settings.EffectsAlertMonstersRounds[n]) {
+		var i, len = effectNames.length;
+		for (i = 0; i < len; i++) {
+			if (_settings.isEffectsAlertMonsters[i]
+					&& allinfo[0].match(effectNames[i])
+					&& allinfo[2] === _settings.EffectsAlertMonstersRounds[i]) {
 				var monnum = $(this).parent().parent().attr("id").replace("mkey_", "");
-				var sec1 = TimeCounter(1);
 				alert(allinfo[0] + '\n on monster number "' + monnum + '" is expiring');
-				_ltc.main[1] -= TimeCounter(0, sec1);
-				_ltc.isbattle[1] -= TimeCounter(0, sec1);
 			}
 		}
-	});
-}
-function CheckForAction() {
-	$("#ckey_defend, #ckey_focus, .btm1, .btsd, .btii, .btqss, .btqi2").each(function (j) {
-		var onclickadded = $(this).attr("onclick");
-		if (onclickadded !== null) $(this).attr("onclick", "var data = [0, 0]; data[0] = 1; var dtm = new Date(); var b = dtm.getTime(); data[1] = b; if (typeof(GM_deleteValue) !== 'undefined') {GM_setValue('PLTC',JSON.stringify(data));} else {localStorage.setItem('PLTC',JSON.stringify(data));}" + onclickadded + ";");
 	});
 }
 function TaggingItems(clean) {
@@ -5711,7 +5965,8 @@ function TaggingItems(clean) {
 		} else if (/Heavy/i.test(equipType)) {
 			equipTypeIdx = 6;
 		}
-		if (equipTypeIdx < 0) throw new Exception("unexpected equipment type");
+		if (equipTypeIdx < 0)
+			throw new Exception("unexpected equipment type");
 		var idArray = equipTagArrayTable[equipTypeIdx].id;
 		var valueArray = equipTagArrayTable[equipTypeIdx].value;
 		var idCleanArray = equipTagArrayTable[equipTypeIdx].idClean;
@@ -5789,16 +6044,210 @@ function TaggingItems(clean) {
 		}
 	}
 }
-function ShrineButton() {
-	$("#item_pane.cspp div[id$=item_pane]").each(function() {
-		$(this).bind("click");
-	});
+
+//------------------------------------
+// main routine
+//------------------------------------
+HVStat.main1 = function () {
+	//console.log("main1: document.readyState = " + document.readyState);
+	//-- Hide Logo ASAP to avoid flashing.
+	if (_settings.isHideHVLogo){
+		var eStyle = document.createElement('style');
+		eStyle.type = 'text/css';
+		eStyle.appendChild(document.createTextNode('img.cw { visibility: hidden; }'));
+		document.childNodes[1].appendChild(eStyle);
+	}
+	if (_settings.isChangePageTitle && document.title === "The HentaiVerse") {
+		document.title = _settings.customPageTitle;
+	}
+	var waitingForDocumentInteractive = function () {
+		if (document.readyState === "loading") {
+			setTimeout(waitingForDocumentInteractive, 10);
+		} else {
+			setTimeout(HVStat.main2, 1);
+		}
+	};
+	waitingForDocumentInteractive();
 }
-function getMonsterElementId(n) {
-	var ids = [
-		"mkey_1", "mkey_2", "mkey_3", "mkey_4", "mkey_5",
-		"mkey_6", "mkey_7", "mkey_8", "mkey_9", "mkey_0"
-	];
-	if (!(0 <= n && n <= 9)) throw new Error("n must be 0 to 9");
-	return ids[n];
+
+HVStat.main2 = function () {
+	//console.log("main2: document.readyState = " + document.readyState);
+	// store DOM caches
+	HVStat.popupElement = document.getElementById("popup_box");
+	HVStat.quickcastBarElement = document.getElementById("quickbar");
+	HVStat.battleLogElement = document.getElementById("togpane_log");
+	HVStat.monsterPaneElement = document.getElementById("monsterpane");
+	HVStat.charHpGaugeElement = document.getElementsByTagName("img")[2];
+	HVStat.charMpGaugeElement = document.getElementsByTagName("img")[5];
+	HVStat.charSpGaugeElement = document.getElementsByTagName("img")[8];
+	HVStat.charOcGaugeElement = document.getElementsByTagName("img")[11];
+
+	// store static values
+	HVStat.isCharacterPage = !!document.getElementById("pattrform");
+	HVStat.usingHVFont = document.getElementsByClassName('fd10')[0].textContent !== "Health points";
+	HVStat.currHpRate = HVStat.getGaugeRate(HVStat.charHpGaugeElement, HVStat.charGaugeMaxWidth);
+	HVStat.currMpRate = HVStat.getGaugeRate(HVStat.charMpGaugeElement, HVStat.charGaugeMaxWidth);
+	HVStat.currSpRate = HVStat.getGaugeRate(HVStat.charSpGaugeElement, HVStat.charGaugeMaxWidth);
+	HVStat.currOcRate = HVStat.getGaugeRate(HVStat.charOcGaugeElement, HVStat.charGaugeMaxWidth);
+	HVStat.currHpPercent = Math.floor(HVStat.currHpRate * 100);
+	HVStat.currMpPercent = Math.floor(HVStat.currMpRate * 100);
+	HVStat.currSpPercent = Math.floor(HVStat.currSpRate * 100);
+	HVStat.duringBattle = !!HVStat.battleLogElement;
+	HVStat.isBattleOver = !!document.querySelector("#battleform div.btcp");
+
+	// processes not require IndexedDB and not alert/confirm immediately
+	if (!HVStat.isChrome && !document.getElementById("cssdiv")) {
+		GM_addStyle(GM_getResourceText("jQueryUICSS"));
+		var a = document.createElement("div");
+		a.setAttribute("id", "cssdiv");
+		a.setAttribute("style", "visibility:hidden");
+		document.documentElement.appendChild(a);
+	}
+	initUI();
+	if (HVStat.duringBattle) {
+		// store static values
+		HVStat.numberOfMonsters = $("#monsterpane > div").length;
+
+		if (_settings.isHighlightQC) {
+			HVStat.highlightQuickcast();
+		}
+		if (_settings.isShowPowerupBox) {
+			displayPowerupBox();
+		}
+		if (_settings.isShowDivider) {
+			addBattleLogDividers();
+		}
+		if (_settings.isShowHighlight) {
+			setLogCSS();
+			highlightLogText();
+		}
+		if (_settings.isShowSelfDuration) {
+			showSelfEffectsDuration();
+		}
+		if (_settings.isShowMonsterNumber) {
+			showMonsterNumber();
+		}
+		if (_settings.isShowScanButton || _settings.isShowSkillButton || _settings.isEnableScanHotkey || _settings.isEnableSkillHotkey) {
+			Scanbutton();
+		}
+		if (_settings.isShowMonsterDuration) {
+			showMonsterEffectsDuration();
+		}
+	} else {
+		localStorage.removeItem(HV_ROUND);
+		HVStat.resetHealthWarningStates();
+		// equipment tag
+		if (HVStat.isEquipmentPage && _settings.isShowTags[0]) {
+			TaggingItems(false);
+		}
+		if (HVStat.isInventoryPage && _settings.isShowTags[5]) {
+			TaggingItems(true);
+		}
+		if (HVStat.isShopPage && _settings.isShowTags[1]) {
+			TaggingItems(false);
+		}
+		if (HVStat.isItemWorldPage && _settings.isShowTags[2]) {
+			TaggingItems(false);
+		}
+		if (HVStat.isMoogleWrite && _settings.isShowTags[3]) {
+			$("#mailform #leftpane").children().eq(3).children().eq(1).click(TaggingItems);
+		}
+		if (HVStat.isForgePage && _settings.isShowTags[4]) {
+			TaggingItems(false);
+			if (_settings.isDisableForgeHotKeys) {
+				document.onkeypress = null;
+			}
+		}
+	}
+	setTimeout(HVStat.main3, 1);
 }
+
+HVStat.main3 = function () {
+	//console.log("main3: document.readyState = " + document.readyState);
+	// open database
+	HVStat.openIndexedDB(HVStat.main4);
+}
+
+HVStat.main4 = function () {
+	//console.log("main4: document.readyState = " + document.readyState);
+	// processes require IndexedDB and not alert/confirm immediately
+	var waitingForDocumentComplete = function () {
+		if (document.readyState !== "complete") {
+			setTimeout(waitingForDocumentComplete, 10);
+		} else {
+			setTimeout(HVStat.main5, 1);
+		}
+	};
+	waitingForDocumentComplete();
+}
+
+HVStat.main5 = function () {
+	//console.log("main5: document.readyState = " + document.readyState);
+	// processes require IndexedDB or alert/confirm immediately
+	if (HVStat.duringBattle) {
+		HVStat.transaction = HVStat.idb.transaction(["MonsterScanResults", "MonsterSkills"], "readwrite");
+
+		collectRoundInfo();		// using alert -- should be split to display part and warning part
+		if ((_round !== null) && (_round.currRound > 0) && _settings.isShowRoundCounter) {
+			showRoundCounter();	// requires _round
+		}
+		if ((_round !== null) && (HVStat.monsters.length > 0)){
+			showMonsterStats();	// requires _round, IndexedDB
+		}
+		if (_settings.isShowStatsPopup) {
+			registerEventHandlersForMonsterPopup();	// requires _round, IndexedDB
+		}
+		if (_settings.warnMode[_round.battleType]) {
+			HVStat.warnHealthStatus();		// using alert
+		}
+		if (_settings.isMainEffectsAlertSelf) {
+			AlertEffectsSelf();		// using alert
+		}
+		if (_settings.isMainEffectsAlertMonsters) {
+			AlertEffectsMonsters();		// using alert
+		}
+		if (HVStat.isBattleOver) {
+			if (_settings.isShowEndStats) {
+				showBattleEndStats();	// requires _round
+			}
+			saveStats();
+			_round.reset();
+		}
+	} else {
+		if (_settings.isColumnInventory && HVStat.isBattleItemsPage) {
+			initItemsView();
+		} else if (HVStat.isCharacterPage) {
+			collectCurrentProfsData();
+		} else if (HVStat.isShrinePage) {
+			if (_settings.isTrackShrine) {
+				captureShrine();
+			}
+			if (HVStat.isChrome) {
+				window.document.onkeydown = null;	// workaround to make enable SPACE key
+			}
+		}
+	}
+	if (_settings.isShowSidebarProfs) {
+		showSidebarProfs();
+	}
+	var invAlert = localStorage.getItem(HV_EQUIP);
+	var invFull = (invAlert === null) ? false : JSON.parse(invAlert);
+	if (invFull) inventoryWarning();
+
+	if (!HVStat.duringBattle) {
+		if ((_settings.isStartAlert || _settings.isShowEquippedSet) && !HVStat.usingHVFont) {
+			FindSettingsStats();
+		}
+		if (_settings.isStartAlert && !HVStat.usingHVFont) {
+			StartBattleAlerts();
+		}
+	}
+	if (!HVStat.usingHVFont && _settings.isShowEquippedSet) {
+		SetDisplay();
+	}
+}
+
+//------------------------------------
+// execute
+//------------------------------------
+HVStat.main1();
