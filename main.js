@@ -2324,7 +2324,8 @@ function displayPowerupBox() {
 		var powerInfo = powerup.getAttribute("onmouseover");
 		powerBox.setAttribute("onmouseover", powerInfo);
 		powerBox.setAttribute("onmouseout", powerup.getAttribute("onmouseout"));
-		powerBox.setAttribute("onclick", 'var e = createEvent("Events"); e.initEvent("keydown", true, true); e.altKey = false; e.ctrlKey = false; e.shiftKey = false; e.metaKey = false; e.keyCode = 80; document.dispatchEvent(e);');
+		//powerBox.setAttribute("onclick", 'var e=createEvent("Events");e.initEvent("keydown",true,true);e.altKey=false;e.ctrlKey=false;e.shiftKey=false;e.metaKey=false;e.keyCode=80;document.dispatchEvent(e);');
+		powerBox.setAttribute("onclick", 'document.getElementById("ckey_items").onclick();document.getElementById("ikey_p").onclick();document.getElementById("ikey_p").onclick();');
 		if (powerInfo.indexOf('Health') > -1) powerBox.innerHTML = "<img class='PowerupGemIcon' src='"+ I_HEALTHPOT+ "' id='healthgem'>";
 		else if (powerInfo.indexOf('Mana') > -1) powerBox.innerHTML = "<img class='PowerupGemIcon' src='"+ I_MANAPOT+ "' id='managem'>";
 		else if (powerInfo.indexOf('Spirit') > -1) powerBox.innerHTML = "<img class='PowerupGemIcon' src='"+ I_SPIRITPOT+ "' id='spiritgem'>";
