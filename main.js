@@ -3909,6 +3909,8 @@ function initSettingsPane() {
 		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isAlertGem" /></td><td colspan="2">Alert on Powerup drops</td></tr>'
 		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isAlertOverchargeFull" /></td><td colspan="2">Alert when Overcharge is full</td></tr>'
 		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isShowMonsterNumber"></td><td colspan="2">Show Numbers instead of letters next to monsters.</td></tr>'
+		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isShowRoundCounter"></td><td colspan="2">Show Round Counter.</td></tr>'
+		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isShowPowerupBox"></td><td colspan="2">Show Powerup Box.</td></tr>'
 		+ '<tr><td colspan="2" style="padding-left:10px">Display Monster Stats:</td></tr>'
 		+ '<tr><td align="center" style="width:5px;padding-left:20px"><input type="checkbox" name="showMonsterHP" /></td><td colspan="2">Show monster HP (<span style="color:red">Estimated</span>)</td><td></td></tr>'
 		+ '<tr><td align="center" style="width:5px;padding-left:40px"><input type="checkbox" name="showMonsterHPPercent" /></td><td colspan="2" style="padding-left:10px">Show monster HP in percentage</td></tr>'
@@ -4009,6 +4011,8 @@ function initSettingsPane() {
 	}
 	//isShowMonsterNumber stolen from HV Lite, and added by Ilirith
 	if (_settings.isShowMonsterNumber) $("input[name=isShowMonsterNumber]").attr("checked", "checked");
+	if (_settings.isShowRoundCounter) $("input[name=isShowRoundCounter]").attr("checked", "checked");
+	if (_settings.isShowPowerupBox) $("input[name=isShowPowerupBox]").attr("checked", "checked");
 	if (_settings.showMonsterHP) $("input[name=showMonsterHP]").attr("checked", "checked");
 	if (_settings.showMonsterHPPercent) $("input[name=showMonsterHPPercent]").attr("checked", "checked");
 	if (_settings.showMonsterMP) $("input[name=showMonsterMP]").attr("checked", "checked");
@@ -4241,6 +4245,8 @@ function initSettingsPane() {
 	$("input[name=isNagSP]").click(saveSettings);
 	$("input[name=isShowPopup]").click(saveSettings);
 	$("input[name=isShowMonsterNumber]").click(saveSettings);
+	$("input[name=isShowPowerupBox]").click(saveSettings);
+	$("input[name=isShowRoundCounter]").click(saveSettings);
 	$("._resetSettings").click(function (){ if (confirm("Reset Settings to default?")) _settings.reset(); })
 	$("._resetAll").click(function (){ if (confirm("Reset All Tracking data?")) HVResetTracking(); })
 	$("._masterReset").click(function (){ if (confirm("This will delete ALL HV data saved in localStorage.\nAre you sure you want to do this?")) HVMasterReset(); })
@@ -4390,6 +4396,8 @@ function saveSettings() {
 	_settings.isShowPopup = $("input[name=isShowPopup]").get(0).checked;
 	_settings.monsterPopupDelay = $("input[name=monsterPopupDelay]").get(0).value;
 	_settings.isShowMonsterNumber = $("input[name=isShowMonsterNumber]").get(0).checked;
+	_settings.isShowPowerupBox = $("input[name=isShowPowerupBox]").get(0).checked;
+	_settings.isShowRoundCounter = $("input[name=isShowRoundCounter]").get(0).checked;
 	_settings.save();
 }
 function reminderAndSaveSettings() {
@@ -4921,6 +4929,8 @@ function HVSettings() {
 	//0-equipment page, 1-shop, 2-itemworld, 3-moogle, 4-forge
 	this.isShowTags = [false, false, false, false, false, false];
 	this.isShowMonsterNumber = false;
+	this.isShowPowerupBox = false;
+	this.isShowRoundCounter = false;
 }
 function saveStatsBackup(back) {
 	loadStatsObject();
@@ -6084,7 +6094,9 @@ HVStat.main2 = function () {
 		if (_settings.isHighlightQC) {
 			HVStat.highlightQuickcast();
 		}
-		displayPowerupBox();
+		if (_settings.isShowPowerupBox) {
+			displayPowerupBox();
+		}
 		if (_settings.isShowDivider) {
 			addBattleLogDividers();
 		}
@@ -6158,7 +6170,7 @@ HVStat.main5 = function () {
 		HVStat.transaction = HVStat.idb.transaction(["MonsterScanResults", "MonsterSkills"], "readwrite");
 
 		collectRoundInfo();		// using alert -- should be split to display part and warning part
-		if ((_round !== null) && (_round.currRound > 0)) {
+		if ((_round !== null) && (_round.currRound > 0) && _settings.isShowRoundCounter) {
 			showRoundCounter();	// requires _round
 		}
 		if ((_round !== null) && (HVStat.monsters.length > 0)){
