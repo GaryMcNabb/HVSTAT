@@ -25,6 +25,17 @@ var HVStat = {
 	reMonsterSkillsTSV: /^(\d+?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)$/gm,
 	charGaugeMaxWidth: 120,
 	monsterGaugeMaxWidth: 120,
+
+	// page identification
+	isBattleItemsPage: document.location.search === "?s=Character&ss=it",
+	isInventoryPage: document.location.search === "?s=Character&ss=in",
+	isEquipmentPage: document.location.search.indexOf("?s=Character&ss=eq") > -1,
+	isItemWorldPage: document.location.search.indexOf("?s=Battle&ss=iw") > -1,
+	isMoogleWrite: document.location.search.indexOf("?s=Bazaar&ss=mm&filter=Write") > -1,
+	isShopPage: document.location.search.indexOf("?s=Bazaar&ss=es") > -1,
+	isForgePage: document.location.search.indexOf("?s=Bazaar&ss=fr") > -1,
+	isShrinePage: document.location.search === "?s=Bazaar&ss=ss",
+
 	// temporary localStorage keys (attach the prefix "HVStat" to avoid conflicts with other scripts)
 	key_hpAlertAlreadyShown: "HVStatHpAlertAlreadyShown",
 	key_mpAlertAlreadyShown: "HVStatMpAlertAlreadyShown",
@@ -53,6 +64,9 @@ var HVStat = {
 	nRowsMonsterScanResultsTSV: 0,
 	nRowsMonsterSkillsTSV: 0,
 
+	// page identification
+	isCharacterPage: false,
+
 	// page states
 	usingHVFont: true,
 
@@ -67,6 +81,7 @@ var HVStat = {
 
 	// battle states
 	duringBattle: false,
+	isBattleOver: false,
 	numberOfMonsters: 0,
 	monsters: []	// instances of HVStat.Monster
 };
@@ -2409,7 +2424,7 @@ HVStat.warnHealthStatus = function () {
 	var hpWarningResumeLevel = hpWarningLevel + 10;
 	var mpWarningResumeLevel = mpWarningLevel + 10;
 	var spWarningResumeLevel = spWarningLevel + 10;
-	if (!isBattleOver()) {
+	if (!HVStat.isBattleOver) {
 		if (_settings.isShowPopup) {
 			if (HVStat.currHpPercent <= hpWarningLevel && (!hpAlertAlreadyShown || _settings.isNagHP)) {
 				alert("Your health is dangerously low!");
@@ -2455,7 +2470,7 @@ HVStat.resetHealthWarningStates = function () {
 }
 
 function collectCurrentProfsData() {
-	if (!isCharacterPage() || HVStat.usingHVFont)
+	if (!HVStat.isCharacterPage || HVStat.usingHVFont)
 		return;
 	loadProfsObject();
 	var c = $(".eqm").children().eq(0).children().eq(1).children();
@@ -4447,17 +4462,6 @@ function captureShrine() {
 	}
 	return;
 }
-function isBattleOver() { return ($("#battleform .btcp").length > 0); }
-function isItemInventoryPage() { return document.location.href.match(/s=character&ss=it/i); }
-function isAllInventoryPage() { return document.location.href.match(/s=Character&ss=in/i); }
-function isEquipmentInventoryPage() { return document.location.href.match(/s=Character&ss=eq/i); }
-function isItemWorldPage() { return document.location.href.match(/s=Battle&ss=iw/i); }
-function isMoogleWrite() { return document.location.href.match(/s=Bazaar&ss=mm&filter=Write/i); }
-function isCharacterPage() { return document.getElementById("pattrform"); }
-function isHentaiVerse() { return ($(".stuffbox").length); }
-function isShopPage() { return document.location.href.match(/s=Bazaar&ss=es/i); }
-function isForgePage() { return document.location.href.match(/s=Bazaar&ss=fr/i); }
-function isShrinePage() { return document.location.href.match(/s=Bazaar&ss=ss/i); }
 function loadOverviewObject() {
 	if (_overview !== null) return;
 	_overview = new HVCacheOverview();
@@ -6058,6 +6062,7 @@ HVStat.main2 = function () {
 	HVStat.charOcGaugeElement = document.getElementsByTagName("img")[11];
 
 	// store static values
+	HVStat.isCharacterPage = !!document.getElementById("pattrform");
 	HVStat.usingHVFont = document.getElementsByClassName('fd10')[0].textContent !== "Health points";
 	HVStat.currHpRate = HVStat.getGaugeRate(HVStat.charHpGaugeElement, HVStat.charGaugeMaxWidth);
 	HVStat.currMpRate = HVStat.getGaugeRate(HVStat.charMpGaugeElement, HVStat.charGaugeMaxWidth);
@@ -6067,6 +6072,7 @@ HVStat.main2 = function () {
 	HVStat.currMpPercent = Math.floor(HVStat.currMpRate * 100);
 	HVStat.currSpPercent = Math.floor(HVStat.currSpRate * 100);
 	HVStat.duringBattle = !!HVStat.battleLogElement;
+	HVStat.isBattleOver = !!document.querySelector("#battleform div.btcp");
 
 	// processes not require IndexedDB and not alert/confirm immediately
 	if (!HVStat.isChrome && !cssInserted()) {
@@ -6104,22 +6110,22 @@ HVStat.main2 = function () {
 		localStorage.removeItem(HV_ROUND);
 		HVStat.resetHealthWarningStates();
 		// equipment tag
-		if (isEquipmentInventoryPage() && _settings.isShowTags[0]) {
+		if (HVStat.isEquipmentPage && _settings.isShowTags[0]) {
 			TaggingItems(false);
 		}
-		if (isAllInventoryPage() && _settings.isShowTags[5]) {
+		if (HVStat.isInventoryPage && _settings.isShowTags[5]) {
 			TaggingItems(true);
 		}
-		if (isShopPage() && _settings.isShowTags[1]) {
+		if (HVStat.isShopPage && _settings.isShowTags[1]) {
 			TaggingItems(false);
 		}
-		if (isItemWorldPage() && _settings.isShowTags[2]) {
+		if (HVStat.isItemWorldPage && _settings.isShowTags[2]) {
 			TaggingItems(false);
 		}
-		if (isMoogleWrite() && _settings.isShowTags[3]) {
+		if (HVStat.isMoogleWrite && _settings.isShowTags[3]) {
 			$("#mailform #leftpane").children().eq(3).children().eq(1).click(TaggingItems);
 		}
-		if (isForgePage() && _settings.isShowTags[4]) {
+		if (HVStat.isForgePage && _settings.isShowTags[4]) {
 			TaggingItems(false);
 			if (_settings.isDisableForgeHotKeys) {
 				document.onkeypress = null;
@@ -6170,7 +6176,7 @@ HVStat.main5 = function () {
 		if ((_round !== null) && (HVStat.monsters.length > 0)){
 			showMonsterStats();	// requires _round, IndexedDB
 		}
-		if (isBattleOver()) {
+		if (HVStat.isBattleOver) {
 			if (_settings.isShowEndStats) {
 				showBattleEndStats();	// requires _round
 			}
@@ -6184,11 +6190,11 @@ HVStat.main5 = function () {
 		if (_round) {
 			_round.reset();
 		}
-		if (_settings.isColumnInventory && isItemInventoryPage()) {
+		if (_settings.isColumnInventory && HVStat.isBattleItemsPage) {
 			initItemsView();
-		} else if (isCharacterPage()) {
+		} else if (HVStat.isCharacterPage) {
 			collectCurrentProfsData();
-		} else if (isShrinePage()) {
+		} else if (HVStat.isShrinePage) {
 			if (_settings.isTrackShrine) {
 				captureShrine();
 			}
