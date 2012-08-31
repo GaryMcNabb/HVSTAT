@@ -11,24 +11,6 @@
 // @run-at           document-start
 // ==/UserScript==
 
-// The goal of the develop-scan branch:
-//
-// (Done)- New global variables and functions are stored in the package
-// (Done)- Add function that local storage 'HVMonsterDatabase' migrates to new IndexedDB
-// (Done)- Add function to import/export monster database
-// (Done)- Add Monster information to be stored
-//         - monster trainer
-//         - debuffs affected
-//         - skill name
-//         - skill last used date
-// (Done)- Replace HVMonster with HVStat.Monster
-// (Done)- Replace MonsterPopup()
-// (Done)- Remove AssumeResistances()
-// (Done)- Remove StartDatabase()
-// (Done)- Remove MinimalizeDatabaseSize()
-// (Done)- Remove SaveToDatabase()
-// (Almost done)- Modify->Replace showMonsterStats()
-
 // Package
 var HVStat = {
 	//------------------------------------
@@ -41,25 +23,44 @@ var HVStat = {
 	IDBCursor: window.IDBCursor || window.webkitIDBCursor,
 	reMonsterScanResultsTSV: /^(\d+?)\t(.*?)\t(.*?)\t(.*?)\t(\d*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)$/gm,
 	reMonsterSkillsTSV: /^(\d+?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)$/gm,
+	charGaugeMaxWidth: 120,
+	monsterGaugeMaxWidth: 120,
+	// temporary localStorage keys (attach the prefix "HVStat" to avoid conflicts with other scripts)
+	key_hpAlertAlreadyShown: "HVStatHpAlertAlreadyShown",
+	key_mpAlertAlreadyShown: "HVStatMpAlertAlreadyShown",
+	key_spAlertAlreadyShown: "HVStatSpAlertAlreadyShown",
+	key_ocAlertAlreadyShown: "HVStatOcAlertAlreadyShown",
 
 	//------------------------------------
 	// DOM caches
 	//------------------------------------
 	popupElement: null,
-	monsterPaneElement: null,
+	quickcastBarElement: null,
 	battleLogElement: null,
+	monsterPaneElement: null,
+	charHpGaugeElement: null,
+	charMpGaugeElement: null,
+	charSpGaugeElement: null,
+	charOcGaugeElement: null,
 
 	//------------------------------------
 	// package scope global variables
 	//------------------------------------
 	idb: null,
 	transaction: null,
-// 	monsterScanResultsStore: null,
-// 	monsterSkillsStore: null,
 	dataURIMonsterScanResults: null,
 	dataURIMonsterSkills: null,
 	nRowsMonsterScanResultsTSV: 0,
 	nRowsMonsterSkillsTSV: 0,
+
+	// character-related
+	currHpRate: 0,
+	currMpRate: 0,
+	currSpRate: 0,
+	currOcRate: 0,
+	currHpPercent: 0,
+	currMpPercent: 0,
+	currSpPercent: 0,
 
 	// battle-related
 	duringBattle: false,
@@ -67,6 +68,7 @@ var HVStat = {
 	monsters: []	// instances of HVStat.Monster
 };
 
+// TODO: should be stored in the package to avoid conflicts with official HV page in the future
 HV_SETTINGS = "HVSettings";
 _settings = null;
 loadSettingsObject();
@@ -444,6 +446,19 @@ HVStat.getElapsedFrom = function (date) {
 	return str;
 };
 
+HVStat.getGaugeRate = function (gaugeElement, gaugeMaxWidth) {
+	var reStyleWidth = /width\s*?:\s*?(\d+?)px/i;
+	var style = gaugeElement.getAttribute("style");
+	var result = reStyleWidth.exec(style);
+	var rate;
+	if (result && result.length >= 2) {
+		rate = Number(result[1]) / gaugeMaxWidth;
+	} else {
+		rate = gaugeElement.width / gaugeMaxWidth;
+	}
+	return rate;
+};
+
 //------------------------------------
 // classes
 //------------------------------------
@@ -785,7 +800,7 @@ HVStat.Monster = (function () {
 		"mkey_1", "mkey_2", "mkey_3", "mkey_4", "mkey_5",
 		"mkey_6", "mkey_7", "mkey_8", "mkey_9", "mkey_0"
 	];
-	var _maxBarWidth = 120;
+	var _maxBarWidth = HVStat.monsterGaugeMaxWidth;
 
 	// constructor
 	function Monster(index) {
@@ -2119,6 +2134,7 @@ HVStat.migration.deleteOldDatabase = function () {
 //------------------------------------
 // legacy codes
 //------------------------------------
+// TODO: should be stored in the package to avoid conflicts with official HV page in the future
 
 /* ========== GLOBAL VARIABLES ========== */
 VERSION = "5.4.1.8";
@@ -2136,10 +2152,6 @@ HV_REWARDS = "HVRewards";
 HV_SHRINE = "HVShrine";
 HV_DROPS = "HVDrops";
 HV_ROUND = "HVRound";
-HV_ALERT = "critAlert";
-HV_ALERTMP = "critAlertMP";
-HV_ALERTSP = "critAlertSP";
-HV_ALERTOC = "fullAlertOC";
 HV_EQUIP = "inventoryAlert";
 HV_DBASE = "HVMonsterDatabase";
 HV_COLL = "HVCollectData";
@@ -2354,82 +2366,79 @@ function showMonsterNumber() {
 	style2.innerHTML = style;
 	document.head.appendChild(style2);
 }
-function healthWarning() {
-	var r, reWidth = /width\s*?:\s*?(\d+?)px/i;
-	var barFrameWidth = 120;
-	var c = document.getElementsByTagName("img")[2];
-//	var e = document.getElementsByTagName("img")[3];
-	var cmp = document.getElementsByTagName("img")[5];
-//	var emp = document.getElementsByTagName("img")[6];
-	var csp = document.getElementsByTagName("img")[8];
-//	var esp = document.getElementsByTagName("img")[9];
-	var elemOCBar = document.getElementsByTagName("img")[11];
-//	var elemOCFrame = document.getElementsByTagName("img")[12];
-	r = reWidth.exec(c.getAttribute("style"));
-	var b = (r && r.length >= 2 ? r[1] : c.width) / barFrameWidth;
-	r = reWidth.exec(cmp.getAttribute("style"));
-	var bmp = (r && r.length >= 2 ? r[1] : cmp.width) / barFrameWidth;
-	r = reWidth.exec(csp.getAttribute("style"));
-	var bsp = (r && r.length >= 2 ? r[1] : csp.width) / barFrameWidth;
-	r = reWidth.exec(elemOCBar.getAttribute("style"));
-	var overchargeRate = (r && r.length >= 2 ? r[1] : elemOCBar.width) / barFrameWidth;
-	var d = localStorage.getItem(HV_ALERT);
-	var dmp = localStorage.getItem(HV_ALERTMP);
-	var dsp = localStorage.getItem(HV_ALERTSP);
-	var overchargeAlertState = localStorage.getItem(HV_ALERTOC);
-	var f = (d === null) ? false : JSON.parse(d);
-	var fmp = (dmp === null) ? false : JSON.parse(dmp);
-	var fsp = (dsp === null) ? false : JSON.parse(dsp);
-	var overchargeAlertAlreadyShown = overchargeAlertState === null ? false : JSON.parse(overchargeAlertState);
-	var g = parseFloat(_settings.warnOrangeLevel / 100);
-	var i = parseFloat(_settings.warnRedLevel / 100);
-	var h = parseFloat(_settings.warnAlertLevel / 100);
-	var gmp = parseFloat(_settings.warnOrangeLevelMP / 100);
-	var imp = parseFloat(_settings.warnRedLevelMP / 100);
-	var hmp = parseFloat(_settings.warnAlertLevelMP / 100);
-	var gsp = parseFloat(_settings.warnOrangeLevelSP / 100);
-	var isp = parseFloat(_settings.warnRedLevelSP / 100);
-	var hsp = parseFloat(_settings.warnAlertLevelSP / 100);
-	var a = h + 0.1;
-	var amp = hmp + 0.1;
-	var asp = hsp + 0.1;
-	if ((b <= g) && _settings.isHighlightQC)
-		document.getElementById("quickbar").style.backgroundColor = b > i ? "orange" : "red";
-	else if ((bmp <= gmp) && _settings.isHighlightQC)
-		document.getElementById("quickbar").style.backgroundColor = bmp > imp ? "blue" : "darkblue";
-	else if ((bsp <= gsp) && _settings.isHighlightQC)
-		document.getElementById("quickbar").style.backgroundColor = bsp > isp ? "lime" : "green";
-	if (!isBattleOver() && _settings.isShowPopup && (b <= h) && (!f || _settings.isNagHP)) {
-		alert("Your health is dangerously low!");
-		f = true;
-		localStorage.setItem(HV_ALERT, JSON.stringify(f));
+
+HVStat.highlightQuickcast = function () {
+	var hpHighlightLevel1 = Number(_settings.warnOrangeLevel);
+	var hpHighlightLevel2 = Number(_settings.warnRedLevel);
+	var mpHighlightLevel1 = Number(_settings.warnOrangeLevelMP);
+	var mpHighlightLevel2 = Number(_settings.warnRedLevelMP);
+	var spHighlightLevel1 = Number(_settings.warnOrangeLevelSP);
+	var spHighlightLevel2 = Number(_settings.warnRedLevelSP);
+	if (HVStat.currHpPercent <= hpHighlightLevel1) {
+		HVStat.quickcastBarElement.style.backgroundColor = (HVStat.currHpPercent > hpHighlightLevel2) ? "orange" : "red";
+	} else if (HVStat.currMpPercent <= mpHighlightLevel1) {
+		HVStat.quickcastBarElement.style.backgroundColor = (HVStat.currMpPercent > mpHighlightLevel2) ? "blue" : "darkblue";
+	} else if (HVStat.currSpPercent <= spHighlightLevel1) {
+		HVStat.quickcastBarElement.style.backgroundColor = (HVStat.currSpPercent > spHighlightLevel2) ? "lime" : "green";
 	}
-	if (!isBattleOver() && _settings.isShowPopup && (bmp <= hmp) && (!fmp || _settings.isNagMP)) {
-		alert("Your mana is dangerously low!");
-		fmp = true;
-		localStorage.setItem(HV_ALERTMP, JSON.stringify(fmp));
-	}
-	if (!isBattleOver() && _settings.isShowPopup && (bsp <= hsp) && (!fsp || _settings.isNagSP)) {
-		alert("Your spirit is dangerously low!");
-		fsp = true;
-		localStorage.setItem(HV_ALERTSP, JSON.stringify(fsp));
-	}
-	if (!isBattleOver() && _settings.isAlertOverchargeFull && overchargeRate >= 1.0 && !overchargeAlertAlreadyShown) {
-		alert("Your overcharge is full.");
-		overchargeAlertAlreadyShown = true;
-		localStorage.setItem(HV_ALERTOC, JSON.stringify(overchargeAlertAlreadyShown));
-	}
-	if (_settings.isShowPopup) {
-		if (f && b > a)
-			localStorage.removeItem(HV_ALERT);
-		if (fmp && bmp > amp)
-			localStorage.removeItem(HV_ALERTMP);
-		if (fsp && bsp > asp)
-			localStorage.removeItem(HV_ALERTSP);
-	}
-	if (overchargeAlertAlreadyShown && overchargeRate < 1.0)
-		localStorage.removeItem(HV_ALERTOC);
 }
+
+HVStat.warnHealthStatus = function () {
+	var hpAlertAlreadyShown = !!localStorage.getItem(HVStat.key_hpAlertAlreadyShown);
+	var mpAlertAlreadyShown = !!localStorage.getItem(HVStat.key_mpAlertAlreadyShown);
+	var spAlertAlreadyShown = !!localStorage.getItem(HVStat.key_spAlertAlreadyShown);
+	var ocAlertAlreadyShown = !!localStorage.getItem(HVStat.key_ocAlertAlreadyShown);
+	var hpWarningLevel = Number(_settings.warnAlertLevel);
+	var mpWarningLevel = Number(_settings.warnAlertLevelMP);
+	var spWarningLevel = Number(_settings.warnAlertLevelSP);
+	var hpWarningResumeLevel = hpWarningLevel + 10;
+	var mpWarningResumeLevel = mpWarningLevel + 10;
+	var spWarningResumeLevel = spWarningLevel + 10;
+	if (!isBattleOver()) {
+		if (_settings.isShowPopup) {
+			if (HVStat.currHpPercent <= hpWarningLevel && (!hpAlertAlreadyShown || _settings.isNagHP)) {
+				alert("Your health is dangerously low!");
+				hpAlertAlreadyShown = true;
+				localStorage.setItem(HVStat.key_hpAlertAlreadyShown, "true");
+			}
+			if (HVStat.currMpPercent <= mpWarningLevel && (!mpAlertAlreadyShown || _settings.isNagMP)) {
+				alert("Your mana is dangerously low!");
+				mpAlertAlreadyShown = true;
+				localStorage.setItem(HVStat.key_mpAlertAlreadyShown, "true");
+			}
+			if (HVStat.currSpPercent <= spWarningLevel && (!spAlertAlreadyShown || _settings.isNagSP)) {
+				alert("Your spirit is dangerously low!");
+				spAlertAlreadyShown = true;
+				localStorage.setItem(HVStat.key_spAlertAlreadyShown, "true");
+			}
+		}
+		if (_settings.isAlertOverchargeFull && HVStat.currOcRate >= 1.0 && !ocAlertAlreadyShown) {
+			alert("Your overcharge is full.");
+			ocAlertAlreadyShown = true;
+			localStorage.setItem(HVStat.key_ocAlertAlreadyShown, "true");
+		}
+	}
+	if (hpWarningLevel > hpWarningResumeLevel) {
+		localStorage.removeItem(HVStat.key_hpAlertAlreadyShown);
+	}
+	if (mpWarningLevel > mpWarningResumeLevel) {
+		localStorage.removeItem(HVStat.key_mpAlertAlreadyShown);
+	}
+	if (spWarningLevel > spWarningResumeLevel) {
+		localStorage.removeItem(HVStat.key_spAlertAlreadyShown);
+	}
+	if (HVStat.currOcRate < 1.0) {
+		localStorage.removeItem(HVStat.key_ocAlertAlreadyShown);
+	}
+}
+
+HVStat.resetHealthWarningStates = function () {
+	localStorage.removeItem(HVStat.key_hpAlertAlreadyShown);
+	localStorage.removeItem(HVStat.key_mpAlertAlreadyShown);
+	localStorage.removeItem(HVStat.key_spAlertAlreadyShown);
+	localStorage.removeItem(HVStat.key_ocAlertAlreadyShown);
+}
+
 function collectCurrentProfsData() {
 	if (!isCharacterPage() || isHVFontEngine())
 		return;
@@ -4530,7 +4539,6 @@ function HVMasterReset() {
 	deleteFromStorage(HV_DROPS);
 	deleteFromStorage(HV_SETTINGS);
 	deleteFromStorage(HV_ROUND);
-	deleteFromStorage(HV_ALERT);
 	deleteFromStorage(HV_EQUIP);
 	deleteFromStorage(HV_DATA);
 	deleteFromStorage("HVBackup1");
@@ -4538,6 +4546,10 @@ function HVMasterReset() {
 	deleteFromStorage("HVBackup3");
 	deleteFromStorage("HVBackup4");
 	deleteFromStorage("HVBackup5")
+	deleteFromStorage(key_hpAlertAlreadyShown);
+	deleteFromStorage(key_mpAlertAlreadyShown);
+	deleteFromStorage(key_spAlertAlreadyShown);
+	deleteFromStorage(key_ocAlertAlreadyShown);
 }
 function clone(a) {
 	if (a === null || typeof(a) !== "object") return a;
@@ -6023,13 +6035,23 @@ HVStat.main2 = function () {
 	//console.log("main2: document.readyState = " + document.readyState);
 	// store DOM caches
 	HVStat.popupElement = document.getElementById("popup_box");
-	HVStat.monsterPaneElement = document.getElementById("monsterpane");
+	HVStat.quickcastBarElement = document.getElementById("quickbar");
 	HVStat.battleLogElement = document.getElementById("togpane_log");
+	HVStat.monsterPaneElement = document.getElementById("monsterpane");
+	HVStat.charHpGaugeElement = document.getElementsByTagName("img")[2];
+	HVStat.charMpGaugeElement = document.getElementsByTagName("img")[5];
+	HVStat.charSpGaugeElement = document.getElementsByTagName("img")[8];
+	HVStat.charOcGaugeElement = document.getElementsByTagName("img")[11];
 
 	// store static values
-	if (HVStat.battleLogElement) {
-		HVStat.duringBattle = true;
-	}
+	HVStat.currHpRate = HVStat.getGaugeRate(HVStat.charHpGaugeElement, HVStat.charGaugeMaxWidth);
+	HVStat.currMpRate = HVStat.getGaugeRate(HVStat.charMpGaugeElement, HVStat.charGaugeMaxWidth);
+	HVStat.currSpRate = HVStat.getGaugeRate(HVStat.charSpGaugeElement, HVStat.charGaugeMaxWidth);
+	HVStat.currOcRate = HVStat.getGaugeRate(HVStat.charOcGaugeElement, HVStat.charGaugeMaxWidth);
+	HVStat.currHpPercent = Math.floor(HVStat.currHpRate * 100);
+	HVStat.currMpPercent = Math.floor(HVStat.currMpRate * 100);
+	HVStat.currSpPercent = Math.floor(HVStat.currSpRate * 100);
+	HVStat.duringBattle = !!HVStat.battleLogElement;
 
 	// processes not require IndexedDB and not alert/confirm immediately
 	if (!HVStat.isChrome && !cssInserted()) {
@@ -6041,8 +6063,8 @@ HVStat.main2 = function () {
 		// store static values
 		HVStat.numberOfMonsters = $("#monsterpane > div").length;
 
-		if (_settings.isShowMonsterNumber) {
-			showMonsterNumber();
+		if (_settings.isHighlightQC) {
+			HVStat.highlightQuickcast();
 		}
 		displayPowerupBox();
 		if (_settings.isShowDivider) {
@@ -6054,6 +6076,9 @@ HVStat.main2 = function () {
 		if (_settings.isShowSelfDuration) {
 			showSelfEffectsDuration();
 		}
+		if (_settings.isShowMonsterNumber) {
+			showMonsterNumber();
+		}
 		if (_settings.isShowScanButton || _settings.isShowSkillButton || _settings.isEnableScanHotkey || _settings.isEnableSkillHotkey) {
 			Scanbutton();
 		}
@@ -6061,6 +6086,7 @@ HVStat.main2 = function () {
 			showMonsterEffectsDuration();
 		}
 	} else {
+		HVStat.resetHealthWarningStates();
 		// equipment tag
 		if (isEquipmentInventoryPage() && _settings.isShowTags[0]) {
 			TaggingItems(false);
@@ -6120,7 +6146,7 @@ HVStat.main5 = function () {
 		}
 		collectRoundInfo();		// using alert
 		if (_settings.warnMode[_round.battleType]) {
-			healthWarning();		// using alert
+			HVStat.warnHealthStatus();		// using alert
 		}
 		if ((_round !== null) && (_round.currRound > 0)) {
 			showRoundCounter();	// requires _round
