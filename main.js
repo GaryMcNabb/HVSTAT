@@ -664,7 +664,7 @@ HVStat.MonsterScanResults = (function () {
 						if (j > 0) {
 							damageTypes.splice(indices[j], 1);
 						} else {
-							damageTypes[j] = _damageTypeGeneralizingTable[i].generic;
+							damageTypes[indices[j]] = _damageTypeGeneralizingTable[i].generic;
 						}
 					}
 				}
