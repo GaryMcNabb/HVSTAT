@@ -1282,9 +1282,11 @@ function collectRoundInfo() {
 				_round.elemGain += p;
 			} else if (r.match(/divine magic/)) {
 				_profs.divineTotal += p;
+				_profs.spiritTotal = (_profs.divineTotal+_profs.forbidTotal) / 2;
 				_round.divineGain += p;
 			} else if (r.match(/forbidden magic/)) {
 				_profs.forbidTotal += p;
+				_profs.spiritTotal = (_profs.divineTotal+_profs.forbidTotal) / 2;
 				_round.forbidGain += p;
 			} else if (r.match(/deprecating magic/)) {
 				_profs.depTotal += p;
