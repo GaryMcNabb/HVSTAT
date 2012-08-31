@@ -4,7 +4,7 @@
 // @description      Collects data, analyzes statistics, and enhances the interface of the HentaiVerse
 // @include          http://hentaiverse.org/*
 // @author           Various (http://forums.e-hentai.org/index.php?showtopic=50962)
-// @version          5.4.1.8
+// @version          5.4.2.0
 // @require          https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js
 // @require          https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.21/jquery-ui.min.js
 // @resource         jQueryUICSS http://www.starfleetplatoon.com/~cmal/HVSTAT/jqueryui.css
@@ -2154,7 +2154,7 @@ HVStat.migration.deleteOldDatabase = function () {
 // TODO: should be stored in the package to avoid conflicts with official HV page in the future
 
 /* ========== GLOBAL VARIABLES ========== */
-VERSION = "5.4.1.8";
+VERSION = "5.4.2.0";
 HV_OVERVIEW = "HVOverview";
 HV_STATS = "HVStats";
 HV_PROF = "HVProf";
@@ -2349,28 +2349,32 @@ function showMonsterStats() {
 }
 function showMonsterEffectsDuration() {
 	for (var i = 0; i < HVStat.numberOfMonsters; i++) {
-		$("#" + HVStat.Monster.getDomElementId(i)).children().eq(3).children("img").each(createDurationBadge);
+		var baseElement = document.getElementById(HVStat.Monster.getDomElementId(i));
+		var array = baseElement.children[3].getElementsByTagName("img");
+		var j = array.length
+		while(j--)createDurationBadge(array[j], j);
 	}
 }
 function showSelfEffectsDuration() {
-	$("div.btps img").each(createDurationBadge);
+	var array = document.getElementsByClassName("btps")[0].getElementsByTagName("img");
+	var i = array.length;
+	while(i--)createDurationBadge(array[i], i);
 }
-function createDurationBadge(a) {
+function createDurationBadge(a, x) {
 	var SELF_EFF_TOP = 34;
 	var SELF_EFF_LEFT = 8;
 	var MON_EFF_TOP = -3;
 	var MON_EFF_LEFT = 5;
 	var FIRST_EFF = 33;
-	var e = $(this);
+	var e = a;
 	var g, d;
 	var c, f;
-	d = e.outerHTML().match(/\s\d+?\)/);
-	if (d !== null)
-		g = d[0].replace(")", "").replace(" ", "");
+	d = e.outerHTML.match(/\s\d+?\)/);
+	if (d !== null) g = d[0].replace(")", "").replace(" ", "");
 	if (g >= 0) {
-		var h = e.parent().parent().parent().attr("id") === "monsterpane";
+		var h = e.parentNode.parentNode.parentNode.id === "monsterpane";
 		c = h ? MON_EFF_TOP : SELF_EFF_TOP;
-		f = (h ? MON_EFF_LEFT : SELF_EFF_LEFT) + FIRST_EFF * a;
+		f = (h ? MON_EFF_LEFT : SELF_EFF_LEFT) + FIRST_EFF * x;
 		var b = "<div style='position:absolute;";
 		if (h) {
 			if (_settings.isMonstersEffectsWarnColor) {
@@ -2378,35 +2382,29 @@ function createDurationBadge(a) {
 					b += "background-color:red;";
 				else if (g <= Number(_settings.MonstersWarnOrangeRounds))
 					b += "background-color:orange;";
-				else
-					b += "background-color:#EFEEDC;";
-			} else 
-				b += "background-color:#EFEEDC;";
+				else b += "background-color:#EFEEDC;";
+			} else  b += "background-color:#EFEEDC;";
 		} else if (!h) {
 			if (_settings.isSelfEffectsWarnColor) {
 				if (g <= Number(_settings.SelfWarnRedRounds))
 					b += "background-color:red;";
 				else if (g <= Number(_settings.SelfWarnOrangeRounds))
 					b += "background-color:orange;";
-				else
-					b += "background-color:#EFEEDC;";
-			} else
-				b += "background-color:#EFEEDC;";
+				else b += "background-color:#EFEEDC;";
+			} else b += "background-color:#EFEEDC;";
 		}
 		b += "font-size:11px;font-weight:bold;font-family:arial,helvetica,sans-serif;line-height:12px;text-align:center;width:20px;height:12px;border-style:solid;border-width:1px;border-color:#5C0D11;overflow:hidden;top:" + c + "px;left:" + f + "px;cursor:default;'>" + g + "</div>";
-		e.after(b);
+		e.parentNode.innerHTML += b;
 	}
 }
 function showBattleEndStats() {
-	$("#togpane_log").children().before("<div class='ui-state-default ui-corner-bottom' style='padding:10px;margin-bottom:10px;text-align:left'>" + getBattleEndStatsHtml() + "</div>");
+	var battleLog = document.getElementById("togpane_log");
+	battleLog.innerHTML = "<div class='ui-state-default ui-corner-bottom' style='padding:10px;margin-bottom:10px;text-align:left'>" + getBattleEndStatsHtml() + "</div>" + battleLog.innerHTML;
 }
 function showMonsterNumber() {
-	var targets = document.querySelectorAll('img.btmi');
-	var i = targets.length;
-	while (i--)
-		targets[i].parentNode.appendChild(document.createElement('div')).innerHTML = (i+1)%10;
-	var style = '';
-	style += '.btmi {display:none;} .btmi + div {height:25px; font-size:1.6em; font-family:HentaiVerse; color:black; padding-top:0.4em;}';
+	var targets = document.querySelectorAll('.btmi'), i = targets.length;
+	while (i-- > 0) targets[i].parentNode.appendChild(document.createElement('div')).innerHTML = (i+1)%10;
+	var style = '.btmi {display:none;} .btmi + div {height:25px; font-size:1.6em; font-family:HentaiVerse; color:black; padding-top:0.4em;}';
 	var style2 = document.createElement('style');
 	style2.innerHTML = style;
 	document.head.appendChild(style2);
