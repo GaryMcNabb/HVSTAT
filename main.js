@@ -6160,21 +6160,24 @@ HVStat.main5 = function () {
 	if (HVStat.duringBattle) {
 		HVStat.transaction = HVStat.idb.transaction(["MonsterScanResults", "MonsterSkills"], "readwrite");
 
-		if (_settings.isMainEffectsAlertSelf) {
-			AlertEffectsSelf();		// using alert
-		}
-		if (_settings.isMainEffectsAlertMonsters) {
-			AlertEffectsMonsters();		// using alert
-		}
-		collectRoundInfo();		// using alert
-		if (_settings.warnMode[_round.battleType]) {
-			HVStat.warnHealthStatus();		// using alert
-		}
+		collectRoundInfo();		// using alert -- should be split to display part and warning part
 		if ((_round !== null) && (_round.currRound > 0)) {
 			showRoundCounter();	// requires _round
 		}
 		if ((_round !== null) && (HVStat.monsters.length > 0)){
 			showMonsterStats();	// requires _round, IndexedDB
+		}
+		if (_settings.isShowStatsPopup) {
+			registerEventHandlersForMonsterPopup();	// requires _round, IndexedDB
+		}
+		if (_settings.warnMode[_round.battleType]) {
+			HVStat.warnHealthStatus();		// using alert
+		}
+		if (_settings.isMainEffectsAlertSelf) {
+			AlertEffectsSelf();		// using alert
+		}
+		if (_settings.isMainEffectsAlertMonsters) {
+			AlertEffectsMonsters();		// using alert
 		}
 		if (HVStat.isBattleOver) {
 			if (_settings.isShowEndStats) {
@@ -6183,13 +6186,7 @@ HVStat.main5 = function () {
 			saveStats();
 			_round.reset();
 		}
-		if (_settings.isShowStatsPopup) {
-			registerEventHandlersForMonsterPopup();	// requires _round, IndexedDB
-		}
 	} else {
-		if (_round) {
-			_round.reset();
-		}
 		if (_settings.isColumnInventory && HVStat.isBattleItemsPage) {
 			initItemsView();
 		} else if (HVStat.isCharacterPage) {
