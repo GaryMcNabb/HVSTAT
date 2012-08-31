@@ -2155,13 +2155,6 @@ HVStat.migration.deleteOldDatabase = function () {
 
 /* ========== GLOBAL VARIABLES ========== */
 VERSION = "5.4.1.8";
-SAVE_STATS = true;
-MAX_MID = 33;
-SELF_EFF_TOP = 34;
-SELF_EFF_LEFT = 8;
-MON_EFF_TOP = -3;
-MON_EFF_LEFT = 5;
-FIRST_EFF = 33;
 HV_OVERVIEW = "HVOverview";
 HV_STATS = "HVStats";
 HV_PROF = "HVProf";
@@ -2347,6 +2340,11 @@ function showSelfEffectsDuration() {
 	$("div.btps img").each(createDurationBadge);
 }
 function createDurationBadge(a) {
+	var SELF_EFF_TOP = 34;
+	var SELF_EFF_LEFT = 8;
+	var MON_EFF_TOP = -3;
+	var MON_EFF_LEFT = 5;
+	var FIRST_EFF = 33;
 	var e = $(this);
 	var g, d;
 	var c, f;
