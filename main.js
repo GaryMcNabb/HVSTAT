@@ -6099,6 +6099,7 @@ HVStat.main2 = function () {
 			showMonsterEffectsDuration();
 		}
 	} else {
+		localStorage.removeItem(HV_ROUND);
 		HVStat.resetHealthWarningStates();
 		// equipment tag
 		if (isEquipmentInventoryPage() && _settings.isShowTags[0]) {
