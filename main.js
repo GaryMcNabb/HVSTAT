@@ -4518,10 +4518,11 @@ function getRelativeTime(b) {
 }
 if (HVStat.isChrome) {	//=== Clones a few GreaseMonkey functions for Chrome Users.
 	unsafeWindow = window;
-	function GM_addStyle(a) {
-		var b = document.createElement("style");
-		b.textContent = a;
-		document.getElementsByTagName("head")[0].appendChild(b);
+	function GM_addStyle(styleCSS) {
+		var doc = document,
+		newStyle = doc.createElement("style");
+		newStyle.textContent = styleCSS;
+		doc.documentElement.insertBefore(newStyle);
 	}
 	function GM_getValue(b, a) {
 		var c = localStorage.getItem(b);
@@ -4533,14 +4534,6 @@ if (HVStat.isChrome) {	//=== Clones a few GreaseMonkey functions for Chrome User
 	function GM_setValue(a, b) { localStorage.setItem(a, b); }
 	function GM_getResourceText(a) {}
 }
-function cssAdded() {
-	var a = document.createElement("div");
-	a.setAttribute("id", "cssdiv");
-	a.setAttribute("style", "visibility:hidden");
-	$("body").append(a);
-	return;
-}
-function cssInserted(){ return ($("#cssdiv").length > 0); }
 function HVResetTracking() {
 	_overview.reset();
 	_stats.reset();
@@ -6075,9 +6068,12 @@ HVStat.main2 = function () {
 	HVStat.isBattleOver = !!document.querySelector("#battleform div.btcp");
 
 	// processes not require IndexedDB and not alert/confirm immediately
-	if (!HVStat.isChrome && !cssInserted()) {
+	if (!HVStat.isChrome && !document.getElementById("cssdiv")) {
 		GM_addStyle(GM_getResourceText("jQueryUICSS"));
-		cssAdded();
+		var a = document.createElement("div");
+		a.setAttribute("id", "cssdiv");
+		a.setAttribute("style", "visibility:hidden");
+		document.documentElement.appendChild(a);
 	}
 	initUI();
 	if (HVStat.duringBattle) {
@@ -6203,9 +6199,9 @@ HVStat.main5 = function () {
 	if (_settings.isShowSidebarProfs) {
 		showSidebarProfs();
 	}
-	var a = localStorage.getItem(HV_EQUIP);
-	var c = (a === null) ? false : JSON.parse(a);
-	if (c) inventoryWarning();
+	var invAlert = localStorage.getItem(HV_EQUIP);
+	var invFull = (invAlert === null) ? false : JSON.parse(invAlert);
+	if (invFull) inventoryWarning();
 
 	if (!HVStat.duringBattle) {
 		if ((_settings.isStartAlert || _settings.isShowEquippedSet) && !HVStat.usingHVFont) {
