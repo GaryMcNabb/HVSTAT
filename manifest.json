@@ -13,6 +13,6 @@
       "js": [ "jquery.min.js", "jquery-ui.min.js", "main.js" ],
       "matches": [ "http://hentaiverse.org/*" ],
       "exclude_matches": ["http://hentaiverse.org/pages/showequip*"],
-	 "run_at": "document_start"
+	 "run_at": "document_idle"
    } ]
 }
