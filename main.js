@@ -86,7 +86,6 @@ var HVStat = {
 	monsters: []	// instances of HVStat.Monster
 };
 
-// TODO: should be stored in the package to avoid conflicts with official HV page in the future
 HV_SETTINGS = "HVSettings";
 _settings = null;
 loadSettingsObject();
@@ -2155,7 +2154,6 @@ HVStat.migration.deleteOldDatabase = function () {
 //------------------------------------
 // legacy codes
 //------------------------------------
-// TODO: should be stored in the package to avoid conflicts with official HV page in the future
 
 /* ========== GLOBAL VARIABLES ========== */
 VERSION = "5.4.2.0";
@@ -6060,14 +6058,14 @@ HVStat.main1 = function () {
 	if (_settings.isChangePageTitle && document.title === "The HentaiVerse") {
 		document.title = _settings.customPageTitle;
 	}
-	var waitingForDocumentInteractive = function () {
+	var waitForDocumentInteractive = function () {
 		if (document.readyState === "loading") {
-			setTimeout(waitingForDocumentInteractive, 10);
+			setTimeout(waitForDocumentInteractive, 10);
 		} else {
 			setTimeout(HVStat.main2, 1);
 		}
 	};
-	waitingForDocumentInteractive();
+	waitForDocumentInteractive();
 }
 
 HVStat.main2 = function () {
@@ -6171,14 +6169,14 @@ HVStat.main3 = function () {
 HVStat.main4 = function () {
 	//console.log("main4: document.readyState = " + document.readyState);
 	// processes require IndexedDB and not alert/confirm immediately
-	var waitingForDocumentComplete = function () {
+	var waitForDocumentComplete = function () {
 		if (document.readyState !== "complete") {
-			setTimeout(waitingForDocumentComplete, 10);
+			setTimeout(waitForDocumentComplete, 10);
 		} else {
 			setTimeout(HVStat.main5, 1);
 		}
 	};
-	waitingForDocumentComplete();
+	waitForDocumentComplete();
 }
 
 HVStat.main5 = function () {
