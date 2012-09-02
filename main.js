@@ -2216,7 +2216,11 @@ function setLogCSS() {
 		bCSS = "";
 		
 	if (_settings.isAltHighlight){
-		bCSS = bTD+ "'gains the effect'], "+ bTD+ "'penetrated'], "+ bTD+ "'stun'], "+ bTD+ "'ripened soul']"
+		bCSS = bTD+ "'hits']:not([title*='hits you']), "+ bTD+ "'blasts'], "+ bTD+ "'crits']:not([title*='crits you'])"
+		+ "{color:black}"
+		+ bTD+ "'you hit'], "+ bTD+ "'you crit'], "+ bTD+ "'you counter'], "+ bTD+ "'your offhand hit'], "+ bTD+ "'your offhand crit'], "+ bTD+ "'unleash']"
+		+ "{color:black !important}"
+		+ bTD+ "'gains the effect'], "+ bTD+ "'penetrated'], "+ bTD+ "'stun'], "+ bTD+ "'ripened soul']"
 		+ "{color:purple}"
 		+ bTD+ "'proficiency']"
 		+ "{color:#BA9E1C}"
