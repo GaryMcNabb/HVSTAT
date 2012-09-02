@@ -66,6 +66,7 @@ var HVStat = {
 
 	// page identification
 	isCharacterPage: false,
+	isRiddlePage: false,
 
 	// page states
 	usingHVFont: true,
@@ -6082,6 +6083,7 @@ HVStat.main2 = function () {
 
 	// store static values
 	HVStat.isCharacterPage = !!document.getElementById("pattrform");
+	HVStat.isRiddlePage = !!document.getElementById("riddleform");
 	HVStat.usingHVFont = document.getElementsByClassName('fd10')[0].textContent !== "Health points";
 	HVStat.currHpRate = HVStat.getGaugeRate(HVStat.charHpGaugeElement, HVStat.charGaugeMaxWidth);
 	HVStat.currMpRate = HVStat.getGaugeRate(HVStat.charMpGaugeElement, HVStat.charGaugeMaxWidth);
@@ -6139,7 +6141,9 @@ HVStat.main2 = function () {
 		}
 	} else {
 		localStorage.removeItem(HV_ROUND);
-		HVStat.resetHealthWarningStates();
+		if (!HVStat.isRiddlePage) {
+			HVStat.resetHealthWarningStates();
+		}
 		// equipment tag
 		if (HVStat.isEquipmentPage && _settings.isShowTags[0]) {
 			TaggingItems(false);
