@@ -6102,6 +6102,12 @@ HVStat.main2 = function () {
 		document.documentElement.appendChild(a);
 	}
 	initUI();
+	if (!HVStat.usingHVFont && _settings.isShowEquippedSet) {
+		SetDisplay();
+	}
+	if (_settings.isShowSidebarProfs) {
+		showSidebarProfs();
+	}
 	if (HVStat.duringBattle) {
 		// store static values
 		HVStat.numberOfMonsters = $("#monsterpane > div").length;
@@ -6224,15 +6230,6 @@ HVStat.main5 = function () {
 				window.document.onkeydown = null;	// workaround to make enable SPACE key
 			}
 		}
-	}
-	if (_settings.isShowSidebarProfs) {
-		showSidebarProfs();
-	}
-	var invAlert = localStorage.getItem(HV_EQUIP);
-	var invFull = (invAlert === null) ? false : JSON.parse(invAlert);
-	if (invFull) inventoryWarning();
-
-	if (!HVStat.duringBattle) {
 		if ((_settings.isStartAlert || _settings.isShowEquippedSet) && !HVStat.usingHVFont) {
 			FindSettingsStats();
 		}
@@ -6240,9 +6237,9 @@ HVStat.main5 = function () {
 			StartBattleAlerts();
 		}
 	}
-	if (!HVStat.usingHVFont && _settings.isShowEquippedSet) {
-		SetDisplay();
-	}
+	var invAlert = localStorage.getItem(HV_EQUIP);
+	var invFull = (invAlert === null) ? false : JSON.parse(invAlert);
+	if (invFull) inventoryWarning();
 }
 
 //------------------------------------
