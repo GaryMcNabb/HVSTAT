@@ -6059,9 +6059,6 @@ HVStat.main1 = function () {
 		eStyle.appendChild(document.createTextNode('img.cw { visibility: hidden; }'));
 		document.childNodes[1].appendChild(eStyle);
 	}
-	if (_settings.isChangePageTitle && document.title === "The HentaiVerse") {
-		document.title = _settings.customPageTitle;
-	}
 	var waitForDocumentInteractive = function () {
 		if (document.readyState === "loading") {
 			setTimeout(waitForDocumentInteractive, 10);
@@ -6099,6 +6096,9 @@ HVStat.main2 = function () {
 	HVStat.isBattleOver = !!document.querySelector("#battleform div.btcp");
 
 	// processes not require IndexedDB and not alert/confirm immediately
+	if (_settings.isChangePageTitle && document.title === "The HentaiVerse") {
+		document.title = _settings.customPageTitle;
+	}
 	if (!HVStat.isChrome && !document.getElementById("cssdiv")) {
 		GM_addStyle(GM_getResourceText("jQueryUICSS"));
 		var a = document.createElement("div");
