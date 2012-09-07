@@ -711,11 +711,11 @@ HVStat.MonsterScanResults = (function () {
 			get valueObject() {
 				var i, len;
 				var vo = new HVStat.MonsterScanResultsVO();
-				vo.lastScanDate = _lastScanDate.toISOString();
-				vo.monsterClass = (_monsterClass ? _monsterClass.id : null);
+				vo.lastScanDate = _lastScanDate ? _lastScanDate.toISOString() : null;
+				vo.monsterClass = _monsterClass ? _monsterClass.id : null;
 				vo.powerLevel = _powerLevel;
 				vo.trainer = _trainer;
-				vo.meleeAttack = (_meleeAttack ? _meleeAttack.id : null);
+				vo.meleeAttack = _meleeAttack ? _meleeAttack.id : null;
 				for (i in _defenceLevel) {
 					vo.defenceLevel[i] = _defenceLevel[i].id;
 				}
@@ -1155,6 +1155,7 @@ HVStat.Monster = (function () {
 				html += spiritSkill.toString();
 				html += '</td></tr>';
 			}
+			lastScanString = "Never";
 			if (existsScanResult) {
 				html += '<tr><td>Weak against:</td><td>' + (_scanResult.defWeak.length > 0 ? _scanResult.getDefWeakString(false, true, 0) : "-") + '</td></tr>'
 					+ '<tr><td>Resistant to:</td><td>' + (_scanResult.defResistant.length > 0 ? _scanResult.getDefResistantString(false, true, 0) : "-") + '</td></tr>'
@@ -1163,8 +1164,6 @@ HVStat.Monster = (function () {
 				if (_scanResult.lastScanDate) {
 					lastScanString = HVStat.getDateTimeString(_scanResult.lastScanDate);
 				}
-			} else {
-				lastScanString = "Never";
 			}
 			html += '<tr><td valign="top">Last Scan:</td><td>' + lastScanString + '</td></tr>';
 			if (existsScanResult && _scanResult.lastScanDate) {
