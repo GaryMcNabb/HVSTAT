@@ -4,7 +4,7 @@
 // @description      Collects data, analyzes statistics, and enhances the interface of the HentaiVerse
 // @include          http://hentaiverse.org/*
 // @author           Various (http://forums.e-hentai.org/index.php?showtopic=50962)
-// @version          5.4.2.1
+// @version          5.4.3.0
 // @require          https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js
 // @require          https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.21/jquery-ui.min.js
 // @resource         jQueryUICSS http://www.starfleetplatoon.com/~cmal/HVSTAT/jqueryui.css
@@ -16,6 +16,7 @@ var HVStat = {
 	//------------------------------------
 	// package scope global constants
 	//------------------------------------
+	VERSION: "5.4.3.0 Beta",
 	isChrome: navigator.userAgent.indexOf("Chrome") >= 0,
 	indexedDB: window.indexedDB || window.webkitIndexedDB || window.mozIndexedDB,
 	IDBTransaction: window.IDBTransaction || window.webkitIDBTransaction,
@@ -41,6 +42,24 @@ var HVStat = {
 	key_mpAlertAlreadyShown: "HVStatMpAlertAlreadyShown",
 	key_spAlertAlreadyShown: "HVStatSpAlertAlreadyShown",
 	key_ocAlertAlreadyShown: "HVStatOcAlertAlreadyShown",
+
+	// scroll targets
+	scrollTargets: [
+		// Character
+		"stats_pane",
+		// Equipment
+		"equip_pane",
+		// Inventory
+		"inv_item", "inv_equip",
+		// Battle Inventory, Shop, Forge, Item World
+		"item_pane", "shop_pane",
+		// Monster Lab
+		"slot_pane",
+		// Moogle write
+		"item", "equip",
+		// Arena
+		"arena_pane"
+	],
 
 	//------------------------------------
 	// DOM caches
@@ -84,7 +103,11 @@ var HVStat = {
 	duringBattle: false,
 	isBattleOver: false,
 	numberOfMonsters: 0,
-	monsters: []	// instances of HVStat.Monster
+	monsters: [],	// instances of HVStat.Monster
+
+	// keyboard enhancement
+	battleCommandMap: null,
+	selectedSkillIndex: -1	// -1: unselected 0-2: selected
 };
 
 HV_SETTINGS = "HVSettings";
@@ -2152,11 +2175,259 @@ HVStat.migration.deleteOldDatabase = function () {
 };
 
 //------------------------------------
+// battle command wrapper
+//------------------------------------
+
+HVStat.KeyCombination = function (spec) {
+	this.altKey = spec && spec.altKey || false;
+	this.ctrlKey = spec && spec.ctrlKey || false;
+	this.shiftKey = spec && spec.shiftKey || false;
+	this.keyCode = spec && spec.keyCode || 0;
+}
+
+HVStat.KeyCombination.prototype.equals = function (obj) {
+	if (!obj) {
+		return false;
+	}
+	return this.altKey === obj.altKey
+		&& this.ctrlKey === obj.ctrlKey
+		&& this.shiftKey === obj.shiftKey
+		&& this.keyCode === obj.keyCode;
+};
+
+HVStat.KeyCombination.prototype.toString = function () {
+	var s = "";
+	if (this.altKey) {
+		s += "ALT+";
+	}
+	if (this.ctrlKey) {
+		s += "CTRL+";
+	}
+	if (this.shiftKey) {
+		s += "SHIFT+";
+	}
+	s += String(this.keyCode);
+};
+
+HVStat.BattleCommandMenuItem = function (spec) {
+	this.parent = spec && spec.parent || null;
+	this.element = spec && spec.element || null;
+	this.name = spec && this.element && this.element.children[0].children[0].childNodes[0].nodeValue || "";
+	this.id = this.element && this.element.id || "";
+	this.boundKeys = [];
+	this.commandTarget = null;
+
+	var onclick = this.element.getAttribute("onclick").toString();
+	if (onclick.indexOf("friendly") >= 0) {
+		this.commandTarget = "self";
+	} else if (onclick.indexOf("hostile") >= 0) {
+		this.commandTarget = "enemy";
+	}
+};
+
+HVStat.BattleCommandMenuItem.prototype = {
+	get available() {
+		var style = this.element.getAttribute("style");
+		return !(style && style.match(/opacity\s*:\s*0/));
+	},
+	fire: function () {
+		if (this.available) {
+			if (!this.parent.opened) {
+				this.parent.open();
+			}
+			this.element.onclick();	// select
+			if (this.commandTarget === "self") {
+				this.element.onclick();	// commit
+			}
+		}
+	},
+	bindKeys: function (keyConbinations) {
+		this.boundKeys = keyConbinations;
+	},
+	unbindKeys: function () {
+		this.boundKeys = [];
+	}
+}
+
+HVStat.BattleCommandMenu = function (spec) {
+	this.parent = spec && spec.parent || null;
+	this.elementId = spec && spec.elementId || null;
+	this.element = this.elementId && document.getElementById(this.elementId) || null;
+
+	this.items = [];
+	var itemElements = document.querySelectorAll("#" + this.elementId + " div.btsd");
+	var i;
+	for (i = 0; i < itemElements.length; i++) {
+		this.items[i] = new HVStat.BattleCommandMenuItem({ parent: this, element: itemElements[i] });
+	}
+};
+
+HVStat.BattleCommandMenu.prototype = {
+	get opened() {
+		var style = this.element.getAttribute("style");
+		return !(style && style.match(/display\s*:\s*none/));
+	},
+	open: function () {
+		while (!this.opened) {
+			this.parent.element.onclick();
+		}
+	},
+	close: function () {
+		if (this.opened) {
+			this.parent.element.onclick();
+		}
+	}
+};
+
+HVStat.BattleCommand = function (spec) {
+	this.elementId = spec && spec.elementId || null;
+	this.name = spec && spec.name || "";
+	this.menuElementIds = spec && spec.menuElementIds || [];
+	this.element = this.elementId && document.getElementById(this.elementId) || null;
+	this.menus = [];
+
+	// build menus
+	var i;
+	for (i = 0; i < this.menuElementIds.length; i++) {
+		this.menus[i] = new HVStat.BattleCommandMenu({ parent: this, elementId: this.menuElementIds[i] });
+	}
+};
+
+HVStat.BattleCommand.prototype = {
+	get hasMenu() { return this.menus.length > 0; },
+	get menuOpened() {
+		var i;
+		for (i = 0; i < this.menus.length; i++) {
+			if (this.menus[i].opened) {
+				return true;
+			}
+		}
+		return false;
+	},
+	get selectedMenu() {
+		var i;
+		for (i = 0; i < this.menus.length; i++) {
+			if (this.menus[i].opened) {
+				return this.menus[i];
+			}
+		}
+		return null;
+	},
+	select: function (menuElementId) {
+		this.element.onclick();
+	},
+	toString: function () { return this.name; }
+};
+
+HVStat.buildBattleCommandMap = function () {
+	HVStat.battleCommandMap = {
+		"Attack": new HVStat.BattleCommand({ elementId: "ckey_attack", name: "Attack" }),
+		"Magic": new HVStat.BattleCommand({ elementId: "ckey_magic", name: "Magic", menuElementIds: ["togpane_magico", "togpane_magict"] }),
+		"Spirit": new HVStat.BattleCommand({ elementId: "ckey_spirit", name: "Spirit" }),
+		"Skills": new HVStat.BattleCommand({ elementId: "ckey_skills", name: "Skills", menuElementIds: ["togpane_skill"] }),
+		"Items": new HVStat.BattleCommand({ elementId: "ckey_items", name: "Items", menuElementIds: ["togpane_item"] }),
+		"Defend": new HVStat.BattleCommand({ elementId: "ckey_defend", name: "Defend" }),
+		"Focus": new HVStat.BattleCommand({ elementId: "ckey_focus", name: "Focus" })
+	};
+};
+
+HVStat.getBattleCommandMenuItemById = function (commandMenuItemId) {
+	var key, menus, i, items, j;
+	for (key in HVStat.battleCommandMap) {
+		menus = HVStat.battleCommandMap[key].menus;
+		for (i = 0; i < menus.length; i++) {
+			items = menus[i].items;
+			for (j = 0; j < items.length; j++) {
+				if (items[j].id === commandMenuItemId) {
+					return items[j];
+				}
+			}
+		}
+	}
+	return null;
+};
+
+HVStat.getBattleCommandMenuItemByName = function (commandMenuItemName) {
+	var key, menus, i, items, j;
+	for (key in HVStat.battleCommandMap) {
+		menus = HVStat.battleCommandMap[key].menus;
+		for (i = 0; i < menus.length; i++) {
+			items = menus[i].items;
+			for (j = 0; j < items.length; j++) {
+				if (items[j].name === commandMenuItemName) {
+					return items[j];
+				}
+			}
+		}
+	}
+	return null;
+};
+
+HVStat.getBattleCommandMenuItemsByBoundKey = function (keyCombination) {
+	var foundItems = [];
+	var key, menus, i, items, j, boundKeys, k;
+	for (key in HVStat.battleCommandMap) {
+		menus = HVStat.battleCommandMap[key].menus;
+		for (i = 0; i < menus.length; i++) {
+			items = menus[i].items;
+			for (j = 0; j < items.length; j++) {
+				boundKeys = items[j].boundKeys;
+				for (k = 0; k < boundKeys.length; k++) {
+					if (boundKeys[k].equals(keyCombination)) {
+						foundItems.push(items[j]);
+					}
+				}
+			}
+		}
+	}
+	return foundItems;
+};
+
+HVStat.buildBattleCommandMenuItemMap = function () {
+	HVStat.battleCommandMenuItemMap = {
+		"Scan": HVStat.getBattleCommandMenuItemByName("Scan"),
+		"Skill1": HVStat.getBattleCommandMenuItemById("110001")
+			|| HVStat.getBattleCommandMenuItemById("120001")
+			|| HVStat.getBattleCommandMenuItemById("130001")
+			|| HVStat.getBattleCommandMenuItemById("140001")
+			|| HVStat.getBattleCommandMenuItemById("150001"),
+		"Skill2": HVStat.getBattleCommandMenuItemById("110002")
+			|| HVStat.getBattleCommandMenuItemById("120002")
+			|| HVStat.getBattleCommandMenuItemById("130002")
+			|| HVStat.getBattleCommandMenuItemById("140002")
+			|| HVStat.getBattleCommandMenuItemById("150002"),
+		"Skill3": HVStat.getBattleCommandMenuItemById("110003")
+			|| HVStat.getBattleCommandMenuItemById("120003")
+			|| HVStat.getBattleCommandMenuItemById("130003")
+			|| HVStat.getBattleCommandMenuItemById("140003")
+			|| HVStat.getBattleCommandMenuItemById("150003"),
+		"OFC": HVStat.getBattleCommandMenuItemByName("Orbital Friendship Cannon")
+	};
+	if (HVStat.battleCommandMenuItemMap["Scan"]) {
+		HVStat.battleCommandMenuItemMap["Scan"].bindKeys([
+			new HVStat.KeyCombination({ keyCode: 46 }),		// Delete
+			new HVStat.KeyCombination({ keyCode: 110 })		// Numpad . Del
+		]);
+	}
+	if (HVStat.battleCommandMenuItemMap["Skill1"]) {
+		HVStat.battleCommandMenuItemMap["Skill1"].bindKeys([
+			new HVStat.KeyCombination({ keyCode: 107 }),	// Numpad +
+			new HVStat.KeyCombination({ keyCode: 187 })		// = +
+		]);
+	}
+	if (HVStat.battleCommandMenuItemMap["OFC"]) {
+		HVStat.battleCommandMenuItemMap["OFC"].bindKeys([
+			new HVStat.KeyCombination({ keyCode: 109 }),	// Numpad -
+			new HVStat.KeyCombination({ keyCode: 189 })		// - _
+		]);
+	}
+};
+
+//------------------------------------
 // legacy codes
 //------------------------------------
 
 /* ========== GLOBAL VARIABLES ========== */
-VERSION = "5.4.2.0";
 HV_OVERVIEW = "HVOverview";
 HV_STATS = "HVStats";
 HV_PROF = "HVProf";
@@ -3656,7 +3927,7 @@ function initUI() {
 }
 function initMainMenu() {
 	if (_isMenuInitComplete) return;
-	var b = "[STAT] HentaiVerse Statistics, Tracking, and Analysis Tool v." + VERSION + (HVStat.isChrome ? " (Chrome Edition)" : "");
+	var b = "[STAT] HentaiVerse Statistics, Tracking, and Analysis Tool v." + HVStat.VERSION + (HVStat.isChrome ? " (Chrome Edition)" : "");
 	var c = document.createElement("div");
 	$(c).addClass("_mainMenu").css("text-align", "left");
 	var a = '<div id="tabs"><ul>'
@@ -5535,234 +5806,197 @@ function loadCHARSSObject() {
 	_charss = new HVCharacterStatsSettings();
 	_charss.load();
 }
-function Scanbutton() {
-	pressedScanbySTAT = false;
-	pressedSkillbySTAT = 0;
-	var skillnum = [null, null, null];
-	var cooldown = [true, true, true];
-	$("#togpane_skill  div.btsd").each(function () {
-		var g = $(this);
-		var st = g.attr("style");
-		var skid = g.attr("id");
-		if (String(skid).match(/1(1|2|3|4|5)0001/)) {
-			skillnum[0] = skid;
-			if (!String(st).match(/opacity.0.5/i)) cooldown[0] = false;
-		} else if (String(skid).match(/1(1|2|3|4|5)0002/)) {
-			skillnum[1] = skid;
-			if (!String(st).match(/opacity.0.5/i)) cooldown[1] = false;
-		} else if (String(skid).match(/1(1|2|3|4|5)0003/)) {
-			skillnum[2] = skid;
-			if (!String(st).match(/opacity.0.5/i)) cooldown[2] = false;
+
+HVStat.scrollTargetMouseoverEventHandler = function (event) {
+	var target = event.target;
+	while (target && HVStat.scrollTargets.indexOf(target.id) < 0) {
+		target = target.parentElement;
+	}
+	if (target) {
+		HVStat.scrollTarget = target;
+	}
+};
+
+HVStat.scrollTargetMouseoutEventHandler = function (event) {
+	HVStat.scrollTarget = null;
+};
+
+HVStat.registerScrollTargetMouseEventListeners = function () {
+	var i, element;
+	for (i = 0; i < HVStat.scrollTargets.length; i++) {
+		element = document.getElementById(HVStat.scrollTargets[i]);
+		if (element) {
+			element.addEventListener("mouseover", HVStat.scrollTargetMouseoverEventHandler);
+			element.addEventListener("mouseout", HVStat.scrollTargetMouseoutEventHandler);
 		}
-	});
-	var skillname = [null, null, null];
-	switch (skillnum[0]) {
-	case 110001:
-	case "110001":
-		skillname[0] = "SkyS"; break;
-	case 120001:
-	case "120001":
-		skillname[0] = "ShiB"; break;
-	case 130001:
-	case "130001":
-		skillname[0] = "GreC"; break;
-	case 140001:
-	case "140001":
-		skillname[0] = "IrisS"; break;
-	case 150001:
-	case "150001":
-		skillname[0] = "ConS";
 	}
-	switch (skillnum[1]) {
-	case 120002:
-	case "120002":
-		skillname[1] = "VitS"; break;
-	case 130002:
-	case "130002":
-		skillname[1] = "RenB"; break;
-	case 140002:
-	case "140002":
-		skillname[1] = "Stab";
+};
+
+HVStat.documentKeydownEventHandler = function (event) {
+	if (true/*_settings.enablePageUpAndDown*/) {
+		if (HVStat.scrollTarget && !event.altKey && !event.ctrlKey && !event.shiftKey) {
+			switch (event.keyCode) {
+			case 33:	// PAGE UP
+				HVStat.scrollTarget.scrollTop -= HVStat.scrollTarget.clientHeight;
+				event.preventDefault();
+				break;
+			case 34:	// PAGE DOWN
+				HVStat.scrollTarget.scrollTop += HVStat.scrollTarget.clientHeight;
+				event.preventDefault();
+				break;
+			}
+		}
 	}
-	switch (skillnum[2]) {
-	case 120003:
-	case "120003":
-		skillname[2] = "MerB"; break;
-	case 130003:
-	case "130003":
-		skillname[2] = "ShaS"; break;
-	case 140003:
-	case "140003":
-		skillname[2] = "FreB";
-	}
-	var n = HVStat.numberOfMonsters;
-	var num = 0;
-	var a = $("#mainpane");
-	document.addEventListener('keydown', function(a) {
-		var key = a.keyCode ? a.keyCode : a.which;
-		if (_settings.isEnableScanHotkey) {
-			if (key === 110 || key === 46) {
-				if (!window.pressedScanbySTAT) {
-					if (window.pressedSkillbySTAT === 0) {
-						// open skill menu
-						if (HVStat.isChrome) {
-							document.getElementById("ckey_skills").onclick();
-						} else {
-							location.href = 'javascript:document.getElementById("ckey_skills").onclick(); void(0);';
-						}
-					}
-					// select scan
-					if (HVStat.isChrome) {
-						document.getElementById("100020").onclick();
+	var boundKeys, i, j;
+	if (HVStat.duringBattle) {
+		var miScan = HVStat.battleCommandMenuItemMap["Scan"];
+		var miSkill1 = HVStat.battleCommandMenuItemMap["Skill1"];
+		var miSkill2 = HVStat.battleCommandMenuItemMap["Skill2"];
+		var miSkill3 = HVStat.battleCommandMenuItemMap["Skill3"];
+		var miOFC = HVStat.battleCommandMenuItemMap["OFC"];
+		var miSkills = [miSkill1, miSkill2, miSkill3];
+
+		if (_settings.isEnableScanHotkey && miScan) {
+			boundKeys = miScan.boundKeys;
+			for (i = 0; i < boundKeys.length; i++) {
+				if (boundKeys[i].equals(event)) {
+					if (HVStat.battleCommandMap["Skills"].menuOpened) {
+						HVStat.battleCommandMap["Attack"].select();	// close skills menu
 					} else {
-						location.href = 'javascript:document.getElementById("100020").onclick(); void(0);';
+						miScan.fire();
 					}
-					window.pressedScanbySTAT = true;
-				} else {
-					// close skill menu
-					if (HVStat.isChrome) {
-						document.getElementById("ckey_skills").onclick();
-					} else {
-						location.href = 'javascript:document.getElementById("ckey_skills").onclick(); void(0);';
-					}
-					window.pressedScanbySTAT = false;
-					window.pressedSkillbySTAT = 0;
 				}
 			}
 		}
-		if (_settings.isEnableSkillHotkey) {
-			if (key === 107 || key === 187) {
-				if (window.pressedSkillbySTAT === 0) {
-					if (!window.pressedScanbySTAT) {
-						// open skill menu
-						if (HVStat.isChrome) {
-							document.getElementById("ckey_skills").onclick();
-						} else {
-							location.href = 'javascript:document.getElementById("ckey_skills").onclick(); void(0);';
-						}
-					}
-					if (!cooldown[0]) {
-						if (HVStat.isChrome) {
-							document.getElementById(skillnum[0]).onclick();
-						} else {
-							location.href = 'javascript:document.getElementById("' + skillnum[0] + '").onclick(); void(0);';
-						}
-						if (!cooldown[1]) {
-							window.pressedSkillbySTAT = 1;
-						} else if (!cooldown[2]) {
-							window.pressedSkillbySTAT = 2;
-						} else {
-							window.pressedSkillbySTAT = 3;
-						}
-					} else if (!cooldown[1]) {
-						if (HVStat.isChrome) {
-							document.getElementById(skillnum[1]).onclick();
-						} else {
-							location.href = 'javascript:document.getElementById("' + skillnum[1] + '").onclick(); void(0);';
-						}
-						if (!cooldown[2]) {
-							window.pressedSkillbySTAT = 2;
-						} else {
-							window.pressedSkillbySTAT = 3;
-						}
-					} else if (!cooldown[2]) {
-						if (HVStat.isChrome) {
-							document.getElementById(skillnum[2]).onclick();
-						} else {
-							location.href = 'javascript:document.getElementById("' + skillnum[2] + '").onclick(); void(0);';
-						}
-						window.pressedSkillbySTAT = 3;
-					} else if (window.pressedScanbySTAT) {
-						// close skill menu
-						if (HVStat.isChrome) {
-							document.getElementById("ckey_skills").onclick();
-						} else {
-							location.href = 'javascript:document.getElementById("ckey_skills").onclick(); void(0);';
-						}
-						window.pressedScanbySTAT = false;
-						window.pressedSkillbySTAT = 0;
-					}
-				} else if (window.pressedSkillbySTAT === 1) {
-					if (!cooldown[1]) {
-						if (HVStat.isChrome) {
-							document.getElementById(skillnum[1]).onclick();
-						} else {
-							location.href = 'javascript:document.getElementById("' + skillnum[1] + '").onclick(); void(0);';
-						}
-						if (!cooldown[2]) {
-							window.pressedSkillbySTAT = 2;
-						} else {
-							window.pressedSkillbySTAT = 3;
-						}
-					} else if (!cooldown[2]) {
-						if (HVStat.isChrome) {
-							document.getElementById(skillnum[2]).onclick();
-						} else {
-							location.href = 'javascript:document.getElementById("' + skillnum[2] + '").onclick(); void(0);';
-						}
-						window.pressedSkillbySTAT = 3;
+		if (_settings.isEnableSkillHotkey && miSkill1) {
+			var avilableSkillMaxIndex = -1;
+			for (i = 0; i < miSkills.length; i++) {
+				if (miSkills[i] && miSkills[i].available) {
+					avilableSkillMaxIndex = i;
+				}
+			}
+			boundKeys = miSkill1.boundKeys;
+			for (i = 0; i < boundKeys.length; i++) {
+				if (boundKeys[i].equals(event)) {
+					if (HVStat.selectedSkillIndex >= avilableSkillMaxIndex) {
+						HVStat.battleCommandMap["Attack"].select();	// close skills menu
+						HVStat.selectedSkillIndex = -1;
 					} else {
-						window.pressedSkillbySTAT = 3;
-					}
-				} else if (window.pressedSkillbySTAT === 2) {
-					if (!cooldown[2]) {
-						if (HVStat.isChrome) {
-							document.getElementById(skillnum[2]).onclick();
-						} else {
-							location.href = 'javascript:document.getElementById("' + skillnum[2] + '").onclick(); void(0);';
+						for (j = HVStat.selectedSkillIndex + 1; j <= avilableSkillMaxIndex; j++) {
+							if (miSkills[j] && miSkills[j].available) {
+								miSkills[j].fire();
+								HVStat.selectedSkillIndex = j;
+								break;
+							}
 						}
-						window.pressedSkillbySTAT = 3;
-					} else {
-						window.pressedSkillbySTAT = 3;
 					}
-				} else if (window.pressedSkillbySTAT === 3) {
-					// close skill menu
-					if (HVStat.isChrome) {
-						document.getElementById("ckey_skills").onclick();
-					} else {
-						location.href = 'javascript:document.getElementById("ckey_skills").onclick(); void(0);';
-					}
-					window.pressedScanbySTAT = false;
-					window.pressedSkillbySTAT = 0;
 				}
 			}
 		}
-	});
-	var j = HVStat.numberOfMonsters;
-	while (j--) {
+		if (true/*_settings.enableOFCHotkey*/ && miOFC) {
+			boundKeys = miOFC.boundKeys;
+			for (i = 0; i < boundKeys.length; i++) {
+				if (boundKeys[i].equals(event)) {
+					if (HVStat.battleCommandMap["Skills"].menuOpened) {
+						HVStat.battleCommandMap["Attack"].select();	// close skills menu
+					} else {
+						miOFC.fire();
+					}
+				}
+			}
+		}
+	}
+};
+
+HVStat.scanButtonClickHandler = function (event) {
+	var monsterId = this.id.slice(11);
+	var monsterElement = document.getElementById(monsterId);
+	HVStat.battleCommandMenuItemMap["Scan"].fire();
+	monsterElement.onclick();
+}
+
+HVStat.skillButtonClickHandler = function (event) {
+	var result = /HVStatSkill(\d)_(.+)/.exec(this.id)
+	if (!result || result.length < 3) {
+		return;
+	}
+	var skillNumber = result[1];
+	var monsterId = result[2];
+	var monsterElement = document.getElementById(monsterId);
+	HVStat.battleCommandMenuItemMap["Skill" + skillNumber].fire();
+	monsterElement.onclick();
+}
+
+HVStat.showScanAndSkillButtons = function () {
+	var skill1 = HVStat.battleCommandMenuItemMap["Skill1"];
+	var skill2 = HVStat.battleCommandMenuItemMap["Skill2"];
+	var skill3 = HVStat.battleCommandMenuItemMap["Skill3"];
+	var skills = [];
+	if (skill1) {
+		skills.push(skill1);
+	}
+	if (skill2) {
+		skills.push(skill2);
+	}
+	if (skill3) {
+		skills.push(skill3);
+	}
+	var getButtonLabelFromSkillId = function (skillId) {
+		var skillButtonLabelTable = [
+			{ id: "110001", label: "SkyS" },
+			{ id: "120001", label: "ShiB" },
+			{ id: "120002", label: "VitS" },
+			{ id: "120003", label: "MerB" },
+			{ id: "130001", label: "GreC" },
+			{ id: "130002", label: "RenB" },
+			{ id: "130003", label: "ShaS" },
+			{ id: "140001", label: "IrisS" },
+			{ id: "140002", label: "Stab" },
+			{ id: "140003", label: "FreB" },
+			{ id: "150001", label: "ConS" },
+		];
+		var i;
+		for (i = 0; i < skillButtonLabelTable.length; i++) {
+			if (skillButtonLabelTable[i].id === skillId) {
+				return skillButtonLabelTable[i].label;
+			}
+		}
+		return "";
+	}
+
+	var mainPane = document.getElementById("mainpane");
+	var i, j;
+	for (j = 0; j < HVStat.numberOfMonsters; j++) {
 		var monsterElementId = HVStat.Monster.getDomElementId(j);
-		var u = $("#" + monsterElementId);
-		var e = u.children().eq(2).children().eq(0);
-		var dead = e.html().match(/bardead/i);
+		var u = document.getElementById(monsterElementId);
+		var e = u.children[2].children[0];
+		var dead = e.innerHTML.indexOf("bardead") >= 0;
+		var div, style;
 		if (!dead) {
-			var top = u.offset().top;
+			var rectObject = u.getBoundingClientRect();
+			var top = rectObject.top;
 			if (_settings.isShowScanButton) {
-				var c = document.createElement("div");
-				var d = "<span style='font-size:10px;font-weight:bold;font-family:arial,helvetica,sans-serif;text-align:center;vertical-align:text-top;cursor:default'>Scan</span>";
-				c.setAttribute("id", "STATscan_" + String(n));
-				c.setAttribute("style", "position:absolute;top:" + String(top) + "px;left:556px;background-color:#EFEEDC;width:25px;height:10px;border-style:double;border-width:2px;z-index:2;border-color:#555555;");
-				c.setAttribute("onclick", 'document.getElementById("ckey_skills").onclick();document.getElementById("100020").onclick();document.getElementById("' + monsterElementId + '").onclick()');
-				c.innerHTML = d;
-				a.after(c);
+				div = document.createElement("div");
+				div.setAttribute("id", "HVStatScan_" + monsterElementId);
+				div.setAttribute("style", "position:absolute; top:" + String(top) + "px; left:556px; background-color:#EFEEDC; width:25px; height:10px; border-style:double; border-width:2px; z-index:2; border-color:#555555;");
+				div.innerHTML = "<span style='font-size:10px;font-weight:bold;font-family:arial,helvetica,sans-serif;text-align:center;vertical-align:text-top;cursor:default'>Scan</span>";
+				mainPane.parentNode.insertBefore(div, mainPane.nextSibling);
+				div.addEventListener("click", HVStat.scanButtonClickHandler);
 			}
 			if (_settings.isShowSkillButton) {
-				var i = 3;
-				while (i--) {
-					var cs = document.createElement("div");
+				for (i = 0; i < skills.length; i++) {
+					div = document.createElement("div");
 					var tops = top + (i + 1) * 14;
-					if (skillnum[i] !== null) {
-						var ds = "<span style='font-size:10px;font-weight:bold;font-family:arial,helvetica,sans-serif;text-align:center;vertical-align:text-top;cursor:default'>" + skillname[i] + "</span>";
-						cs.setAttribute("id", "STATskill_" + String(i + 1) + "_"+ String(n));
-						var style = "position:absolute;top:" + String(tops) + "px;left:556px;background-color:#EFEEDC;width:25px;height:10px;border-style:double;border-width:2px;z-index:2;border-color:#555555;"
-						if (cooldown[i]) {
-							cs.setAttribute("style", style + "opacity:0.3;");
-						} else {
-							cs.setAttribute("style", style);
-							cs.setAttribute("onclick", 'document.getElementById("ckey_skills").onclick();document.getElementById("' + skillnum[i] + '").onclick();document.getElementById("' + monsterElementId + '").onclick()');
-						}
-						cs.innerHTML = ds;
-						a.after(cs);
+					div.setAttribute("id", "HVStatSkill" + String(i + 1) + "_"+ monsterElementId);
+					style = "position:absolute; top:" + String(tops) + "px; left:556px; background-color:#EFEEDC; width:25px; height:10px; border-style:double; border-width:2px; z-index:2; border-color:#555555;"
+					if (!skills[i].available) {
+						div.setAttribute("style", style + "opacity:0.3;");
+					} else {
+						div.setAttribute("style", style);
 					}
+					div.innerHTML = "<span style='font-size:10px; font-weight:bold; font-family:arial,helvetica,sans-serif; text-align:center; vertical-align:text-top; cursor:default'>" + getButtonLabelFromSkillId(skills[i].id) + "</span>";
+					mainPane.parentNode.insertBefore(div, mainPane.nextSibling);
+					div.addEventListener("click", HVStat.skillButtonClickHandler);
 				}
 			}
 		}
@@ -6103,6 +6337,8 @@ HVStat.main2 = function () {
 	if (HVStat.duringBattle) {
 		// store static values
 		HVStat.numberOfMonsters = $("#monsterpane > div").length;
+		HVStat.buildBattleCommandMap();
+		HVStat.buildBattleCommandMenuItemMap();
 
 		if (_settings.isHighlightQC) {
 			HVStat.highlightQuickcast();
@@ -6123,8 +6359,8 @@ HVStat.main2 = function () {
 		if (_settings.isShowMonsterNumber) {
 			showMonsterNumber();
 		}
-		if (_settings.isShowScanButton || _settings.isShowSkillButton || _settings.isEnableScanHotkey || _settings.isEnableSkillHotkey) {
-			Scanbutton();
+		if (_settings.isShowScanButton || _settings.isShowSkillButton) {
+			HVStat.showScanAndSkillButtons();
 		}
 		if (_settings.isShowMonsterDuration) {
 			showMonsterEffectsDuration();
@@ -6157,6 +6393,8 @@ HVStat.main2 = function () {
 			}
 		}
 	}
+	HVStat.registerScrollTargetMouseEventListeners();
+	document.addEventListener("keydown", HVStat.documentKeydownEventHandler);
 	setTimeout(HVStat.main3, 1);
 }
 
