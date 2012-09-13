@@ -2863,19 +2863,33 @@ function collectRoundInfo() {
 	if (_settings.isTrackRewards)
 		loadRewardsObject();
 	var monsterIndex = HVStat.monsters.length - 1;
-	$("#togpane_log td:first-child").each(function (elementIndex) {
+	var elements = document.querySelectorAll("#togpane_log td:first-child");
+	var elementIndex;
+	for (elementIndex = 0; elementIndex < elements.length; elementIndex++) {
 		var reResult;
-		var turnNumberElement = $(this);
-		var logStringElement = turnNumberElement.next().next();
+		var turnNumberElement = elements[elementIndex];
+		var logStringElement = turnNumberElement.nextSibling.nextSibling;
 		if (elementIndex === 0) {
-			lastTurnNumberString = turnNumberElement.html();
+			lastTurnNumberString = turnNumberElement.innerHTML;
 		}
-		logString = logStringElement.html();
-		var currentTurnNumberString = turnNumberElement.html();
-		var previousRowNumberOfCurrentTurn = parseInt(turnNumberElement.next().html()) - 1;
-		var currentTurnNumberElements = $("td.t1:contains(" + currentTurnNumberString + ")");
-		var logStringOfPreviousRow = currentTurnNumberElements.next().filter(":contains(" + previousRowNumberOfCurrentTurn + ")").next().html();
-		var joinedLogStringOfCurrentTurn = $("td.t1:contains(" + currentTurnNumberString + ")").next().next().text();
+		logString = logStringElement.innerHTML;
+		var currentTurnNumberString = turnNumberElement.innerHTML;
+		var previousRowNumberOfCurrentTurn = Number(turnNumberElement.nextSibling.innerHTML) - 1;
+		var currentTurnNumberElements = document.querySelectorAll("#togpane_log td.t1");
+		var joinedLogStringOfCurrentTurn = "";
+		for (var rowIndex = 0; rowIndex < currentTurnNumberElements.length; rowIndex++) {
+			var turnNumberElement = currentTurnNumberElements[rowIndex];
+			if (turnNumberElement.innerHTML === String(currentTurnNumberString)) {
+				var rowNumberElement = currentTurnNumberElements[rowIndex].nextSibling;
+				var logElement = rowNumberElement.nextSibling;
+				joinedLogStringOfCurrentTurn += logElement.innerHTML
+				if (rowNumberElement.innerHTML === String(previousRowNumberOfCurrentTurn)) {
+					logStringOfPreviousRow = logElement.innerHTML;
+				}
+			} else {
+				break;
+			}
+		}
 		if (!_round.isLoaded) { // should be changed to "if turn 0"
 			if (logString.match(/HP=/)) {
 				HVStat.monsters[monsterIndex].fetchStartingLog(logString);
@@ -2916,7 +2930,7 @@ function collectRoundInfo() {
 			}
 			RoundSave();
 		}
-		if (turnNumberElement.html() !== lastTurnNumberString) {
+		if (turnNumberElement.innerHTML !== lastTurnNumberString) {
 			return false;
 		}
 		if (_settings.isAlertGem && logString.match(/drops a (.*) Gem/)) {
@@ -3292,7 +3306,7 @@ function collectRoundInfo() {
 		if (logString.match(/reached equipment inventory limit/i)) {
 			localStorage.setItem(HV_EQUIP, JSON.stringify("true"));
 		}
-	});
+	}
 	if (a > 1) {
 		_round.aDomino[0]++;
 		_round.aDomino[1] += a;
