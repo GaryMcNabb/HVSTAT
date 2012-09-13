@@ -16,7 +16,7 @@ var HVStat = {
 	//------------------------------------
 	// package scope global constants
 	//------------------------------------
-	VERSION: "5.4.3.0 Beta",
+	VERSION: "5.4.3.0",
 	isChrome: navigator.userAgent.indexOf("Chrome") >= 0,
 	indexedDB: window.indexedDB || window.webkitIndexedDB || window.mozIndexedDB,
 	IDBTransaction: window.IDBTransaction || window.webkitIDBTransaction,
@@ -991,7 +991,7 @@ HVStat.Monster = (function () {
 				hpBarBaseElement.parentNode.insertBefore(div, hpBarBaseElement.nextSibling);
 			}
 			if (_settings.showMonsterMP) {
-				mpIndicator = (_currMpRate * 100).toFixed(1);
+				mpIndicator = (_currMpRate * 100).toFixed(1) + "%";
 				div = document.createElement("div");
 				div.setAttribute("style", "position:absolute;z-index:1074;top:11px;font-size:8pt;font-family:arial,helvetica,sans-serif;font-weight:bolder;color:yellow;width:120px;text-align:center");
 				divText = document.createTextNode(mpIndicator);
@@ -999,7 +999,7 @@ HVStat.Monster = (function () {
 				mpBarBaseElement.parentNode.insertBefore(div, mpBarBaseElement.nextSibling);
 			}
 			if (_hasSpiritPoint && _settings.showMonsterSP) {
-				spIndicator = (_currSpRate * 100).toFixed(1);
+				spIndicator = (_currSpRate * 100).toFixed(1) + "%";
 				div = document.createElement("div");
 				div.setAttribute("style", "position:absolute;z-index:1074;top:23px;font-size:8pt;font-family:arial,helvetica,sans-serif;font-weight:bolder;color:yellow;width:120px;text-align:center");
 				divText = document.createTextNode(spIndicator);
@@ -2398,6 +2398,7 @@ HVStat.getBattleCommandMenuItemsByBoundKey = function (keyCombination) {
 
 HVStat.buildBattleCommandMenuItemMap = function () {
 	HVStat.battleCommandMenuItemMap = {
+		"PowerupGem": HVStat.getBattleCommandMenuItemById("ikey_p"),
 		"Scan": HVStat.getBattleCommandMenuItemByName("Scan"),
 		"Skill1": HVStat.getBattleCommandMenuItemById("110001")
 			|| HVStat.getBattleCommandMenuItemById("120001")
@@ -2624,7 +2625,10 @@ function displayPowerupBox() {
 		powerBox.setAttribute("onmouseover", powerInfo);
 		powerBox.setAttribute("onmouseout", powerup.getAttribute("onmouseout"));
 		//powerBox.setAttribute("onclick", 'var e=createEvent("Events");e.initEvent("keydown",true,true);e.altKey=false;e.ctrlKey=false;e.shiftKey=false;e.metaKey=false;e.keyCode=80;document.dispatchEvent(e);');
-		powerBox.setAttribute("onclick", 'document.getElementById("ckey_items").onclick();document.getElementById("ikey_p").onclick();document.getElementById("ikey_p").onclick();');
+//		powerBox.setAttribute("onclick", 'document.getElementById("ckey_items").onclick();document.getElementById("ikey_p").onclick();document.getElementById("ikey_p").onclick();');
+		powerBox.addEventListener("click", function (event) {
+			HVStat.battleCommandMenuItemMap["PowerupGem"].fire();
+		});
 		if (powerInfo.indexOf('Health') > -1) powerBox.innerHTML = "<img class='PowerupGemIcon' src='"+ I_HEALTHPOT+ "' id='healthgem'>";
 		else if (powerInfo.indexOf('Mana') > -1) powerBox.innerHTML = "<img class='PowerupGemIcon' src='"+ I_MANAPOT+ "' id='managem'>";
 		else if (powerInfo.indexOf('Spirit') > -1) powerBox.innerHTML = "<img class='PowerupGemIcon' src='"+ I_SPIRITPOT+ "' id='spiritgem'>";
@@ -4204,19 +4208,23 @@ function initSettingsPane() {
 		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isColumnInventory" /></td><td colspan="2">Use column view for item inventory (<span style="color:red">Downloadable/Custom Local Fonts only!</span>)</td></tr>'
 		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isChangePageTitle" /></td><td colspan="2">Change HentaiVerse page title: <input type="text" name="customPageTitle" size="40" /></td><td></td></tr>'
 		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isStartAlert" /></td><td colspan="2">Warnings berfore starting Challenges when HP is below <input type="text" name="StartAlertHP" size="1" maxLength="2" style="text-align:right" />%, MP is below <input type="text" name="StartAlertMP" size="1" maxLength="2" style="text-align:right" />%, SP is below <input type="text" name="StartAlertSP" size="1" maxLength="2" style="text-align:right" />% or difficulty is over <select id="StartAlertDifficulty"><option id=diff1 value=1>Easy</option><option id=diff2 value=2>Normal</option><option id=diff3 value=3>Hard</option><option id=diff4 value=4>Heroic</option><option id=diff5 value=5>Nightmare</option><option id=diff6 value=6>Hell</option><option id=diff7 value=7>Nintendo</option><option id=diff8 value=8>Battletoads</option></select> (<span style="color:red">Downloadable/Custom Local Fonts only!</span>)</td><td></td></tr>'
-		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isShowScanButton" /></td><td colspan="2">Show scan button</td><td></td></tr>'
-		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isEnableScanHotkey" /></td><td colspan="2">Enable Scan Hotkeys: numpad","/numpad delete</td><td></td></tr>'
-		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isShowSkillButton" /></td><td colspan="2">Show skill button </td><td></td></tr>'
-		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isEnableSkillHotkey" /></td><td colspan="2">Enable Weapon Skill Hotkeys: "+" / "=" and numpad"+" (Works without skillbutton)</td><td></td></tr>'
+		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isShowScanButton" /></td><td colspan="2">Show scan buttons</td><td></td></tr>'
+		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isShowSkillButton" /></td><td colspan="2">Show skill buttons</td><td></td></tr>'
 		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isShowEquippedSet" /></td><td colspan="2">Show equipped set number at left panel (<span style="color:red">Downloadable/Custom Local Fonts only!</span>)</td><td></td></tr>'
-		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isDisableForgeHotKeys" /></td><td colspan="2">Disable hot keys in the Forge (<span style="color:red">Strongry recommended if use item tags</span>)</td><td></td></tr>'
-		+ '<tr><td colspan="3">Show item tags in:</td><td></td></tr>'
+		+ '<tr><td colspan="3">Show equipment tags in:</td><td></td></tr>'
 		+ '<tr><td align="center" style="width:5px;padding-left:15px"><input type="checkbox" name="isShowTags0" /></td><td colspan="3" style="padding-left:15px">Equipment page </td></tr>'
 		+ '<tr><td align="center" style="width:5px;padding-left:15px"><input type="checkbox" name="isShowTags1" /></td><td colspan="3" style="padding-left:15px">Bazaar shop page </td></tr>'
 		+ '<tr><td align="center" style="width:5px;padding-left:15px"><input type="checkbox" name="isShowTags2" /></td><td colspan="3" style="padding-left:15px">Item World </td></tr>'
 		+ '<tr><td align="center" style="width:5px;padding-left:15px"><input type="checkbox" name="isShowTags3" /></td><td colspan="3" style="padding-left:15px">Moogle Mail Attachments list </td></tr>'
 		+ '<tr><td align="center" style="width:5px;padding-left:15px"><input type="checkbox" name="isShowTags4" /></td><td colspan="3" style="padding-left:15px">Forge </td></tr>'
 		+ '<tr><td align="center" style="width:5px;padding-left:15px"><input type="checkbox" name="isShowTags5" /></td><td colspan="3" style="padding-left:15px">Inventory (<span style="color:red">Strongly suggested to turn it on and visit inventory once for a while</span>)</td></tr>'
+		+ '<tr><td colspan="2"><b>Keyboard Options:</b></td></tr>'
+		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isEnableScanHotkey" /></td><td colspan="2">Enable Scan Hotkeys: numpad","/numpad delete</td><td></td></tr>'
+		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isEnableSkillHotkey" /></td><td colspan="2">Enable Weapon Skill Hotkeys: "+" / "=" and numpad"+"</td><td></td></tr>'
+		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="enableOFCHotkey" /></td><td colspan="2">Enable Orbital Friendship Cannon Hotkeys: "-" / "_" and numpad"-"</td><td></td></tr>'
+		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="enableScrollHotkey" /></td><td colspan="2">Enable Page Up/Down key on scrollable panes</td><td></td></tr>'
+		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isDisableForgeHotKeys" /></td><td colspan="2">Disable hotkeys in the Forge (<span style="color:red">Strongly recommended if using equipment tags</span>)</td><td></td></tr>'
+		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="enableShrineKeyPatch" /></td><td colspan="2">Patch to enable Space key in the Shrine (Chrome only)</td><td></td></tr>'
 		+ '<tr><td colspan="2"><b>Battle Enhancement:</b></td></tr>'
 		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isShowHighlight" /></td><td colspan="2">Highlight battle log</td><td></td></tr>'
 		+ '<tr><td align="center" style="width:5px;padding-left:20px"><input type="checkbox" name="isAltHighlight" /></td><td colspan="2" style="padding-left:10px">Use alternate highlighting</td></tr>'
@@ -4225,9 +4233,10 @@ function initSettingsPane() {
 		+ '<tr><td align="center" style="width:5px;padding-left:30px"><input type="checkbox" name="isSelfEffectsWarnColor" /></td><td colspan="2" style="padding-left:10px">Highlight duration badges - <span style="color:orange">Orange</span>: on <input type="text" name="SelfWarnOrangeRounds" size="1" maxLength="2" style="text-align:right" /> rounds; <span style="color:red">Red</span>: on <input type="text" name="SelfWarnRedRounds" size="1" maxLength="1" style="text-align:right" /> rounds</td></tr>'
 		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isShowRoundReminder" /></td><td colspan="2">Final round reminder - minimum <input type="text" name="reminderMinRounds" size="1" maxLength="3" style="text-align:right" /> rounds; Alert <input type="text" name="reminderBeforeEnd" size="1" maxLength="1" style="text-align:right" /> rounds before end</td></tr>'
 		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isShowEndStats" /></td><td colspan="2">Show Battle Summary</td><td></td></tr>'
-		+ '<tr><td align="center" style="width:5px;padding-left:20px"><input type="checkbox" name="isShowEndProfs" /></td><td colspan="2" style="padding-left:10px">Show Proficiency Gain Summary</td><tr><td align="center" style="width:5px;padding-left:40px"><input type="checkbox" name="isShowEndProfsMagic" /></td><td colspan="2" style="padding-left:30px">Show Magic Proficiency</td></tr>'
-		+ '<tr><td align="center" style="width:5px;padding-left:40px"><input type="checkbox" name="isShowEndProfsArmor" /></td><td colspan="2" style="padding-left:30px">Show Armor Proficiency</td></tr>'
-		+ '<tr><td align="center" style="width:5px;padding-left:40px"><input type="checkbox" name="isShowEndProfsWeapon" /></td><td colspan="2" style="padding-left:30px">Show Weapon Proficiency</td></tr>'
+		+ '<tr><td align="center" style="width:5px;padding-left:20px"><input type="checkbox" name="isShowEndProfs" /></td><td colspan="2" style="padding-left:10px">Show Proficiency Gain Summary</td></tr>'
+		+ '<tr><td align="center" style="width:5px;padding-left:40px"><input type="checkbox" name="isShowEndProfsMagic" /></td><td colspan="2" style="padding-left:30px">Show Magic Proficiency Gain Summary</td></tr>'
+		+ '<tr><td align="center" style="width:5px;padding-left:40px"><input type="checkbox" name="isShowEndProfsArmor" /></td><td colspan="2" style="padding-left:30px">Show Armor Proficiency Gain Summary</td></tr>'
+		+ '<tr><td align="center" style="width:5px;padding-left:40px"><input type="checkbox" name="isShowEndProfsWeapon" /></td><td colspan="2" style="padding-left:30px">Show Weapon Proficiency Gain Summary</td></tr>'
 		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isAlertGem" /></td><td colspan="2">Alert on Powerup drops</td></tr>'
 		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isAlertOverchargeFull" /></td><td colspan="2">Alert when Overcharge is full</td></tr>'
 		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isShowMonsterNumber"></td><td colspan="2">Show Numbers instead of letters next to monsters.</td></tr>'
@@ -4316,12 +4325,48 @@ function initSettingsPane() {
 		+ '<tr><td align="center"><input type="button" class="_resetSettings" value="Default Settings" title="Reset settings to default."/></td><td align="center"><input type="button" class="_masterReset" value="MASTER RESET" title="Deletes all of STAT\'s saved data and settings."/></td></tr>'
 		+ '</table>';
 	$("#pane6").html(a);
+
+	// General Options
+	if (_settings.isShowSidebarProfs) $("input[name=isShowSidebarProfs]").attr("checked", "checked");
+	if (_settings.isColumnInventory) $("input[name=isColumnInventory]").attr("checked", "checked");
+	if (_settings.isChangePageTitle) $("input[name=isChangePageTitle]").attr("checked", "checked");
+	$("input[name=customPageTitle]").attr("value", _settings.customPageTitle);
+	if (_settings.isStartAlert) $("input[name=isStartAlert]").attr("checked", "checked");
+	$("input[name=StartAlertHP]").attr("value", _settings.StartAlertHP);
+	$("input[name=StartAlertMP]").attr("value", _settings.StartAlertMP);
+	$("input[name=StartAlertSP]").attr("value", _settings.StartAlertSP);
+	var diffsel = "diff" + String(_settings.StartAlertDifficulty);
+	$("#"+diffsel+"").attr("selected", true);
+	if (_settings.isShowScanButton) $("input[name=isShowScanButton]").attr("checked", "checked");
+	if (_settings.isShowSkillButton) $("input[name=isShowSkillButton]").attr("checked", "checked");
+	if (_settings.isShowEquippedSet) $("input[name=isShowEquippedSet]").attr("checked", "checked");
+	if (_settings.isShowTags[0]) $("input[name=isShowTags0]").attr("checked", "checked");
+	if (_settings.isShowTags[1]) $("input[name=isShowTags1]").attr("checked", "checked");
+	if (_settings.isShowTags[2]) $("input[name=isShowTags2]").attr("checked", "checked");
+	if (_settings.isShowTags[3]) $("input[name=isShowTags3]").attr("checked", "checked");
+	if (_settings.isShowTags[4]) $("input[name=isShowTags4]").attr("checked", "checked");
+	if (_settings.isShowTags[5]) $("input[name=isShowTags5]").attr("checked", "checked");
+
+	// Keyboard Options
+	if (_settings.isEnableScanHotkey) $("input[name=isEnableScanHotkey]").attr("checked", "checked");
+	if (_settings.isEnableSkillHotkey) $("input[name=isEnableSkillHotkey]").attr("checked", "checked");
+	if (_settings.enableOFCHotkey) $("input[name=enableOFCHotkey]").attr("checked", "checked");
+	if (_settings.enableScrollHotkey) $("input[name=enableScrollHotkey]").attr("checked", "checked");
+	if (_settings.isDisableForgeHotKeys) $("input[name=isDisableForgeHotKeys]").attr("checked", "checked");
+	if (_settings.enableShrineKeyPatch) $("input[name=enableShrineKeyPatch]").attr("checked", "checked");
+
+	// Battle Enhancement
 	if (_settings.isShowHighlight) $("input[name=isShowHighlight]").attr("checked", "checked");
 	if (_settings.isAltHighlight) $("input[name=isAltHighlight]").attr("checked", "checked");
 	if (_settings.isShowDivider) $("input[name=isShowDivider]").attr("checked", "checked");
-	if (_settings.isShowEndStats) $("input[name=isShowEndStats]").attr("checked", "checked");
-	//isShowEndProfs added by Ilirith
-	if (_settings.isShowEndProfs) {
+	if (_settings.isShowSelfDuration) $("input[name=isShowSelfDuration]").attr("checked", "checked");
+	if (_settings.isSelfEffectsWarnColor) $("input[name=isSelfEffectsWarnColor]").attr("checked", "checked");
+	$("input[name=SelfWarnOrangeRounds]").attr("value", _settings.SelfWarnOrangeRounds);
+	$("input[name=SelfWarnRedRounds]").attr("value", _settings.SelfWarnRedRounds);
+	if (_settings.isShowRoundReminder) $("input[name=isShowRoundReminder]").attr("checked", "checked");
+	$("input[name=reminderMinRounds]").attr("value", _settings.reminderMinRounds);
+	$("input[name=reminderBeforeEnd]").attr("value", _settings.reminderBeforeEnd);
+	if (_settings.isShowEndProfs) {	//isShowEndProfs added by Ilirith
 		$("input[name=isShowEndProfs]").attr("checked", "checked");
 		if (_settings.isShowEndProfsMagic) $("input[name=isShowEndProfsMagic]").attr("checked", "checked");
 		if (_settings.isShowEndProfsArmor) $("input[name=isShowEndProfsArmor]").attr("checked", "checked");
@@ -4331,15 +4376,20 @@ function initSettingsPane() {
 		$("input[name=isShowEndProfsArmor]").removeAttr("checked");
 		$("input[name=isShowEndProfsWeapon]").removeAttr("checked");
 	}
-	//isShowMonsterNumber stolen from HV Lite, and added by Ilirith
-	if (_settings.isShowMonsterNumber) $("input[name=isShowMonsterNumber]").attr("checked", "checked");
+	if (_settings.isAlertGem) $("input[name=isAlertGem]").attr("checked", "checked");
+	if (_settings.isAlertOverchargeFull) $("input[name=isAlertOverchargeFull]").attr("checked", "checked");
+	if (_settings.isShowMonsterNumber) $("input[name=isShowMonsterNumber]").attr("checked", "checked"); //isShowMonsterNumber stolen from HV Lite, and added by Ilirith
 	if (_settings.isShowRoundCounter) $("input[name=isShowRoundCounter]").attr("checked", "checked");
 	if (_settings.isShowPowerupBox) $("input[name=isShowPowerupBox]").attr("checked", "checked");
+
+	// Display Monster Stats
 	if (_settings.showMonsterHP) $("input[name=showMonsterHP]").attr("checked", "checked");
 	if (_settings.showMonsterHPPercent) $("input[name=showMonsterHPPercent]").attr("checked", "checked");
 	if (_settings.showMonsterMP) $("input[name=showMonsterMP]").attr("checked", "checked");
 	if (_settings.showMonsterSP) $("input[name=showMonsterSP]").attr("checked", "checked");
+	if (_settings.showMonsterInfoFromDB) $("input[name=showMonsterInfoFromDB]").attr("checked", "checked");
 	if (_settings.showMonsterClassFromDB) $("input[name=showMonsterClassFromDB]").attr("checked", "checked");
+	if (_settings.showMonsterPowerLevelFromDB) $("input[name=showMonsterPowerLevelFromDB]").attr("checked", "checked");
 	if (_settings.showMonsterAttackTypeFromDB) $("input[name=showMonsterAttackTypeFromDB]").attr("checked", "checked");
 	if (_settings.showMonsterWeaknessesFromDB) $("input[name=showMonsterWeaknessesFromDB]").attr("checked", "checked");
 	if (_settings.showMonsterResistancesFromDB) $("input[name=showMonsterResistancesFromDB]").attr("checked", "checked");
@@ -4353,10 +4403,8 @@ function initSettingsPane() {
 	if (_settings.hideSpecificDamageType[7]) $("input[name=hideSpecificDamageType7]").attr("checked", "checked");
 	if (_settings.hideSpecificDamageType[8]) $("input[name=hideSpecificDamageType8]").attr("checked", "checked");
 	if (_settings.hideSpecificDamageType[9]) $("input[name=hideSpecificDamageType9]").attr("checked", "checked");
-	if (_settings.hideSpecificDamageType[10]) 	$("input[name=hideSpecificDamageType10]").attr("checked", "checked");
+	if (_settings.hideSpecificDamageType[10]) $("input[name=hideSpecificDamageType10]").attr("checked", "checked");
 	if (_settings.ResizeMonsterInfo) $("input[name=ResizeMonsterInfo]").attr("checked", "checked");
-	if (_settings.showMonsterPowerLevelFromDB) $("input[name=showMonsterPowerLevelFromDB]").attr("checked", "checked");
-	if (_settings.showMonsterInfoFromDB) $("input[name=showMonsterInfoFromDB]").attr("checked", "checked");
 	if (_settings.isShowStatsPopup) $("input[name=isShowStatsPopup]").attr("checked", "checked");
 	if (_settings.isMonsterPopupPlacement) $("input[name=isMonsterPopupPlacement]").attr("checked", "checked");
 	$("input[name=monsterPopupDelay]").attr("value", _settings.monsterPopupDelay);
@@ -4364,43 +4412,15 @@ function initSettingsPane() {
 	if (_settings.isMonstersEffectsWarnColor) $("input[name=isMonstersEffectsWarnColor]").attr("checked", "checked");
 	$("input[name=MonstersWarnOrangeRounds]").attr("value", _settings.MonstersWarnOrangeRounds);
 	$("input[name=MonstersWarnRedRounds]").attr("value", _settings.MonstersWarnRedRounds);
-	if (_settings.isShowSelfDuration) $("input[name=isShowSelfDuration]").attr("checked", "checked");
-	if (_settings.isSelfEffectsWarnColor) $("input[name=isSelfEffectsWarnColor]").attr("checked", "checked");
-	$("input[name=SelfWarnOrangeRounds]").attr("value", _settings.SelfWarnOrangeRounds);
-	$("input[name=SelfWarnRedRounds]").attr("value", _settings.SelfWarnRedRounds);
-	if (_settings.isShowSidebarProfs) $("input[name=isShowSidebarProfs]").attr("checked", "checked");
-	if (_settings.isRememberScan) $("input[name=isRememberScan]").attr("checked", "checked");
-	if (_settings.isRememberSkillsTypes) $("input[name=isRememberSkillsTypes]").attr("checked", "checked");
-	if (_settings.isShowRoundReminder) $("input[name=isShowRoundReminder]").attr("checked", "checked");
-	$("input[name=reminderMinRounds]").attr("value", _settings.reminderMinRounds);
-	if (_settings.isAlertGem) $("input[name=isAlertGem]").attr("checked", "checked");
-	if (_settings.isAlertOverchargeFull) $("input[name=isAlertOverchargeFull]").attr("checked", "checked");
-	$("input[name=reminderBeforeEnd]").attr("value", _settings.reminderBeforeEnd);
-	if (_settings.isChangePageTitle) $("input[name=isChangePageTitle]").attr("checked", "checked");
-	if (_settings.isStartAlert) $("input[name=isStartAlert]").attr("checked", "checked");
-	if (_settings.isShowEquippedSet) $("input[name=isShowEquippedSet]").attr("checked", "checked");
-	if (_settings.isDisableForgeHotKeys) $("input[name=isDisableForgeHotKeys]").attr("checked", "checked");
-	if (_settings.isShowTags[0]) $("input[name=isShowTags0]").attr("checked", "checked");
-	if (_settings.isShowTags[1]) $("input[name=isShowTags1]").attr("checked", "checked");
-	if (_settings.isShowTags[2]) $("input[name=isShowTags2]").attr("checked", "checked");
-	if (_settings.isShowTags[3]) $("input[name=isShowTags3]").attr("checked", "checked");
-	if (_settings.isShowTags[4]) $("input[name=isShowTags4]").attr("checked", "checked");
-	if (_settings.isShowTags[5]) $("input[name=isShowTags5]").attr("checked", "checked");
-	$("input[name=StartAlertHP]").attr("value", _settings.StartAlertHP);
-	$("input[name=StartAlertMP]").attr("value", _settings.StartAlertMP);
-	$("input[name=StartAlertSP]").attr("value", _settings.StartAlertSP);
-	var diffsel = "diff" + String(_settings.StartAlertDifficulty);
-	$("#"+diffsel+"").attr("selected", true);
-	if (_settings.isShowScanButton) $("input[name=isShowScanButton]").attr("checked", "checked");
-	if (_settings.isShowSkillButton) $("input[name=isShowSkillButton]").attr("checked", "checked");
-	if (_settings.isEnableScanHotkey) $("input[name=isEnableScanHotkey]").attr("checked", "checked");
-	if (_settings.isEnableSkillHotkey) $("input[name=isEnableSkillHotkey]").attr("checked", "checked");
-	$("input[name=customPageTitle]").attr("value", _settings.customPageTitle);
-	if (_settings.isColumnInventory) $("input[name=isColumnInventory]").attr("checked", "checked");
+
+	// Tracking Functions
 	if (_settings.isTrackStats) $("input[name=isTrackStats]").attr("checked", "checked");
 	if (_settings.isTrackRewards) $("input[name=isTrackRewards]").attr("checked", "checked");
 	if (_settings.isTrackShrine) $("input[name=isTrackShrine]").attr("checked", "checked");
 	if (_settings.isTrackItems) $("input[name=isTrackItems]").attr("checked", "checked");
+
+	// Warning System
+	// Effects Expiring Warnings
 	if (_settings.isMainEffectsAlertSelf) $("input[name=isMainEffectsAlertSelf]").attr("checked", "checked");
 	if (_settings.isEffectsAlertSelf[0]) $("input[name=isEffectsAlertSelf0]").attr("checked", "checked");
 	if (_settings.isEffectsAlertSelf[1]) $("input[name=isEffectsAlertSelf1]").attr("checked", "checked");
@@ -4445,45 +4465,92 @@ function initSettingsPane() {
 	$("input[name=EffectsAlertMonstersRounds9]").attr("value", _settings.EffectsAlertMonstersRounds[9]);
 	$("input[name=EffectsAlertMonstersRounds10]").attr("value", _settings.EffectsAlertMonstersRounds[10]);
 	$("input[name=EffectsAlertMonstersRounds11]").attr("value", _settings.EffectsAlertMonstersRounds[11]);
+
+	// Specific Spell Warnings
+	if (_settings.isWarnAbsorbTrigger) $("input[name=isWarnAbsorbTrigger]").attr("checked", "checked");
+	if (_settings.isWarnSparkTrigger) $("input[name=isWarnSparkTrigger]").attr("checked", "checked");
+	if (_settings.isWarnSparkExpire) $("input[name=isWarnSparkExpire]").attr("checked", "checked");
+
+	// Alert Mode
+	if (_settings.isHighlightQC) $("input[name=isHighlightQC]").attr("checked", "checked");
+	$("input[name=warnOrangeLevel]").attr("value", _settings.warnOrangeLevel);
+	$("input[name=warnRedLevel]").attr("value", _settings.warnRedLevel);
+	$("input[name=warnAlertLevel]").attr("value", _settings.warnAlertLevel);
+	$("input[name=warnOrangeLevelMP]").attr("value", _settings.warnOrangeLevelMP);
+	$("input[name=warnRedLevelMP]").attr("value", _settings.warnRedLevelMP);
+	$("input[name=warnAlertLevelMP]").attr("value", _settings.warnAlertLevelMP);
+	$("input[name=warnOrangeLevelSP]").attr("value", _settings.warnOrangeLevelSP);
+	$("input[name=warnRedLevelSP]").attr("value", _settings.warnRedLevelSP);
+	$("input[name=warnAlertLevelSP]").attr("value", _settings.warnAlertLevelSP);
+	if (_settings.isShowPopup) $("input[name=isShowPopup]").attr("checked", "checked");
+	if (_settings.isNagHP) $("input[name=isNagHP]").attr("checked", "checked")
+	if (_settings.isNagMP) $("input[name=isNagMP]").attr("checked", "checked")
+	if (_settings.isNagSP) $("input[name=isNagSP]").attr("checked", "checked");
+
+	// Battle Type
 	if (_settings.warnMode[0]) $("input[name=isWarnH]").attr("checked", "checked");
 	if (_settings.warnMode[1]) $("input[name=isWarnA]").attr("checked", "checked");
 	if (_settings.warnMode[2]) $("input[name=isWarnGF]").attr("checked", "checked");
 	if (_settings.warnMode[3]) $("input[name=isWarnIW]").attr("checked", "checked");
 	if (_settings.warnMode[4]) $("input[name=isWarnCF]").attr("checked", "checked");
-	if (_settings.isHighlightQC) $("input[name=isHighlightQC]").attr("checked", "checked");
-	$("input[name=warnOrangeLevel]").attr("value", _settings.warnOrangeLevel);
-	$("input[name=warnRedLevel]").attr("value", _settings.warnRedLevel);
-	$("input[name=warnAlertLevel]").attr("value", _settings.warnAlertLevel);
-	if (_settings.isNagHP) $("input[name=isNagHP]").attr("checked", "checked")
-	$("input[name=warnOrangeLevelMP]").attr("value", _settings.warnOrangeLevelMP);
-	$("input[name=warnRedLevelMP]").attr("value", _settings.warnRedLevelMP);
-	$("input[name=warnAlertLevelMP]").attr("value", _settings.warnAlertLevelMP);
-	if (_settings.isNagMP) $("input[name=isNagMP]").attr("checked", "checked")
-	$("input[name=warnOrangeLevelSP]").attr("value", _settings.warnOrangeLevelSP);
-	$("input[name=warnRedLevelSP]").attr("value", _settings.warnRedLevelSP);
-	$("input[name=warnAlertLevelSP]").attr("value", _settings.warnAlertLevelSP);
-	if (_settings.isNagSP) $("input[name=isNagSP]").attr("checked", "checked");
-	if (_settings.isShowPopup) $("input[name=isShowPopup]").attr("checked", "checked");
-	if (_settings.isWarnAbsorbTrigger) $("input[name=isWarnAbsorbTrigger]").attr("checked", "checked");
-	if (_settings.isWarnSparkTrigger) $("input[name=isWarnSparkTrigger]").attr("checked", "checked");
-	if (_settings.isWarnSparkExpire) $("input[name=isWarnSparkExpire]").attr("checked", "checked");
+
+	// Database Options
+	if (_settings.isRememberScan) $("input[name=isRememberScan]").attr("checked", "checked");
+	if (_settings.isRememberSkillsTypes) $("input[name=isRememberSkillsTypes]").attr("checked", "checked");
+
+	// General Options
+	$("input[name=isShowSidebarProfs]").click(reminderAndSaveSettings);
+	$("input[name=isColumnInventory]").click(saveSettings);
+	$("input[name=isChangePageTitle]").click(saveSettings);
+	$("input[name=customPageTitle]").change(saveSettings);
+	$("input[name=isStartAlert]").click(saveSettings);
+	$("input[name=StartAlertHP]").change(saveSettings);
+	$("input[name=StartAlertMP]").change(saveSettings);
+	$("input[name=StartAlertSP]").change(saveSettings);
+	$("select[id=StartAlertDifficulty]").change(saveSettings);
+	$("input[name=isShowScanButton]").click(saveSettings);
+	$("input[name=isShowSkillButton]").click(saveSettings);
+	$("input[name=isShowEquippedSet]").click(saveSettings);
+	$("input[name^=isShowTags]").click(saveSettings);
+
+	// Keyboard Options
+	$("input[name=isEnableScanHotkey]").click(saveSettings);
+	$("input[name=isEnableSkillHotkey]").click(saveSettings);
+	$("input[name=enableOFCHotkey]").click(saveSettings);
+	$("input[name=enableScrollHotkey]").click(saveSettings);
+	$("input[name=isDisableForgeHotKeys]").click(saveSettings);
+	$("input[name=enableShrineKeyPatch]").click(saveSettings);
+
+	// Battle Enhancement
 	$("input[name=isShowHighlight]").click(saveSettings);
 	$("input[name=isAltHighlight]").click(saveSettings);
 	$("input[name=isShowDivider]").click(saveSettings);
+	$("input[name=isShowSelfDuration]").click(saveSettings);
+	$("input[name=isSelfEffectsWarnColor]").click(saveSettings);
+	$("input[name=SelfWarnOrangeRounds]").change(saveSettings);
+	$("input[name=SelfWarnRedRounds]").change(saveSettings);
+	$("input[name=isShowRoundReminder]").click(saveSettings);
+	$("input[name=reminderMinRounds]").change(saveSettings);
+	$("input[name=reminderBeforeEnd]").change(saveSettings);
 	$("input[name=isShowEndStats]").click(saveSettings);
 	$("input[name=isShowEndProfs]").click(saveSettings); //isShowEndProfs added by Ilirith
 	$("input[name=isShowEndProfsMagic]").click(saveSettings); //isShowEndProfs added by Ilirith
 	$("input[name=isShowEndProfsArmor]").click(saveSettings); //isShowEndProfs added by Ilirith
 	$("input[name=isShowEndProfsWeapon]").click(saveSettings); //isShowEndProfs added by Ilirith
+	$("input[name=isAlertGem]").click(saveSettings);
+	$("input[name=isAlertOverchargeFull]").click(saveSettings);
+	$("input[name=isShowMonsterNumber]").click(saveSettings);
+	$("input[name=isShowRoundCounter]").click(saveSettings);
+	$("input[name=isShowPowerupBox]").click(saveSettings);
+
+	// Display Monster Stats
 	$("input[name=showMonsterHP]").click(saveSettings);
 	$("input[name=showMonsterHPPercent]").click(saveSettings);
 	$("input[name=showMonsterMP]").click(saveSettings);
 	$("input[name=showMonsterSP]").click(saveSettings);
 	$("input[name=showMonsterInfoFromDB]").click(saveSettings);
-	$("input[name=isShowStatsPopup]").click(saveSettings);
-	$("input[name=isMonsterPopupPlacement]").click(saveSettings);
-	$("input[name=monsterPopupDelay]").change(saveSettings);
 	$("input[name=showMonsterClassFromDB]").click(saveSettings);
+	$("input[name=showMonsterPowerLevelFromDB]").click(saveSettings);
 	$("input[name=showMonsterAttackTypeFromDB]").click(saveSettings);
 	$("input[name=showMonsterWeaknessesFromDB]").click(saveSettings);
 	$("input[name=showMonsterResistancesFromDB]").click(saveSettings);
@@ -4499,95 +4566,124 @@ function initSettingsPane() {
 	$("input[name=hideSpecificDamageType9]").click(saveSettings);
 	$("input[name=hideSpecificDamageType10]").click(saveSettings);
 	$("input[name=ResizeMonsterInfo]").click(saveSettings);
-	$("input[name=showMonsterPowerLevelFromDB]").click(saveSettings);
+	$("input[name=isShowStatsPopup]").click(saveSettings);
+	$("input[name=isMonsterPopupPlacement]").click(saveSettings);
+	$("input[name=monsterPopupDelay]").change(saveSettings);
 	$("input[name=isShowMonsterDuration]").click(saveSettings);
 	$("input[name=isMonstersEffectsWarnColor]").click(saveSettings);
 	$("input[name=MonstersWarnOrangeRounds]").change(saveSettings);
 	$("input[name=MonstersWarnRedRounds]").change(saveSettings);
-	$("input[name=isShowSelfDuration]").click(saveSettings);
-	$("input[name=isSelfEffectsWarnColor]").click(saveSettings);
-	$("input[name=SelfWarnOrangeRounds]").change(saveSettings);
-	$("input[name=SelfWarnRedRounds]").change(saveSettings);
-	$("input[name=isShowSidebarProfs]").click(reminderAndSaveSettings);
-	$("input[name=isRememberScan]").click(reminderAndSaveSettings);
-	$("input[name=isRememberSkillsTypes]").click(reminderAndSaveSettings);
-	$("input[name=isShowRoundReminder]").click(saveSettings);
-	$("input[name=reminderMinRounds]").change(saveSettings);
-	$("input[name=reminderBeforeEnd]").change(saveSettings);
-	$("input[name=isAlertGem]").click(saveSettings);
-	$("input[name=isAlertOverchargeFull]").click(saveSettings);
-	$("input[name=isShowScanButton]").click(saveSettings);
-	$("input[name=isShowSkillButton]").click(saveSettings);
-	$("input[name=isEnableSkillHotkey]").click(saveSettings);
-	$("input[name=isEnableScanHotkey]").click(saveSettings);
-	$("input[name=isChangePageTitle]").click(saveSettings);
-	$("input[name=isStartAlert]").click(saveSettings);
-	$("input[name=isShowEquippedSet]").click(saveSettings);
-	$("input[name=isDisableForgeHotKeys]").click(saveSettings);
-	$("input[name^=isShowTags]").click(saveSettings);
-	$("input[name=StartAlertHP]").change(saveSettings);
-	$("input[name=StartAlertMP]").change(saveSettings);
-	$("input[name=StartAlertSP]").change(saveSettings);
-	$("input[name=StartAlertSP]").change(saveSettings);
-	$("select[id=StartAlertDifficulty]").change(saveSettings);
-	$("input[name=customPageTitle]").change(saveSettings);
-	$("input[name=isColumnInventory]").click(saveSettings);
+
+	// Tracking Functions
 	$("input[name=isTrackStats]").click(saveSettings);
 	$("input[name=isTrackRewards]").click(saveSettings);
 	$("input[name=isTrackShrine]").click(saveSettings);
 	$("input[name=isTrackItems]").click(saveSettings);
+
+	// Warning System
+	// Effects Expiring Warnings
 	$("input[name=isMainEffectsAlertSelf]").click(saveSettings);
 	$("input[name^=isEffectsAlertSelf]").click(saveSettings);
 	$("input[name^=EffectsAlertSelfRounds]").change(saveSettings);
 	$("input[name=isMainEffectsAlertMonsters]").click(saveSettings);
 	$("input[name^=isEffectsAlertMonsters]").click(saveSettings);
 	$("input[name^=EffectsAlertMonstersRounds]").change(saveSettings);
+
+	// Specific Spell Warnings
 	$("input[name=isWarnAbsorbTrigger]").click(saveSettings);
 	$("input[name=isWarnSparkTrigger]").click(saveSettings);
 	$("input[name=isWarnSparkExpire]").click(saveSettings);
+
+	// Alert Mode
+	$("input[name=isHighlightQC]").click(saveSettings);
+	$("input[name=warnOrangeLevel]").change(saveSettings);
+	$("input[name=warnRedLevel]").change(saveSettings);
+	$("input[name=warnAlertLevel]").change(saveSettings);
+	$("input[name=warnOrangeLevelMP]").change(saveSettings);
+	$("input[name=warnRedLevelMP]").change(saveSettings);
+	$("input[name=warnAlertLevelMP]").change(saveSettings);
+	$("input[name=warnOrangeLevelSP]").change(saveSettings);
+	$("input[name=warnRedLevelSP]").change(saveSettings);
+	$("input[name=warnAlertLevelSP]").change(saveSettings);
+	$("input[name=isShowPopup]").click(saveSettings);
+	$("input[name=isNagHP]").click(saveSettings);
+	$("input[name=isNagMP]").click(saveSettings);
+	$("input[name=isNagSP]").click(saveSettings);
+
+	// Battle Type
 	$("input[name=isWarnH]").click(saveSettings);
 	$("input[name=isWarnA]").click(saveSettings);
 	$("input[name=isWarnGF]").click(saveSettings);
 	$("input[name=isWarnIW]").click(saveSettings);
 	$("input[name=isWarnCF]").click(saveSettings);
-	$("input[name=isHighlightQC]").click(saveSettings);
-	$("input[name=warnOrangeLevel]").change(saveSettings);
-	$("input[name=warnRedLevel]").change(saveSettings);
-	$("input[name=warnAlertLevel]").change(saveSettings);
-	$("input[name=isNagHP]").click(saveSettings);
-	$("input[name=warnOrangeLevelMP]").change(saveSettings);
-	$("input[name=warnRedLevelMP]").change(saveSettings);
-	$("input[name=warnAlertLevelMP]").change(saveSettings);
-	$("input[name=isNagMP]").click(saveSettings);
-	$("input[name=warnOrangeLevelSP]").change(saveSettings);
-	$("input[name=warnRedLevelSP]").change(saveSettings);
-	$("input[name=warnAlertLevelSP]").change(saveSettings);
-	$("input[name=isNagSP]").click(saveSettings);
-	$("input[name=isShowPopup]").click(saveSettings);
-	$("input[name=isShowMonsterNumber]").click(saveSettings);
-	$("input[name=isShowPowerupBox]").click(saveSettings);
-	$("input[name=isShowRoundCounter]").click(saveSettings);
+
+	// Database Options
+	$("input[name=isRememberScan]").click(reminderAndSaveSettings);
+	$("input[name=isRememberSkillsTypes]").click(reminderAndSaveSettings);
+
 	$("._resetSettings").click(function (){ if (confirm("Reset Settings to default?")) _settings.reset(); })
 	$("._resetAll").click(function (){ if (confirm("Reset All Tracking data?")) HVResetTracking(); })
 	$("._masterReset").click(function (){ if (confirm("This will delete ALL HV data saved in localStorage.\nAre you sure you want to do this?")) HVMasterReset(); })
 }
 function saveSettings() {
+	// General Options
+	_settings.isShowSidebarProfs = $("input[name=isShowSidebarProfs]").get(0).checked;
+	_settings.isColumnInventory = $("input[name=isColumnInventory]").get(0).checked;
+	_settings.isChangePageTitle = $("input[name=isChangePageTitle]").get(0).checked;
+	_settings.customPageTitle = $("input[name=customPageTitle]").get(0).value;
+	_settings.isStartAlert = $("input[name=isStartAlert]").get(0).checked;
+	_settings.StartAlertHP = $("input[name=StartAlertHP]").get(0).value;
+	_settings.StartAlertMP = $("input[name=StartAlertMP]").get(0).value;
+	_settings.StartAlertSP = $("input[name=StartAlertSP]").get(0).value;
+	_settings.StartAlertDifficulty = $("select[id=StartAlertDifficulty]").get(0).value;
+	_settings.isShowScanButton = $("input[name=isShowScanButton]").get(0).checked;
+	_settings.isShowSkillButton = $("input[name=isShowSkillButton]").get(0).checked;
+	_settings.isShowEquippedSet = $("input[name=isShowEquippedSet]").get(0).checked;
+	_settings.isShowTags[0] = $("input[name=isShowTags0]").get(0).checked;
+	_settings.isShowTags[1] = $("input[name=isShowTags1]").get(0).checked;
+	_settings.isShowTags[2] = $("input[name=isShowTags2]").get(0).checked;
+	_settings.isShowTags[3] = $("input[name=isShowTags3]").get(0).checked;
+	_settings.isShowTags[4] = $("input[name=isShowTags4]").get(0).checked;
+	_settings.isShowTags[5] = $("input[name=isShowTags5]").get(0).checked;
+
+	// Keyboard Options
+	_settings.isEnableScanHotkey = $("input[name=isEnableScanHotkey]").get(0).checked;
+	_settings.isEnableSkillHotkey = $("input[name=isEnableSkillHotkey]").get(0).checked;
+	_settings.enableOFCHotkey = $("input[name=enableOFCHotkey]").get(0).checked;
+	_settings.enableScrollHotkey = $("input[name=enableScrollHotkey]").get(0).checked;
+	_settings.isDisableForgeHotKeys = $("input[name=isDisableForgeHotKeys]").get(0).checked;
+	_settings.enableShrineKeyPatch = $("input[name=enableShrineKeyPatch]").get(0).checked;
+
+	// Battle Enhancement
 	_settings.isShowHighlight = $("input[name=isShowHighlight]").get(0).checked;
 	_settings.isAltHighlight = $("input[name=isAltHighlight]").get(0).checked;
 	_settings.isShowDivider = $("input[name=isShowDivider]").get(0).checked;
+	_settings.isShowSelfDuration = $("input[name=isShowSelfDuration]").get(0).checked;
+	_settings.isSelfEffectsWarnColor = $("input[name=isSelfEffectsWarnColor]").get(0).checked;
+	_settings.SelfWarnOrangeRounds = $("input[name=SelfWarnOrangeRounds]").get(0).value;
+	_settings.SelfWarnRedRounds = $("input[name=SelfWarnRedRounds]").get(0).value;
+	_settings.isShowRoundReminder = $("input[name=isShowRoundReminder]").get(0).checked;
+	_settings.reminderMinRounds = $("input[name=reminderMinRounds]").get(0).value;
+	_settings.reminderBeforeEnd = $("input[name=reminderBeforeEnd]").get(0).value;
 	_settings.isShowEndStats = $("input[name=isShowEndStats]").get(0).checked;
 	_settings.isShowEndProfs = $("input[name=isShowEndProfs]").get(0).checked; //isShowEndProfs added by Ilirith
 	_settings.isShowEndProfsMagic = $("input[name=isShowEndProfsMagic]").get(0).checked; //isShowEndProfs added by Ilirith
 	_settings.isShowEndProfsArmor = $("input[name=isShowEndProfsArmor]").get(0).checked; //isShowEndProfs added by Ilirith
 	_settings.isShowEndProfsWeapon = $("input[name=isShowEndProfsWeapon]").get(0).checked; //isShowEndProfs added by Ilirith
+	_settings.isAlertGem = $("input[name=isAlertGem]").get(0).checked;
+	_settings.isAlertOverchargeFull = $("input[name=isAlertOverchargeFull]").get(0).checked;
+	_settings.isShowMonsterNumber = $("input[name=isShowMonsterNumber]").get(0).checked;
+	_settings.isShowRoundCounter = $("input[name=isShowRoundCounter]").get(0).checked;
+	_settings.isShowPowerupBox = $("input[name=isShowPowerupBox]").get(0).checked;
+
+	// Display Monster Stats
 	_settings.showMonsterHP = $("input[name=showMonsterHP]").get(0).checked;
 	_settings.showMonsterHPPercent = $("input[name=showMonsterHPPercent]").get(0).checked;
 	_settings.showMonsterMP = $("input[name=showMonsterMP]").get(0).checked;
 	_settings.showMonsterSP = $("input[name=showMonsterSP]").get(0).checked;
 	_settings.showMonsterInfoFromDB = $("input[name=showMonsterInfoFromDB]").get(0).checked;
-	_settings.isShowStatsPopup = $("input[name=isShowStatsPopup]").get(0).checked;
-	_settings.isMonsterPopupPlacement = $("input[name=isMonsterPopupPlacement]").get(0).checked;
 	_settings.showMonsterClassFromDB = $("input[name=showMonsterClassFromDB]").get(0).checked;
+	_settings.showMonsterPowerLevelFromDB = $("input[name=showMonsterPowerLevelFromDB]").get(0).checked;
 	_settings.showMonsterAttackTypeFromDB = $("input[name=showMonsterAttackTypeFromDB]").get(0).checked;
 	_settings.showMonsterWeaknessesFromDB = $("input[name=showMonsterWeaknessesFromDB]").get(0).checked;
 	_settings.showMonsterResistancesFromDB = $("input[name=showMonsterResistancesFromDB]").get(0).checked;
@@ -4603,47 +4699,22 @@ function saveSettings() {
 	_settings.hideSpecificDamageType[9] = $("input[name=hideSpecificDamageType9]").get(0).checked;
 	_settings.hideSpecificDamageType[10] = $("input[name=hideSpecificDamageType10]").get(0).checked;
 	_settings.ResizeMonsterInfo = $("input[name=ResizeMonsterInfo]").get(0).checked;
-	_settings.showMonsterPowerLevelFromDB = $("input[name=showMonsterPowerLevelFromDB]").get(0).checked;
+	_settings.isShowStatsPopup = $("input[name=isShowStatsPopup]").get(0).checked;
+	_settings.isMonsterPopupPlacement = $("input[name=isMonsterPopupPlacement]").get(0).checked;
+	_settings.monsterPopupDelay = $("input[name=monsterPopupDelay]").get(0).value;
 	_settings.isShowMonsterDuration = $("input[name=isShowMonsterDuration]").get(0).checked;
 	_settings.isMonstersEffectsWarnColor = $("input[name=isMonstersEffectsWarnColor]").get(0).checked;
 	_settings.MonstersWarnOrangeRounds = $("input[name=MonstersWarnOrangeRounds]").get(0).value;
 	_settings.MonstersWarnRedRounds = $("input[name=MonstersWarnRedRounds]").get(0).value;
-	_settings.isShowSelfDuration = $("input[name=isShowSelfDuration]").get(0).checked;
-	_settings.isSelfEffectsWarnColor = $("input[name=isSelfEffectsWarnColor]").get(0).checked;
-	_settings.SelfWarnOrangeRounds = $("input[name=SelfWarnOrangeRounds]").get(0).value;
-	_settings.SelfWarnRedRounds = $("input[name=SelfWarnRedRounds]").get(0).value;
-	_settings.isShowSidebarProfs = $("input[name=isShowSidebarProfs]").get(0).checked;
-	_settings.isRememberScan = $("input[name=isRememberScan]").get(0).checked;
-	_settings.isRememberSkillsTypes = $("input[name=isRememberSkillsTypes]").get(0).checked;
-	_settings.isShowRoundReminder = $("input[name=isShowRoundReminder]").get(0).checked;
-	_settings.reminderMinRounds = $("input[name=reminderMinRounds]").get(0).value;
-	_settings.reminderBeforeEnd = $("input[name=reminderBeforeEnd]").get(0).value;
-	_settings.isAlertGem = $("input[name=isAlertGem]").get(0).checked;
-	_settings.isAlertOverchargeFull = $("input[name=isAlertOverchargeFull]").get(0).checked;
-	_settings.isShowScanButton = $("input[name=isShowScanButton]").get(0).checked;
-	_settings.isShowSkillButton = $("input[name=isShowSkillButton]").get(0).checked;
-	_settings.isEnableScanHotkey = $("input[name=isEnableScanHotkey]").get(0).checked;
-	_settings.isEnableSkillHotkey = $("input[name=isEnableSkillHotkey]").get(0).checked;
-	_settings.isChangePageTitle = $("input[name=isChangePageTitle]").get(0).checked;
-	_settings.isShowEquippedSet = $("input[name=isShowEquippedSet]").get(0).checked;
-	_settings.isDisableForgeHotKeys = $("input[name=isDisableForgeHotKeys]").get(0).checked;
-	_settings.isShowTags[0] = $("input[name=isShowTags0]").get(0).checked;
-	_settings.isShowTags[1] = $("input[name=isShowTags1]").get(0).checked;
-	_settings.isShowTags[2] = $("input[name=isShowTags2]").get(0).checked;
-	_settings.isShowTags[3] = $("input[name=isShowTags3]").get(0).checked;
-	_settings.isShowTags[4] = $("input[name=isShowTags4]").get(0).checked;
-	_settings.isShowTags[5] = $("input[name=isShowTags5]").get(0).checked;
-	_settings.isStartAlert = $("input[name=isStartAlert]").get(0).checked;
-	_settings.StartAlertHP = $("input[name=StartAlertHP]").get(0).value;
-	_settings.StartAlertMP = $("input[name=StartAlertMP]").get(0).value;
-	_settings.StartAlertSP = $("input[name=StartAlertSP]").get(0).value;
-	_settings.StartAlertDifficulty = $("select[id=StartAlertDifficulty]").get(0).value;
-	_settings.customPageTitle = $("input[name=customPageTitle]").get(0).value;
-	_settings.isColumnInventory = $("input[name=isColumnInventory]").get(0).checked;
+
+	// Tracking Functions
 	_settings.isTrackStats = $("input[name=isTrackStats]").get(0).checked;
 	_settings.isTrackRewards = $("input[name=isTrackRewards]").get(0).checked;
 	_settings.isTrackShrine = $("input[name=isTrackShrine]").get(0).checked;
 	_settings.isTrackItems = $("input[name=isTrackItems]").get(0).checked;
+
+	// Warning System
+	// Effects Expiring Warnings
 	_settings.isMainEffectsAlertSelf = $("input[name=isMainEffectsAlertSelf]").get(0).checked;
 	_settings.isEffectsAlertSelf[0] = $("input[name=isEffectsAlertSelf0]").get(0).checked;
 	_settings.isEffectsAlertSelf[1] = $("input[name=isEffectsAlertSelf1]").get(0).checked;
@@ -4691,32 +4762,39 @@ function saveSettings() {
 	_settings.EffectsAlertMonstersRounds[9] = $("input[name=EffectsAlertMonstersRounds9]").get(0).value;
 	_settings.EffectsAlertMonstersRounds[10] = $("input[name=EffectsAlertMonstersRounds10]").get(0).value;
 	_settings.EffectsAlertMonstersRounds[11] = $("input[name=EffectsAlertMonstersRounds11]").get(0).value;
+
+	// Specific Spell Warnings
 	_settings.isWarnAbsorbTrigger = $("input[name=isWarnAbsorbTrigger]").get(0).checked;
 	_settings.isWarnSparkTrigger = $("input[name=isWarnSparkTrigger]").get(0).checked;
 	_settings.isWarnSparkExpire = $("input[name=isWarnSparkExpire]").get(0).checked;
+
+	// Alert Mode
 	_settings.isHighlightQC = $("input[name=isHighlightQC]").get(0).checked;
 	_settings.warnOrangeLevel = $("input[name=warnOrangeLevel]").get(0).value;
 	_settings.warnRedLevel = $("input[name=warnRedLevel]").get(0).value;
 	_settings.warnAlertLevel = $("input[name=warnAlertLevel]").get(0).value;
-	_settings.isNagHP = $("input[name=isNagHP]").get(0).checked;
 	_settings.warnOrangeLevelMP = $("input[name=warnOrangeLevelMP]").get(0).value;
 	_settings.warnRedLevelMP = $("input[name=warnRedLevelMP]").get(0).value;
 	_settings.warnAlertLevelMP = $("input[name=warnAlertLevelMP]").get(0).value;
-	_settings.isNagMP = $("input[name=isNagMP]").get(0).checked;
 	_settings.warnOrangeLevelSP = $("input[name=warnOrangeLevelSP]").get(0).value;
 	_settings.warnRedLevelSP = $("input[name=warnRedLevelSP]").get(0).value;
 	_settings.warnAlertLevelSP = $("input[name=warnAlertLevelSP]").get(0).value;
+	_settings.isShowPopup = $("input[name=isShowPopup]").get(0).checked;
+	_settings.isNagHP = $("input[name=isNagHP]").get(0).checked;
+	_settings.isNagMP = $("input[name=isNagMP]").get(0).checked;
 	_settings.isNagSP = $("input[name=isNagSP]").get(0).checked;
+
+	// Battle Type
 	_settings.warnMode[0] = $("input[name=isWarnH]").get(0).checked;
 	_settings.warnMode[1] = $("input[name=isWarnA]").get(0).checked;
 	_settings.warnMode[2] = $("input[name=isWarnGF]").get(0).checked;
 	_settings.warnMode[3] = $("input[name=isWarnIW]").get(0).checked;
 	_settings.warnMode[4] = $("input[name=isWarnCF]").get(0).checked;
-	_settings.isShowPopup = $("input[name=isShowPopup]").get(0).checked;
-	_settings.monsterPopupDelay = $("input[name=monsterPopupDelay]").get(0).value;
-	_settings.isShowMonsterNumber = $("input[name=isShowMonsterNumber]").get(0).checked;
-	_settings.isShowPowerupBox = $("input[name=isShowPowerupBox]").get(0).checked;
-	_settings.isShowRoundCounter = $("input[name=isShowRoundCounter]").get(0).checked;
+
+	// Database Options
+	_settings.isRememberScan = $("input[name=isRememberScan]").get(0).checked;
+	_settings.isRememberSkillsTypes = $("input[name=isRememberSkillsTypes]").get(0).checked;
+
 	_settings.save();
 }
 function reminderAndSaveSettings() {
@@ -5162,19 +5240,95 @@ function HVSettings() {
 	this.save = function () { saveToStorage(this, HV_SETTINGS); };
 	this.reset = function () { deleteFromStorage(HV_SETTINGS); };
 	this.cloneFrom = clone;
+
+	// General Options
+	this.isShowSidebarProfs = false;
+	this.isColumnInventory = false;
+	this.isChangePageTitle = false;
+	this.customPageTitle = "HV";
+	this.isStartAlert = false;
+	this.StartAlertHP = 95;
+	this.StartAlertMP = 95;
+	this.StartAlertSP = 95;
+	this.StartAlertDifficulty = 2;
+	this.isShowScanButton = false;
+	this.isShowSkillButton = false;
+	this.isShowEquippedSet = false;
+	//0-equipment page, 1-shop, 2-itemworld, 3-moogle, 4-forge
+	this.isShowTags = [false, false, false, false, false, false];
+
+	// Keyboard Options
+	this.isEnableScanHotkey = false;
+	this.isEnableSkillHotkey = false;
+	this.enableOFCHotkey = false;
+	this.enableScrollHotkey = false;
+	this.isDisableForgeHotKeys = false;
+	this.enableShrineKeyPatch = false;
+
+	// Battle Enhancement
+	this.isShowHighlight = true;
+	this.isAltHighlight = false;
+	this.isShowDivider = true;
+	this.isShowSelfDuration = true;
+	this.isSelfEffectsWarnColor = false;
+	this.SelfWarnOrangeRounds = 5;
+	this.SelfWarnRedRounds = 1;
+	this.isShowRoundReminder = false;
+	this.reminderMinRounds = 3;
+	this.reminderBeforeEnd = 1;
+	this.isShowEndStats = true;
+	this.isShowEndProfs = true;
+	this.isShowEndProfsMagic = true;
+	this.isShowEndProfsArmor = true;
+	this.isShowEndProfsWeapon = true;
+	this.isAlertGem = true;
+	this.isAlertOverchargeFull = false;
+	this.isShowMonsterNumber = false;
+	this.isShowRoundCounter = false;
+	this.isShowPowerupBox = false;
+
+	// Display Monster Stats
+	this.showMonsterHP = true;
+	this.showMonsterHPPercent = false;
+	this.showMonsterMP = true;
+	this.showMonsterSP = true;
+	this.showMonsterInfoFromDB = false;
+	this.showMonsterClassFromDB = false;
+	this.showMonsterPowerLevelFromDB = false;
+	this.showMonsterAttackTypeFromDB = false;
+	this.showMonsterWeaknessesFromDB = false;
+	this.showMonsterResistancesFromDB = false;
+	this.hideSpecificDamageType = [false, false, false, false, false, false, false, false, false, false, false];
+	this.ResizeMonsterInfo = false;
+	this.isShowStatsPopup = false;
+	this.isMonsterPopupPlacement = false;
+	this.monsterPopupDelay = 0;
+	this.isShowMonsterDuration = true;
+	this.isMonstersEffectsWarnColor = false;
+	this.MonstersWarnOrangeRounds = 5;
+	this.MonstersWarnRedRounds = 1;
+
+	// Tracking Functions
 	this.isTrackStats = true;
 	this.isTrackRewards = false;
 	this.isTrackShrine = false;
 	this.isTrackItems = false;
+
+	// Warning System
+	// Effects Expiring Warnings
 	this.isMainEffectsAlertSelf = false;
 	this.isEffectsAlertSelf = [false, false, false, false, false, false, false, false, false, false];
 	this.EffectsAlertSelfRounds = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
 	this.isMainEffectsAlertMonsters = false;
 	this.isEffectsAlertMonsters = [false, false, false, false, false, false, false, false, false, false, false, false];
 	this.EffectsAlertMonstersRounds = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+
+	// Specific Spell Warnings
 	this.isWarnAbsorbTrigger = false;
 	this.isWarnSparkTrigger = true;
 	this.isWarnSparkExpire = true;
+
+	// Alert Mode
 	this.isHighlightQC = true;
 	this.warnOrangeLevel = 40;
 	this.warnRedLevel = 35;
@@ -5185,70 +5339,17 @@ function HVSettings() {
 	this.warnOrangeLevelSP = -1;
 	this.warnRedLevelSP = -1;
 	this.warnAlertLevelSP = -1;
+	this.isShowPopup = true;
 	this.isNagHP = false;
 	this.isNagMP = false;
 	this.isNagSP = false;
-	this.isShowPopup = true;
+
+	// Battle Type
 	this.warnMode = [true, true, false, false, false];
-	this.isShowHighlight = true;
-	this.isAltHighlight = false;
-	this.isShowDivider = true;
-	this.isShowEndStats = true;
-	this.isShowEndProfs = true;
-	this.isShowEndProfsMagic = true;
-	this.isShowEndProfsArmor = true;
-	this.isShowEndProfsWeapon = true;
-	this.showMonsterHP = true;
-	this.showMonsterHPPercent = false;
-	this.showMonsterMP = true;
-	this.showMonsterSP = true;
-	this.showMonsterInfoFromDB = false;
-	this.isShowStatsPopup = false;
-	this.showMonsterClassFromDB = false;
-	this.showMonsterAttackTypeFromDB = false;
-	this.showMonsterWeaknessesFromDB = false;
-	this.showMonsterResistancesFromDB = false;
-	this.hideSpecificDamageType = [false, false, false, false, false, false, false, false, false, false, false];
-	this.ResizeMonsterInfo = false;
-	this.showMonsterPowerLevelFromDB = false;
-	this.isShowMonsterDuration = true;
-	this.isMonstersEffectsWarnColor = false;
-	this.MonstersWarnOrangeRounds = 5;
-	this.MonstersWarnRedRounds = 1;
-	this.isShowSelfDuration = true;
-	this.isSelfEffectsWarnColor = false;
-	this.SelfWarnOrangeRounds = 5;
-	this.SelfWarnRedRounds = 1;
-	this.isShowSidebarProfs = false;
+
+	// Database Options
 	this.isRememberScan = false;
 	this.isRememberSkillsTypes = false;
-	this.isShowRoundReminder = false;
-	this.reminderMinRounds = 3;
-	this.reminderBeforeEnd = 1;
-	this.isAlertGem = true;
-	this.isAlertOverchargeFull = false;
-	this.isChangePageTitle = false;
-	this.customPageTitle = "HV";
-	this.isColumnInventory = false;
-	this.isMonsterPopupPlacement = false;
-	this.monsterPopupDelay = 0;
-	this.isStartAlert = false;
-	this.StartAlertHP = 95;
-	this.StartAlertMP = 95;
-	this.StartAlertSP = 95;
-	this.StartAlertDifficulty = 2;
-	this.isShowScanButton = false;
-	this.isEnableScanHotkey = false;
-	this.isShowSkillButton = false;
-	this.isEnableSkillHotkey = false;
-	this.isShowEquippedSet = false;
-	this.isDisableForgeHotKeys = false;
-	//0-twohanded fighter; 1-elemental mage
-	//0-equipment page, 1-shop, 2-itemworld, 3-moogle, 4-forge
-	this.isShowTags = [false, false, false, false, false, false];
-	this.isShowMonsterNumber = false;
-	this.isShowPowerupBox = false;
-	this.isShowRoundCounter = false;
 }
 function saveStatsBackup(back) {
 	loadStatsObject();
@@ -5867,7 +5968,7 @@ HVStat.registerScrollTargetMouseEventListeners = function () {
 };
 
 HVStat.documentKeydownEventHandler = function (event) {
-	if (true/*_settings.enablePageUpAndDown*/) {
+	if (_settings.enableScrollHotkey) {
 		if (HVStat.scrollTarget && !event.altKey && !event.ctrlKey && !event.shiftKey) {
 			switch (event.keyCode) {
 			case 33:	// PAGE UP
@@ -5927,7 +6028,7 @@ HVStat.documentKeydownEventHandler = function (event) {
 				}
 			}
 		}
-		if (true/*_settings.enableOFCHotkey*/ && miOFC) {
+		if (_settings.enableOFCHotkey && miOFC) {
 			boundKeys = miOFC.boundKeys;
 			for (i = 0; i < boundKeys.length; i++) {
 				if (boundKeys[i].equals(event)) {
@@ -6509,7 +6610,7 @@ HVStat.main5 = function () {
 			if (_settings.isTrackShrine) {
 				captureShrine();
 			}
-			if (HVStat.isChrome) {
+			if (HVStat.isChrome && _settings.enableShrineKeyPatch) {
 				window.document.onkeydown = null;	// workaround to make enable SPACE key
 			}
 		}
