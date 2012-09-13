@@ -2776,14 +2776,14 @@ function collectCurrentProfsData() {
 	if (!HVStat.isCharacterPage || HVStat.usingHVFont)
 		return;
 	loadProfsObject();
-	var c = $(".eqm").children().eq(0).children().eq(1).children();
+	var c = $("div.eqm").children().eq(0).children().eq(1).children();
 	var b = _profs.weapProfTotals.length;
 	while (b--)
-		_profs.weapProfTotals[b] = parseFloat(c.eq(0).children().eq(1).find(".fd12").eq(b * 2 + 1).text());
+		_profs.weapProfTotals[b] = parseFloat(c.eq(0).children().eq(1).find("div.fd12").eq(b * 2 + 1).text());
 	b = _profs.armorProfTotals.length;
 	while (b--)
-		_profs.armorProfTotals[b] = parseFloat(c.eq(0).children().eq(1).find(".fd12").eq(b * 2 + 7).text());
-	var a = c.eq(1).children().eq(1).find(".fd12");
+		_profs.armorProfTotals[b] = parseFloat(c.eq(0).children().eq(1).find("div.fd12").eq(b * 2 + 7).text());
+	var a = c.eq(1).children().eq(1).find("div.fd12");
 	_profs.elemTotal = parseFloat(a.eq(1).text());
 	_profs.divineTotal = parseFloat(a.eq(3).text());
 	_profs.forbidTotal = parseFloat(a.eq(5).text());
@@ -2797,15 +2797,21 @@ function showSidebarProfs() {
 	loadProfsObject();
 	if (!isProfTotalsRecorded())
 		return;
-	var b = $(".stuffbox").height() - 31;
+	var b = document.querySelector("div.stuffbox").scrollHeight - 31;
 	GM_addStyle(".prof_sidebar td {font-family:arial,helvetica,sans-serif; font-size:9pt; font-weight:normal; text-align:left}.prof_sidebar_top td {font-family:arial,helvetica,sans-serif; font-size:10pt; font-weight:bold; text-align:center}");
-	var a = "<div id='_profbutton' class='ui-corner-all' style='position:absolute;top:" + b + "px;border:1px solid;margin-left:5px;padding:2px;width:132px;font-size:10pt;font-weight:bold;text-align:center;cursor:default;'>Proficiency</div>";
-	$(".clb").append(a);
-	$("#_profbutton").mouseover(function () {
+	var div = document.createElement("div");
+	div.setAttribute("id", "_profbutton");
+	div.setAttribute("class", "ui-corner-all");
+	div.setAttribute("style", 'position:absolute;top:' + b + 'px;border:1px solid;margin-left:5px;padding:2px;width:132px;font-size:10pt;font-weight:bold;text-align:center;cursor:default;');
+	div.innerHTML = "Proficiency";
+	var leftBar = document.querySelector("div.clb");
+	leftBar.parentNode.insertBefore(div, leftBar.nextSibling);
+
+	div.addEventListener("mouseover", function () {
 		var c = HVStat.popupElement;
-		var d = $("#_profbutton").offset();
-		c.style.left = d.left + 145 + "px";
-		c.style.top = d.top - 126 + "px";
+		var rectObject = div.getBoundingClientRect();
+		c.style.left = rectObject.left + 145 + "px";
+		c.style.top = rectObject.top - 126 + "px";
 		c.style.width = "260px";
 		c.style.height = "126px";
 		c.innerHTML = '<table class="prof_sidebar" cellspacing="0" cellpadding="0" style="width:100%">'
@@ -2819,7 +2825,7 @@ function showSidebarProfs() {
 			+ '<tr><td>Heavy armor:</td><td>' + _profs.armorProfTotals[3].toFixed(2) + '</td><td>Curative:</td><td>' + _profs.curativeTotal.toFixed(2) + '</td></tr></table>'; //spiritTotal added by Ilirith
 		c.style.visibility = "visible";
 	});
-	$("#_profbutton").mouseout(function () {
+	div.addEventListener("mouseout", function () {
 		HVStat.popupElement.style.visibility = "hidden";
 	});
 }
@@ -2829,7 +2835,7 @@ function isProfTotalsRecorded() {
 }
 function inventoryWarning() {
 	var d = 4;
-	var c = $(".stuffbox").width() - 85 - 4;
+	var c = $("div.stuffbox").width() - 85 - 4;
 	var a = document.createElement("div");
 	var b = "<div class='ui-state-error ui-corner-all' style='position:absolute; top:" + d + "px; left: " + c + "px; z-index:1074'><span style='margin:3px' class='ui-icon ui-icon-alert' title='Inventory Limit Exceeded.'/></div>";
 	$(a).html(b);
@@ -2841,10 +2847,10 @@ function inventoryWarning() {
 	});
 }
 function collectRoundInfo() {
-	var e = "";
+	var lastTurnNumberString = "";
 	var a = 0;
 	var ac = 0;
-	var c = "";
+	var logString = "";
 	var d;
 	var b = false;
 	// create monster objects
@@ -2856,32 +2862,32 @@ function collectRoundInfo() {
 		loadDropsObject();
 	if (_settings.isTrackRewards)
 		loadRewardsObject();
-	var index = HVStat.monsters.length - 1;
-	$("#togpane_log td:first-child").each(function (j) {
+	var monsterIndex = HVStat.monsters.length - 1;
+	$("#togpane_log td:first-child").each(function (elementIndex) {
 		var reResult;
-		var g = $(this);
-		var k = g.next().next();
-		if (j === 0) {
-			e = g.html();
+		var turnNumberElement = $(this);
+		var logStringElement = turnNumberElement.next().next();
+		if (elementIndex === 0) {
+			lastTurnNumberString = turnNumberElement.html();
 		}
-		c = k.html();
-		var kline = g.html();
-		var kline2 = parseInt(g.next().html()) - 1;
-		var sel0 = $(".t1:contains(" + kline + ")");
-		var sel = sel0.next().filter(":contains(" + kline2 + ")").next().html();
-		var selall = $(".t1:contains(" + kline + ")").next().next().text();
-		if (!_round.isLoaded) { // -> if turn 0
-			if (c.match(/HP=/)) {
-				HVStat.monsters[index].fetchStartingLog(c);
+		logString = logStringElement.html();
+		var currentTurnNumberString = turnNumberElement.html();
+		var previousRowNumberOfCurrentTurn = parseInt(turnNumberElement.next().html()) - 1;
+		var currentTurnNumberElements = $("td.t1:contains(" + currentTurnNumberString + ")");
+		var logStringOfPreviousRow = currentTurnNumberElements.next().filter(":contains(" + previousRowNumberOfCurrentTurn + ")").next().html();
+		var joinedLogStringOfCurrentTurn = $("td.t1:contains(" + currentTurnNumberString + ")").next().next().text();
+		if (!_round.isLoaded) { // should be changed to "if turn 0"
+			if (logString.match(/HP=/)) {
+				HVStat.monsters[monsterIndex].fetchStartingLog(logString);
 				if (_settings.showMonsterInfoFromDB) {
-					HVStat.monsters[index].getFromDB(HVStat.transaction, RoundSave);
+					HVStat.monsters[monsterIndex].getFromDB(HVStat.transaction, RoundSave);
 				}
 				if (_settings.isTrackItems) {
 					_round.dropChances++;
 				}
-				index--;
-			} else if (c.match(/\(Round/)) {
-				var f = c.match(/\(round.*?\)/i)[0].replace("(", "").replace(")", "");
+				monsterIndex--;
+			} else if (logString.match(/\(Round/)) {
+				var f = logString.match(/\(round.*?\)/i)[0].replace("(", "").replace(")", "");
 				var m = f.split(" ");
 				_round.currRound = parseInt(m[1]);
 				if (m.length > 2) {
@@ -2896,36 +2902,36 @@ function collectRoundInfo() {
 				}
 				b = true;
 			}
-			if (c.match(/random encounter/)) {
+			if (logString.match(/random encounter/)) {
 				_round.battleType = HOURLY;
-			} else if (c.match(/arena challenge/)) {
+			} else if (logString.match(/arena challenge/)) {
 				_round.battleType = ARENA;
-				_round.arenaNum = parseInt(c.match(/challenge #\d+?\s/i)[0].replace("challenge #", ""));
-			} else if (c.match(/GrindFest/)) {
+				_round.arenaNum = parseInt(logString.match(/challenge #\d+?\s/i)[0].replace("challenge #", ""));
+			} else if (logString.match(/GrindFest/)) {
 				_round.battleType = GRINDFEST;
-			} else if (c.match(/Item World/)) {
+			} else if (logString.match(/Item World/)) {
 				_round.battleType = ITEM_WORLD;
-			} else if (c.match(/CrysFest/)) {
+			} else if (logString.match(/CrysFest/)) {
 				_round.battleType = CRYSFEST;
 			}
 			RoundSave();
 		}
-		if (g.html() !== e) {
+		if (turnNumberElement.html() !== lastTurnNumberString) {
 			return false;
 		}
-		if (_settings.isAlertGem && c.match(/drops a (.*) Gem/)) {
+		if (_settings.isAlertGem && logString.match(/drops a (.*) Gem/)) {
 			alert("You picked up a " + RegExp.$1 + " Gem.");
 		}
-		if (_settings.isWarnAbsorbTrigger && /The spell is absorbed/.test(c)) {
+		if (_settings.isWarnAbsorbTrigger && /The spell is absorbed/.test(logString)) {
 			alert("Absorbing Ward has triggered.");
 		}
-		if (_settings.isWarnSparkTrigger && c.match(/spark of life.*defeat/ig)) {
+		if (_settings.isWarnSparkTrigger && logString.match(/spark of life.*defeat/ig)) {
 			alert("Spark of Life has triggered!!");
 		}
-		if (_settings.isWarnSparkExpire && c.match(/spark of life.*expired/ig)) {
+		if (_settings.isWarnSparkExpire && logString.match(/spark of life.*expired/ig)) {
 			alert("Spark of Life has expired!!");
 		}
-		if ((_settings.isShowSidebarProfs || _settings.isTrackStats) && c.match(/0.0(\d+) points of (.*?) proficiency/ig)) {
+		if ((_settings.isShowSidebarProfs || _settings.isTrackStats) && logString.match(/0.0(\d+) points of (.*?) proficiency/ig)) {
 			var p = (RegExp.$1) / 100;
 			var r = RegExp.$2;
 			loadProfsObject();
@@ -2974,11 +2980,11 @@ function collectRoundInfo() {
 			_profs.save();
 		}
 		if (_settings.isRememberScan) {
-			if (c.indexOf("Scanning") >= 0) {
+			if (logString.indexOf("Scanning") >= 0) {
 				(function () {
 					var scanningMonsterName;
 					var scanningMonsterIndex = -1;
-					var r = /Scanning ([^\.]{0,30})\.{3,}/.exec(c);
+					var r = /Scanning ([^\.]{0,30})\.{3,}/.exec(logString);
 					var i, len, monster;
 					if (r && r.length >= 2) {
 						scanningMonsterName = r[1];
@@ -2986,7 +2992,7 @@ function collectRoundInfo() {
 						for (i = 0; i < len; i++) {
 							monster = HVStat.monsters[i];
 							if (monster.name === scanningMonsterName) {
-								monster.fetchScanningLog(c, HVStat.transaction);
+								monster.fetchScanningLog(logString, HVStat.transaction);
 							}
 						}
 					}
@@ -2995,59 +3001,59 @@ function collectRoundInfo() {
 		}
 		if (_settings.isTrackStats || _settings.isShowEndStats) {
 			var o = 0;
-			if (c.match(/\s(\d+)\s/)) {
+			if (logString.match(/\s(\d+)\s/)) {
 				o = parseInt(RegExp.$1);
 			}
-			if (c.match(/has been defeated/i)) {
+			if (logString.match(/has been defeated/i)) {
 				_round.kills++;
-			} else if (c.match(/bleeding wound hits/i)) {
+			} else if (logString.match(/bleeding wound hits/i)) {
 				_round.dDealt[2] += o;
-			} else if (c.match(/(you hit)|(you crit)/i)) {
+			} else if (logString.match(/(you hit)|(you crit)/i)) {
 				_round.aAttempts++;
 				a++;
-				_round.aHits[c.match(/you crit/i) ? 1 : 0]++;
-				_round.dDealt[c.match(/you crit/i) ? 1 : 0] += o;
-			} else if (c.match(/your offhand (hits|crits)/i)) {
-				_round.aOffhands[c.match(/offhand crit/i) ? 2 : 0]++;
-				_round.aOffhands[c.match(/offhand crit/i) ? 3 : 1] += o;
-			} else if (c.match(/you counter/i)) {
+				_round.aHits[logString.match(/you crit/i) ? 1 : 0]++;
+				_round.dDealt[logString.match(/you crit/i) ? 1 : 0] += o;
+			} else if (logString.match(/your offhand (hits|crits)/i)) {
+				_round.aOffhands[logString.match(/offhand crit/i) ? 2 : 0]++;
+				_round.aOffhands[logString.match(/offhand crit/i) ? 3 : 1] += o;
+			} else if (logString.match(/you counter/i)) {
 				_round.aCounters[0]++;
 				_round.aCounters[1] += o;
 				ac++;
 				_round.dDealt[0] += o;
-			} else if (c.match(/hits|blasts|explodes/i) && !c.match(/hits you /i)) {
-				if (c.match(/spreading poison hits /i) && !c.match(/(hits you |crits you )/i)) {
+			} else if (logString.match(/hits|blasts|explodes/i) && !logString.match(/hits you /i)) {
+				if (logString.match(/spreading poison hits /i) && !logString.match(/(hits you |crits you )/i)) {
 					_round.effectPoison[1] += o;
 					_round.effectPoison[0]++;
 				} else {
-					if (c.match(/(searing skin|freezing limbs|deep burns|turbulent air|burning soul|breached defence|blunted attack) (hits|blasts|explodes)/i) && !c.match(/(hits you |crits you )/i)) {
+					if (logString.match(/(searing skin|freezing limbs|deep burns|turbulent air|burning soul|breached defence|blunted attack) (hits|blasts|explodes)/i) && !logString.match(/(hits you |crits you )/i)) {
 						_round.elemEffects[1]++;
 						_round.elemEffects[2] += o;
-					} else if (c.match(/(fireball|inferno|flare|meteor|nova|flames of loki|icestrike|snowstorm|freeze|blizzard|cryostasis|fimbulvetr|lighting|thunderstorm|ball lighting|chain lighting|shockblast|wrath of thor|windblast|cyclone|gale|hurricane|downburst|storms of njord) (hits|blasts|explodes)/i) && !c.match(/(hits you |crits you )/i)) {
-						_round.dDealtSp[c.match(/blasts/i) ? 1 : 0] += o;
-						_round.sHits[c.match(/blasts/i) ? 1 : 0]++;
+					} else if (logString.match(/(fireball|inferno|flare|meteor|nova|flames of loki|icestrike|snowstorm|freeze|blizzard|cryostasis|fimbulvetr|lighting|thunderstorm|ball lighting|chain lighting|shockblast|wrath of thor|windblast|cyclone|gale|hurricane|downburst|storms of njord) (hits|blasts|explodes)/i) && !logString.match(/(hits you |crits you )/i)) {
+						_round.dDealtSp[logString.match(/blasts/i) ? 1 : 0] += o;
+						_round.sHits[logString.match(/blasts/i) ? 1 : 0]++;
 						_round.elemSpells[1]++;
 						_round.elemSpells[2] += o;
-					} else if (c.match(/(condemn|purge|smite|banish) (hits|blasts|explodes)/i) && !c.match(/(hits you |crits you )/i)) {
-						_round.dDealtSp[c.match(/blasts/i) ? 1 : 0] += o;
-						_round.sHits[c.match(/blasts/i) ? 1 : 0]++;
+					} else if (logString.match(/(condemn|purge|smite|banish) (hits|blasts|explodes)/i) && !logString.match(/(hits you |crits you )/i)) {
+						_round.dDealtSp[logString.match(/blasts/i) ? 1 : 0] += o;
+						_round.sHits[logString.match(/blasts/i) ? 1 : 0]++;
 						_round.divineSpells[1]++;
 						_round.divineSpells[2] += o
-					} else if (c.match(/(soul reaper|soul harvest|soul fire|soul burst|corruption|pestilence|disintegrate|ragnarok) (hits|blasts|explodes)/i) && !c.match(/(hits you |crits you )/i)) {
-						_round.dDealtSp[c.match(/blasts/i) ? 1 : 0] += o;
-						_round.sHits[c.match(/blasts/i) ? 1 : 0]++;
+					} else if (logString.match(/(soul reaper|soul harvest|soul fire|soul burst|corruption|pestilence|disintegrate|ragnarok) (hits|blasts|explodes)/i) && !logString.match(/(hits you |crits you )/i)) {
+						_round.dDealtSp[logString.match(/blasts/i) ? 1 : 0] += o;
+						_round.sHits[logString.match(/blasts/i) ? 1 : 0]++;
 						_round.forbidSpells[1]++;
 						_round.forbidSpells[2] += o
 					}
 				}
-			} else if (c.match(/(hits you )|(crits you )/i)) {
+			} else if (logString.match(/(hits you )|(crits you )/i)) {
 				_round.mAttempts++;
-				_round.mHits[c.match(/crits/i) ? 1 : 0]++;
-				_round.dTaken[c.match(/crits/i) ? 1 : 0] += o;
-				if (sel.match(/ uses | casts /i)) {
+				_round.mHits[logString.match(/crits/i) ? 1 : 0]++;
+				_round.dTaken[logString.match(/crits/i) ? 1 : 0] += o;
+				if (logStringOfPreviousRow.match(/ uses | casts /i)) {
 					_round.pskills[1]++;
 					_round.pskills[2] += o;
-					if (sel.match(/ casts /i)) {
+					if (logStringOfPreviousRow.match(/ casts /i)) {
 						_round.pskills[5]++;
 						_round.pskills[6] += o;
 					} else {
@@ -3057,115 +3063,115 @@ function collectRoundInfo() {
 					if (_settings.isRememberSkillsTypes) {
 						var j = HVStat.monsters.length;
 						while (j--) {
-							reResult = /([^\.]{1,30}) (?:uses|casts) /.exec(sel);
+							reResult = /([^\.]{1,30}) (?:uses|casts) /.exec(logStringOfPreviousRow);
 							if (reResult && reResult.length >= 2 && reResult[1] === HVStat.monsters[j].name && reResult[1].indexOf("Unnamed ") !== 0) {
-								HVStat.monsters[j].fetchSkillLog(sel, c, HVStat.transaction);
+								HVStat.monsters[j].fetchSkillLog(logStringOfPreviousRow, logString, HVStat.transaction);
 								break;
 							}
 						}
 					}
 				}
-			} else if (c.match(/you (dodge|evade|block|parry|resist)|(misses.*?against you)/i)) {
+			} else if (logString.match(/you (dodge|evade|block|parry|resist)|(misses.*?against you)/i)) {
 				_round.mAttempts++;
-				if (c.match(/dodge|(misses.*?against you)/)) {
+				if (logString.match(/dodge|(misses.*?against you)/)) {
 					_round.pDodges++;
-				} else if (c.match(/evade/)) {
+				} else if (logString.match(/evade/)) {
 					_round.pEvades++;
-				} else if (c.match(/block/)) {
+				} else if (logString.match(/block/)) {
 					_round.pBlocks++;
-				} else if (c.match(/parry/)) {
+				} else if (logString.match(/parry/)) {
 					_round.pParries++;
-				} else if (c.match(/resist/)) {
+				} else if (logString.match(/resist/)) {
 					_round.pResists++;
 				}
-			} else if (c.match(/casts?/)) {
-				if (c.match(/casts/)) {
+			} else if (logString.match(/casts?/)) {
+				if (logString.match(/casts/)) {
 					_round.mAttempts++;
 					_round.mSpells++;
-				} else if (c.match(/you cast/i)) {
-					if (c.match(/(poison|slow|weaken|sleep|confuse|imperil|blind|silence|nerf|x.nerf|magnet|lifestream)/i)) {
+				} else if (logString.match(/you cast/i)) {
+					if (logString.match(/(poison|slow|weaken|sleep|confuse|imperil|blind|silence|nerf|x.nerf|magnet|lifestream)/i)) {
 						_round.depSpells[0]++;
 						_round.sAttempts++
-					} else if (c.match(/(condemn|purge|smite|banish)/i)) {
+					} else if (logString.match(/(condemn|purge|smite|banish)/i)) {
 						_round.divineSpells[0]++;
 						_round.sAttempts++;
-						if (selall.match(/Your spell misses its mark/i)) {
-							_round.divineSpells[3] += selall.match(/Your spell misses its mark/ig).length;
+						if (joinedLogStringOfCurrentTurn.match(/Your spell misses its mark/i)) {
+							_round.divineSpells[3] += joinedLogStringOfCurrentTurn.match(/Your spell misses its mark/ig).length;
 						}
-					} else if (c.match(/(soul reaper|soul harvest|soul fire|soul burst|corruption|pestilence|disintegrate|ragnarok)/i)) {
+					} else if (logString.match(/(soul reaper|soul harvest|soul fire|soul burst|corruption|pestilence|disintegrate|ragnarok)/i)) {
 						_round.forbidSpells[0]++;
 						_round.sAttempts++
-						if (selall.match(/Your spell misses its mark/i)) {
-							_round.forbidSpells[3] += selall.match(/Your spell misses its mark/ig).length;
+						if (joinedLogStringOfCurrentTurn.match(/Your spell misses its mark/i)) {
+							_round.forbidSpells[3] += joinedLogStringOfCurrentTurn.match(/Your spell misses its mark/ig).length;
 						}
-					} else if (c.match(/(fireball|inferno|flare|meteor|nova|flames of loki|icestrike|snowstorm|freeze|blizzard|cryostasis|fimbulvetr|lighting|thunderstorm|ball lighting|chain lighting|shockblast|wrath of thor|windblast|cyclone|gale|hurricane|downburst|storms of njord)/i)) {
+					} else if (logString.match(/(fireball|inferno|flare|meteor|nova|flames of loki|icestrike|snowstorm|freeze|blizzard|cryostasis|fimbulvetr|lighting|thunderstorm|ball lighting|chain lighting|shockblast|wrath of thor|windblast|cyclone|gale|hurricane|downburst|storms of njord)/i)) {
 						_round.elemSpells[0]++;
 						_round.sAttempts++;
-						if (selall.match(/Your spell misses its mark/i)) {
-							_round.elemSpells[3] += selall.match(/Your spell misses its mark/ig).length;
+						if (joinedLogStringOfCurrentTurn.match(/Your spell misses its mark/i)) {
+							_round.elemSpells[3] += joinedLogStringOfCurrentTurn.match(/Your spell misses its mark/ig).length;
 						}
-					} else if (c.match(/(spark of life|absorb|protection|shadow veil|haste|flame spikes|frost spikes|lightning spikes|storm spikes|arcane focus|heartseeker)/i)) {
+					} else if (logString.match(/(spark of life|absorb|protection|shadow veil|haste|flame spikes|frost spikes|lightning spikes|storm spikes|arcane focus|heartseeker)/i)) {
 						_round.supportSpells++
-						if (c.match(/absorb/i)) {
+						if (logString.match(/absorb/i)) {
 							_round.absArry[0]++
 						}
-					} else if (c.match(/(cure|regen)/i)) {
+					} else if (logString.match(/(cure|regen)/i)) {
 						_round.curativeSpells++
-						if (c.match(/cure/i)) {
-							_round.cureTotals[c.match(/cure\./i) ? 0 : c.match(/cure ii\./i) ? 1 : 2] += d;
-							_round.cureCounts[c.match(/cure\./i) ? 0 : c.match(/cure ii\./i) ? 1 : 2]++
+						if (logString.match(/cure/i)) {
+							_round.cureTotals[logString.match(/cure\./i) ? 0 : logString.match(/cure ii\./i) ? 1 : 2] += d;
+							_round.cureCounts[logString.match(/cure\./i) ? 0 : logString.match(/cure ii\./i) ? 1 : 2]++
 						}
 					}
 				}
-			} else if (c.match(/The spell is absorbed. You gain (\d+) Magic Points/)) {
+			} else if (logString.match(/The spell is absorbed. You gain (\d+) Magic Points/)) {
 				_round.absArry[1]++;
 				_round.absArry[2] += parseInt(RegExp.$1);
-			} else if (c.match(/You are healed for (\d+) Health Points/)) {
+			} else if (logString.match(/You are healed for (\d+) Health Points/)) {
 				d = parseInt(RegExp.$1);
-			} else if (c.match(/Your attack misses its mark/)) {
+			} else if (logString.match(/Your attack misses its mark/)) {
 				_round.aAttempts++;
-			} else if (c.match(/Your spell misses its mark/)) {
+			} else if (logString.match(/Your spell misses its mark/)) {
 				_round.sResists++;
-			} else if (c.match(/gains? the effect/i)) {
-				if (c.match(/gain the effect Overwhelming Strikes/i)) {
+			} else if (logString.match(/gains? the effect/i)) {
+				if (logString.match(/gain the effect Overwhelming Strikes/i)) {
 					_round.overStrikes++;
-				} else if (c.match(/gains the effect Coalesced Mana/i)) {
+				} else if (logString.match(/gains the effect Coalesced Mana/i)) {
 					_round.coalesce++;
-				} else if (c.match(/gains the effect Ether Theft/i)) {
+				} else if (logString.match(/gains the effect Ether Theft/i)) {
 					_round.eTheft++;
-				} else if (c.match(/gain the effect Channeling/i)) {
+				} else if (logString.match(/gain the effect Channeling/i)) {
 					_round.channel++;
 				} else {
-					if (c.match(/gains the effect (searing skin|freezing limbs|deep burns|turbulent air|breached defence|blunted attack|burning soul|rippened soul)/i)) {
+					if (logString.match(/gains the effect (searing skin|freezing limbs|deep burns|turbulent air|breached defence|blunted attack|burning soul|rippened soul)/i)) {
 						_round.elemEffects[0]++;
-					} else if (c.match(/gains the effect (spreading poison|slowed|weakened|sleep|confused|imperiled|blinded|silenced|nerfed|magically snared|lifestream)/i)) {
+					} else if (logString.match(/gains the effect (spreading poison|slowed|weakened|sleep|confused|imperiled|blinded|silenced|nerfed|magically snared|lifestream)/i)) {
 						_round.depSpells[1]++;
-					} else if (c.match(/gains the effect stunned/i)) {
+					} else if (logString.match(/gains the effect stunned/i)) {
 						_round.weaponprocs[0]++;
-						if (sel.match(/You counter/i)) {
+						if (logStringOfPreviousRow.match(/You counter/i)) {
 							_round.weaponprocs[0]--;
 							_round.weaponprocs[7]++
 						}
-					} else if (c.match(/gains the effect penetrated armor/i)) {
+					} else if (logString.match(/gains the effect penetrated armor/i)) {
 						_round.weaponprocs[1]++;
-					} else if (c.match(/gains the effect bleeding wound/i)) {
+					} else if (logString.match(/gains the effect bleeding wound/i)) {
 						_round.weaponprocs[2]++;
-					} else if (c.match(/gains the effect ether theft/i)) {
+					} else if (logString.match(/gains the effect ether theft/i)) {
 						_round.weaponprocs[3]++;
 					}
 				}
-			} else if (c.match(/uses?/i)) {
-				if (c.match(/uses/i)) {
+			} else if (logString.match(/uses?/i)) {
+				if (logString.match(/uses/i)) {
 					_round.pskills[0]++;
-				} else if (c.match(/use Mystic Gem/i)) {
+				} else if (logString.match(/use Mystic Gem/i)) {
 					_round.channel--;
 				}
-			} else if (c.match(/you drain/i)) {
-				if (c.match(/you drain \d+(\.)?\d? hp from/i)) {
+			} else if (logString.match(/you drain/i)) {
+				if (logString.match(/you drain \d+(\.)?\d? hp from/i)) {
 					_round.weaponprocs[4]++;
-				} else if (c.match(/you drain \d+(\.)?\d? mp from/i)) {
+				} else if (logString.match(/you drain \d+(\.)?\d? mp from/i)) {
 					_round.weaponprocs[5]++;
-				} else if (c.match(/you drain \d+(\.)?\d? sp from/i)) {
+				} else if (logString.match(/you drain \d+(\.)?\d? sp from/i)) {
 					_round.weaponprocs[6]++;
 				}
 			}
@@ -3173,18 +3179,18 @@ function collectRoundInfo() {
 		var l = /\[.*?\]/i;
 		var n;
 		var t = 1;
-		if (c.match(/dropped.*?color:.*?red.*?\[.*?\]/ig)) {
+		if (logString.match(/dropped.*?color:.*?red.*?\[.*?\]/ig)) {
 			_equips++;
-			var q = c.match(l)[0];
+			var q = logString.match(l)[0];
 			_lastEquipName = q;
 			if (_settings.isTrackItems) {
 				_drops.eqDrop++;
 				_drops.eqArray.push(q);
 				_drops.eqDropbyBT[_round.battleType]++;
 			}
-		} else if (c.match(/dropped.*?color:.*?blue.*?\[.*?\]/ig)) {
+		} else if (logString.match(/dropped.*?color:.*?blue.*?\[.*?\]/ig)) {
 			_artifacts++;
-			itemToAdd = c.match(l)[0];
+			itemToAdd = logString.match(l)[0];
 			_lastArtName = itemToAdd;
 			if (_settings.isTrackItems) {
 				_drops.artDrop++;
@@ -3203,8 +3209,8 @@ function collectRoundInfo() {
 					_drops.artArry.push(itemToAdd);
 				}
 			}
-		} else if (_settings.isTrackItems && (c.match(/dropped.*?color:.*?green.*?\[.*?\]/ig) || c.match(/dropped.*?token/ig))) {
-			itemToAdd = c.match(l)[0];
+		} else if (_settings.isTrackItems && (logString.match(/dropped.*?color:.*?green.*?\[.*?\]/ig) || logString.match(/dropped.*?token/ig))) {
+			itemToAdd = logString.match(l)[0];
 			if (itemToAdd.match(/(\d){0,2}.?x?.?Crystal of /ig)) {
 				t = parseInt("0" + RegExp.$1, 10);
 				if (t < 1) {
@@ -3222,21 +3228,21 @@ function collectRoundInfo() {
 					break;
 				}
 			}
-		} else if (_settings.isTrackItems && c.match(/dropped.*?color:.*?\#461B7E.*?\[.*?\]/ig)) {
+		} else if (_settings.isTrackItems && logString.match(/dropped.*?color:.*?\#461B7E.*?\[.*?\]/ig)) {
 			_drops.dropChances--;
 			_drops.dropChancesbyBT[_round.battleType]--;
 		}
-		if (c.match(/(clear bonus).*?color:.*?red.*?\[.*?\]/ig)) {
+		if (logString.match(/(clear bonus).*?color:.*?red.*?\[.*?\]/ig)) {
 			_equips++;
-			var s = c.match(l)[0];
+			var s = logString.match(l)[0];
 			_lastEquipName = s;
 			if (_settings.isTrackRewards) {
 				_rewards.eqRwrd++;
 				_rewards.eqRwrdArry.push(s);
 			}
-		} else if (c.match(/(clear bonus).*?color:.*?blue.*?\[.*?\]/ig)) {
+		} else if (logString.match(/(clear bonus).*?color:.*?blue.*?\[.*?\]/ig)) {
 			_artifacts++;
-			itemToAdd = c.match(l)[0];
+			itemToAdd = logString.match(l)[0];
 			_lastArtName = itemToAdd;
 			if (_settings.isTrackRewards) {
 				_rewards.artRwrd++;
@@ -3254,9 +3260,9 @@ function collectRoundInfo() {
 					_rewards.artRwrdArry.push(itemToAdd);
 				}
 			}
-		} else if (_settings.isTrackRewards && (c.match(/(clear bonus).*?color:.*?green.*?\[.*?\]/ig) || c.match(/(clear bonus).*?token/ig))) {
+		} else if (_settings.isTrackRewards && (logString.match(/(clear bonus).*?color:.*?green.*?\[.*?\]/ig) || logString.match(/(clear bonus).*?token/ig))) {
 			_rewards.itemsRwrd++;
-			itemToAdd = c.match(l)[0];
+			itemToAdd = logString.match(l)[0];
 			if (itemToAdd.match(/(\d)x Crystal/ig)) {
 				t = parseInt("0" + RegExp.$1, 10);
 				itemToAdd = itemToAdd.replace(/\dx /, "");
@@ -3274,16 +3280,16 @@ function collectRoundInfo() {
 				_rewards.itemRwrdQtyArry.push(1);
 				_rewards.itemRwrdArry.push(itemToAdd);
 			}
-		} else if (_settings.isTrackRewards && (c.match(/(token bonus).*?\[.*?\]/ig))) {
-			if (c.match(/token of blood/ig)) {
+		} else if (_settings.isTrackRewards && (logString.match(/(token bonus).*?\[.*?\]/ig))) {
+			if (logString.match(/token of blood/ig)) {
 				_tokenDrops[0]++;
-			} else if (c.match(/token of healing/ig)) {
+			} else if (logString.match(/token of healing/ig)) {
 				_tokenDrops[1]++;
-			} else if (c.match(/chaos token/ig)) {
+			} else if (logString.match(/chaos token/ig)) {
 				_tokenDrops[2]++;
 			}
 		}
-		if (c.match(/reached equipment inventory limit/i)) {
+		if (logString.match(/reached equipment inventory limit/i)) {
 			localStorage.setItem(HV_EQUIP, JSON.stringify("true"));
 		}
 	});
@@ -3295,8 +3301,8 @@ function collectRoundInfo() {
 	if (ac > 1) {
 		_round.aCounters[ac]++;
 	}
-	if (e > _round.lastTurn) {
-		_round.lastTurn = e;
+	if (lastTurnNumberString > _round.lastTurn) {
+		_round.lastTurn = lastTurnNumberString;
 	}
 	RoundSave();
 }
@@ -3929,14 +3935,14 @@ function getMonsterStatsHtml() {
 }
 function initUI() {
 	var d = 4;
-	var c = $(".stuffbox").width() - 60 - 4;
-	var b = document.createElement("div");
-	var a = "<div class='ui-state-default ui-corner-all' style='position:absolute; top:" + d + "px; left: " + c + "px; z-index:1074'><span style='margin:3px' class='ui-icon ui-icon-wrench' title='Launch HV STAT UI'/></div>";
-	$(b).html(a);
-	$(b).addClass("_mainButton");
-	$("body").append(b);
-	$(b).css("cursor", "pointer");
-	$("._mainButton").click(initMainMenu)
+	var c = document.querySelector("div.stuffbox").scrollWidth - 60 - 4;
+	var div = document.createElement("div");
+	div.setAttribute("id", "HVStatMainButton");
+	div.setAttribute("class", "ui-state-default ui-corner-all");
+	div.setAttribute("style", "position:absolute; top:" + d + "px; left: " + c + "px; z-index:1074; cursor: pointer;");
+	div.innerHTML = '<span style="margin:3px" class="ui-icon ui-icon-wrench" title="Launch HV STAT UI"/>';
+	document.body.insertBefore(div, null);
+	div.addEventListener("click", initMainMenu);
 }
 function initMainMenu() {
 	if (_isMenuInitComplete) return;
@@ -3980,8 +3986,9 @@ function initMainMenu() {
 	initShrinePane();
 	initSettingsPane();
 	initMonsterStatsPane();
-	$("._mainButton").unbind("click", initMainMenu);
-	$("._mainButton").click(function () {
+	var mainButton = document.getElementById("HVStatMainButton");
+	mainButton.removeEventListener("click", initMainMenu);
+	mainButton.addEventListener("click", function () {
 		if ($(c).dialog("isOpen"))
 			$(c).dialog("close");
 		else
