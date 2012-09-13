@@ -851,9 +851,9 @@ HVStat.Monster = (function () {
 		}
 
 		var _index = index;
-		var _baseElement = $("#" + _domElementIds[_index]);
-		var _healthBars = $("div.btm5", _baseElement);
-		var _isDead = $("img.chb2", _healthBars.eq(0)).length === 0;
+		var _baseElement = document.getElementById(_domElementIds[_index]);
+		var _healthBars = _baseElement.querySelectorAll("div.btm5");
+		var _isDead = _healthBars[0].querySelectorAll("img.chb2").length === 0;
 		var _waitingForGetResponseOfMonsterScanResults = false;
 		var _waitingForGetResponseOfMonsterSkills = false;
 
@@ -866,11 +866,14 @@ HVStat.Monster = (function () {
 		var _skills = [];
 
 		var currBarRate = function (barIndex) {
-			var v, style, bar = $("img.chb2", _healthBars.eq(barIndex));
+			if (barIndex >= _healthBars.length) {
+				return 0;
+			}
+			var v, style, bar = _healthBars[barIndex].querySelector("img.chb2");
 			if (!bar) {
 				v = 0;
 			} else {
-				style = bar.attr("style");
+				style = bar.getAttribute("style");
 				r = /width\s*?:\s*?(\d+?)px/i.exec(style);
 				if (r && r.length >= 2) {
 					v = Number(r[1]) / _maxBarWidth;
@@ -959,11 +962,11 @@ HVStat.Monster = (function () {
 				return;
 			}
 
-			var nameOuterFrameElement = _baseElement.children().eq(1);
-			var nameInnerFrameElement = _baseElement.children().eq(1).children().eq(0);
-			var hpBarBaseElement = _baseElement.children().eq(2).children().eq(0);
-			var mpBarBaseElement = _baseElement.children().eq(2).children().eq(1);
-			var spBarBaseElement = _baseElement.children().eq(2).children().eq(2);
+			var nameOuterFrameElement = _baseElement.children[1];
+			var nameInnerFrameElement = _baseElement.children[1].children[0];
+			var hpBarBaseElement = _baseElement.children[2].children[0];
+			var mpBarBaseElement = _baseElement.children[2].children[1];
+			var spBarBaseElement = _baseElement.children[2].children[2];
 			var maxAbbrLevel = _settings.ResizeMonsterInfo ? 5 : 1;
 			var maxStatsWidth = 315;
 
@@ -971,6 +974,7 @@ HVStat.Monster = (function () {
 			var mpIndicator = "";
 			var spIndicator = "";
 			var html, statsHtml;
+			var div, divText;
 			var statsElement;
 			var abbrLevel;
 
@@ -980,18 +984,27 @@ HVStat.Monster = (function () {
 				} else {
 					hpIndicator = _currHp() + " / " + _maxHp
 				}
-				html = '<div style="position:absolute;z-index:1074;top:-1px;font-size:8pt;font-family:arial,helvetica,sans-serif;font-weight:bolder;color:yellow;width:120px;text-align:center">' + hpIndicator + '</div>';
-				hpBarBaseElement.after(html);
+				div = document.createElement("div");
+				div.setAttribute("style", "position:absolute;z-index:1074;top:-1px;font-size:8pt;font-family:arial,helvetica,sans-serif;font-weight:bolder;color:yellow;width:120px;text-align:center");
+				divText = document.createTextNode(hpIndicator);
+				div.appendChild(divText);
+				hpBarBaseElement.parentNode.insertBefore(div, hpBarBaseElement.nextSibling);
 			}
 			if (_settings.showMonsterMP) {
 				mpIndicator = (_currMpRate * 100).toFixed(1);
-				html = '<div style="position:absolute;z-index:1074;top:11px;font-size:8pt;font-family:arial,helvetica,sans-serif;font-weight:bolder;color:yellow;width:120px;text-align:center">' + mpIndicator + '%</div>';
-				mpBarBaseElement.after(html);
+				div = document.createElement("div");
+				div.setAttribute("style", "position:absolute;z-index:1074;top:11px;font-size:8pt;font-family:arial,helvetica,sans-serif;font-weight:bolder;color:yellow;width:120px;text-align:center");
+				divText = document.createTextNode(mpIndicator);
+				div.appendChild(divText);
+				mpBarBaseElement.parentNode.insertBefore(div, mpBarBaseElement.nextSibling);
 			}
 			if (_hasSpiritPoint && _settings.showMonsterSP) {
 				spIndicator = (_currSpRate * 100).toFixed(1);
-				html = '<div style="position:absolute;z-index:1074;top:23px;font-size:8pt;font-family:arial,helvetica,sans-serif;font-weight:bolder;color:yellow;width:120px;text-align:center">' + spIndicator + '%</div>';
-				spBarBaseElement.after(html);
+				div = document.createElement("div");
+				div.setAttribute("style", "position:absolute;z-index:1074;top:23px;font-size:8pt;font-family:arial,helvetica,sans-serif;font-weight:bolder;color:yellow;width:120px;text-align:center");
+				divText = document.createTextNode(spIndicator);
+				div.appendChild(divText);
+				spBarBaseElement.parentNode.insertBefore(div, spBarBaseElement.nextSibling);
 			}
 
 			if (_settings.showMonsterInfoFromDB) {
@@ -1088,13 +1101,13 @@ HVStat.Monster = (function () {
 						}
 					}
 					if (HVStat.usingHVFont) {
-						nameOuterFrameElement.css("width", "auto"); // tweak for Firefox
-						nameInnerFrameElement.css("width", "auto"); // tweak for Firefox
+						nameOuterFrameElement.style.width = "auto"; // tweak for Firefox
+						nameInnerFrameElement.style.width = "auto"; // tweak for Firefox
 						html = "<div style='font-family:arial; font-size:7pt; font-style:normal; font-weight:bold; cursor:default; position:relative; top:-1px; left:2px; padding:0 1px; margin-left:0px; white-space:nowrap;'>" + statsHtml + "</div>";
 						nameInnerFrameElement.after(html);
-						statsElement = nameInnerFrameElement.next();
+						statsElement = nameInnerFrameElement.nextSibling;
 						//console.log("scrollWidth = " + statsElement.prop("scrollWidth"));
-						if (Number(nameOuterFrameElement.prop("scrollWidth")) <= maxStatsWidth) {	// does not work with Firefox without tweak
+						if (Number(nameOuterFrameElement.scrollWidth) <= maxStatsWidth) {	// does not work with Firefox without tweak
 							break;
 						} else if (abbrLevel < maxAbbrLevel - 1) {
 							// revert
@@ -1102,25 +1115,25 @@ HVStat.Monster = (function () {
 						}
 					} else {
 						html = "<div style='font-family:arial; font-size:7pt; font-style:normal; font-weight:bold; display:inline; cursor:default; padding:0 1px; margin-left:1px; white-space:nowrap;'>" + statsHtml + "</div>";
-						var nameElement = nameInnerFrameElement.children().eq(0);
-						var name = nameElement.html();
-						nameOuterFrameElement.css("width", "auto"); // tweak for Firefox
-						nameInnerFrameElement.css("width", "auto"); // tweak for Firefox
-						nameElement.html(name + html);
-						nameElement.css("white-space", "nowrap");
+						var nameElement = nameInnerFrameElement.children[0];
+						var name = nameElement.innerHTML;
+						nameOuterFrameElement.style.width = "auto"; // tweak for Firefox
+						nameInnerFrameElement.style.width = "auto"; // tweak for Firefox
+						nameElement.innerHTML = name + html;
+						nameElement.style.whiteSpace = "nowrap";
 						//console.log("scrollWidth = " + nameElement.prop("scrollWidth"));
-						if (Number(nameElement.prop("scrollWidth")) <= maxStatsWidth) {	// does not work with Firefox without tweak
+						if (Number(nameElement.scrollWidth) <= maxStatsWidth) {	// does not work with Firefox without tweak
 							break;
 						} else if (_settings.ResizeMonsterInfo) {
 							// revert
-							nameElement.html(name);
+							nameElement.innerHTML = name;
 							if (abbrLevel >= maxAbbrLevel - 1) {
 								// reduce name length
 								for (var len = name.length - 2; len >= 6; len--) {
 									var reducedName = name.substring(0, len) + "...";
-									nameElement.html(reducedName + html);
+									nameElement.innerHTML = reducedName + html;
 									//console.log("scrollWidth = " + nameElement.prop("scrollWidth"));
-									if (Number(nameElement.prop("scrollWidth")) <= maxStatsWidth) {	// does not work with Firefox without tweak
+									if (Number(nameElement.scrollWidth) <= maxStatsWidth) {	// does not work with Firefox without tweak
 										break;
 									}
 								}
@@ -1128,7 +1141,7 @@ HVStat.Monster = (function () {
 						}
 					}
 				}
-				nameOuterFrameElement.css("width", String(maxStatsWidth) + "px");
+				nameOuterFrameElement.style.width = String(maxStatsWidth) + "px";
 			}
 		};
 
@@ -6005,7 +6018,20 @@ HVStat.showScanAndSkillButtons = function () {
 function registerEventHandlersForMonsterPopup() {
 	var delay = _settings.monsterPopupDelay;
 	var popupLeftOffset = _settings.isMonsterPopupPlacement ? 955 : 300;
-	var showPopup = function (index) {
+	var showPopup = function (event) {
+		var target;
+		for (target = event.target; target && target.id.indexOf("mkey_") < 0; target = target.parentElement) {
+			;
+		}
+		if (!target) return;
+		var i, index = -1;
+		for (i = 0; i < HVStat.monsters.length; i++) {
+			if (HVStat.monsters[i].domElementId === target.id) {
+				index = i;
+				break;
+			}
+		}
+		if (index < 0) return;
 		var html = HVStat.monsters[index].renderPopup();
 		HVStat.popupElement.style.width = "270px";
 		HVStat.popupElement.style.height = "auto";
@@ -6021,11 +6047,11 @@ function registerEventHandlersForMonsterPopup() {
 	};
 	var timerId;
 	var prepareForShowingPopup = function (event) {
-		(function (index) {
+		(function (event) {
 			timerId = setTimeout(function () {
-				showPopup(index);
+				showPopup(event);
 			}, delay);
-		})(event.data.index);
+		})(event);
 	};
 	var prepareForHidingPopup = function (event) {
 		setTimeout(hidePopup, delay);
@@ -6033,9 +6059,9 @@ function registerEventHandlersForMonsterPopup() {
 	};
 	var i, len = HVStat.monsters.length;
 	for (i = 0; i < len; i++) {
-		var monsterElement = $("#" + HVStat.monsters[i].domElementId);
-		monsterElement.bind('mouseover', { index: i }, prepareForShowingPopup);
-		monsterElement.bind('mouseout', prepareForHidingPopup);
+		var monsterElement = HVStat.monsters[i].baseElement;
+		monsterElement.addEventListener("mouseover", prepareForShowingPopup);
+		monsterElement.addEventListener("mouseout", prepareForHidingPopup);
 	}
 }
 function StartBattleAlerts () {
@@ -6113,47 +6139,51 @@ function FindSettingsStats() {
 	_charss.save();
 }
 function AlertEffectsSelf() {
-	$("div.btps > img").each(function () {
-		var allinfo = $(this).attr("onmouseover")
-			.replace("battle.set_infopane_effect(", "")
-			.replace(")", "")
-			.replace(/\'\,\s/g, '", ')
-			.replace(/\'/g, "")
-			.split('", ');
-		var effectNames = [
-			"Protection", "Hastened", "Shadow Veil", "Regen", "Absorbing Ward",
-			"Spark of Life", "Channeling", "Arcane Focus", "Heartseeker", "Spirit Shield"
-		];
-		var i, len = effectNames.length;
-		for (i = 0; i < len; i++) {
+	var effectNames = [
+		"Protection", "Hastened", "Shadow Veil", "Regen", "Absorbing Ward",
+		"Spark of Life", "Channeling", "Arcane Focus", "Heartseeker", "Spirit Shield"
+	];
+	var elements = document.querySelectorAll("#battleform div.btps > img");
+	Array.prototype.forEach.call(elements, function (element) {
+		var onmouseover = element.getAttribute("onmouseover").toString();
+		var result = /battle\.set_infopane_effect\('([^']*)'\s*,\s*'[^']*'\s*,\s*(.+)\)/.exec(onmouseover);
+		if (result && result.length < 3) return;
+		var effectName = result[1];
+		var duration = result[2];
+		var i;
+		for (i = 0; i < effectNames.length; i++) {
 			if (_settings.isEffectsAlertSelf[i]
-					&& allinfo[0].match(effectNames[i])
-					&& allinfo[2] === _settings.EffectsAlertSelfRounds[i]) {
-				alert(allinfo[0] + " is expiring");
+					&& effectNames[i] === effectName
+					&& _settings.EffectsAlertSelfRounds[i] === duration) {
+				alert(effectName + " is expiring");
 			}
 		}
 	});
 }
 function AlertEffectsMonsters() {
-	$("div.btm6 > img").each(function () {
-		var allinfo = $(this).attr("onmouseover")
-			.replace("battle.set_infopane_effect(", "")
-			.replace(")", "")
-			.replace(/\'\,\s/g, '", ')
-			.replace(/\'/g, "")
-			.split('", ');
-		var effectNames = [
-			"Spreading Poison", "Slowed", "Weakened", "Asleep", "Confused",
-			"Imperiled", "Blinded", "Silenced", "Nerfed", "Magically Snared",
-			"Lifestream", "Coalesced Mana"
-		];
-		var i, len = effectNames.length;
-		for (i = 0; i < len; i++) {
+	var effectNames = [
+		"Spreading Poison", "Slowed", "Weakened", "Asleep", "Confused",
+		"Imperiled", "Blinded", "Silenced", "Nerfed", "Magically Snared",
+		"Lifestream", "Coalesced Mana"
+	];
+	var elements = document.querySelectorAll("#monsterpane div.btm6 > img");
+	Array.prototype.forEach.call(elements, function (element) {
+		var onmouseover = element.getAttribute("onmouseover").toString();
+		var result = /battle\.set_infopane_effect\('([^']*)'\s*,\s*'[^']*'\s*,\s*(.+)\)/.exec(onmouseover);
+		if (result && result.length < 3) return;
+		var effectName = result[1];
+		var duration = result[2];
+		var i, base, monsterNumber;
+		for (i = 0; i < effectNames.length; i++) {
 			if (_settings.isEffectsAlertMonsters[i]
-					&& allinfo[0].match(effectNames[i])
-					&& allinfo[2] === _settings.EffectsAlertMonstersRounds[i]) {
-				var monnum = $(this).parent().parent().attr("id").replace("mkey_", "");
-				alert(allinfo[0] + '\n on monster number "' + monnum + '" is expiring');
+					&& effectNames[i] === effectName
+					&& _settings.EffectsAlertMonstersRounds[i] === duration) {
+				for (base = element; base && base.id.indexOf("mkey_") < 0; base = base.parentElement) {
+					;
+				}
+				if (!base) continue;
+				monsterNumber = base.id.replace("mkey_", "");
+				alert(effectName + '\n on monster number "' + monsterNumber + '" is expiring');
 			}
 		}
 	});
@@ -6336,7 +6366,7 @@ HVStat.main2 = function () {
 	}
 	if (HVStat.duringBattle) {
 		// store static values
-		HVStat.numberOfMonsters = $("#monsterpane > div").length;
+		HVStat.numberOfMonsters = document.querySelectorAll("#monsterpane > div").length;
 		HVStat.buildBattleCommandMap();
 		HVStat.buildBattleCommandMenuItemMap();
 
