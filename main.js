@@ -2268,7 +2268,8 @@ HVStat.BattleCommandMenu = function (spec) {
 	this.element = this.elementId && document.getElementById(this.elementId) || null;
 
 	this.items = [];
-	var itemElements = document.querySelectorAll("#" + this.elementId + " div.btsd");
+//	var itemElements = this.element.querySelectorAll("div.btsd, #ikey_p, img.btii");
+	var itemElements = this.element.querySelectorAll("div.btsd");
 	var i;
 	for (i = 0; i < itemElements.length; i++) {
 		this.items[i] = new HVStat.BattleCommandMenuItem({ parent: this, element: itemElements[i] });
@@ -2624,11 +2625,10 @@ function displayPowerupBox() {
 		var powerInfo = powerup.getAttribute("onmouseover");
 		powerBox.setAttribute("onmouseover", powerInfo);
 		powerBox.setAttribute("onmouseout", powerup.getAttribute("onmouseout"));
-		//powerBox.setAttribute("onclick", 'var e=createEvent("Events");e.initEvent("keydown",true,true);e.altKey=false;e.ctrlKey=false;e.shiftKey=false;e.metaKey=false;e.keyCode=80;document.dispatchEvent(e);');
-//		powerBox.setAttribute("onclick", 'document.getElementById("ckey_items").onclick();document.getElementById("ikey_p").onclick();document.getElementById("ikey_p").onclick();');
-		powerBox.addEventListener("click", function (event) {
-			HVStat.battleCommandMenuItemMap["PowerupGem"].fire();
-		});
+		powerBox.setAttribute("onclick", 'document.getElementById("ckey_items").onclick();document.getElementById("ikey_p").onclick();document.getElementById("ikey_p").onclick();');
+// 		powerBox.addEventListener("click", function (event) {
+// 			HVStat.battleCommandMenuItemMap["PowerupGem"].fire();
+// 		});
 		if (powerInfo.indexOf('Health') > -1) powerBox.innerHTML = "<img class='PowerupGemIcon' src='"+ I_HEALTHPOT+ "' id='healthgem'>";
 		else if (powerInfo.indexOf('Mana') > -1) powerBox.innerHTML = "<img class='PowerupGemIcon' src='"+ I_MANAPOT+ "' id='managem'>";
 		else if (powerInfo.indexOf('Spirit') > -1) powerBox.innerHTML = "<img class='PowerupGemIcon' src='"+ I_SPIRITPOT+ "' id='spiritgem'>";
@@ -2872,6 +2872,9 @@ function collectRoundInfo() {
 	for (elementIndex = 0; elementIndex < elements.length; elementIndex++) {
 		var reResult;
 		var turnNumberElement = elements[elementIndex];
+		if (!turnNumberElement.nextSibling || !turnNumberElement.nextSibling.nextSibling) {
+			continue;
+		}
 		var logStringElement = turnNumberElement.nextSibling.nextSibling;
 		if (elementIndex === 0) {
 			lastTurnNumberString = turnNumberElement.innerHTML;
@@ -2882,12 +2885,12 @@ function collectRoundInfo() {
 		var currentTurnNumberElements = document.querySelectorAll("#togpane_log td.t1");
 		var joinedLogStringOfCurrentTurn = "";
 		for (var rowIndex = 0; rowIndex < currentTurnNumberElements.length; rowIndex++) {
-			var turnNumberElement = currentTurnNumberElements[rowIndex];
-			if (turnNumberElement.innerHTML === String(currentTurnNumberString)) {
-				var rowNumberElement = currentTurnNumberElements[rowIndex].nextSibling;
-				var logElement = rowNumberElement.nextSibling;
-				joinedLogStringOfCurrentTurn += logElement.innerHTML
-				if (rowNumberElement.innerHTML === String(previousRowNumberOfCurrentTurn)) {
+			var tempTurnNumberElement = currentTurnNumberElements[rowIndex];
+			if (tempTurnNumberElement.innerHTML === String(currentTurnNumberString)) {
+				var tempRowNumberElement = currentTurnNumberElements[rowIndex].nextSibling;
+				var logElement = tempRowNumberElement.nextSibling;
+				joinedLogStringOfCurrentTurn += jQuery.text(logElement);
+				if (tempRowNumberElement.innerHTML === String(previousRowNumberOfCurrentTurn)) {
 					logStringOfPreviousRow = logElement.innerHTML;
 				}
 			} else {
@@ -2935,7 +2938,7 @@ function collectRoundInfo() {
 			RoundSave();
 		}
 		if (turnNumberElement.innerHTML !== lastTurnNumberString) {
-			return false;
+			continue;
 		}
 		if (_settings.isAlertGem && logString.match(/drops a (.*) Gem/)) {
 			alert("You picked up a " + RegExp.$1 + " Gem.");
