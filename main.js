@@ -104,10 +104,11 @@ var HVStat = {
 	isBattleOver: false,
 	numberOfMonsters: 0,
 	monsters: [],	// instances of HVStat.Monster
+	alertQueue: [],
 
 	// keyboard enhancement
 	battleCommandMap: null,
-	selectedSkillIndex: -1	// -1: unselected 0-2: selected
+	selectedSkillIndex: -1	// -1: not selected, 0-2: selected
 };
 
 HV_SETTINGS = "HVSettings";
@@ -499,6 +500,17 @@ HVStat.getGaugeRate = function (gaugeElement, gaugeMaxWidth) {
 	}
 	return rate;
 };
+
+HVStat.enqueueAlert = function (message) {
+	HVStat.alertQueue.push(message);
+}
+
+HVStat.AlertAllFromQueue = function () {
+	var i, len = HVStat.alertQueue.length;
+	for (i = 0; i < len; i++) {
+		alert(HVStat.alertQueue.shift());
+	}
+}
 
 //------------------------------------
 // classes
@@ -2225,7 +2237,7 @@ HVStat.KeyCombination.prototype.toString = function () {
 HVStat.BattleCommandMenuItem = function (spec) {
 	this.parent = spec && spec.parent || null;
 	this.element = spec && spec.element || null;
-	this.name = spec && this.element && this.element.children[0].children[0].childNodes[0].nodeValue || "";
+	this.name = spec && this.element && this.element.children[0].children[0].childNodes[0].nodeValue || "";	// TODO
 	this.id = this.element && this.element.id || "";
 	this.boundKeys = [];
 	this.commandTarget = null;
@@ -2941,16 +2953,16 @@ function collectRoundInfo() {
 			break;
 		}
 		if (_settings.isAlertGem && logString.match(/drops a (.*) Gem/)) {
-			alert("You picked up a " + RegExp.$1 + " Gem.");
+			HVStat.enqueueAlert("You picked up a " + RegExp.$1 + " Gem.");
 		}
 		if (_settings.isWarnAbsorbTrigger && /The spell is absorbed/.test(logString)) {
-			alert("Absorbing Ward has triggered.");
+			HVStat.enqueueAlert("Absorbing Ward has triggered.");
 		}
 		if (_settings.isWarnSparkTrigger && logString.match(/spark of life.*defeat/ig)) {
-			alert("Spark of Life has triggered!!");
+			HVStat.enqueueAlert("Spark of Life has triggered!!");
 		}
 		if (_settings.isWarnSparkExpire && logString.match(/spark of life.*expired/ig)) {
-			alert("Spark of Life has expired!!");
+			HVStat.enqueueAlert("Spark of Life has expired!!");
 		}
 		if ((_settings.isShowSidebarProfs || _settings.isTrackStats) && logString.match(/0.0(\d+) points of (.*?) proficiency/ig)) {
 			var p = (RegExp.$1) / 100;
@@ -6525,6 +6537,9 @@ HVStat.main2 = function () {
 		if (!HVStat.isRiddlePage) {
 			HVStat.resetHealthWarningStates();
 		}
+		if (_settings.enableScrollHotkey) {
+			HVStat.registerScrollTargetMouseEventListeners();
+		}
 		// equipment tag
 		if (HVStat.isEquipmentPage && _settings.isShowTags[0]) {
 			TaggingItems(false);
@@ -6548,7 +6563,6 @@ HVStat.main2 = function () {
 			}
 		}
 	}
-	HVStat.registerScrollTargetMouseEventListeners();
 	document.addEventListener("keydown", HVStat.documentKeydownEventHandler);
 	setTimeout(HVStat.main3, 1);
 }
@@ -6561,7 +6575,21 @@ HVStat.main3 = function () {
 
 HVStat.main4 = function () {
 	//console.log("main4: document.readyState = " + document.readyState);
-	// processes require IndexedDB and not alert/confirm immediately
+	// processes require IndexedDB
+	if (HVStat.duringBattle) {
+		HVStat.transaction = HVStat.idb.transaction(["MonsterScanResults", "MonsterSkills"], "readwrite");
+
+		collectRoundInfo();		// requires IndexedDB
+		if ((_round !== null) && (_round.currRound > 0) && _settings.isShowRoundCounter) {
+			showRoundCounter();	// requires _round
+		}
+		if ((_round !== null) && (HVStat.monsters.length > 0)){
+			showMonsterStats();	// requires _round, IndexedDB
+		}
+		if (_settings.isShowStatsPopup) {
+			registerEventHandlersForMonsterPopup();	// requires _round, IndexedDB
+		}
+	}
 	var waitForDocumentComplete = function () {
 		if (document.readyState !== "complete") {
 			setTimeout(waitForDocumentComplete, 10);
@@ -6574,20 +6602,10 @@ HVStat.main4 = function () {
 
 HVStat.main5 = function () {
 	//console.log("main5: document.readyState = " + document.readyState);
-	// processes require IndexedDB or alert/confirm immediately
+	// processes alert/confirm immediately
 	if (HVStat.duringBattle) {
-		HVStat.transaction = HVStat.idb.transaction(["MonsterScanResults", "MonsterSkills"], "readwrite");
+		HVStat.AlertAllFromQueue();
 
-		collectRoundInfo();		// using alert -- should be split to display part and warning part
-		if ((_round !== null) && (_round.currRound > 0) && _settings.isShowRoundCounter) {
-			showRoundCounter();	// requires _round
-		}
-		if ((_round !== null) && (HVStat.monsters.length > 0)){
-			showMonsterStats();	// requires _round, IndexedDB
-		}
-		if (_settings.isShowStatsPopup) {
-			registerEventHandlersForMonsterPopup();	// requires _round, IndexedDB
-		}
 		if (_settings.warnMode[_round.battleType]) {
 			HVStat.warnHealthStatus();		// using alert
 		}
