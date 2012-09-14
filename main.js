@@ -2938,7 +2938,7 @@ function collectRoundInfo() {
 			RoundSave();
 		}
 		if (turnNumberElement.innerHTML !== lastTurnNumberString) {
-			continue;
+			break;
 		}
 		if (_settings.isAlertGem && logString.match(/drops a (.*) Gem/)) {
 			alert("You picked up a " + RegExp.$1 + " Gem.");
