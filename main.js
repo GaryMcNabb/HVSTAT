@@ -2251,7 +2251,7 @@ HVStat.BattleCommandMenuItem.prototype = {
 	get available() {
 		return !this.element.style.cssText.match(/opacity\s*:\s*0/);
 	},
-	fire: function () {
+	select: function () {
 		if (this.available) {
 			if (!this.parent.opened) {
 				this.parent.open();
@@ -2336,6 +2336,11 @@ HVStat.BattleCommand.prototype = {
 	},
 	select: function (menuElementId) {
 		this.element.onclick();
+	},
+	close: function () {
+		if (this.menuOpened) {
+			this.select();
+		}
 	},
 	toString: function () { return this.name; }
 };
@@ -2634,7 +2639,7 @@ function displayPowerupBox() {
 		powerBox.setAttribute("onmouseout", powerup.getAttribute("onmouseout"));
 		powerBox.setAttribute("onclick", 'document.getElementById("ckey_items").onclick();document.getElementById("ikey_p").onclick();document.getElementById("ikey_p").onclick();');
 // 		powerBox.addEventListener("click", function (event) {
-// 			HVStat.battleCommandMenuItemMap["PowerupGem"].fire();
+// 			HVStat.battleCommandMenuItemMap["PowerupGem"].select();
 // 		});
 		if (powerInfo.indexOf('Health') > -1) powerBox.innerHTML = "<img class='PowerupGemIcon' src='"+ I_HEALTHPOT+ "' id='healthgem'>";
 		else if (powerInfo.indexOf('Mana') > -1) powerBox.innerHTML = "<img class='PowerupGemIcon' src='"+ I_MANAPOT+ "' id='managem'>";
@@ -6006,9 +6011,9 @@ HVStat.documentKeydownEventHandler = function (event) {
 			for (i = 0; i < boundKeys.length; i++) {
 				if (boundKeys[i].equals(event)) {
 					if (HVStat.battleCommandMap["Skills"].menuOpened) {
-						HVStat.battleCommandMap["Attack"].select();	// close skills menu
+						HVStat.battleCommandMap["Skills"].close();
 					} else {
-						miScan.fire();
+						miScan.select();
 					}
 				}
 			}
@@ -6024,12 +6029,12 @@ HVStat.documentKeydownEventHandler = function (event) {
 			for (i = 0; i < boundKeys.length; i++) {
 				if (boundKeys[i].equals(event)) {
 					if (HVStat.selectedSkillIndex >= avilableSkillMaxIndex) {
-						HVStat.battleCommandMap["Attack"].select();	// close skills menu
+						HVStat.battleCommandMap["Skills"].close();
 						HVStat.selectedSkillIndex = -1;
 					} else {
 						for (j = HVStat.selectedSkillIndex + 1; j <= avilableSkillMaxIndex; j++) {
 							if (miSkills[j] && miSkills[j].available) {
-								miSkills[j].fire();
+								miSkills[j].select();
 								HVStat.selectedSkillIndex = j;
 								break;
 							}
@@ -6043,9 +6048,9 @@ HVStat.documentKeydownEventHandler = function (event) {
 			for (i = 0; i < boundKeys.length; i++) {
 				if (boundKeys[i].equals(event)) {
 					if (HVStat.battleCommandMap["Skills"].menuOpened) {
-						HVStat.battleCommandMap["Attack"].select();	// close skills menu
+						HVStat.battleCommandMap["Skills"].close();
 					} else {
-						miOFC.fire();
+						miOFC.select();
 					}
 				}
 			}
@@ -6056,7 +6061,7 @@ HVStat.documentKeydownEventHandler = function (event) {
 HVStat.scanButtonClickHandler = function (event) {
 	var monsterId = this.id.slice(11);
 	var monsterElement = document.getElementById(monsterId);
-	HVStat.battleCommandMenuItemMap["Scan"].fire();
+	HVStat.battleCommandMenuItemMap["Scan"].select();
 	monsterElement.onclick();
 }
 
@@ -6068,7 +6073,7 @@ HVStat.skillButtonClickHandler = function (event) {
 	var skillNumber = result[1];
 	var monsterId = result[2];
 	var monsterElement = document.getElementById(monsterId);
-	HVStat.battleCommandMenuItemMap["Skill" + skillNumber].fire();
+	HVStat.battleCommandMenuItemMap["Skill" + skillNumber].select();
 	monsterElement.onclick();
 }
 
