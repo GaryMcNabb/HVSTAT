@@ -4,7 +4,7 @@
 // @description      Collects data, analyzes statistics, and enhances the interface of the HentaiVerse
 // @include          http://hentaiverse.org/*
 // @author           Various (http://forums.e-hentai.org/index.php?showtopic=50962)
-// @version          5.4.2.1
+// @version          5.4.3.0
 // @require          https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js
 // @require          https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.21/jquery-ui.min.js
 // @resource         jQueryUICSS http://www.starfleetplatoon.com/~cmal/HVSTAT/jqueryui.css
@@ -16,6 +16,7 @@ var HVStat = {
 	//------------------------------------
 	// package scope global constants
 	//------------------------------------
+	VERSION: "5.4.3.0",
 	isChrome: navigator.userAgent.indexOf("Chrome") >= 0,
 	indexedDB: window.indexedDB || window.webkitIndexedDB || window.mozIndexedDB,
 	IDBTransaction: window.IDBTransaction || window.webkitIDBTransaction,
@@ -41,6 +42,24 @@ var HVStat = {
 	key_mpAlertAlreadyShown: "HVStatMpAlertAlreadyShown",
 	key_spAlertAlreadyShown: "HVStatSpAlertAlreadyShown",
 	key_ocAlertAlreadyShown: "HVStatOcAlertAlreadyShown",
+
+	// scroll targets
+	scrollTargets: [
+		// Character
+		"stats_pane",
+		// Equipment
+		"equip_pane",
+		// Inventory
+		"inv_item", "inv_equip",
+		// Battle Inventory, Shop, Forge, Item World
+		"item_pane", "shop_pane",
+		// Monster Lab
+		"slot_pane",
+		// Moogle write
+		"item", "equip",
+		// Arena
+		"arena_pane"
+	],
 
 	//------------------------------------
 	// DOM caches
@@ -84,7 +103,12 @@ var HVStat = {
 	duringBattle: false,
 	isBattleOver: false,
 	numberOfMonsters: 0,
-	monsters: []	// instances of HVStat.Monster
+	monsters: [],	// instances of HVStat.Monster
+	alertQueue: [],
+
+	// keyboard enhancement
+	battleCommandMap: null,
+	selectedSkillIndex: -1	// -1: not selected, 0-2: selected
 };
 
 HV_SETTINGS = "HVSettings";
@@ -465,9 +489,7 @@ HVStat.getElapsedFrom = function (date) {
 };
 
 HVStat.getGaugeRate = function (gaugeElement, gaugeMaxWidth) {
-	var reStyleWidth = /width\s*?:\s*?(\d+?)px/i;
-	var style = gaugeElement.getAttribute("style");
-	var result = reStyleWidth.exec(style);
+	var result = /width\s*?:\s*?(\d+?)px/i.exec(gaugeElement.style.cssText);
 	var rate;
 	if (result && result.length >= 2) {
 		rate = Number(result[1]) / gaugeMaxWidth;
@@ -476,6 +498,17 @@ HVStat.getGaugeRate = function (gaugeElement, gaugeMaxWidth) {
 	}
 	return rate;
 };
+
+HVStat.enqueueAlert = function (message) {
+	HVStat.alertQueue.push(message);
+}
+
+HVStat.AlertAllFromQueue = function () {
+	var i, len = HVStat.alertQueue.length;
+	for (i = 0; i < len; i++) {
+		alert(HVStat.alertQueue.shift());
+	}
+}
 
 //------------------------------------
 // classes
@@ -828,9 +861,9 @@ HVStat.Monster = (function () {
 		}
 
 		var _index = index;
-		var _baseElement = $("#" + _domElementIds[_index]);
-		var _healthBars = $("div.btm5", _baseElement);
-		var _isDead = $("img.chb2", _healthBars.eq(0)).length === 0;
+		var _baseElement = document.getElementById(_domElementIds[_index]);
+		var _healthBars = _baseElement.querySelectorAll("div.btm5");
+		var _isDead = _healthBars[0].querySelectorAll("img.chb2").length === 0;
 		var _waitingForGetResponseOfMonsterScanResults = false;
 		var _waitingForGetResponseOfMonsterSkills = false;
 
@@ -843,12 +876,14 @@ HVStat.Monster = (function () {
 		var _skills = [];
 
 		var currBarRate = function (barIndex) {
-			var v, style, bar = $("img.chb2", _healthBars.eq(barIndex));
+			if (barIndex >= _healthBars.length) {
+				return 0;
+			}
+			var v, bar = _healthBars[barIndex].querySelector("img.chb2");
 			if (!bar) {
 				v = 0;
 			} else {
-				style = bar.attr("style");
-				r = /width\s*?:\s*?(\d+?)px/i.exec(style);
+				r = /width\s*?:\s*?(\d+?)px/i.exec(bar.style.cssText);
 				if (r && r.length >= 2) {
 					v = Number(r[1]) / _maxBarWidth;
 				} else {
@@ -936,11 +971,11 @@ HVStat.Monster = (function () {
 				return;
 			}
 
-			var nameOuterFrameElement = _baseElement.children().eq(1);
-			var nameInnerFrameElement = _baseElement.children().eq(1).children().eq(0);
-			var hpBarBaseElement = _baseElement.children().eq(2).children().eq(0);
-			var mpBarBaseElement = _baseElement.children().eq(2).children().eq(1);
-			var spBarBaseElement = _baseElement.children().eq(2).children().eq(2);
+			var nameOuterFrameElement = _baseElement.children[1];
+			var nameInnerFrameElement = _baseElement.children[1].children[0];
+			var hpBarBaseElement = _baseElement.children[2].children[0];
+			var mpBarBaseElement = _baseElement.children[2].children[1];
+			var spBarBaseElement = _baseElement.children[2].children[2];
 			var maxAbbrLevel = _settings.ResizeMonsterInfo ? 5 : 1;
 			var maxStatsWidth = 315;
 
@@ -948,6 +983,7 @@ HVStat.Monster = (function () {
 			var mpIndicator = "";
 			var spIndicator = "";
 			var html, statsHtml;
+			var div, divText;
 			var statsElement;
 			var abbrLevel;
 
@@ -957,18 +993,27 @@ HVStat.Monster = (function () {
 				} else {
 					hpIndicator = _currHp() + " / " + _maxHp
 				}
-				html = '<div style="position:absolute;z-index:1074;top:-1px;font-size:8pt;font-family:arial,helvetica,sans-serif;font-weight:bolder;color:yellow;width:120px;text-align:center">' + hpIndicator + '</div>';
-				hpBarBaseElement.after(html);
+				div = document.createElement("div");
+				div.style.cssText = "position:absolute;z-index:1074;top:-1px;font-size:8pt;font-family:arial,helvetica,sans-serif;font-weight:bolder;color:yellow;width:120px;text-align:center";
+				divText = document.createTextNode(hpIndicator);
+				div.appendChild(divText);
+				hpBarBaseElement.parentNode.insertBefore(div, hpBarBaseElement.nextSibling);
 			}
 			if (_settings.showMonsterMP) {
-				mpIndicator = (_currMpRate * 100).toFixed(1);
-				html = '<div style="position:absolute;z-index:1074;top:11px;font-size:8pt;font-family:arial,helvetica,sans-serif;font-weight:bolder;color:yellow;width:120px;text-align:center">' + mpIndicator + '%</div>';
-				mpBarBaseElement.after(html);
+				mpIndicator = (_currMpRate * 100).toFixed(1) + "%";
+				div = document.createElement("div");
+				div.style.cssText = "position:absolute;z-index:1074;top:11px;font-size:8pt;font-family:arial,helvetica,sans-serif;font-weight:bolder;color:yellow;width:120px;text-align:center";
+				divText = document.createTextNode(mpIndicator);
+				div.appendChild(divText);
+				mpBarBaseElement.parentNode.insertBefore(div, mpBarBaseElement.nextSibling);
 			}
 			if (_hasSpiritPoint && _settings.showMonsterSP) {
-				spIndicator = (_currSpRate * 100).toFixed(1);
-				html = '<div style="position:absolute;z-index:1074;top:23px;font-size:8pt;font-family:arial,helvetica,sans-serif;font-weight:bolder;color:yellow;width:120px;text-align:center">' + spIndicator + '%</div>';
-				spBarBaseElement.after(html);
+				spIndicator = (_currSpRate * 100).toFixed(1) + "%";
+				div = document.createElement("div");
+				div.style.cssText = "position:absolute;z-index:1074;top:23px;font-size:8pt;font-family:arial,helvetica,sans-serif;font-weight:bolder;color:yellow;width:120px;text-align:center";
+				divText = document.createTextNode(spIndicator);
+				div.appendChild(divText);
+				spBarBaseElement.parentNode.insertBefore(div, spBarBaseElement.nextSibling);
 			}
 
 			if (_settings.showMonsterInfoFromDB) {
@@ -1065,13 +1110,13 @@ HVStat.Monster = (function () {
 						}
 					}
 					if (HVStat.usingHVFont) {
-						nameOuterFrameElement.css("width", "auto"); // tweak for Firefox
-						nameInnerFrameElement.css("width", "auto"); // tweak for Firefox
+						nameOuterFrameElement.style.width = "auto"; // tweak for Firefox
+						nameInnerFrameElement.style.width = "auto"; // tweak for Firefox
 						html = "<div style='font-family:arial; font-size:7pt; font-style:normal; font-weight:bold; cursor:default; position:relative; top:-1px; left:2px; padding:0 1px; margin-left:0px; white-space:nowrap;'>" + statsHtml + "</div>";
 						nameInnerFrameElement.after(html);
-						statsElement = nameInnerFrameElement.next();
+						statsElement = nameInnerFrameElement.nextSibling;
 						//console.log("scrollWidth = " + statsElement.prop("scrollWidth"));
-						if (Number(nameOuterFrameElement.prop("scrollWidth")) <= maxStatsWidth) {	// does not work with Firefox without tweak
+						if (Number(nameOuterFrameElement.scrollWidth) <= maxStatsWidth) {	// does not work with Firefox without tweak
 							break;
 						} else if (abbrLevel < maxAbbrLevel - 1) {
 							// revert
@@ -1079,25 +1124,25 @@ HVStat.Monster = (function () {
 						}
 					} else {
 						html = "<div style='font-family:arial; font-size:7pt; font-style:normal; font-weight:bold; display:inline; cursor:default; padding:0 1px; margin-left:1px; white-space:nowrap;'>" + statsHtml + "</div>";
-						var nameElement = nameInnerFrameElement.children().eq(0);
-						var name = nameElement.html();
-						nameOuterFrameElement.css("width", "auto"); // tweak for Firefox
-						nameInnerFrameElement.css("width", "auto"); // tweak for Firefox
-						nameElement.html(name + html);
-						nameElement.css("white-space", "nowrap");
+						var nameElement = nameInnerFrameElement.children[0];
+						var name = nameElement.innerHTML;
+						nameOuterFrameElement.style.width = "auto"; // tweak for Firefox
+						nameInnerFrameElement.style.width = "auto"; // tweak for Firefox
+						nameElement.innerHTML = name + html;
+						nameElement.style.whiteSpace = "nowrap";
 						//console.log("scrollWidth = " + nameElement.prop("scrollWidth"));
-						if (Number(nameElement.prop("scrollWidth")) <= maxStatsWidth) {	// does not work with Firefox without tweak
+						if (Number(nameElement.scrollWidth) <= maxStatsWidth) {	// does not work with Firefox without tweak
 							break;
 						} else if (_settings.ResizeMonsterInfo) {
 							// revert
-							nameElement.html(name);
+							nameElement.innerHTML = name;
 							if (abbrLevel >= maxAbbrLevel - 1) {
 								// reduce name length
 								for (var len = name.length - 2; len >= 6; len--) {
 									var reducedName = name.substring(0, len) + "...";
-									nameElement.html(reducedName + html);
+									nameElement.innerHTML = reducedName + html;
 									//console.log("scrollWidth = " + nameElement.prop("scrollWidth"));
-									if (Number(nameElement.prop("scrollWidth")) <= maxStatsWidth) {	// does not work with Firefox without tweak
+									if (Number(nameElement.scrollWidth) <= maxStatsWidth) {	// does not work with Firefox without tweak
 										break;
 									}
 								}
@@ -1105,7 +1150,7 @@ HVStat.Monster = (function () {
 						}
 					}
 				}
-				nameOuterFrameElement.css("width", String(maxStatsWidth) + "px");
+				nameOuterFrameElement.style.width = String(maxStatsWidth) + "px";
 			}
 		};
 
@@ -2152,11 +2197,264 @@ HVStat.migration.deleteOldDatabase = function () {
 };
 
 //------------------------------------
+// battle command wrapper
+//------------------------------------
+
+HVStat.KeyCombination = function (spec) {
+	this.altKey = spec && spec.altKey || false;
+	this.ctrlKey = spec && spec.ctrlKey || false;
+	this.shiftKey = spec && spec.shiftKey || false;
+	this.keyCode = spec && spec.keyCode || 0;
+}
+
+HVStat.KeyCombination.prototype.equals = function (obj) {
+	if (!obj) {
+		return false;
+	}
+	return this.altKey === obj.altKey
+		&& this.ctrlKey === obj.ctrlKey
+		&& this.shiftKey === obj.shiftKey
+		&& this.keyCode === obj.keyCode;
+};
+
+HVStat.KeyCombination.prototype.toString = function () {
+	var s = "";
+	if (this.altKey) {
+		s += "ALT+";
+	}
+	if (this.ctrlKey) {
+		s += "CTRL+";
+	}
+	if (this.shiftKey) {
+		s += "SHIFT+";
+	}
+	s += String(this.keyCode);
+};
+
+HVStat.BattleCommandMenuItem = function (spec) {
+	this.parent = spec && spec.parent || null;
+	this.element = spec && spec.element || null;
+	this.name = spec && this.element && this.element.children[0].children[0].childNodes[0].nodeValue || "";	// TODO
+	this.id = this.element && this.element.id || "";
+	this.boundKeys = [];
+	this.commandTarget = null;
+
+	var onclick = this.element.getAttribute("onclick").toString();
+	if (onclick.indexOf("friendly") >= 0) {
+		this.commandTarget = "self";
+	} else if (onclick.indexOf("hostile") >= 0) {
+		this.commandTarget = "enemy";
+	}
+};
+
+HVStat.BattleCommandMenuItem.prototype = {
+	get available() {
+		return !this.element.style.cssText.match(/opacity\s*:\s*0/);
+	},
+	select: function () {
+		if (this.available) {
+			if (!this.parent.opened) {
+				this.parent.open();
+			}
+			this.element.onclick();	// select
+			if (this.commandTarget === "self") {
+				this.element.onclick();	// commit
+			}
+		}
+	},
+	bindKeys: function (keyConbinations) {
+		this.boundKeys = keyConbinations;
+	},
+	unbindKeys: function () {
+		this.boundKeys = [];
+	}
+}
+
+HVStat.BattleCommandMenu = function (spec) {
+	this.parent = spec && spec.parent || null;
+	this.elementId = spec && spec.elementId || null;
+	this.element = this.elementId && document.getElementById(this.elementId) || null;
+
+	this.items = [];
+//	var itemElements = this.element.querySelectorAll("div.btsd, #ikey_p, img.btii");
+	var itemElements = this.element.querySelectorAll("div.btsd");
+	var i;
+	for (i = 0; i < itemElements.length; i++) {
+		this.items[i] = new HVStat.BattleCommandMenuItem({ parent: this, element: itemElements[i] });
+	}
+};
+
+HVStat.BattleCommandMenu.prototype = {
+	get opened() {
+		return !this.element.style.cssText.match(/display\s*:\s*none/);
+	},
+	open: function () {
+		while (!this.opened) {
+			this.parent.element.onclick();
+		}
+	},
+	close: function () {
+		if (this.opened) {
+			this.parent.element.onclick();
+		}
+	}
+};
+
+HVStat.BattleCommand = function (spec) {
+	this.elementId = spec && spec.elementId || null;
+	this.name = spec && spec.name || "";
+	this.menuElementIds = spec && spec.menuElementIds || [];
+	this.element = this.elementId && document.getElementById(this.elementId) || null;
+	this.menus = [];
+
+	// build menus
+	var i;
+	for (i = 0; i < this.menuElementIds.length; i++) {
+		this.menus[i] = new HVStat.BattleCommandMenu({ parent: this, elementId: this.menuElementIds[i] });
+	}
+};
+
+HVStat.BattleCommand.prototype = {
+	get hasMenu() { return this.menus.length > 0; },
+	get menuOpened() {
+		var i;
+		for (i = 0; i < this.menus.length; i++) {
+			if (this.menus[i].opened) {
+				return true;
+			}
+		}
+		return false;
+	},
+	get selectedMenu() {
+		var i;
+		for (i = 0; i < this.menus.length; i++) {
+			if (this.menus[i].opened) {
+				return this.menus[i];
+			}
+		}
+		return null;
+	},
+	select: function (menuElementId) {
+		this.element.onclick();
+	},
+	close: function () {
+		if (this.menuOpened) {
+			this.select();
+		}
+	},
+	toString: function () { return this.name; }
+};
+
+HVStat.buildBattleCommandMap = function () {
+	HVStat.battleCommandMap = {
+		"Attack": new HVStat.BattleCommand({ elementId: "ckey_attack", name: "Attack" }),
+		"Magic": new HVStat.BattleCommand({ elementId: "ckey_magic", name: "Magic", menuElementIds: ["togpane_magico", "togpane_magict"] }),
+		"Spirit": new HVStat.BattleCommand({ elementId: "ckey_spirit", name: "Spirit" }),
+		"Skills": new HVStat.BattleCommand({ elementId: "ckey_skills", name: "Skills", menuElementIds: ["togpane_skill"] }),
+		"Items": new HVStat.BattleCommand({ elementId: "ckey_items", name: "Items", menuElementIds: ["togpane_item"] }),
+		"Defend": new HVStat.BattleCommand({ elementId: "ckey_defend", name: "Defend" }),
+		"Focus": new HVStat.BattleCommand({ elementId: "ckey_focus", name: "Focus" })
+	};
+};
+
+HVStat.getBattleCommandMenuItemById = function (commandMenuItemId) {
+	var key, menus, i, items, j;
+	for (key in HVStat.battleCommandMap) {
+		menus = HVStat.battleCommandMap[key].menus;
+		for (i = 0; i < menus.length; i++) {
+			items = menus[i].items;
+			for (j = 0; j < items.length; j++) {
+				if (items[j].id === commandMenuItemId) {
+					return items[j];
+				}
+			}
+		}
+	}
+	return null;
+};
+
+HVStat.getBattleCommandMenuItemByName = function (commandMenuItemName) {
+	var key, menus, i, items, j;
+	for (key in HVStat.battleCommandMap) {
+		menus = HVStat.battleCommandMap[key].menus;
+		for (i = 0; i < menus.length; i++) {
+			items = menus[i].items;
+			for (j = 0; j < items.length; j++) {
+				if (items[j].name === commandMenuItemName) {
+					return items[j];
+				}
+			}
+		}
+	}
+	return null;
+};
+
+HVStat.getBattleCommandMenuItemsByBoundKey = function (keyCombination) {
+	var foundItems = [];
+	var key, menus, i, items, j, boundKeys, k;
+	for (key in HVStat.battleCommandMap) {
+		menus = HVStat.battleCommandMap[key].menus;
+		for (i = 0; i < menus.length; i++) {
+			items = menus[i].items;
+			for (j = 0; j < items.length; j++) {
+				boundKeys = items[j].boundKeys;
+				for (k = 0; k < boundKeys.length; k++) {
+					if (boundKeys[k].equals(keyCombination)) {
+						foundItems.push(items[j]);
+					}
+				}
+			}
+		}
+	}
+	return foundItems;
+};
+
+HVStat.buildBattleCommandMenuItemMap = function () {
+	HVStat.battleCommandMenuItemMap = {
+		"PowerupGem": HVStat.getBattleCommandMenuItemById("ikey_p"),
+		"Scan": HVStat.getBattleCommandMenuItemByName("Scan"),
+		"Skill1": HVStat.getBattleCommandMenuItemById("110001")
+			|| HVStat.getBattleCommandMenuItemById("120001")
+			|| HVStat.getBattleCommandMenuItemById("130001")
+			|| HVStat.getBattleCommandMenuItemById("140001")
+			|| HVStat.getBattleCommandMenuItemById("150001"),
+		"Skill2": HVStat.getBattleCommandMenuItemById("110002")
+			|| HVStat.getBattleCommandMenuItemById("120002")
+			|| HVStat.getBattleCommandMenuItemById("130002")
+			|| HVStat.getBattleCommandMenuItemById("140002")
+			|| HVStat.getBattleCommandMenuItemById("150002"),
+		"Skill3": HVStat.getBattleCommandMenuItemById("110003")
+			|| HVStat.getBattleCommandMenuItemById("120003")
+			|| HVStat.getBattleCommandMenuItemById("130003")
+			|| HVStat.getBattleCommandMenuItemById("140003")
+			|| HVStat.getBattleCommandMenuItemById("150003"),
+		"OFC": HVStat.getBattleCommandMenuItemByName("Orbital Friendship Cannon")
+	};
+	if (HVStat.battleCommandMenuItemMap["Scan"]) {
+		HVStat.battleCommandMenuItemMap["Scan"].bindKeys([
+			new HVStat.KeyCombination({ keyCode: 46 }),		// Delete
+			new HVStat.KeyCombination({ keyCode: 110 })		// Numpad . Del
+		]);
+	}
+	if (HVStat.battleCommandMenuItemMap["Skill1"]) {
+		HVStat.battleCommandMenuItemMap["Skill1"].bindKeys([
+			new HVStat.KeyCombination({ keyCode: 107 }),	// Numpad +
+			new HVStat.KeyCombination({ keyCode: 187 })		// = +
+		]);
+	}
+	if (HVStat.battleCommandMenuItemMap["OFC"]) {
+		HVStat.battleCommandMenuItemMap["OFC"].bindKeys([
+			new HVStat.KeyCombination({ keyCode: 109 }),	// Numpad -
+			new HVStat.KeyCombination({ keyCode: 189 })		// - _
+		]);
+	}
+};
+
+//------------------------------------
 // legacy codes
 //------------------------------------
 
 /* ========== GLOBAL VARIABLES ========== */
-VERSION = "5.4.2.0";
 HV_OVERVIEW = "HVOverview";
 HV_STATS = "HVStats";
 HV_PROF = "HVProf";
@@ -2333,14 +2631,16 @@ function displayPowerupBox() {
 		powerBox = doc.createElement("div");
 		powerup = doc.getElementById("ikey_p");
 	
-	powerBox.setAttribute("style", "position:absolute;top:7px;right:5px;background-color:#EFEEDC;width:30px;height:32px;border-style:double;border-width:2px;border-color:#555555;");
+	powerBox.style.cssText = "position:absolute;top:7px;right:5px;background-color:#EFEEDC;width:30px;height:32px;border-style:double;border-width:2px;border-color:#555555;";
 	if (powerup === null) powerBox.innerHTML = "<span style='font-size:16px;font-weight:bold;font-family:arial,helvetica,sans-serif;text-align:center;line-height:32px;cursor:default'>P</span>";
 	else {
 		var powerInfo = powerup.getAttribute("onmouseover");
 		powerBox.setAttribute("onmouseover", powerInfo);
 		powerBox.setAttribute("onmouseout", powerup.getAttribute("onmouseout"));
-		//powerBox.setAttribute("onclick", 'var e=createEvent("Events");e.initEvent("keydown",true,true);e.altKey=false;e.ctrlKey=false;e.shiftKey=false;e.metaKey=false;e.keyCode=80;document.dispatchEvent(e);');
 		powerBox.setAttribute("onclick", 'document.getElementById("ckey_items").onclick();document.getElementById("ikey_p").onclick();document.getElementById("ikey_p").onclick();');
+// 		powerBox.addEventListener("click", function (event) {
+// 			HVStat.battleCommandMenuItemMap["PowerupGem"].select();
+// 		});
 		if (powerInfo.indexOf('Health') > -1) powerBox.innerHTML = "<img class='PowerupGemIcon' src='"+ I_HEALTHPOT+ "' id='healthgem'>";
 		else if (powerInfo.indexOf('Mana') > -1) powerBox.innerHTML = "<img class='PowerupGemIcon' src='"+ I_MANAPOT+ "' id='managem'>";
 		else if (powerInfo.indexOf('Spirit') > -1) powerBox.innerHTML = "<img class='PowerupGemIcon' src='"+ I_SPIRITPOT+ "' id='spiritgem'>";
@@ -2492,14 +2792,14 @@ function collectCurrentProfsData() {
 	if (!HVStat.isCharacterPage || HVStat.usingHVFont)
 		return;
 	loadProfsObject();
-	var c = $(".eqm").children().eq(0).children().eq(1).children();
+	var c = $("div.eqm").children().eq(0).children().eq(1).children();
 	var b = _profs.weapProfTotals.length;
 	while (b--)
-		_profs.weapProfTotals[b] = parseFloat(c.eq(0).children().eq(1).find(".fd12").eq(b * 2 + 1).text());
+		_profs.weapProfTotals[b] = parseFloat(c.eq(0).children().eq(1).find("div.fd12").eq(b * 2 + 1).text());
 	b = _profs.armorProfTotals.length;
 	while (b--)
-		_profs.armorProfTotals[b] = parseFloat(c.eq(0).children().eq(1).find(".fd12").eq(b * 2 + 7).text());
-	var a = c.eq(1).children().eq(1).find(".fd12");
+		_profs.armorProfTotals[b] = parseFloat(c.eq(0).children().eq(1).find("div.fd12").eq(b * 2 + 7).text());
+	var a = c.eq(1).children().eq(1).find("div.fd12");
 	_profs.elemTotal = parseFloat(a.eq(1).text());
 	_profs.divineTotal = parseFloat(a.eq(3).text());
 	_profs.forbidTotal = parseFloat(a.eq(5).text());
@@ -2513,15 +2813,21 @@ function showSidebarProfs() {
 	loadProfsObject();
 	if (!isProfTotalsRecorded())
 		return;
-	var b = $(".stuffbox").height() - 31;
+	var b = document.querySelector("div.stuffbox").scrollHeight - 31;
 	GM_addStyle(".prof_sidebar td {font-family:arial,helvetica,sans-serif; font-size:9pt; font-weight:normal; text-align:left}.prof_sidebar_top td {font-family:arial,helvetica,sans-serif; font-size:10pt; font-weight:bold; text-align:center}");
-	var a = "<div id='_profbutton' class='ui-corner-all' style='position:absolute;top:" + b + "px;border:1px solid;margin-left:5px;padding:2px;width:132px;font-size:10pt;font-weight:bold;text-align:center;cursor:default;'>Proficiency</div>";
-	$(".clb").append(a);
-	$("#_profbutton").mouseover(function () {
+	var div = document.createElement("div");
+	div.setAttribute("id", "_profbutton");
+	div.setAttribute("class", "ui-corner-all");
+	div.style.cssText = 'position:absolute;top:' + b + 'px;border:1px solid;margin-left:5px;padding:2px;width:132px;font-size:10pt;font-weight:bold;text-align:center;cursor:default;';
+	div.innerHTML = "Proficiency";
+	var leftBar = document.querySelector("div.clb");
+	leftBar.parentNode.insertBefore(div, leftBar.nextSibling);
+
+	div.addEventListener("mouseover", function () {
 		var c = HVStat.popupElement;
-		var d = $("#_profbutton").offset();
-		c.style.left = d.left + 145 + "px";
-		c.style.top = d.top - 126 + "px";
+		var rectObject = div.getBoundingClientRect();
+		c.style.left = rectObject.left + 145 + "px";
+		c.style.top = rectObject.top - 126 + "px";
 		c.style.width = "260px";
 		c.style.height = "126px";
 		c.innerHTML = '<table class="prof_sidebar" cellspacing="0" cellpadding="0" style="width:100%">'
@@ -2535,7 +2841,7 @@ function showSidebarProfs() {
 			+ '<tr><td>Heavy armor:</td><td>' + _profs.armorProfTotals[3].toFixed(2) + '</td><td>Curative:</td><td>' + _profs.curativeTotal.toFixed(2) + '</td></tr></table>'; //spiritTotal added by Ilirith
 		c.style.visibility = "visible";
 	});
-	$("#_profbutton").mouseout(function () {
+	div.addEventListener("mouseout", function () {
 		HVStat.popupElement.style.visibility = "hidden";
 	});
 }
@@ -2545,7 +2851,7 @@ function isProfTotalsRecorded() {
 }
 function inventoryWarning() {
 	var d = 4;
-	var c = $(".stuffbox").width() - 85 - 4;
+	var c = $("div.stuffbox").width() - 85 - 4;
 	var a = document.createElement("div");
 	var b = "<div class='ui-state-error ui-corner-all' style='position:absolute; top:" + d + "px; left: " + c + "px; z-index:1074'><span style='margin:3px' class='ui-icon ui-icon-alert' title='Inventory Limit Exceeded.'/></div>";
 	$(a).html(b);
@@ -2557,10 +2863,10 @@ function inventoryWarning() {
 	});
 }
 function collectRoundInfo() {
-	var e = "";
+	var lastTurnNumberString = "";
 	var a = 0;
 	var ac = 0;
-	var c = "";
+	var logString = "";
 	var d;
 	var b = false;
 	// create monster objects
@@ -2572,32 +2878,49 @@ function collectRoundInfo() {
 		loadDropsObject();
 	if (_settings.isTrackRewards)
 		loadRewardsObject();
-	var index = HVStat.monsters.length - 1;
-	$("#togpane_log td:first-child").each(function (j) {
+	var monsterIndex = HVStat.monsters.length - 1;
+	var elements = document.querySelectorAll("#togpane_log td:first-child");
+	var elementIndex;
+	for (elementIndex = 0; elementIndex < elements.length; elementIndex++) {
 		var reResult;
-		var g = $(this);
-		var k = g.next().next();
-		if (j === 0) {
-			e = g.html();
+		var turnNumberElement = elements[elementIndex];
+		if (!turnNumberElement.nextSibling || !turnNumberElement.nextSibling.nextSibling) {
+			continue;
 		}
-		c = k.html();
-		var kline = g.html();
-		var kline2 = parseInt(g.next().html()) - 1;
-		var sel0 = $(".t1:contains(" + kline + ")");
-		var sel = sel0.next().filter(":contains(" + kline2 + ")").next().html();
-		var selall = $(".t1:contains(" + kline + ")").next().next().text();
-		if (!_round.isLoaded) { // -> if turn 0
-			if (c.match(/HP=/)) {
-				HVStat.monsters[index].fetchStartingLog(c);
+		var logStringElement = turnNumberElement.nextSibling.nextSibling;
+		if (elementIndex === 0) {
+			lastTurnNumberString = turnNumberElement.innerHTML;
+		}
+		logString = logStringElement.innerHTML;
+		var currentTurnNumberString = turnNumberElement.innerHTML;
+		var previousRowNumberOfCurrentTurn = Number(turnNumberElement.nextSibling.innerHTML) - 1;
+		var currentTurnNumberElements = document.querySelectorAll("#togpane_log td.t1");
+		var joinedLogStringOfCurrentTurn = "";
+		for (var rowIndex = 0; rowIndex < currentTurnNumberElements.length; rowIndex++) {
+			var tempTurnNumberElement = currentTurnNumberElements[rowIndex];
+			if (tempTurnNumberElement.innerHTML === String(currentTurnNumberString)) {
+				var tempRowNumberElement = currentTurnNumberElements[rowIndex].nextSibling;
+				var logElement = tempRowNumberElement.nextSibling;
+				joinedLogStringOfCurrentTurn += jQuery.text(logElement);
+				if (tempRowNumberElement.innerHTML === String(previousRowNumberOfCurrentTurn)) {
+					logStringOfPreviousRow = logElement.innerHTML;
+				}
+			} else {
+				break;
+			}
+		}
+		if (!_round.isLoaded) { // should be changed to "if turn 0"
+			if (logString.match(/HP=/)) {
+				HVStat.monsters[monsterIndex].fetchStartingLog(logString);
 				if (_settings.showMonsterInfoFromDB) {
-					HVStat.monsters[index].getFromDB(HVStat.transaction, RoundSave);
+					HVStat.monsters[monsterIndex].getFromDB(HVStat.transaction, RoundSave);
 				}
 				if (_settings.isTrackItems) {
 					_round.dropChances++;
 				}
-				index--;
-			} else if (c.match(/\(Round/)) {
-				var f = c.match(/\(round.*?\)/i)[0].replace("(", "").replace(")", "");
+				monsterIndex--;
+			} else if (logString.match(/\(Round/)) {
+				var f = logString.match(/\(round.*?\)/i)[0].replace("(", "").replace(")", "");
 				var m = f.split(" ");
 				_round.currRound = parseInt(m[1]);
 				if (m.length > 2) {
@@ -2612,36 +2935,36 @@ function collectRoundInfo() {
 				}
 				b = true;
 			}
-			if (c.match(/random encounter/)) {
+			if (logString.match(/random encounter/)) {
 				_round.battleType = HOURLY;
-			} else if (c.match(/arena challenge/)) {
+			} else if (logString.match(/arena challenge/)) {
 				_round.battleType = ARENA;
-				_round.arenaNum = parseInt(c.match(/challenge #\d+?\s/i)[0].replace("challenge #", ""));
-			} else if (c.match(/GrindFest/)) {
+				_round.arenaNum = parseInt(logString.match(/challenge #\d+?\s/i)[0].replace("challenge #", ""));
+			} else if (logString.match(/GrindFest/)) {
 				_round.battleType = GRINDFEST;
-			} else if (c.match(/Item World/)) {
+			} else if (logString.match(/Item World/)) {
 				_round.battleType = ITEM_WORLD;
-			} else if (c.match(/CrysFest/)) {
+			} else if (logString.match(/CrysFest/)) {
 				_round.battleType = CRYSFEST;
 			}
 			RoundSave();
 		}
-		if (g.html() !== e) {
-			return false;
+		if (turnNumberElement.innerHTML !== lastTurnNumberString) {
+			break;
 		}
-		if (_settings.isAlertGem && c.match(/drops a (.*) Gem/)) {
-			alert("You picked up a " + RegExp.$1 + " Gem.");
+		if (_settings.isAlertGem && logString.match(/drops a (.*) Gem/)) {
+			HVStat.enqueueAlert("You picked up a " + RegExp.$1 + " Gem.");
 		}
-		if (_settings.isWarnAbsorbTrigger && /The spell is absorbed/.test(c)) {
-			alert("Absorbing Ward has triggered.");
+		if (_settings.isWarnAbsorbTrigger && /The spell is absorbed/.test(logString)) {
+			HVStat.enqueueAlert("Absorbing Ward has triggered.");
 		}
-		if (_settings.isWarnSparkTrigger && c.match(/spark of life.*defeat/ig)) {
-			alert("Spark of Life has triggered!!");
+		if (_settings.isWarnSparkTrigger && logString.match(/spark of life.*defeat/ig)) {
+			HVStat.enqueueAlert("Spark of Life has triggered!!");
 		}
-		if (_settings.isWarnSparkExpire && c.match(/spark of life.*expired/ig)) {
-			alert("Spark of Life has expired!!");
+		if (_settings.isWarnSparkExpire && logString.match(/spark of life.*expired/ig)) {
+			HVStat.enqueueAlert("Spark of Life has expired!!");
 		}
-		if ((_settings.isShowSidebarProfs || _settings.isTrackStats) && c.match(/0.0(\d+) points of (.*?) proficiency/ig)) {
+		if ((_settings.isShowSidebarProfs || _settings.isTrackStats) && logString.match(/0.0(\d+) points of (.*?) proficiency/ig)) {
 			var p = (RegExp.$1) / 100;
 			var r = RegExp.$2;
 			loadProfsObject();
@@ -2690,11 +3013,11 @@ function collectRoundInfo() {
 			_profs.save();
 		}
 		if (_settings.isRememberScan) {
-			if (c.indexOf("Scanning") >= 0) {
+			if (logString.indexOf("Scanning") >= 0) {
 				(function () {
 					var scanningMonsterName;
 					var scanningMonsterIndex = -1;
-					var r = /Scanning ([^\.]{0,30})\.{3,}/.exec(c);
+					var r = /Scanning ([^\.]{0,30})\.{3,}/.exec(logString);
 					var i, len, monster;
 					if (r && r.length >= 2) {
 						scanningMonsterName = r[1];
@@ -2702,7 +3025,7 @@ function collectRoundInfo() {
 						for (i = 0; i < len; i++) {
 							monster = HVStat.monsters[i];
 							if (monster.name === scanningMonsterName) {
-								monster.fetchScanningLog(c, HVStat.transaction);
+								monster.fetchScanningLog(logString, HVStat.transaction);
 							}
 						}
 					}
@@ -2711,59 +3034,59 @@ function collectRoundInfo() {
 		}
 		if (_settings.isTrackStats || _settings.isShowEndStats) {
 			var o = 0;
-			if (c.match(/\s(\d+)\s/)) {
+			if (logString.match(/\s(\d+)\s/)) {
 				o = parseInt(RegExp.$1);
 			}
-			if (c.match(/has been defeated/i)) {
+			if (logString.match(/has been defeated/i)) {
 				_round.kills++;
-			} else if (c.match(/bleeding wound hits/i)) {
+			} else if (logString.match(/bleeding wound hits/i)) {
 				_round.dDealt[2] += o;
-			} else if (c.match(/(you hit)|(you crit)/i)) {
+			} else if (logString.match(/(you hit)|(you crit)/i)) {
 				_round.aAttempts++;
 				a++;
-				_round.aHits[c.match(/you crit/i) ? 1 : 0]++;
-				_round.dDealt[c.match(/you crit/i) ? 1 : 0] += o;
-			} else if (c.match(/your offhand (hits|crits)/i)) {
-				_round.aOffhands[c.match(/offhand crit/i) ? 2 : 0]++;
-				_round.aOffhands[c.match(/offhand crit/i) ? 3 : 1] += o;
-			} else if (c.match(/you counter/i)) {
+				_round.aHits[logString.match(/you crit/i) ? 1 : 0]++;
+				_round.dDealt[logString.match(/you crit/i) ? 1 : 0] += o;
+			} else if (logString.match(/your offhand (hits|crits)/i)) {
+				_round.aOffhands[logString.match(/offhand crit/i) ? 2 : 0]++;
+				_round.aOffhands[logString.match(/offhand crit/i) ? 3 : 1] += o;
+			} else if (logString.match(/you counter/i)) {
 				_round.aCounters[0]++;
 				_round.aCounters[1] += o;
 				ac++;
 				_round.dDealt[0] += o;
-			} else if (c.match(/hits|blasts|explodes/i) && !c.match(/hits you /i)) {
-				if (c.match(/spreading poison hits /i) && !c.match(/(hits you |crits you )/i)) {
+			} else if (logString.match(/hits|blasts|explodes/i) && !logString.match(/hits you /i)) {
+				if (logString.match(/spreading poison hits /i) && !logString.match(/(hits you |crits you )/i)) {
 					_round.effectPoison[1] += o;
 					_round.effectPoison[0]++;
 				} else {
-					if (c.match(/(searing skin|freezing limbs|deep burns|turbulent air|burning soul|breached defence|blunted attack) (hits|blasts|explodes)/i) && !c.match(/(hits you |crits you )/i)) {
+					if (logString.match(/(searing skin|freezing limbs|deep burns|turbulent air|burning soul|breached defence|blunted attack) (hits|blasts|explodes)/i) && !logString.match(/(hits you |crits you )/i)) {
 						_round.elemEffects[1]++;
 						_round.elemEffects[2] += o;
-					} else if (c.match(/(fireball|inferno|flare|meteor|nova|flames of loki|icestrike|snowstorm|freeze|blizzard|cryostasis|fimbulvetr|lighting|thunderstorm|ball lighting|chain lighting|shockblast|wrath of thor|windblast|cyclone|gale|hurricane|downburst|storms of njord) (hits|blasts|explodes)/i) && !c.match(/(hits you |crits you )/i)) {
-						_round.dDealtSp[c.match(/blasts/i) ? 1 : 0] += o;
-						_round.sHits[c.match(/blasts/i) ? 1 : 0]++;
+					} else if (logString.match(/(fireball|inferno|flare|meteor|nova|flames of loki|icestrike|snowstorm|freeze|blizzard|cryostasis|fimbulvetr|lighting|thunderstorm|ball lighting|chain lighting|shockblast|wrath of thor|windblast|cyclone|gale|hurricane|downburst|storms of njord) (hits|blasts|explodes)/i) && !logString.match(/(hits you |crits you )/i)) {
+						_round.dDealtSp[logString.match(/blasts/i) ? 1 : 0] += o;
+						_round.sHits[logString.match(/blasts/i) ? 1 : 0]++;
 						_round.elemSpells[1]++;
 						_round.elemSpells[2] += o;
-					} else if (c.match(/(condemn|purge|smite|banish) (hits|blasts|explodes)/i) && !c.match(/(hits you |crits you )/i)) {
-						_round.dDealtSp[c.match(/blasts/i) ? 1 : 0] += o;
-						_round.sHits[c.match(/blasts/i) ? 1 : 0]++;
+					} else if (logString.match(/(condemn|purge|smite|banish) (hits|blasts|explodes)/i) && !logString.match(/(hits you |crits you )/i)) {
+						_round.dDealtSp[logString.match(/blasts/i) ? 1 : 0] += o;
+						_round.sHits[logString.match(/blasts/i) ? 1 : 0]++;
 						_round.divineSpells[1]++;
 						_round.divineSpells[2] += o
-					} else if (c.match(/(soul reaper|soul harvest|soul fire|soul burst|corruption|pestilence|disintegrate|ragnarok) (hits|blasts|explodes)/i) && !c.match(/(hits you |crits you )/i)) {
-						_round.dDealtSp[c.match(/blasts/i) ? 1 : 0] += o;
-						_round.sHits[c.match(/blasts/i) ? 1 : 0]++;
+					} else if (logString.match(/(soul reaper|soul harvest|soul fire|soul burst|corruption|pestilence|disintegrate|ragnarok) (hits|blasts|explodes)/i) && !logString.match(/(hits you |crits you )/i)) {
+						_round.dDealtSp[logString.match(/blasts/i) ? 1 : 0] += o;
+						_round.sHits[logString.match(/blasts/i) ? 1 : 0]++;
 						_round.forbidSpells[1]++;
 						_round.forbidSpells[2] += o
 					}
 				}
-			} else if (c.match(/(hits you )|(crits you )/i)) {
+			} else if (logString.match(/(hits you )|(crits you )/i)) {
 				_round.mAttempts++;
-				_round.mHits[c.match(/crits/i) ? 1 : 0]++;
-				_round.dTaken[c.match(/crits/i) ? 1 : 0] += o;
-				if (sel.match(/ uses | casts /i)) {
+				_round.mHits[logString.match(/crits/i) ? 1 : 0]++;
+				_round.dTaken[logString.match(/crits/i) ? 1 : 0] += o;
+				if (logStringOfPreviousRow.match(/ uses | casts /i)) {
 					_round.pskills[1]++;
 					_round.pskills[2] += o;
-					if (sel.match(/ casts /i)) {
+					if (logStringOfPreviousRow.match(/ casts /i)) {
 						_round.pskills[5]++;
 						_round.pskills[6] += o;
 					} else {
@@ -2773,115 +3096,115 @@ function collectRoundInfo() {
 					if (_settings.isRememberSkillsTypes) {
 						var j = HVStat.monsters.length;
 						while (j--) {
-							reResult = /([^\.]{1,30}) (?:uses|casts) /.exec(sel);
+							reResult = /([^\.]{1,30}) (?:uses|casts) /.exec(logStringOfPreviousRow);
 							if (reResult && reResult.length >= 2 && reResult[1] === HVStat.monsters[j].name && reResult[1].indexOf("Unnamed ") !== 0) {
-								HVStat.monsters[j].fetchSkillLog(sel, c, HVStat.transaction);
+								HVStat.monsters[j].fetchSkillLog(logStringOfPreviousRow, logString, HVStat.transaction);
 								break;
 							}
 						}
 					}
 				}
-			} else if (c.match(/you (dodge|evade|block|parry|resist)|(misses.*?against you)/i)) {
+			} else if (logString.match(/you (dodge|evade|block|parry|resist)|(misses.*?against you)/i)) {
 				_round.mAttempts++;
-				if (c.match(/dodge|(misses.*?against you)/)) {
+				if (logString.match(/dodge|(misses.*?against you)/)) {
 					_round.pDodges++;
-				} else if (c.match(/evade/)) {
+				} else if (logString.match(/evade/)) {
 					_round.pEvades++;
-				} else if (c.match(/block/)) {
+				} else if (logString.match(/block/)) {
 					_round.pBlocks++;
-				} else if (c.match(/parry/)) {
+				} else if (logString.match(/parry/)) {
 					_round.pParries++;
-				} else if (c.match(/resist/)) {
+				} else if (logString.match(/resist/)) {
 					_round.pResists++;
 				}
-			} else if (c.match(/casts?/)) {
-				if (c.match(/casts/)) {
+			} else if (logString.match(/casts?/)) {
+				if (logString.match(/casts/)) {
 					_round.mAttempts++;
 					_round.mSpells++;
-				} else if (c.match(/you cast/i)) {
-					if (c.match(/(poison|slow|weaken|sleep|confuse|imperil|blind|silence|nerf|x.nerf|magnet|lifestream)/i)) {
+				} else if (logString.match(/you cast/i)) {
+					if (logString.match(/(poison|slow|weaken|sleep|confuse|imperil|blind|silence|nerf|x.nerf|magnet|lifestream)/i)) {
 						_round.depSpells[0]++;
 						_round.sAttempts++
-					} else if (c.match(/(condemn|purge|smite|banish)/i)) {
+					} else if (logString.match(/(condemn|purge|smite|banish)/i)) {
 						_round.divineSpells[0]++;
 						_round.sAttempts++;
-						if (selall.match(/Your spell misses its mark/i)) {
-							_round.divineSpells[3] += selall.match(/Your spell misses its mark/ig).length;
+						if (joinedLogStringOfCurrentTurn.match(/Your spell misses its mark/i)) {
+							_round.divineSpells[3] += joinedLogStringOfCurrentTurn.match(/Your spell misses its mark/ig).length;
 						}
-					} else if (c.match(/(soul reaper|soul harvest|soul fire|soul burst|corruption|pestilence|disintegrate|ragnarok)/i)) {
+					} else if (logString.match(/(soul reaper|soul harvest|soul fire|soul burst|corruption|pestilence|disintegrate|ragnarok)/i)) {
 						_round.forbidSpells[0]++;
 						_round.sAttempts++
-						if (selall.match(/Your spell misses its mark/i)) {
-							_round.forbidSpells[3] += selall.match(/Your spell misses its mark/ig).length;
+						if (joinedLogStringOfCurrentTurn.match(/Your spell misses its mark/i)) {
+							_round.forbidSpells[3] += joinedLogStringOfCurrentTurn.match(/Your spell misses its mark/ig).length;
 						}
-					} else if (c.match(/(fireball|inferno|flare|meteor|nova|flames of loki|icestrike|snowstorm|freeze|blizzard|cryostasis|fimbulvetr|lighting|thunderstorm|ball lighting|chain lighting|shockblast|wrath of thor|windblast|cyclone|gale|hurricane|downburst|storms of njord)/i)) {
+					} else if (logString.match(/(fireball|inferno|flare|meteor|nova|flames of loki|icestrike|snowstorm|freeze|blizzard|cryostasis|fimbulvetr|lighting|thunderstorm|ball lighting|chain lighting|shockblast|wrath of thor|windblast|cyclone|gale|hurricane|downburst|storms of njord)/i)) {
 						_round.elemSpells[0]++;
 						_round.sAttempts++;
-						if (selall.match(/Your spell misses its mark/i)) {
-							_round.elemSpells[3] += selall.match(/Your spell misses its mark/ig).length;
+						if (joinedLogStringOfCurrentTurn.match(/Your spell misses its mark/i)) {
+							_round.elemSpells[3] += joinedLogStringOfCurrentTurn.match(/Your spell misses its mark/ig).length;
 						}
-					} else if (c.match(/(spark of life|absorb|protection|shadow veil|haste|flame spikes|frost spikes|lightning spikes|storm spikes|arcane focus|heartseeker)/i)) {
+					} else if (logString.match(/(spark of life|absorb|protection|shadow veil|haste|flame spikes|frost spikes|lightning spikes|storm spikes|arcane focus|heartseeker)/i)) {
 						_round.supportSpells++
-						if (c.match(/absorb/i)) {
+						if (logString.match(/absorb/i)) {
 							_round.absArry[0]++
 						}
-					} else if (c.match(/(cure|regen)/i)) {
+					} else if (logString.match(/(cure|regen)/i)) {
 						_round.curativeSpells++
-						if (c.match(/cure/i)) {
-							_round.cureTotals[c.match(/cure\./i) ? 0 : c.match(/cure ii\./i) ? 1 : 2] += d;
-							_round.cureCounts[c.match(/cure\./i) ? 0 : c.match(/cure ii\./i) ? 1 : 2]++
+						if (logString.match(/cure/i)) {
+							_round.cureTotals[logString.match(/cure\./i) ? 0 : logString.match(/cure ii\./i) ? 1 : 2] += d;
+							_round.cureCounts[logString.match(/cure\./i) ? 0 : logString.match(/cure ii\./i) ? 1 : 2]++
 						}
 					}
 				}
-			} else if (c.match(/The spell is absorbed. You gain (\d+) Magic Points/)) {
+			} else if (logString.match(/The spell is absorbed. You gain (\d+) Magic Points/)) {
 				_round.absArry[1]++;
 				_round.absArry[2] += parseInt(RegExp.$1);
-			} else if (c.match(/You are healed for (\d+) Health Points/)) {
+			} else if (logString.match(/You are healed for (\d+) Health Points/)) {
 				d = parseInt(RegExp.$1);
-			} else if (c.match(/Your attack misses its mark/)) {
+			} else if (logString.match(/Your attack misses its mark/)) {
 				_round.aAttempts++;
-			} else if (c.match(/Your spell misses its mark/)) {
+			} else if (logString.match(/Your spell misses its mark/)) {
 				_round.sResists++;
-			} else if (c.match(/gains? the effect/i)) {
-				if (c.match(/gain the effect Overwhelming Strikes/i)) {
+			} else if (logString.match(/gains? the effect/i)) {
+				if (logString.match(/gain the effect Overwhelming Strikes/i)) {
 					_round.overStrikes++;
-				} else if (c.match(/gains the effect Coalesced Mana/i)) {
+				} else if (logString.match(/gains the effect Coalesced Mana/i)) {
 					_round.coalesce++;
-				} else if (c.match(/gains the effect Ether Theft/i)) {
+				} else if (logString.match(/gains the effect Ether Theft/i)) {
 					_round.eTheft++;
-				} else if (c.match(/gain the effect Channeling/i)) {
+				} else if (logString.match(/gain the effect Channeling/i)) {
 					_round.channel++;
 				} else {
-					if (c.match(/gains the effect (searing skin|freezing limbs|deep burns|turbulent air|breached defence|blunted attack|burning soul|rippened soul)/i)) {
+					if (logString.match(/gains the effect (searing skin|freezing limbs|deep burns|turbulent air|breached defence|blunted attack|burning soul|rippened soul)/i)) {
 						_round.elemEffects[0]++;
-					} else if (c.match(/gains the effect (spreading poison|slowed|weakened|sleep|confused|imperiled|blinded|silenced|nerfed|magically snared|lifestream)/i)) {
+					} else if (logString.match(/gains the effect (spreading poison|slowed|weakened|sleep|confused|imperiled|blinded|silenced|nerfed|magically snared|lifestream)/i)) {
 						_round.depSpells[1]++;
-					} else if (c.match(/gains the effect stunned/i)) {
+					} else if (logString.match(/gains the effect stunned/i)) {
 						_round.weaponprocs[0]++;
-						if (sel.match(/You counter/i)) {
+						if (logStringOfPreviousRow.match(/You counter/i)) {
 							_round.weaponprocs[0]--;
 							_round.weaponprocs[7]++
 						}
-					} else if (c.match(/gains the effect penetrated armor/i)) {
+					} else if (logString.match(/gains the effect penetrated armor/i)) {
 						_round.weaponprocs[1]++;
-					} else if (c.match(/gains the effect bleeding wound/i)) {
+					} else if (logString.match(/gains the effect bleeding wound/i)) {
 						_round.weaponprocs[2]++;
-					} else if (c.match(/gains the effect ether theft/i)) {
+					} else if (logString.match(/gains the effect ether theft/i)) {
 						_round.weaponprocs[3]++;
 					}
 				}
-			} else if (c.match(/uses?/i)) {
-				if (c.match(/uses/i)) {
+			} else if (logString.match(/uses?/i)) {
+				if (logString.match(/uses/i)) {
 					_round.pskills[0]++;
-				} else if (c.match(/use Mystic Gem/i)) {
+				} else if (logString.match(/use Mystic Gem/i)) {
 					_round.channel--;
 				}
-			} else if (c.match(/you drain/i)) {
-				if (c.match(/you drain \d+(\.)?\d? hp from/i)) {
+			} else if (logString.match(/you drain/i)) {
+				if (logString.match(/you drain \d+(\.)?\d? hp from/i)) {
 					_round.weaponprocs[4]++;
-				} else if (c.match(/you drain \d+(\.)?\d? mp from/i)) {
+				} else if (logString.match(/you drain \d+(\.)?\d? mp from/i)) {
 					_round.weaponprocs[5]++;
-				} else if (c.match(/you drain \d+(\.)?\d? sp from/i)) {
+				} else if (logString.match(/you drain \d+(\.)?\d? sp from/i)) {
 					_round.weaponprocs[6]++;
 				}
 			}
@@ -2889,18 +3212,18 @@ function collectRoundInfo() {
 		var l = /\[.*?\]/i;
 		var n;
 		var t = 1;
-		if (c.match(/dropped.*?color:.*?red.*?\[.*?\]/ig)) {
+		if (logString.match(/dropped.*?color:.*?red.*?\[.*?\]/ig)) {
 			_equips++;
-			var q = c.match(l)[0];
+			var q = logString.match(l)[0];
 			_lastEquipName = q;
 			if (_settings.isTrackItems) {
 				_drops.eqDrop++;
 				_drops.eqArray.push(q);
 				_drops.eqDropbyBT[_round.battleType]++;
 			}
-		} else if (c.match(/dropped.*?color:.*?blue.*?\[.*?\]/ig)) {
+		} else if (logString.match(/dropped.*?color:.*?blue.*?\[.*?\]/ig)) {
 			_artifacts++;
-			itemToAdd = c.match(l)[0];
+			itemToAdd = logString.match(l)[0];
 			_lastArtName = itemToAdd;
 			if (_settings.isTrackItems) {
 				_drops.artDrop++;
@@ -2919,8 +3242,8 @@ function collectRoundInfo() {
 					_drops.artArry.push(itemToAdd);
 				}
 			}
-		} else if (_settings.isTrackItems && (c.match(/dropped.*?color:.*?green.*?\[.*?\]/ig) || c.match(/dropped.*?token/ig))) {
-			itemToAdd = c.match(l)[0];
+		} else if (_settings.isTrackItems && (logString.match(/dropped.*?color:.*?green.*?\[.*?\]/ig) || logString.match(/dropped.*?token/ig))) {
+			itemToAdd = logString.match(l)[0];
 			if (itemToAdd.match(/(\d){0,2}.?x?.?Crystal of /ig)) {
 				t = parseInt("0" + RegExp.$1, 10);
 				if (t < 1) {
@@ -2938,21 +3261,21 @@ function collectRoundInfo() {
 					break;
 				}
 			}
-		} else if (_settings.isTrackItems && c.match(/dropped.*?color:.*?\#461B7E.*?\[.*?\]/ig)) {
+		} else if (_settings.isTrackItems && logString.match(/dropped.*?color:.*?\#461B7E.*?\[.*?\]/ig)) {
 			_drops.dropChances--;
 			_drops.dropChancesbyBT[_round.battleType]--;
 		}
-		if (c.match(/(clear bonus).*?color:.*?red.*?\[.*?\]/ig)) {
+		if (logString.match(/(clear bonus).*?color:.*?red.*?\[.*?\]/ig)) {
 			_equips++;
-			var s = c.match(l)[0];
+			var s = logString.match(l)[0];
 			_lastEquipName = s;
 			if (_settings.isTrackRewards) {
 				_rewards.eqRwrd++;
 				_rewards.eqRwrdArry.push(s);
 			}
-		} else if (c.match(/(clear bonus).*?color:.*?blue.*?\[.*?\]/ig)) {
+		} else if (logString.match(/(clear bonus).*?color:.*?blue.*?\[.*?\]/ig)) {
 			_artifacts++;
-			itemToAdd = c.match(l)[0];
+			itemToAdd = logString.match(l)[0];
 			_lastArtName = itemToAdd;
 			if (_settings.isTrackRewards) {
 				_rewards.artRwrd++;
@@ -2970,9 +3293,9 @@ function collectRoundInfo() {
 					_rewards.artRwrdArry.push(itemToAdd);
 				}
 			}
-		} else if (_settings.isTrackRewards && (c.match(/(clear bonus).*?color:.*?green.*?\[.*?\]/ig) || c.match(/(clear bonus).*?token/ig))) {
+		} else if (_settings.isTrackRewards && (logString.match(/(clear bonus).*?color:.*?green.*?\[.*?\]/ig) || logString.match(/(clear bonus).*?token/ig))) {
 			_rewards.itemsRwrd++;
-			itemToAdd = c.match(l)[0];
+			itemToAdd = logString.match(l)[0];
 			if (itemToAdd.match(/(\d)x Crystal/ig)) {
 				t = parseInt("0" + RegExp.$1, 10);
 				itemToAdd = itemToAdd.replace(/\dx /, "");
@@ -2990,19 +3313,19 @@ function collectRoundInfo() {
 				_rewards.itemRwrdQtyArry.push(1);
 				_rewards.itemRwrdArry.push(itemToAdd);
 			}
-		} else if (_settings.isTrackRewards && (c.match(/(token bonus).*?\[.*?\]/ig))) {
-			if (c.match(/token of blood/ig)) {
+		} else if (_settings.isTrackRewards && (logString.match(/(token bonus).*?\[.*?\]/ig))) {
+			if (logString.match(/token of blood/ig)) {
 				_tokenDrops[0]++;
-			} else if (c.match(/token of healing/ig)) {
+			} else if (logString.match(/token of healing/ig)) {
 				_tokenDrops[1]++;
-			} else if (c.match(/chaos token/ig)) {
+			} else if (logString.match(/chaos token/ig)) {
 				_tokenDrops[2]++;
 			}
 		}
-		if (c.match(/reached equipment inventory limit/i)) {
+		if (logString.match(/reached equipment inventory limit/i)) {
 			localStorage.setItem(HV_EQUIP, JSON.stringify("true"));
 		}
-	});
+	}
 	if (a > 1) {
 		_round.aDomino[0]++;
 		_round.aDomino[1] += a;
@@ -3011,8 +3334,8 @@ function collectRoundInfo() {
 	if (ac > 1) {
 		_round.aCounters[ac]++;
 	}
-	if (e > _round.lastTurn) {
-		_round.lastTurn = e;
+	if (lastTurnNumberString > _round.lastTurn) {
+		_round.lastTurn = lastTurnNumberString;
 	}
 	RoundSave();
 }
@@ -3645,18 +3968,18 @@ function getMonsterStatsHtml() {
 }
 function initUI() {
 	var d = 4;
-	var c = $(".stuffbox").width() - 60 - 4;
-	var b = document.createElement("div");
-	var a = "<div class='ui-state-default ui-corner-all' style='position:absolute; top:" + d + "px; left: " + c + "px; z-index:1074'><span style='margin:3px' class='ui-icon ui-icon-wrench' title='Launch HV STAT UI'/></div>";
-	$(b).html(a);
-	$(b).addClass("_mainButton");
-	$("body").append(b);
-	$(b).css("cursor", "pointer");
-	$("._mainButton").click(initMainMenu)
+	var c = document.querySelector("div.stuffbox").scrollWidth - 60 - 4;
+	var div = document.createElement("div");
+	div.setAttribute("id", "HVStatMainButton");
+	div.setAttribute("class", "ui-state-default ui-corner-all");
+	div.style.cssText = "position:absolute; top:" + d + "px; left: " + c + "px; z-index:1074; cursor: pointer;";
+	div.innerHTML = '<span style="margin:3px" class="ui-icon ui-icon-wrench" title="Launch HV STAT UI"/>';
+	document.body.insertBefore(div, null);
+	div.addEventListener("click", initMainMenu);
 }
 function initMainMenu() {
 	if (_isMenuInitComplete) return;
-	var b = "[STAT] HentaiVerse Statistics, Tracking, and Analysis Tool v." + VERSION + (HVStat.isChrome ? " (Chrome Edition)" : "");
+	var b = "[STAT] HentaiVerse Statistics, Tracking, and Analysis Tool v." + HVStat.VERSION + (HVStat.isChrome ? " (Chrome Edition)" : "");
 	var c = document.createElement("div");
 	$(c).addClass("_mainMenu").css("text-align", "left");
 	var a = '<div id="tabs"><ul>'
@@ -3696,8 +4019,9 @@ function initMainMenu() {
 	initShrinePane();
 	initSettingsPane();
 	initMonsterStatsPane();
-	$("._mainButton").unbind("click", initMainMenu);
-	$("._mainButton").click(function () {
+	var mainButton = document.getElementById("HVStatMainButton");
+	mainButton.removeEventListener("click", initMainMenu);
+	mainButton.addEventListener("click", function () {
 		if ($(c).dialog("isOpen"))
 			$(c).dialog("close");
 		else
@@ -3899,19 +4223,23 @@ function initSettingsPane() {
 		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isColumnInventory" /></td><td colspan="2">Use column view for item inventory (<span style="color:red">Downloadable/Custom Local Fonts only!</span>)</td></tr>'
 		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isChangePageTitle" /></td><td colspan="2">Change HentaiVerse page title: <input type="text" name="customPageTitle" size="40" /></td><td></td></tr>'
 		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isStartAlert" /></td><td colspan="2">Warnings berfore starting Challenges when HP is below <input type="text" name="StartAlertHP" size="1" maxLength="2" style="text-align:right" />%, MP is below <input type="text" name="StartAlertMP" size="1" maxLength="2" style="text-align:right" />%, SP is below <input type="text" name="StartAlertSP" size="1" maxLength="2" style="text-align:right" />% or difficulty is over <select id="StartAlertDifficulty"><option id=diff1 value=1>Easy</option><option id=diff2 value=2>Normal</option><option id=diff3 value=3>Hard</option><option id=diff4 value=4>Heroic</option><option id=diff5 value=5>Nightmare</option><option id=diff6 value=6>Hell</option><option id=diff7 value=7>Nintendo</option><option id=diff8 value=8>Battletoads</option></select> (<span style="color:red">Downloadable/Custom Local Fonts only!</span>)</td><td></td></tr>'
-		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isShowScanButton" /></td><td colspan="2">Show scan button</td><td></td></tr>'
-		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isEnableScanHotkey" /></td><td colspan="2">Enable Scan Hotkeys: numpad","/numpad delete</td><td></td></tr>'
-		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isShowSkillButton" /></td><td colspan="2">Show skill button </td><td></td></tr>'
-		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isEnableSkillHotkey" /></td><td colspan="2">Enable Weapon Skill Hotkeys: "+" / "=" and numpad"+" (Works without skillbutton)</td><td></td></tr>'
+		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isShowScanButton" /></td><td colspan="2">Show scan buttons</td><td></td></tr>'
+		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isShowSkillButton" /></td><td colspan="2">Show skill buttons</td><td></td></tr>'
 		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isShowEquippedSet" /></td><td colspan="2">Show equipped set number at left panel (<span style="color:red">Downloadable/Custom Local Fonts only!</span>)</td><td></td></tr>'
-		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isDisableForgeHotKeys" /></td><td colspan="2">Disable hot keys in the Forge (<span style="color:red">Strongry recommended if use item tags</span>)</td><td></td></tr>'
-		+ '<tr><td colspan="3">Show item tags in:</td><td></td></tr>'
+		+ '<tr><td colspan="3">Show equipment tags in:</td><td></td></tr>'
 		+ '<tr><td align="center" style="width:5px;padding-left:15px"><input type="checkbox" name="isShowTags0" /></td><td colspan="3" style="padding-left:15px">Equipment page </td></tr>'
 		+ '<tr><td align="center" style="width:5px;padding-left:15px"><input type="checkbox" name="isShowTags1" /></td><td colspan="3" style="padding-left:15px">Bazaar shop page </td></tr>'
 		+ '<tr><td align="center" style="width:5px;padding-left:15px"><input type="checkbox" name="isShowTags2" /></td><td colspan="3" style="padding-left:15px">Item World </td></tr>'
 		+ '<tr><td align="center" style="width:5px;padding-left:15px"><input type="checkbox" name="isShowTags3" /></td><td colspan="3" style="padding-left:15px">Moogle Mail Attachments list </td></tr>'
 		+ '<tr><td align="center" style="width:5px;padding-left:15px"><input type="checkbox" name="isShowTags4" /></td><td colspan="3" style="padding-left:15px">Forge </td></tr>'
 		+ '<tr><td align="center" style="width:5px;padding-left:15px"><input type="checkbox" name="isShowTags5" /></td><td colspan="3" style="padding-left:15px">Inventory (<span style="color:red">Strongly suggested to turn it on and visit inventory once for a while</span>)</td></tr>'
+		+ '<tr><td colspan="2"><b>Keyboard Options:</b></td></tr>'
+		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isEnableScanHotkey" /></td><td colspan="2">Enable Scan Hotkeys: numpad","/numpad delete</td><td></td></tr>'
+		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isEnableSkillHotkey" /></td><td colspan="2">Enable Weapon Skill Hotkeys: "+" / "=" and numpad"+"</td><td></td></tr>'
+		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="enableOFCHotkey" /></td><td colspan="2">Enable Orbital Friendship Cannon Hotkeys: "-" / "_" and numpad"-"</td><td></td></tr>'
+		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="enableScrollHotkey" /></td><td colspan="2">Enable Page Up/Down key on scrollable panes</td><td></td></tr>'
+		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isDisableForgeHotKeys" /></td><td colspan="2">Disable hotkeys in the Forge (<span style="color:red">Strongly recommended if using equipment tags</span>)</td><td></td></tr>'
+		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="enableShrineKeyPatch" /></td><td colspan="2">Patch to enable Space key in the Shrine (Chrome only)</td><td></td></tr>'
 		+ '<tr><td colspan="2"><b>Battle Enhancement:</b></td></tr>'
 		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isShowHighlight" /></td><td colspan="2">Highlight battle log</td><td></td></tr>'
 		+ '<tr><td align="center" style="width:5px;padding-left:20px"><input type="checkbox" name="isAltHighlight" /></td><td colspan="2" style="padding-left:10px">Use alternate highlighting</td></tr>'
@@ -3920,14 +4248,15 @@ function initSettingsPane() {
 		+ '<tr><td align="center" style="width:5px;padding-left:30px"><input type="checkbox" name="isSelfEffectsWarnColor" /></td><td colspan="2" style="padding-left:10px">Highlight duration badges - <span style="color:orange">Orange</span>: on <input type="text" name="SelfWarnOrangeRounds" size="1" maxLength="2" style="text-align:right" /> rounds; <span style="color:red">Red</span>: on <input type="text" name="SelfWarnRedRounds" size="1" maxLength="1" style="text-align:right" /> rounds</td></tr>'
 		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isShowRoundReminder" /></td><td colspan="2">Final round reminder - minimum <input type="text" name="reminderMinRounds" size="1" maxLength="3" style="text-align:right" /> rounds; Alert <input type="text" name="reminderBeforeEnd" size="1" maxLength="1" style="text-align:right" /> rounds before end</td></tr>'
 		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isShowEndStats" /></td><td colspan="2">Show Battle Summary</td><td></td></tr>'
-		+ '<tr><td align="center" style="width:5px;padding-left:20px"><input type="checkbox" name="isShowEndProfs" /></td><td colspan="2" style="padding-left:10px">Show Proficiency Gain Summary</td><tr><td align="center" style="width:5px;padding-left:40px"><input type="checkbox" name="isShowEndProfsMagic" /></td><td colspan="2" style="padding-left:30px">Show Magic Proficiency</td></tr>'
-		+ '<tr><td align="center" style="width:5px;padding-left:40px"><input type="checkbox" name="isShowEndProfsArmor" /></td><td colspan="2" style="padding-left:30px">Show Armor Proficiency</td></tr>'
-		+ '<tr><td align="center" style="width:5px;padding-left:40px"><input type="checkbox" name="isShowEndProfsWeapon" /></td><td colspan="2" style="padding-left:30px">Show Weapon Proficiency</td></tr>'
+		+ '<tr><td align="center" style="width:5px;padding-left:20px"><input type="checkbox" name="isShowEndProfs" /></td><td colspan="2" style="padding-left:10px">Show Proficiency Gain Summary</td></tr>'
+		+ '<tr><td align="center" style="width:5px;padding-left:40px"><input type="checkbox" name="isShowEndProfsMagic" /></td><td colspan="2" style="padding-left:30px">Show Magic Proficiency Gain Summary</td></tr>'
+		+ '<tr><td align="center" style="width:5px;padding-left:40px"><input type="checkbox" name="isShowEndProfsArmor" /></td><td colspan="2" style="padding-left:30px">Show Armor Proficiency Gain Summary</td></tr>'
+		+ '<tr><td align="center" style="width:5px;padding-left:40px"><input type="checkbox" name="isShowEndProfsWeapon" /></td><td colspan="2" style="padding-left:30px">Show Weapon Proficiency Gain Summary</td></tr>'
 		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isAlertGem" /></td><td colspan="2">Alert on Powerup drops</td></tr>'
 		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isAlertOverchargeFull" /></td><td colspan="2">Alert when Overcharge is full</td></tr>'
-		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isShowMonsterNumber"></td><td colspan="2">Show Numbers instead of letters next to monsters.</td></tr>'
-		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isShowRoundCounter"></td><td colspan="2">Show Round Counter.</td></tr>'
-		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isShowPowerupBox"></td><td colspan="2">Show Powerup Box.</td></tr>'
+		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isShowMonsterNumber"></td><td colspan="2">Show Numbers instead of letters next to monsters</td></tr>'
+		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isShowRoundCounter"></td><td colspan="2">Show Round Counter</td></tr>'
+		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isShowPowerupBox"></td><td colspan="2">Show Powerup Box</td></tr>'
 		+ '<tr><td colspan="2" style="padding-left:10px">Display Monster Stats:</td></tr>'
 		+ '<tr><td align="center" style="width:5px;padding-left:20px"><input type="checkbox" name="showMonsterHP" /></td><td colspan="2">Show monster HP (<span style="color:red">Estimated</span>)</td><td></td></tr>'
 		+ '<tr><td align="center" style="width:5px;padding-left:40px"><input type="checkbox" name="showMonsterHPPercent" /></td><td colspan="2" style="padding-left:10px">Show monster HP in percentage</td></tr>'
@@ -4011,12 +4340,48 @@ function initSettingsPane() {
 		+ '<tr><td align="center"><input type="button" class="_resetSettings" value="Default Settings" title="Reset settings to default."/></td><td align="center"><input type="button" class="_masterReset" value="MASTER RESET" title="Deletes all of STAT\'s saved data and settings."/></td></tr>'
 		+ '</table>';
 	$("#pane6").html(a);
+
+	// General Options
+	if (_settings.isShowSidebarProfs) $("input[name=isShowSidebarProfs]").attr("checked", "checked");
+	if (_settings.isColumnInventory) $("input[name=isColumnInventory]").attr("checked", "checked");
+	if (_settings.isChangePageTitle) $("input[name=isChangePageTitle]").attr("checked", "checked");
+	$("input[name=customPageTitle]").attr("value", _settings.customPageTitle);
+	if (_settings.isStartAlert) $("input[name=isStartAlert]").attr("checked", "checked");
+	$("input[name=StartAlertHP]").attr("value", _settings.StartAlertHP);
+	$("input[name=StartAlertMP]").attr("value", _settings.StartAlertMP);
+	$("input[name=StartAlertSP]").attr("value", _settings.StartAlertSP);
+	var diffsel = "diff" + String(_settings.StartAlertDifficulty);
+	$("#"+diffsel+"").attr("selected", true);
+	if (_settings.isShowScanButton) $("input[name=isShowScanButton]").attr("checked", "checked");
+	if (_settings.isShowSkillButton) $("input[name=isShowSkillButton]").attr("checked", "checked");
+	if (_settings.isShowEquippedSet) $("input[name=isShowEquippedSet]").attr("checked", "checked");
+	if (_settings.isShowTags[0]) $("input[name=isShowTags0]").attr("checked", "checked");
+	if (_settings.isShowTags[1]) $("input[name=isShowTags1]").attr("checked", "checked");
+	if (_settings.isShowTags[2]) $("input[name=isShowTags2]").attr("checked", "checked");
+	if (_settings.isShowTags[3]) $("input[name=isShowTags3]").attr("checked", "checked");
+	if (_settings.isShowTags[4]) $("input[name=isShowTags4]").attr("checked", "checked");
+	if (_settings.isShowTags[5]) $("input[name=isShowTags5]").attr("checked", "checked");
+
+	// Keyboard Options
+	if (_settings.isEnableScanHotkey) $("input[name=isEnableScanHotkey]").attr("checked", "checked");
+	if (_settings.isEnableSkillHotkey) $("input[name=isEnableSkillHotkey]").attr("checked", "checked");
+	if (_settings.enableOFCHotkey) $("input[name=enableOFCHotkey]").attr("checked", "checked");
+	if (_settings.enableScrollHotkey) $("input[name=enableScrollHotkey]").attr("checked", "checked");
+	if (_settings.isDisableForgeHotKeys) $("input[name=isDisableForgeHotKeys]").attr("checked", "checked");
+	if (_settings.enableShrineKeyPatch) $("input[name=enableShrineKeyPatch]").attr("checked", "checked");
+
+	// Battle Enhancement
 	if (_settings.isShowHighlight) $("input[name=isShowHighlight]").attr("checked", "checked");
 	if (_settings.isAltHighlight) $("input[name=isAltHighlight]").attr("checked", "checked");
 	if (_settings.isShowDivider) $("input[name=isShowDivider]").attr("checked", "checked");
-	if (_settings.isShowEndStats) $("input[name=isShowEndStats]").attr("checked", "checked");
-	//isShowEndProfs added by Ilirith
-	if (_settings.isShowEndProfs) {
+	if (_settings.isShowSelfDuration) $("input[name=isShowSelfDuration]").attr("checked", "checked");
+	if (_settings.isSelfEffectsWarnColor) $("input[name=isSelfEffectsWarnColor]").attr("checked", "checked");
+	$("input[name=SelfWarnOrangeRounds]").attr("value", _settings.SelfWarnOrangeRounds);
+	$("input[name=SelfWarnRedRounds]").attr("value", _settings.SelfWarnRedRounds);
+	if (_settings.isShowRoundReminder) $("input[name=isShowRoundReminder]").attr("checked", "checked");
+	$("input[name=reminderMinRounds]").attr("value", _settings.reminderMinRounds);
+	$("input[name=reminderBeforeEnd]").attr("value", _settings.reminderBeforeEnd);
+	if (_settings.isShowEndProfs) {	//isShowEndProfs added by Ilirith
 		$("input[name=isShowEndProfs]").attr("checked", "checked");
 		if (_settings.isShowEndProfsMagic) $("input[name=isShowEndProfsMagic]").attr("checked", "checked");
 		if (_settings.isShowEndProfsArmor) $("input[name=isShowEndProfsArmor]").attr("checked", "checked");
@@ -4026,15 +4391,20 @@ function initSettingsPane() {
 		$("input[name=isShowEndProfsArmor]").removeAttr("checked");
 		$("input[name=isShowEndProfsWeapon]").removeAttr("checked");
 	}
-	//isShowMonsterNumber stolen from HV Lite, and added by Ilirith
-	if (_settings.isShowMonsterNumber) $("input[name=isShowMonsterNumber]").attr("checked", "checked");
+	if (_settings.isAlertGem) $("input[name=isAlertGem]").attr("checked", "checked");
+	if (_settings.isAlertOverchargeFull) $("input[name=isAlertOverchargeFull]").attr("checked", "checked");
+	if (_settings.isShowMonsterNumber) $("input[name=isShowMonsterNumber]").attr("checked", "checked"); //isShowMonsterNumber stolen from HV Lite, and added by Ilirith
 	if (_settings.isShowRoundCounter) $("input[name=isShowRoundCounter]").attr("checked", "checked");
 	if (_settings.isShowPowerupBox) $("input[name=isShowPowerupBox]").attr("checked", "checked");
+
+	// Display Monster Stats
 	if (_settings.showMonsterHP) $("input[name=showMonsterHP]").attr("checked", "checked");
 	if (_settings.showMonsterHPPercent) $("input[name=showMonsterHPPercent]").attr("checked", "checked");
 	if (_settings.showMonsterMP) $("input[name=showMonsterMP]").attr("checked", "checked");
 	if (_settings.showMonsterSP) $("input[name=showMonsterSP]").attr("checked", "checked");
+	if (_settings.showMonsterInfoFromDB) $("input[name=showMonsterInfoFromDB]").attr("checked", "checked");
 	if (_settings.showMonsterClassFromDB) $("input[name=showMonsterClassFromDB]").attr("checked", "checked");
+	if (_settings.showMonsterPowerLevelFromDB) $("input[name=showMonsterPowerLevelFromDB]").attr("checked", "checked");
 	if (_settings.showMonsterAttackTypeFromDB) $("input[name=showMonsterAttackTypeFromDB]").attr("checked", "checked");
 	if (_settings.showMonsterWeaknessesFromDB) $("input[name=showMonsterWeaknessesFromDB]").attr("checked", "checked");
 	if (_settings.showMonsterResistancesFromDB) $("input[name=showMonsterResistancesFromDB]").attr("checked", "checked");
@@ -4048,10 +4418,8 @@ function initSettingsPane() {
 	if (_settings.hideSpecificDamageType[7]) $("input[name=hideSpecificDamageType7]").attr("checked", "checked");
 	if (_settings.hideSpecificDamageType[8]) $("input[name=hideSpecificDamageType8]").attr("checked", "checked");
 	if (_settings.hideSpecificDamageType[9]) $("input[name=hideSpecificDamageType9]").attr("checked", "checked");
-	if (_settings.hideSpecificDamageType[10]) 	$("input[name=hideSpecificDamageType10]").attr("checked", "checked");
+	if (_settings.hideSpecificDamageType[10]) $("input[name=hideSpecificDamageType10]").attr("checked", "checked");
 	if (_settings.ResizeMonsterInfo) $("input[name=ResizeMonsterInfo]").attr("checked", "checked");
-	if (_settings.showMonsterPowerLevelFromDB) $("input[name=showMonsterPowerLevelFromDB]").attr("checked", "checked");
-	if (_settings.showMonsterInfoFromDB) $("input[name=showMonsterInfoFromDB]").attr("checked", "checked");
 	if (_settings.isShowStatsPopup) $("input[name=isShowStatsPopup]").attr("checked", "checked");
 	if (_settings.isMonsterPopupPlacement) $("input[name=isMonsterPopupPlacement]").attr("checked", "checked");
 	$("input[name=monsterPopupDelay]").attr("value", _settings.monsterPopupDelay);
@@ -4059,43 +4427,15 @@ function initSettingsPane() {
 	if (_settings.isMonstersEffectsWarnColor) $("input[name=isMonstersEffectsWarnColor]").attr("checked", "checked");
 	$("input[name=MonstersWarnOrangeRounds]").attr("value", _settings.MonstersWarnOrangeRounds);
 	$("input[name=MonstersWarnRedRounds]").attr("value", _settings.MonstersWarnRedRounds);
-	if (_settings.isShowSelfDuration) $("input[name=isShowSelfDuration]").attr("checked", "checked");
-	if (_settings.isSelfEffectsWarnColor) $("input[name=isSelfEffectsWarnColor]").attr("checked", "checked");
-	$("input[name=SelfWarnOrangeRounds]").attr("value", _settings.SelfWarnOrangeRounds);
-	$("input[name=SelfWarnRedRounds]").attr("value", _settings.SelfWarnRedRounds);
-	if (_settings.isShowSidebarProfs) $("input[name=isShowSidebarProfs]").attr("checked", "checked");
-	if (_settings.isRememberScan) $("input[name=isRememberScan]").attr("checked", "checked");
-	if (_settings.isRememberSkillsTypes) $("input[name=isRememberSkillsTypes]").attr("checked", "checked");
-	if (_settings.isShowRoundReminder) $("input[name=isShowRoundReminder]").attr("checked", "checked");
-	$("input[name=reminderMinRounds]").attr("value", _settings.reminderMinRounds);
-	if (_settings.isAlertGem) $("input[name=isAlertGem]").attr("checked", "checked");
-	if (_settings.isAlertOverchargeFull) $("input[name=isAlertOverchargeFull]").attr("checked", "checked");
-	$("input[name=reminderBeforeEnd]").attr("value", _settings.reminderBeforeEnd);
-	if (_settings.isChangePageTitle) $("input[name=isChangePageTitle]").attr("checked", "checked");
-	if (_settings.isStartAlert) $("input[name=isStartAlert]").attr("checked", "checked");
-	if (_settings.isShowEquippedSet) $("input[name=isShowEquippedSet]").attr("checked", "checked");
-	if (_settings.isDisableForgeHotKeys) $("input[name=isDisableForgeHotKeys]").attr("checked", "checked");
-	if (_settings.isShowTags[0]) $("input[name=isShowTags0]").attr("checked", "checked");
-	if (_settings.isShowTags[1]) $("input[name=isShowTags1]").attr("checked", "checked");
-	if (_settings.isShowTags[2]) $("input[name=isShowTags2]").attr("checked", "checked");
-	if (_settings.isShowTags[3]) $("input[name=isShowTags3]").attr("checked", "checked");
-	if (_settings.isShowTags[4]) $("input[name=isShowTags4]").attr("checked", "checked");
-	if (_settings.isShowTags[5]) $("input[name=isShowTags5]").attr("checked", "checked");
-	$("input[name=StartAlertHP]").attr("value", _settings.StartAlertHP);
-	$("input[name=StartAlertMP]").attr("value", _settings.StartAlertMP);
-	$("input[name=StartAlertSP]").attr("value", _settings.StartAlertSP);
-	var diffsel = "diff" + String(_settings.StartAlertDifficulty);
-	$("#"+diffsel+"").attr("selected", true);
-	if (_settings.isShowScanButton) $("input[name=isShowScanButton]").attr("checked", "checked");
-	if (_settings.isShowSkillButton) $("input[name=isShowSkillButton]").attr("checked", "checked");
-	if (_settings.isEnableScanHotkey) $("input[name=isEnableScanHotkey]").attr("checked", "checked");
-	if (_settings.isEnableSkillHotkey) $("input[name=isEnableSkillHotkey]").attr("checked", "checked");
-	$("input[name=customPageTitle]").attr("value", _settings.customPageTitle);
-	if (_settings.isColumnInventory) $("input[name=isColumnInventory]").attr("checked", "checked");
+
+	// Tracking Functions
 	if (_settings.isTrackStats) $("input[name=isTrackStats]").attr("checked", "checked");
 	if (_settings.isTrackRewards) $("input[name=isTrackRewards]").attr("checked", "checked");
 	if (_settings.isTrackShrine) $("input[name=isTrackShrine]").attr("checked", "checked");
 	if (_settings.isTrackItems) $("input[name=isTrackItems]").attr("checked", "checked");
+
+	// Warning System
+	// Effects Expiring Warnings
 	if (_settings.isMainEffectsAlertSelf) $("input[name=isMainEffectsAlertSelf]").attr("checked", "checked");
 	if (_settings.isEffectsAlertSelf[0]) $("input[name=isEffectsAlertSelf0]").attr("checked", "checked");
 	if (_settings.isEffectsAlertSelf[1]) $("input[name=isEffectsAlertSelf1]").attr("checked", "checked");
@@ -4140,45 +4480,92 @@ function initSettingsPane() {
 	$("input[name=EffectsAlertMonstersRounds9]").attr("value", _settings.EffectsAlertMonstersRounds[9]);
 	$("input[name=EffectsAlertMonstersRounds10]").attr("value", _settings.EffectsAlertMonstersRounds[10]);
 	$("input[name=EffectsAlertMonstersRounds11]").attr("value", _settings.EffectsAlertMonstersRounds[11]);
+
+	// Specific Spell Warnings
+	if (_settings.isWarnAbsorbTrigger) $("input[name=isWarnAbsorbTrigger]").attr("checked", "checked");
+	if (_settings.isWarnSparkTrigger) $("input[name=isWarnSparkTrigger]").attr("checked", "checked");
+	if (_settings.isWarnSparkExpire) $("input[name=isWarnSparkExpire]").attr("checked", "checked");
+
+	// Alert Mode
+	if (_settings.isHighlightQC) $("input[name=isHighlightQC]").attr("checked", "checked");
+	$("input[name=warnOrangeLevel]").attr("value", _settings.warnOrangeLevel);
+	$("input[name=warnRedLevel]").attr("value", _settings.warnRedLevel);
+	$("input[name=warnAlertLevel]").attr("value", _settings.warnAlertLevel);
+	$("input[name=warnOrangeLevelMP]").attr("value", _settings.warnOrangeLevelMP);
+	$("input[name=warnRedLevelMP]").attr("value", _settings.warnRedLevelMP);
+	$("input[name=warnAlertLevelMP]").attr("value", _settings.warnAlertLevelMP);
+	$("input[name=warnOrangeLevelSP]").attr("value", _settings.warnOrangeLevelSP);
+	$("input[name=warnRedLevelSP]").attr("value", _settings.warnRedLevelSP);
+	$("input[name=warnAlertLevelSP]").attr("value", _settings.warnAlertLevelSP);
+	if (_settings.isShowPopup) $("input[name=isShowPopup]").attr("checked", "checked");
+	if (_settings.isNagHP) $("input[name=isNagHP]").attr("checked", "checked")
+	if (_settings.isNagMP) $("input[name=isNagMP]").attr("checked", "checked")
+	if (_settings.isNagSP) $("input[name=isNagSP]").attr("checked", "checked");
+
+	// Battle Type
 	if (_settings.warnMode[0]) $("input[name=isWarnH]").attr("checked", "checked");
 	if (_settings.warnMode[1]) $("input[name=isWarnA]").attr("checked", "checked");
 	if (_settings.warnMode[2]) $("input[name=isWarnGF]").attr("checked", "checked");
 	if (_settings.warnMode[3]) $("input[name=isWarnIW]").attr("checked", "checked");
 	if (_settings.warnMode[4]) $("input[name=isWarnCF]").attr("checked", "checked");
-	if (_settings.isHighlightQC) $("input[name=isHighlightQC]").attr("checked", "checked");
-	$("input[name=warnOrangeLevel]").attr("value", _settings.warnOrangeLevel);
-	$("input[name=warnRedLevel]").attr("value", _settings.warnRedLevel);
-	$("input[name=warnAlertLevel]").attr("value", _settings.warnAlertLevel);
-	if (_settings.isNagHP) $("input[name=isNagHP]").attr("checked", "checked")
-	$("input[name=warnOrangeLevelMP]").attr("value", _settings.warnOrangeLevelMP);
-	$("input[name=warnRedLevelMP]").attr("value", _settings.warnRedLevelMP);
-	$("input[name=warnAlertLevelMP]").attr("value", _settings.warnAlertLevelMP);
-	if (_settings.isNagMP) $("input[name=isNagMP]").attr("checked", "checked")
-	$("input[name=warnOrangeLevelSP]").attr("value", _settings.warnOrangeLevelSP);
-	$("input[name=warnRedLevelSP]").attr("value", _settings.warnRedLevelSP);
-	$("input[name=warnAlertLevelSP]").attr("value", _settings.warnAlertLevelSP);
-	if (_settings.isNagSP) $("input[name=isNagSP]").attr("checked", "checked");
-	if (_settings.isShowPopup) $("input[name=isShowPopup]").attr("checked", "checked");
-	if (_settings.isWarnAbsorbTrigger) $("input[name=isWarnAbsorbTrigger]").attr("checked", "checked");
-	if (_settings.isWarnSparkTrigger) $("input[name=isWarnSparkTrigger]").attr("checked", "checked");
-	if (_settings.isWarnSparkExpire) $("input[name=isWarnSparkExpire]").attr("checked", "checked");
+
+	// Database Options
+	if (_settings.isRememberScan) $("input[name=isRememberScan]").attr("checked", "checked");
+	if (_settings.isRememberSkillsTypes) $("input[name=isRememberSkillsTypes]").attr("checked", "checked");
+
+	// General Options
+	$("input[name=isShowSidebarProfs]").click(reminderAndSaveSettings);
+	$("input[name=isColumnInventory]").click(saveSettings);
+	$("input[name=isChangePageTitle]").click(saveSettings);
+	$("input[name=customPageTitle]").change(saveSettings);
+	$("input[name=isStartAlert]").click(saveSettings);
+	$("input[name=StartAlertHP]").change(saveSettings);
+	$("input[name=StartAlertMP]").change(saveSettings);
+	$("input[name=StartAlertSP]").change(saveSettings);
+	$("select[id=StartAlertDifficulty]").change(saveSettings);
+	$("input[name=isShowScanButton]").click(saveSettings);
+	$("input[name=isShowSkillButton]").click(saveSettings);
+	$("input[name=isShowEquippedSet]").click(saveSettings);
+	$("input[name^=isShowTags]").click(saveSettings);
+
+	// Keyboard Options
+	$("input[name=isEnableScanHotkey]").click(saveSettings);
+	$("input[name=isEnableSkillHotkey]").click(saveSettings);
+	$("input[name=enableOFCHotkey]").click(saveSettings);
+	$("input[name=enableScrollHotkey]").click(saveSettings);
+	$("input[name=isDisableForgeHotKeys]").click(saveSettings);
+	$("input[name=enableShrineKeyPatch]").click(saveSettings);
+
+	// Battle Enhancement
 	$("input[name=isShowHighlight]").click(saveSettings);
 	$("input[name=isAltHighlight]").click(saveSettings);
 	$("input[name=isShowDivider]").click(saveSettings);
+	$("input[name=isShowSelfDuration]").click(saveSettings);
+	$("input[name=isSelfEffectsWarnColor]").click(saveSettings);
+	$("input[name=SelfWarnOrangeRounds]").change(saveSettings);
+	$("input[name=SelfWarnRedRounds]").change(saveSettings);
+	$("input[name=isShowRoundReminder]").click(saveSettings);
+	$("input[name=reminderMinRounds]").change(saveSettings);
+	$("input[name=reminderBeforeEnd]").change(saveSettings);
 	$("input[name=isShowEndStats]").click(saveSettings);
 	$("input[name=isShowEndProfs]").click(saveSettings); //isShowEndProfs added by Ilirith
 	$("input[name=isShowEndProfsMagic]").click(saveSettings); //isShowEndProfs added by Ilirith
 	$("input[name=isShowEndProfsArmor]").click(saveSettings); //isShowEndProfs added by Ilirith
 	$("input[name=isShowEndProfsWeapon]").click(saveSettings); //isShowEndProfs added by Ilirith
+	$("input[name=isAlertGem]").click(saveSettings);
+	$("input[name=isAlertOverchargeFull]").click(saveSettings);
+	$("input[name=isShowMonsterNumber]").click(saveSettings);
+	$("input[name=isShowRoundCounter]").click(saveSettings);
+	$("input[name=isShowPowerupBox]").click(saveSettings);
+
+	// Display Monster Stats
 	$("input[name=showMonsterHP]").click(saveSettings);
 	$("input[name=showMonsterHPPercent]").click(saveSettings);
 	$("input[name=showMonsterMP]").click(saveSettings);
 	$("input[name=showMonsterSP]").click(saveSettings);
 	$("input[name=showMonsterInfoFromDB]").click(saveSettings);
-	$("input[name=isShowStatsPopup]").click(saveSettings);
-	$("input[name=isMonsterPopupPlacement]").click(saveSettings);
-	$("input[name=monsterPopupDelay]").change(saveSettings);
 	$("input[name=showMonsterClassFromDB]").click(saveSettings);
+	$("input[name=showMonsterPowerLevelFromDB]").click(saveSettings);
 	$("input[name=showMonsterAttackTypeFromDB]").click(saveSettings);
 	$("input[name=showMonsterWeaknessesFromDB]").click(saveSettings);
 	$("input[name=showMonsterResistancesFromDB]").click(saveSettings);
@@ -4194,95 +4581,124 @@ function initSettingsPane() {
 	$("input[name=hideSpecificDamageType9]").click(saveSettings);
 	$("input[name=hideSpecificDamageType10]").click(saveSettings);
 	$("input[name=ResizeMonsterInfo]").click(saveSettings);
-	$("input[name=showMonsterPowerLevelFromDB]").click(saveSettings);
+	$("input[name=isShowStatsPopup]").click(saveSettings);
+	$("input[name=isMonsterPopupPlacement]").click(saveSettings);
+	$("input[name=monsterPopupDelay]").change(saveSettings);
 	$("input[name=isShowMonsterDuration]").click(saveSettings);
 	$("input[name=isMonstersEffectsWarnColor]").click(saveSettings);
 	$("input[name=MonstersWarnOrangeRounds]").change(saveSettings);
 	$("input[name=MonstersWarnRedRounds]").change(saveSettings);
-	$("input[name=isShowSelfDuration]").click(saveSettings);
-	$("input[name=isSelfEffectsWarnColor]").click(saveSettings);
-	$("input[name=SelfWarnOrangeRounds]").change(saveSettings);
-	$("input[name=SelfWarnRedRounds]").change(saveSettings);
-	$("input[name=isShowSidebarProfs]").click(reminderAndSaveSettings);
-	$("input[name=isRememberScan]").click(reminderAndSaveSettings);
-	$("input[name=isRememberSkillsTypes]").click(reminderAndSaveSettings);
-	$("input[name=isShowRoundReminder]").click(saveSettings);
-	$("input[name=reminderMinRounds]").change(saveSettings);
-	$("input[name=reminderBeforeEnd]").change(saveSettings);
-	$("input[name=isAlertGem]").click(saveSettings);
-	$("input[name=isAlertOverchargeFull]").click(saveSettings);
-	$("input[name=isShowScanButton]").click(saveSettings);
-	$("input[name=isShowSkillButton]").click(saveSettings);
-	$("input[name=isEnableSkillHotkey]").click(saveSettings);
-	$("input[name=isEnableScanHotkey]").click(saveSettings);
-	$("input[name=isChangePageTitle]").click(saveSettings);
-	$("input[name=isStartAlert]").click(saveSettings);
-	$("input[name=isShowEquippedSet]").click(saveSettings);
-	$("input[name=isDisableForgeHotKeys]").click(saveSettings);
-	$("input[name^=isShowTags]").click(saveSettings);
-	$("input[name=StartAlertHP]").change(saveSettings);
-	$("input[name=StartAlertMP]").change(saveSettings);
-	$("input[name=StartAlertSP]").change(saveSettings);
-	$("input[name=StartAlertSP]").change(saveSettings);
-	$("select[id=StartAlertDifficulty]").change(saveSettings);
-	$("input[name=customPageTitle]").change(saveSettings);
-	$("input[name=isColumnInventory]").click(saveSettings);
+
+	// Tracking Functions
 	$("input[name=isTrackStats]").click(saveSettings);
 	$("input[name=isTrackRewards]").click(saveSettings);
 	$("input[name=isTrackShrine]").click(saveSettings);
 	$("input[name=isTrackItems]").click(saveSettings);
+
+	// Warning System
+	// Effects Expiring Warnings
 	$("input[name=isMainEffectsAlertSelf]").click(saveSettings);
 	$("input[name^=isEffectsAlertSelf]").click(saveSettings);
 	$("input[name^=EffectsAlertSelfRounds]").change(saveSettings);
 	$("input[name=isMainEffectsAlertMonsters]").click(saveSettings);
 	$("input[name^=isEffectsAlertMonsters]").click(saveSettings);
 	$("input[name^=EffectsAlertMonstersRounds]").change(saveSettings);
+
+	// Specific Spell Warnings
 	$("input[name=isWarnAbsorbTrigger]").click(saveSettings);
 	$("input[name=isWarnSparkTrigger]").click(saveSettings);
 	$("input[name=isWarnSparkExpire]").click(saveSettings);
+
+	// Alert Mode
+	$("input[name=isHighlightQC]").click(saveSettings);
+	$("input[name=warnOrangeLevel]").change(saveSettings);
+	$("input[name=warnRedLevel]").change(saveSettings);
+	$("input[name=warnAlertLevel]").change(saveSettings);
+	$("input[name=warnOrangeLevelMP]").change(saveSettings);
+	$("input[name=warnRedLevelMP]").change(saveSettings);
+	$("input[name=warnAlertLevelMP]").change(saveSettings);
+	$("input[name=warnOrangeLevelSP]").change(saveSettings);
+	$("input[name=warnRedLevelSP]").change(saveSettings);
+	$("input[name=warnAlertLevelSP]").change(saveSettings);
+	$("input[name=isShowPopup]").click(saveSettings);
+	$("input[name=isNagHP]").click(saveSettings);
+	$("input[name=isNagMP]").click(saveSettings);
+	$("input[name=isNagSP]").click(saveSettings);
+
+	// Battle Type
 	$("input[name=isWarnH]").click(saveSettings);
 	$("input[name=isWarnA]").click(saveSettings);
 	$("input[name=isWarnGF]").click(saveSettings);
 	$("input[name=isWarnIW]").click(saveSettings);
 	$("input[name=isWarnCF]").click(saveSettings);
-	$("input[name=isHighlightQC]").click(saveSettings);
-	$("input[name=warnOrangeLevel]").change(saveSettings);
-	$("input[name=warnRedLevel]").change(saveSettings);
-	$("input[name=warnAlertLevel]").change(saveSettings);
-	$("input[name=isNagHP]").click(saveSettings);
-	$("input[name=warnOrangeLevelMP]").change(saveSettings);
-	$("input[name=warnRedLevelMP]").change(saveSettings);
-	$("input[name=warnAlertLevelMP]").change(saveSettings);
-	$("input[name=isNagMP]").click(saveSettings);
-	$("input[name=warnOrangeLevelSP]").change(saveSettings);
-	$("input[name=warnRedLevelSP]").change(saveSettings);
-	$("input[name=warnAlertLevelSP]").change(saveSettings);
-	$("input[name=isNagSP]").click(saveSettings);
-	$("input[name=isShowPopup]").click(saveSettings);
-	$("input[name=isShowMonsterNumber]").click(saveSettings);
-	$("input[name=isShowPowerupBox]").click(saveSettings);
-	$("input[name=isShowRoundCounter]").click(saveSettings);
+
+	// Database Options
+	$("input[name=isRememberScan]").click(reminderAndSaveSettings);
+	$("input[name=isRememberSkillsTypes]").click(reminderAndSaveSettings);
+
 	$("._resetSettings").click(function (){ if (confirm("Reset Settings to default?")) _settings.reset(); })
 	$("._resetAll").click(function (){ if (confirm("Reset All Tracking data?")) HVResetTracking(); })
 	$("._masterReset").click(function (){ if (confirm("This will delete ALL HV data saved in localStorage.\nAre you sure you want to do this?")) HVMasterReset(); })
 }
 function saveSettings() {
+	// General Options
+	_settings.isShowSidebarProfs = $("input[name=isShowSidebarProfs]").get(0).checked;
+	_settings.isColumnInventory = $("input[name=isColumnInventory]").get(0).checked;
+	_settings.isChangePageTitle = $("input[name=isChangePageTitle]").get(0).checked;
+	_settings.customPageTitle = $("input[name=customPageTitle]").get(0).value;
+	_settings.isStartAlert = $("input[name=isStartAlert]").get(0).checked;
+	_settings.StartAlertHP = $("input[name=StartAlertHP]").get(0).value;
+	_settings.StartAlertMP = $("input[name=StartAlertMP]").get(0).value;
+	_settings.StartAlertSP = $("input[name=StartAlertSP]").get(0).value;
+	_settings.StartAlertDifficulty = $("select[id=StartAlertDifficulty]").get(0).value;
+	_settings.isShowScanButton = $("input[name=isShowScanButton]").get(0).checked;
+	_settings.isShowSkillButton = $("input[name=isShowSkillButton]").get(0).checked;
+	_settings.isShowEquippedSet = $("input[name=isShowEquippedSet]").get(0).checked;
+	_settings.isShowTags[0] = $("input[name=isShowTags0]").get(0).checked;
+	_settings.isShowTags[1] = $("input[name=isShowTags1]").get(0).checked;
+	_settings.isShowTags[2] = $("input[name=isShowTags2]").get(0).checked;
+	_settings.isShowTags[3] = $("input[name=isShowTags3]").get(0).checked;
+	_settings.isShowTags[4] = $("input[name=isShowTags4]").get(0).checked;
+	_settings.isShowTags[5] = $("input[name=isShowTags5]").get(0).checked;
+
+	// Keyboard Options
+	_settings.isEnableScanHotkey = $("input[name=isEnableScanHotkey]").get(0).checked;
+	_settings.isEnableSkillHotkey = $("input[name=isEnableSkillHotkey]").get(0).checked;
+	_settings.enableOFCHotkey = $("input[name=enableOFCHotkey]").get(0).checked;
+	_settings.enableScrollHotkey = $("input[name=enableScrollHotkey]").get(0).checked;
+	_settings.isDisableForgeHotKeys = $("input[name=isDisableForgeHotKeys]").get(0).checked;
+	_settings.enableShrineKeyPatch = $("input[name=enableShrineKeyPatch]").get(0).checked;
+
+	// Battle Enhancement
 	_settings.isShowHighlight = $("input[name=isShowHighlight]").get(0).checked;
 	_settings.isAltHighlight = $("input[name=isAltHighlight]").get(0).checked;
 	_settings.isShowDivider = $("input[name=isShowDivider]").get(0).checked;
+	_settings.isShowSelfDuration = $("input[name=isShowSelfDuration]").get(0).checked;
+	_settings.isSelfEffectsWarnColor = $("input[name=isSelfEffectsWarnColor]").get(0).checked;
+	_settings.SelfWarnOrangeRounds = $("input[name=SelfWarnOrangeRounds]").get(0).value;
+	_settings.SelfWarnRedRounds = $("input[name=SelfWarnRedRounds]").get(0).value;
+	_settings.isShowRoundReminder = $("input[name=isShowRoundReminder]").get(0).checked;
+	_settings.reminderMinRounds = $("input[name=reminderMinRounds]").get(0).value;
+	_settings.reminderBeforeEnd = $("input[name=reminderBeforeEnd]").get(0).value;
 	_settings.isShowEndStats = $("input[name=isShowEndStats]").get(0).checked;
 	_settings.isShowEndProfs = $("input[name=isShowEndProfs]").get(0).checked; //isShowEndProfs added by Ilirith
 	_settings.isShowEndProfsMagic = $("input[name=isShowEndProfsMagic]").get(0).checked; //isShowEndProfs added by Ilirith
 	_settings.isShowEndProfsArmor = $("input[name=isShowEndProfsArmor]").get(0).checked; //isShowEndProfs added by Ilirith
 	_settings.isShowEndProfsWeapon = $("input[name=isShowEndProfsWeapon]").get(0).checked; //isShowEndProfs added by Ilirith
+	_settings.isAlertGem = $("input[name=isAlertGem]").get(0).checked;
+	_settings.isAlertOverchargeFull = $("input[name=isAlertOverchargeFull]").get(0).checked;
+	_settings.isShowMonsterNumber = $("input[name=isShowMonsterNumber]").get(0).checked;
+	_settings.isShowRoundCounter = $("input[name=isShowRoundCounter]").get(0).checked;
+	_settings.isShowPowerupBox = $("input[name=isShowPowerupBox]").get(0).checked;
+
+	// Display Monster Stats
 	_settings.showMonsterHP = $("input[name=showMonsterHP]").get(0).checked;
 	_settings.showMonsterHPPercent = $("input[name=showMonsterHPPercent]").get(0).checked;
 	_settings.showMonsterMP = $("input[name=showMonsterMP]").get(0).checked;
 	_settings.showMonsterSP = $("input[name=showMonsterSP]").get(0).checked;
 	_settings.showMonsterInfoFromDB = $("input[name=showMonsterInfoFromDB]").get(0).checked;
-	_settings.isShowStatsPopup = $("input[name=isShowStatsPopup]").get(0).checked;
-	_settings.isMonsterPopupPlacement = $("input[name=isMonsterPopupPlacement]").get(0).checked;
 	_settings.showMonsterClassFromDB = $("input[name=showMonsterClassFromDB]").get(0).checked;
+	_settings.showMonsterPowerLevelFromDB = $("input[name=showMonsterPowerLevelFromDB]").get(0).checked;
 	_settings.showMonsterAttackTypeFromDB = $("input[name=showMonsterAttackTypeFromDB]").get(0).checked;
 	_settings.showMonsterWeaknessesFromDB = $("input[name=showMonsterWeaknessesFromDB]").get(0).checked;
 	_settings.showMonsterResistancesFromDB = $("input[name=showMonsterResistancesFromDB]").get(0).checked;
@@ -4298,47 +4714,22 @@ function saveSettings() {
 	_settings.hideSpecificDamageType[9] = $("input[name=hideSpecificDamageType9]").get(0).checked;
 	_settings.hideSpecificDamageType[10] = $("input[name=hideSpecificDamageType10]").get(0).checked;
 	_settings.ResizeMonsterInfo = $("input[name=ResizeMonsterInfo]").get(0).checked;
-	_settings.showMonsterPowerLevelFromDB = $("input[name=showMonsterPowerLevelFromDB]").get(0).checked;
+	_settings.isShowStatsPopup = $("input[name=isShowStatsPopup]").get(0).checked;
+	_settings.isMonsterPopupPlacement = $("input[name=isMonsterPopupPlacement]").get(0).checked;
+	_settings.monsterPopupDelay = $("input[name=monsterPopupDelay]").get(0).value;
 	_settings.isShowMonsterDuration = $("input[name=isShowMonsterDuration]").get(0).checked;
 	_settings.isMonstersEffectsWarnColor = $("input[name=isMonstersEffectsWarnColor]").get(0).checked;
 	_settings.MonstersWarnOrangeRounds = $("input[name=MonstersWarnOrangeRounds]").get(0).value;
 	_settings.MonstersWarnRedRounds = $("input[name=MonstersWarnRedRounds]").get(0).value;
-	_settings.isShowSelfDuration = $("input[name=isShowSelfDuration]").get(0).checked;
-	_settings.isSelfEffectsWarnColor = $("input[name=isSelfEffectsWarnColor]").get(0).checked;
-	_settings.SelfWarnOrangeRounds = $("input[name=SelfWarnOrangeRounds]").get(0).value;
-	_settings.SelfWarnRedRounds = $("input[name=SelfWarnRedRounds]").get(0).value;
-	_settings.isShowSidebarProfs = $("input[name=isShowSidebarProfs]").get(0).checked;
-	_settings.isRememberScan = $("input[name=isRememberScan]").get(0).checked;
-	_settings.isRememberSkillsTypes = $("input[name=isRememberSkillsTypes]").get(0).checked;
-	_settings.isShowRoundReminder = $("input[name=isShowRoundReminder]").get(0).checked;
-	_settings.reminderMinRounds = $("input[name=reminderMinRounds]").get(0).value;
-	_settings.reminderBeforeEnd = $("input[name=reminderBeforeEnd]").get(0).value;
-	_settings.isAlertGem = $("input[name=isAlertGem]").get(0).checked;
-	_settings.isAlertOverchargeFull = $("input[name=isAlertOverchargeFull]").get(0).checked;
-	_settings.isShowScanButton = $("input[name=isShowScanButton]").get(0).checked;
-	_settings.isShowSkillButton = $("input[name=isShowSkillButton]").get(0).checked;
-	_settings.isEnableScanHotkey = $("input[name=isEnableScanHotkey]").get(0).checked;
-	_settings.isEnableSkillHotkey = $("input[name=isEnableSkillHotkey]").get(0).checked;
-	_settings.isChangePageTitle = $("input[name=isChangePageTitle]").get(0).checked;
-	_settings.isShowEquippedSet = $("input[name=isShowEquippedSet]").get(0).checked;
-	_settings.isDisableForgeHotKeys = $("input[name=isDisableForgeHotKeys]").get(0).checked;
-	_settings.isShowTags[0] = $("input[name=isShowTags0]").get(0).checked;
-	_settings.isShowTags[1] = $("input[name=isShowTags1]").get(0).checked;
-	_settings.isShowTags[2] = $("input[name=isShowTags2]").get(0).checked;
-	_settings.isShowTags[3] = $("input[name=isShowTags3]").get(0).checked;
-	_settings.isShowTags[4] = $("input[name=isShowTags4]").get(0).checked;
-	_settings.isShowTags[5] = $("input[name=isShowTags5]").get(0).checked;
-	_settings.isStartAlert = $("input[name=isStartAlert]").get(0).checked;
-	_settings.StartAlertHP = $("input[name=StartAlertHP]").get(0).value;
-	_settings.StartAlertMP = $("input[name=StartAlertMP]").get(0).value;
-	_settings.StartAlertSP = $("input[name=StartAlertSP]").get(0).value;
-	_settings.StartAlertDifficulty = $("select[id=StartAlertDifficulty]").get(0).value;
-	_settings.customPageTitle = $("input[name=customPageTitle]").get(0).value;
-	_settings.isColumnInventory = $("input[name=isColumnInventory]").get(0).checked;
+
+	// Tracking Functions
 	_settings.isTrackStats = $("input[name=isTrackStats]").get(0).checked;
 	_settings.isTrackRewards = $("input[name=isTrackRewards]").get(0).checked;
 	_settings.isTrackShrine = $("input[name=isTrackShrine]").get(0).checked;
 	_settings.isTrackItems = $("input[name=isTrackItems]").get(0).checked;
+
+	// Warning System
+	// Effects Expiring Warnings
 	_settings.isMainEffectsAlertSelf = $("input[name=isMainEffectsAlertSelf]").get(0).checked;
 	_settings.isEffectsAlertSelf[0] = $("input[name=isEffectsAlertSelf0]").get(0).checked;
 	_settings.isEffectsAlertSelf[1] = $("input[name=isEffectsAlertSelf1]").get(0).checked;
@@ -4386,32 +4777,39 @@ function saveSettings() {
 	_settings.EffectsAlertMonstersRounds[9] = $("input[name=EffectsAlertMonstersRounds9]").get(0).value;
 	_settings.EffectsAlertMonstersRounds[10] = $("input[name=EffectsAlertMonstersRounds10]").get(0).value;
 	_settings.EffectsAlertMonstersRounds[11] = $("input[name=EffectsAlertMonstersRounds11]").get(0).value;
+
+	// Specific Spell Warnings
 	_settings.isWarnAbsorbTrigger = $("input[name=isWarnAbsorbTrigger]").get(0).checked;
 	_settings.isWarnSparkTrigger = $("input[name=isWarnSparkTrigger]").get(0).checked;
 	_settings.isWarnSparkExpire = $("input[name=isWarnSparkExpire]").get(0).checked;
+
+	// Alert Mode
 	_settings.isHighlightQC = $("input[name=isHighlightQC]").get(0).checked;
 	_settings.warnOrangeLevel = $("input[name=warnOrangeLevel]").get(0).value;
 	_settings.warnRedLevel = $("input[name=warnRedLevel]").get(0).value;
 	_settings.warnAlertLevel = $("input[name=warnAlertLevel]").get(0).value;
-	_settings.isNagHP = $("input[name=isNagHP]").get(0).checked;
 	_settings.warnOrangeLevelMP = $("input[name=warnOrangeLevelMP]").get(0).value;
 	_settings.warnRedLevelMP = $("input[name=warnRedLevelMP]").get(0).value;
 	_settings.warnAlertLevelMP = $("input[name=warnAlertLevelMP]").get(0).value;
-	_settings.isNagMP = $("input[name=isNagMP]").get(0).checked;
 	_settings.warnOrangeLevelSP = $("input[name=warnOrangeLevelSP]").get(0).value;
 	_settings.warnRedLevelSP = $("input[name=warnRedLevelSP]").get(0).value;
 	_settings.warnAlertLevelSP = $("input[name=warnAlertLevelSP]").get(0).value;
+	_settings.isShowPopup = $("input[name=isShowPopup]").get(0).checked;
+	_settings.isNagHP = $("input[name=isNagHP]").get(0).checked;
+	_settings.isNagMP = $("input[name=isNagMP]").get(0).checked;
 	_settings.isNagSP = $("input[name=isNagSP]").get(0).checked;
+
+	// Battle Type
 	_settings.warnMode[0] = $("input[name=isWarnH]").get(0).checked;
 	_settings.warnMode[1] = $("input[name=isWarnA]").get(0).checked;
 	_settings.warnMode[2] = $("input[name=isWarnGF]").get(0).checked;
 	_settings.warnMode[3] = $("input[name=isWarnIW]").get(0).checked;
 	_settings.warnMode[4] = $("input[name=isWarnCF]").get(0).checked;
-	_settings.isShowPopup = $("input[name=isShowPopup]").get(0).checked;
-	_settings.monsterPopupDelay = $("input[name=monsterPopupDelay]").get(0).value;
-	_settings.isShowMonsterNumber = $("input[name=isShowMonsterNumber]").get(0).checked;
-	_settings.isShowPowerupBox = $("input[name=isShowPowerupBox]").get(0).checked;
-	_settings.isShowRoundCounter = $("input[name=isShowRoundCounter]").get(0).checked;
+
+	// Database Options
+	_settings.isRememberScan = $("input[name=isRememberScan]").get(0).checked;
+	_settings.isRememberSkillsTypes = $("input[name=isRememberSkillsTypes]").get(0).checked;
+
 	_settings.save();
 }
 function reminderAndSaveSettings() {
@@ -4857,19 +5255,95 @@ function HVSettings() {
 	this.save = function () { saveToStorage(this, HV_SETTINGS); };
 	this.reset = function () { deleteFromStorage(HV_SETTINGS); };
 	this.cloneFrom = clone;
+
+	// General Options
+	this.isShowSidebarProfs = false;
+	this.isColumnInventory = false;
+	this.isChangePageTitle = false;
+	this.customPageTitle = "HV";
+	this.isStartAlert = false;
+	this.StartAlertHP = 95;
+	this.StartAlertMP = 95;
+	this.StartAlertSP = 95;
+	this.StartAlertDifficulty = 2;
+	this.isShowScanButton = false;
+	this.isShowSkillButton = false;
+	this.isShowEquippedSet = false;
+	//0-equipment page, 1-shop, 2-itemworld, 3-moogle, 4-forge
+	this.isShowTags = [false, false, false, false, false, false];
+
+	// Keyboard Options
+	this.isEnableScanHotkey = false;
+	this.isEnableSkillHotkey = false;
+	this.enableOFCHotkey = false;
+	this.enableScrollHotkey = false;
+	this.isDisableForgeHotKeys = false;
+	this.enableShrineKeyPatch = false;
+
+	// Battle Enhancement
+	this.isShowHighlight = true;
+	this.isAltHighlight = false;
+	this.isShowDivider = true;
+	this.isShowSelfDuration = true;
+	this.isSelfEffectsWarnColor = false;
+	this.SelfWarnOrangeRounds = 5;
+	this.SelfWarnRedRounds = 1;
+	this.isShowRoundReminder = false;
+	this.reminderMinRounds = 3;
+	this.reminderBeforeEnd = 1;
+	this.isShowEndStats = true;
+	this.isShowEndProfs = true;
+	this.isShowEndProfsMagic = true;
+	this.isShowEndProfsArmor = true;
+	this.isShowEndProfsWeapon = true;
+	this.isAlertGem = true;
+	this.isAlertOverchargeFull = false;
+	this.isShowMonsterNumber = false;
+	this.isShowRoundCounter = false;
+	this.isShowPowerupBox = false;
+
+	// Display Monster Stats
+	this.showMonsterHP = true;
+	this.showMonsterHPPercent = false;
+	this.showMonsterMP = true;
+	this.showMonsterSP = true;
+	this.showMonsterInfoFromDB = false;
+	this.showMonsterClassFromDB = false;
+	this.showMonsterPowerLevelFromDB = false;
+	this.showMonsterAttackTypeFromDB = false;
+	this.showMonsterWeaknessesFromDB = false;
+	this.showMonsterResistancesFromDB = false;
+	this.hideSpecificDamageType = [false, false, false, false, false, false, false, false, false, false, false];
+	this.ResizeMonsterInfo = false;
+	this.isShowStatsPopup = false;
+	this.isMonsterPopupPlacement = false;
+	this.monsterPopupDelay = 0;
+	this.isShowMonsterDuration = true;
+	this.isMonstersEffectsWarnColor = false;
+	this.MonstersWarnOrangeRounds = 5;
+	this.MonstersWarnRedRounds = 1;
+
+	// Tracking Functions
 	this.isTrackStats = true;
 	this.isTrackRewards = false;
 	this.isTrackShrine = false;
 	this.isTrackItems = false;
+
+	// Warning System
+	// Effects Expiring Warnings
 	this.isMainEffectsAlertSelf = false;
 	this.isEffectsAlertSelf = [false, false, false, false, false, false, false, false, false, false];
 	this.EffectsAlertSelfRounds = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
 	this.isMainEffectsAlertMonsters = false;
 	this.isEffectsAlertMonsters = [false, false, false, false, false, false, false, false, false, false, false, false];
 	this.EffectsAlertMonstersRounds = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+
+	// Specific Spell Warnings
 	this.isWarnAbsorbTrigger = false;
 	this.isWarnSparkTrigger = true;
 	this.isWarnSparkExpire = true;
+
+	// Alert Mode
 	this.isHighlightQC = true;
 	this.warnOrangeLevel = 40;
 	this.warnRedLevel = 35;
@@ -4880,70 +5354,17 @@ function HVSettings() {
 	this.warnOrangeLevelSP = -1;
 	this.warnRedLevelSP = -1;
 	this.warnAlertLevelSP = -1;
+	this.isShowPopup = true;
 	this.isNagHP = false;
 	this.isNagMP = false;
 	this.isNagSP = false;
-	this.isShowPopup = true;
+
+	// Battle Type
 	this.warnMode = [true, true, false, false, false];
-	this.isShowHighlight = true;
-	this.isAltHighlight = false;
-	this.isShowDivider = true;
-	this.isShowEndStats = true;
-	this.isShowEndProfs = true;
-	this.isShowEndProfsMagic = true;
-	this.isShowEndProfsArmor = true;
-	this.isShowEndProfsWeapon = true;
-	this.showMonsterHP = true;
-	this.showMonsterHPPercent = false;
-	this.showMonsterMP = true;
-	this.showMonsterSP = true;
-	this.showMonsterInfoFromDB = false;
-	this.isShowStatsPopup = false;
-	this.showMonsterClassFromDB = false;
-	this.showMonsterAttackTypeFromDB = false;
-	this.showMonsterWeaknessesFromDB = false;
-	this.showMonsterResistancesFromDB = false;
-	this.hideSpecificDamageType = [false, false, false, false, false, false, false, false, false, false, false];
-	this.ResizeMonsterInfo = false;
-	this.showMonsterPowerLevelFromDB = false;
-	this.isShowMonsterDuration = true;
-	this.isMonstersEffectsWarnColor = false;
-	this.MonstersWarnOrangeRounds = 5;
-	this.MonstersWarnRedRounds = 1;
-	this.isShowSelfDuration = true;
-	this.isSelfEffectsWarnColor = false;
-	this.SelfWarnOrangeRounds = 5;
-	this.SelfWarnRedRounds = 1;
-	this.isShowSidebarProfs = false;
+
+	// Database Options
 	this.isRememberScan = false;
 	this.isRememberSkillsTypes = false;
-	this.isShowRoundReminder = false;
-	this.reminderMinRounds = 3;
-	this.reminderBeforeEnd = 1;
-	this.isAlertGem = true;
-	this.isAlertOverchargeFull = false;
-	this.isChangePageTitle = false;
-	this.customPageTitle = "HV";
-	this.isColumnInventory = false;
-	this.isMonsterPopupPlacement = false;
-	this.monsterPopupDelay = 0;
-	this.isStartAlert = false;
-	this.StartAlertHP = 95;
-	this.StartAlertMP = 95;
-	this.StartAlertSP = 95;
-	this.StartAlertDifficulty = 2;
-	this.isShowScanButton = false;
-	this.isEnableScanHotkey = false;
-	this.isShowSkillButton = false;
-	this.isEnableSkillHotkey = false;
-	this.isShowEquippedSet = false;
-	this.isDisableForgeHotKeys = false;
-	//0-twohanded fighter; 1-elemental mage
-	//0-equipment page, 1-shop, 2-itemworld, 3-moogle, 4-forge
-	this.isShowTags = [false, false, false, false, false, false];
-	this.isShowMonsterNumber = false;
-	this.isShowPowerupBox = false;
-	this.isShowRoundCounter = false;
 }
 function saveStatsBackup(back) {
 	loadStatsObject();
@@ -5535,234 +5956,197 @@ function loadCHARSSObject() {
 	_charss = new HVCharacterStatsSettings();
 	_charss.load();
 }
-function Scanbutton() {
-	pressedScanbySTAT = false;
-	pressedSkillbySTAT = 0;
-	var skillnum = [null, null, null];
-	var cooldown = [true, true, true];
-	$("#togpane_skill  div.btsd").each(function () {
-		var g = $(this);
-		var st = g.attr("style");
-		var skid = g.attr("id");
-		if (String(skid).match(/1(1|2|3|4|5)0001/)) {
-			skillnum[0] = skid;
-			if (!String(st).match(/opacity.0.5/i)) cooldown[0] = false;
-		} else if (String(skid).match(/1(1|2|3|4|5)0002/)) {
-			skillnum[1] = skid;
-			if (!String(st).match(/opacity.0.5/i)) cooldown[1] = false;
-		} else if (String(skid).match(/1(1|2|3|4|5)0003/)) {
-			skillnum[2] = skid;
-			if (!String(st).match(/opacity.0.5/i)) cooldown[2] = false;
+
+HVStat.scrollTargetMouseoverEventHandler = function (event) {
+	var target = event.target;
+	while (target && HVStat.scrollTargets.indexOf(target.id) < 0) {
+		target = target.parentElement;
+	}
+	if (target) {
+		HVStat.scrollTarget = target;
+	}
+};
+
+HVStat.scrollTargetMouseoutEventHandler = function (event) {
+	HVStat.scrollTarget = null;
+};
+
+HVStat.registerScrollTargetMouseEventListeners = function () {
+	var i, element;
+	for (i = 0; i < HVStat.scrollTargets.length; i++) {
+		element = document.getElementById(HVStat.scrollTargets[i]);
+		if (element) {
+			element.addEventListener("mouseover", HVStat.scrollTargetMouseoverEventHandler);
+			element.addEventListener("mouseout", HVStat.scrollTargetMouseoutEventHandler);
 		}
-	});
-	var skillname = [null, null, null];
-	switch (skillnum[0]) {
-	case 110001:
-	case "110001":
-		skillname[0] = "SkyS"; break;
-	case 120001:
-	case "120001":
-		skillname[0] = "ShiB"; break;
-	case 130001:
-	case "130001":
-		skillname[0] = "GreC"; break;
-	case 140001:
-	case "140001":
-		skillname[0] = "IrisS"; break;
-	case 150001:
-	case "150001":
-		skillname[0] = "ConS";
 	}
-	switch (skillnum[1]) {
-	case 120002:
-	case "120002":
-		skillname[1] = "VitS"; break;
-	case 130002:
-	case "130002":
-		skillname[1] = "RenB"; break;
-	case 140002:
-	case "140002":
-		skillname[1] = "Stab";
+};
+
+HVStat.documentKeydownEventHandler = function (event) {
+	if (_settings.enableScrollHotkey) {
+		if (HVStat.scrollTarget && !event.altKey && !event.ctrlKey && !event.shiftKey) {
+			switch (event.keyCode) {
+			case 33:	// PAGE UP
+				HVStat.scrollTarget.scrollTop -= HVStat.scrollTarget.clientHeight;
+				event.preventDefault();
+				break;
+			case 34:	// PAGE DOWN
+				HVStat.scrollTarget.scrollTop += HVStat.scrollTarget.clientHeight;
+				event.preventDefault();
+				break;
+			}
+		}
 	}
-	switch (skillnum[2]) {
-	case 120003:
-	case "120003":
-		skillname[2] = "MerB"; break;
-	case 130003:
-	case "130003":
-		skillname[2] = "ShaS"; break;
-	case 140003:
-	case "140003":
-		skillname[2] = "FreB";
-	}
-	var n = HVStat.numberOfMonsters;
-	var num = 0;
-	var a = $("#mainpane");
-	document.addEventListener('keydown', function(a) {
-		var key = a.keyCode ? a.keyCode : a.which;
-		if (_settings.isEnableScanHotkey) {
-			if (key === 110 || key === 46) {
-				if (!window.pressedScanbySTAT) {
-					if (window.pressedSkillbySTAT === 0) {
-						// open skill menu
-						if (HVStat.isChrome) {
-							document.getElementById("ckey_skills").onclick();
-						} else {
-							location.href = 'javascript:document.getElementById("ckey_skills").onclick(); void(0);';
-						}
-					}
-					// select scan
-					if (HVStat.isChrome) {
-						document.getElementById("100020").onclick();
+	var boundKeys, i, j;
+	if (HVStat.duringBattle) {
+		var miScan = HVStat.battleCommandMenuItemMap["Scan"];
+		var miSkill1 = HVStat.battleCommandMenuItemMap["Skill1"];
+		var miSkill2 = HVStat.battleCommandMenuItemMap["Skill2"];
+		var miSkill3 = HVStat.battleCommandMenuItemMap["Skill3"];
+		var miOFC = HVStat.battleCommandMenuItemMap["OFC"];
+		var miSkills = [miSkill1, miSkill2, miSkill3];
+
+		if (_settings.isEnableScanHotkey && miScan) {
+			boundKeys = miScan.boundKeys;
+			for (i = 0; i < boundKeys.length; i++) {
+				if (boundKeys[i].equals(event)) {
+					if (HVStat.battleCommandMap["Skills"].menuOpened) {
+						HVStat.battleCommandMap["Skills"].close();
 					} else {
-						location.href = 'javascript:document.getElementById("100020").onclick(); void(0);';
+						miScan.select();
 					}
-					window.pressedScanbySTAT = true;
-				} else {
-					// close skill menu
-					if (HVStat.isChrome) {
-						document.getElementById("ckey_skills").onclick();
-					} else {
-						location.href = 'javascript:document.getElementById("ckey_skills").onclick(); void(0);';
-					}
-					window.pressedScanbySTAT = false;
-					window.pressedSkillbySTAT = 0;
 				}
 			}
 		}
-		if (_settings.isEnableSkillHotkey) {
-			if (key === 107 || key === 187) {
-				if (window.pressedSkillbySTAT === 0) {
-					if (!window.pressedScanbySTAT) {
-						// open skill menu
-						if (HVStat.isChrome) {
-							document.getElementById("ckey_skills").onclick();
-						} else {
-							location.href = 'javascript:document.getElementById("ckey_skills").onclick(); void(0);';
-						}
-					}
-					if (!cooldown[0]) {
-						if (HVStat.isChrome) {
-							document.getElementById(skillnum[0]).onclick();
-						} else {
-							location.href = 'javascript:document.getElementById("' + skillnum[0] + '").onclick(); void(0);';
-						}
-						if (!cooldown[1]) {
-							window.pressedSkillbySTAT = 1;
-						} else if (!cooldown[2]) {
-							window.pressedSkillbySTAT = 2;
-						} else {
-							window.pressedSkillbySTAT = 3;
-						}
-					} else if (!cooldown[1]) {
-						if (HVStat.isChrome) {
-							document.getElementById(skillnum[1]).onclick();
-						} else {
-							location.href = 'javascript:document.getElementById("' + skillnum[1] + '").onclick(); void(0);';
-						}
-						if (!cooldown[2]) {
-							window.pressedSkillbySTAT = 2;
-						} else {
-							window.pressedSkillbySTAT = 3;
-						}
-					} else if (!cooldown[2]) {
-						if (HVStat.isChrome) {
-							document.getElementById(skillnum[2]).onclick();
-						} else {
-							location.href = 'javascript:document.getElementById("' + skillnum[2] + '").onclick(); void(0);';
-						}
-						window.pressedSkillbySTAT = 3;
-					} else if (window.pressedScanbySTAT) {
-						// close skill menu
-						if (HVStat.isChrome) {
-							document.getElementById("ckey_skills").onclick();
-						} else {
-							location.href = 'javascript:document.getElementById("ckey_skills").onclick(); void(0);';
-						}
-						window.pressedScanbySTAT = false;
-						window.pressedSkillbySTAT = 0;
-					}
-				} else if (window.pressedSkillbySTAT === 1) {
-					if (!cooldown[1]) {
-						if (HVStat.isChrome) {
-							document.getElementById(skillnum[1]).onclick();
-						} else {
-							location.href = 'javascript:document.getElementById("' + skillnum[1] + '").onclick(); void(0);';
-						}
-						if (!cooldown[2]) {
-							window.pressedSkillbySTAT = 2;
-						} else {
-							window.pressedSkillbySTAT = 3;
-						}
-					} else if (!cooldown[2]) {
-						if (HVStat.isChrome) {
-							document.getElementById(skillnum[2]).onclick();
-						} else {
-							location.href = 'javascript:document.getElementById("' + skillnum[2] + '").onclick(); void(0);';
-						}
-						window.pressedSkillbySTAT = 3;
+		if (_settings.isEnableSkillHotkey && miSkill1) {
+			var avilableSkillMaxIndex = -1;
+			for (i = 0; i < miSkills.length; i++) {
+				if (miSkills[i] && miSkills[i].available) {
+					avilableSkillMaxIndex = i;
+				}
+			}
+			boundKeys = miSkill1.boundKeys;
+			for (i = 0; i < boundKeys.length; i++) {
+				if (boundKeys[i].equals(event)) {
+					if (HVStat.selectedSkillIndex >= avilableSkillMaxIndex) {
+						HVStat.battleCommandMap["Skills"].close();
+						HVStat.selectedSkillIndex = -1;
 					} else {
-						window.pressedSkillbySTAT = 3;
-					}
-				} else if (window.pressedSkillbySTAT === 2) {
-					if (!cooldown[2]) {
-						if (HVStat.isChrome) {
-							document.getElementById(skillnum[2]).onclick();
-						} else {
-							location.href = 'javascript:document.getElementById("' + skillnum[2] + '").onclick(); void(0);';
+						for (j = HVStat.selectedSkillIndex + 1; j <= avilableSkillMaxIndex; j++) {
+							if (miSkills[j] && miSkills[j].available) {
+								miSkills[j].select();
+								HVStat.selectedSkillIndex = j;
+								break;
+							}
 						}
-						window.pressedSkillbySTAT = 3;
-					} else {
-						window.pressedSkillbySTAT = 3;
 					}
-				} else if (window.pressedSkillbySTAT === 3) {
-					// close skill menu
-					if (HVStat.isChrome) {
-						document.getElementById("ckey_skills").onclick();
-					} else {
-						location.href = 'javascript:document.getElementById("ckey_skills").onclick(); void(0);';
-					}
-					window.pressedScanbySTAT = false;
-					window.pressedSkillbySTAT = 0;
 				}
 			}
 		}
-	});
-	var j = HVStat.numberOfMonsters;
-	while (j--) {
+		if (_settings.enableOFCHotkey && miOFC) {
+			boundKeys = miOFC.boundKeys;
+			for (i = 0; i < boundKeys.length; i++) {
+				if (boundKeys[i].equals(event)) {
+					if (HVStat.battleCommandMap["Skills"].menuOpened) {
+						HVStat.battleCommandMap["Skills"].close();
+					} else {
+						miOFC.select();
+					}
+				}
+			}
+		}
+	}
+};
+
+HVStat.scanButtonClickHandler = function (event) {
+	var monsterId = this.id.slice(11);
+	var monsterElement = document.getElementById(monsterId);
+	HVStat.battleCommandMenuItemMap["Scan"].select();
+	monsterElement.onclick();
+}
+
+HVStat.skillButtonClickHandler = function (event) {
+	var result = /HVStatSkill(\d)_(.+)/.exec(this.id)
+	if (!result || result.length < 3) {
+		return;
+	}
+	var skillNumber = result[1];
+	var monsterId = result[2];
+	var monsterElement = document.getElementById(monsterId);
+	HVStat.battleCommandMenuItemMap["Skill" + skillNumber].select();
+	monsterElement.onclick();
+}
+
+HVStat.showScanAndSkillButtons = function () {
+	var skill1 = HVStat.battleCommandMenuItemMap["Skill1"];
+	var skill2 = HVStat.battleCommandMenuItemMap["Skill2"];
+	var skill3 = HVStat.battleCommandMenuItemMap["Skill3"];
+	var skills = [];
+	if (skill1) {
+		skills.push(skill1);
+	}
+	if (skill2) {
+		skills.push(skill2);
+	}
+	if (skill3) {
+		skills.push(skill3);
+	}
+	var getButtonLabelFromSkillId = function (skillId) {
+		var skillButtonLabelTable = [
+			{ id: "110001", label: "SkyS" },
+			{ id: "120001", label: "ShiB" },
+			{ id: "120002", label: "VitS" },
+			{ id: "120003", label: "MerB" },
+			{ id: "130001", label: "GreC" },
+			{ id: "130002", label: "RenB" },
+			{ id: "130003", label: "ShaS" },
+			{ id: "140001", label: "IrisS" },
+			{ id: "140002", label: "Stab" },
+			{ id: "140003", label: "FreB" },
+			{ id: "150001", label: "ConS" },
+		];
+		var i;
+		for (i = 0; i < skillButtonLabelTable.length; i++) {
+			if (skillButtonLabelTable[i].id === skillId) {
+				return skillButtonLabelTable[i].label;
+			}
+		}
+		return "";
+	}
+
+	var mainPane = document.getElementById("mainpane");
+	var i, j;
+	for (j = 0; j < HVStat.numberOfMonsters; j++) {
 		var monsterElementId = HVStat.Monster.getDomElementId(j);
-		var u = $("#" + monsterElementId);
-		var e = u.children().eq(2).children().eq(0);
-		var dead = e.html().match(/bardead/i);
+		var u = document.getElementById(monsterElementId);
+		var e = u.children[2].children[0];
+		var dead = e.innerHTML.indexOf("bardead") >= 0;
+		var div, style;
 		if (!dead) {
-			var top = u.offset().top;
+			var rectObject = u.getBoundingClientRect();
+			var top = rectObject.top;
 			if (_settings.isShowScanButton) {
-				var c = document.createElement("div");
-				var d = "<span style='font-size:10px;font-weight:bold;font-family:arial,helvetica,sans-serif;text-align:center;vertical-align:text-top;cursor:default'>Scan</span>";
-				c.setAttribute("id", "STATscan_" + String(n));
-				c.setAttribute("style", "position:absolute;top:" + String(top) + "px;left:556px;background-color:#EFEEDC;width:25px;height:10px;border-style:double;border-width:2px;z-index:2;border-color:#555555;");
-				c.setAttribute("onclick", 'document.getElementById("ckey_skills").onclick();document.getElementById("100020").onclick();document.getElementById("' + monsterElementId + '").onclick()');
-				c.innerHTML = d;
-				a.after(c);
+				div = document.createElement("div");
+				div.setAttribute("id", "HVStatScan_" + monsterElementId);
+				div.style.cssText = "position:absolute; top:" + String(top) + "px; left:556px; background-color:#EFEEDC; width:25px; height:10px; border-style:double; border-width:2px; z-index:2; border-color:#555555;";
+				div.innerHTML = "<span style='font-size:10px;font-weight:bold;font-family:arial,helvetica,sans-serif;text-align:center;vertical-align:text-top;cursor:default'>Scan</span>";
+				mainPane.parentNode.insertBefore(div, mainPane.nextSibling);
+				div.addEventListener("click", HVStat.scanButtonClickHandler);
 			}
 			if (_settings.isShowSkillButton) {
-				var i = 3;
-				while (i--) {
-					var cs = document.createElement("div");
+				for (i = 0; i < skills.length; i++) {
+					div = document.createElement("div");
 					var tops = top + (i + 1) * 14;
-					if (skillnum[i] !== null) {
-						var ds = "<span style='font-size:10px;font-weight:bold;font-family:arial,helvetica,sans-serif;text-align:center;vertical-align:text-top;cursor:default'>" + skillname[i] + "</span>";
-						cs.setAttribute("id", "STATskill_" + String(i + 1) + "_"+ String(n));
-						var style = "position:absolute;top:" + String(tops) + "px;left:556px;background-color:#EFEEDC;width:25px;height:10px;border-style:double;border-width:2px;z-index:2;border-color:#555555;"
-						if (cooldown[i]) {
-							cs.setAttribute("style", style + "opacity:0.3;");
-						} else {
-							cs.setAttribute("style", style);
-							cs.setAttribute("onclick", 'document.getElementById("ckey_skills").onclick();document.getElementById("' + skillnum[i] + '").onclick();document.getElementById("' + monsterElementId + '").onclick()');
-						}
-						cs.innerHTML = ds;
-						a.after(cs);
+					div.setAttribute("id", "HVStatSkill" + String(i + 1) + "_"+ monsterElementId);
+					style = "position:absolute; top:" + String(tops) + "px; left:556px; background-color:#EFEEDC; width:25px; height:10px; border-style:double; border-width:2px; z-index:2; border-color:#555555;"
+					if (!skills[i].available) {
+						div.style.cssText = style + "opacity:0.3;";
+					} else {
+						div.style.cssText = style;
 					}
+					div.innerHTML = "<span style='font-size:10px; font-weight:bold; font-family:arial,helvetica,sans-serif; text-align:center; vertical-align:text-top; cursor:default'>" + getButtonLabelFromSkillId(skills[i].id) + "</span>";
+					mainPane.parentNode.insertBefore(div, mainPane.nextSibling);
+					div.addEventListener("click", HVStat.skillButtonClickHandler);
 				}
 			}
 		}
@@ -5771,7 +6155,20 @@ function Scanbutton() {
 function registerEventHandlersForMonsterPopup() {
 	var delay = _settings.monsterPopupDelay;
 	var popupLeftOffset = _settings.isMonsterPopupPlacement ? 955 : 300;
-	var showPopup = function (index) {
+	var showPopup = function (event) {
+		var target;
+		for (target = event.target; target && target.id.indexOf("mkey_") < 0; target = target.parentElement) {
+			;
+		}
+		if (!target) return;
+		var i, index = -1;
+		for (i = 0; i < HVStat.monsters.length; i++) {
+			if (HVStat.monsters[i].domElementId === target.id) {
+				index = i;
+				break;
+			}
+		}
+		if (index < 0) return;
 		var html = HVStat.monsters[index].renderPopup();
 		HVStat.popupElement.style.width = "270px";
 		HVStat.popupElement.style.height = "auto";
@@ -5787,11 +6184,11 @@ function registerEventHandlersForMonsterPopup() {
 	};
 	var timerId;
 	var prepareForShowingPopup = function (event) {
-		(function (index) {
+		(function (event) {
 			timerId = setTimeout(function () {
-				showPopup(index);
+				showPopup(event);
 			}, delay);
-		})(event.data.index);
+		})(event);
 	};
 	var prepareForHidingPopup = function (event) {
 		setTimeout(hidePopup, delay);
@@ -5799,9 +6196,9 @@ function registerEventHandlersForMonsterPopup() {
 	};
 	var i, len = HVStat.monsters.length;
 	for (i = 0; i < len; i++) {
-		var monsterElement = $("#" + HVStat.monsters[i].domElementId);
-		monsterElement.bind('mouseover', { index: i }, prepareForShowingPopup);
-		monsterElement.bind('mouseout', prepareForHidingPopup);
+		var monsterElement = HVStat.monsters[i].baseElement;
+		monsterElement.addEventListener("mouseover", prepareForShowingPopup);
+		monsterElement.addEventListener("mouseout", prepareForHidingPopup);
 	}
 }
 function StartBattleAlerts () {
@@ -5821,15 +6218,20 @@ function StartBattleAlerts () {
 		g.attr("onclick", newOnClick);
 	});
 }
-function SetDisplay() {
+
+HVStat.showEquippedSet = function () {
 	loadCHARSSObject();
-	var set = String(_charss.set);
-	var g = $("div.clb table.cit").eq(5);
-	var af = g.children().eq(0).children().eq(0).children().eq(0).children().eq(0).html();
-	var a = '<table style="position:relative; z-index:999" class="cit"><tbody><tr><td><div style="width:105px; height:17px" id="Byledalej_equipped1" class="fd12">' + af + '</div></td></tr></tbody></table>';
-	$("div.clb table.cit").eq(-1).after(a);
-	$("#Byledalej_equipped1>div").text("Equipped set: " + set);
-}
+	var leftBar = document.querySelector("div.clb");
+	var cssText = leftBar.querySelector("table.cit td > div > div").style.cssText;
+	var table = document.createElement("table");
+	table.setAttribute("class", "cit");
+	table.innerHTML ='<tbody><tr><td><div class="fd12"><div id="HVStatEquippedSet"></div></div></td></tr></tbody>';
+	leftBar.insertBefore(table, null);
+	var equippedSet = document.getElementById("HVStatEquippedSet");
+	equippedSet.style.cssText = cssText;
+	equippedSet.innerHTML = "Equipped set: " + String(_charss.set);
+};
+
 function FindSettingsStats() {
 	loadCHARSSObject();
 	var pointsarray = $("div.clb > div.cwbdv").text();
@@ -5879,47 +6281,51 @@ function FindSettingsStats() {
 	_charss.save();
 }
 function AlertEffectsSelf() {
-	$("div.btps > img").each(function () {
-		var allinfo = $(this).attr("onmouseover")
-			.replace("battle.set_infopane_effect(", "")
-			.replace(")", "")
-			.replace(/\'\,\s/g, '", ')
-			.replace(/\'/g, "")
-			.split('", ');
-		var effectNames = [
-			"Protection", "Hastened", "Shadow Veil", "Regen", "Absorbing Ward",
-			"Spark of Life", "Channeling", "Arcane Focus", "Heartseeker", "Spirit Shield"
-		];
-		var i, len = effectNames.length;
-		for (i = 0; i < len; i++) {
+	var effectNames = [
+		"Protection", "Hastened", "Shadow Veil", "Regen", "Absorbing Ward",
+		"Spark of Life", "Channeling", "Arcane Focus", "Heartseeker", "Spirit Shield"
+	];
+	var elements = document.querySelectorAll("#battleform div.btps > img");
+	Array.prototype.forEach.call(elements, function (element) {
+		var onmouseover = element.getAttribute("onmouseover").toString();
+		var result = /battle\.set_infopane_effect\('([^']*)'\s*,\s*'[^']*'\s*,\s*(.+)\)/.exec(onmouseover);
+		if (result && result.length < 3) return;
+		var effectName = result[1];
+		var duration = result[2];
+		var i;
+		for (i = 0; i < effectNames.length; i++) {
 			if (_settings.isEffectsAlertSelf[i]
-					&& allinfo[0].match(effectNames[i])
-					&& allinfo[2] === _settings.EffectsAlertSelfRounds[i]) {
-				alert(allinfo[0] + " is expiring");
+					&& effectNames[i] === effectName
+					&& _settings.EffectsAlertSelfRounds[i] === duration) {
+				alert(effectName + " is expiring");
 			}
 		}
 	});
 }
 function AlertEffectsMonsters() {
-	$("div.btm6 > img").each(function () {
-		var allinfo = $(this).attr("onmouseover")
-			.replace("battle.set_infopane_effect(", "")
-			.replace(")", "")
-			.replace(/\'\,\s/g, '", ')
-			.replace(/\'/g, "")
-			.split('", ');
-		var effectNames = [
-			"Spreading Poison", "Slowed", "Weakened", "Asleep", "Confused",
-			"Imperiled", "Blinded", "Silenced", "Nerfed", "Magically Snared",
-			"Lifestream", "Coalesced Mana"
-		];
-		var i, len = effectNames.length;
-		for (i = 0; i < len; i++) {
+	var effectNames = [
+		"Spreading Poison", "Slowed", "Weakened", "Asleep", "Confused",
+		"Imperiled", "Blinded", "Silenced", "Nerfed", "Magically Snared",
+		"Lifestream", "Coalesced Mana"
+	];
+	var elements = document.querySelectorAll("#monsterpane div.btm6 > img");
+	Array.prototype.forEach.call(elements, function (element) {
+		var onmouseover = element.getAttribute("onmouseover").toString();
+		var result = /battle\.set_infopane_effect\('([^']*)'\s*,\s*'[^']*'\s*,\s*(.+)\)/.exec(onmouseover);
+		if (result && result.length < 3) return;
+		var effectName = result[1];
+		var duration = result[2];
+		var i, base, monsterNumber;
+		for (i = 0; i < effectNames.length; i++) {
 			if (_settings.isEffectsAlertMonsters[i]
-					&& allinfo[0].match(effectNames[i])
-					&& allinfo[2] === _settings.EffectsAlertMonstersRounds[i]) {
-				var monnum = $(this).parent().parent().attr("id").replace("mkey_", "");
-				alert(allinfo[0] + '\n on monster number "' + monnum + '" is expiring');
+					&& effectNames[i] === effectName
+					&& _settings.EffectsAlertMonstersRounds[i] === duration) {
+				for (base = element; base && base.id.indexOf("mkey_") < 0; base = base.parentElement) {
+					;
+				}
+				if (!base) continue;
+				monsterNumber = base.id.replace("mkey_", "");
+				alert(effectName + '\n on monster number "' + monsterNumber + '" is expiring');
 			}
 		}
 	});
@@ -6090,19 +6496,15 @@ HVStat.main2 = function () {
 		GM_addStyle(GM_getResourceText("jQueryUICSS"));
 		var a = document.createElement("div");
 		a.setAttribute("id", "cssdiv");
-		a.setAttribute("style", "visibility:hidden");
+		a.style.cssText = "visibility:hidden";
 		document.documentElement.appendChild(a);
 	}
 	initUI();
-	if (!HVStat.usingHVFont && _settings.isShowEquippedSet) {
-		SetDisplay();
-	}
-	if (_settings.isShowSidebarProfs) {
-		showSidebarProfs();
-	}
 	if (HVStat.duringBattle) {
 		// store static values
-		HVStat.numberOfMonsters = $("#monsterpane > div").length;
+		HVStat.numberOfMonsters = document.querySelectorAll("#monsterpane > div").length;
+		HVStat.buildBattleCommandMap();
+		HVStat.buildBattleCommandMenuItemMap();
 
 		if (_settings.isHighlightQC) {
 			HVStat.highlightQuickcast();
@@ -6123,16 +6525,22 @@ HVStat.main2 = function () {
 		if (_settings.isShowMonsterNumber) {
 			showMonsterNumber();
 		}
-		if (_settings.isShowScanButton || _settings.isShowSkillButton || _settings.isEnableScanHotkey || _settings.isEnableSkillHotkey) {
-			Scanbutton();
+		if (_settings.isShowScanButton || _settings.isShowSkillButton) {
+			HVStat.showScanAndSkillButtons();
 		}
 		if (_settings.isShowMonsterDuration) {
 			showMonsterEffectsDuration();
 		}
 	} else {
 		localStorage.removeItem(HV_ROUND);
+		if ((_settings.isStartAlert || _settings.isShowEquippedSet) && !HVStat.usingHVFont) {
+			FindSettingsStats();
+		}
 		if (!HVStat.isRiddlePage) {
 			HVStat.resetHealthWarningStates();
+		}
+		if (_settings.enableScrollHotkey) {
+			HVStat.registerScrollTargetMouseEventListeners();
 		}
 		// equipment tag
 		if (HVStat.isEquipmentPage && _settings.isShowTags[0]) {
@@ -6157,6 +6565,13 @@ HVStat.main2 = function () {
 			}
 		}
 	}
+	if (!HVStat.usingHVFont && _settings.isShowEquippedSet) {
+		HVStat.showEquippedSet();
+	}
+	if (_settings.isShowSidebarProfs) {
+		showSidebarProfs();
+	}
+	document.addEventListener("keydown", HVStat.documentKeydownEventHandler);
 	setTimeout(HVStat.main3, 1);
 }
 
@@ -6168,7 +6583,21 @@ HVStat.main3 = function () {
 
 HVStat.main4 = function () {
 	//console.log("main4: document.readyState = " + document.readyState);
-	// processes require IndexedDB and not alert/confirm immediately
+	// processes require IndexedDB
+	if (HVStat.duringBattle) {
+		HVStat.transaction = HVStat.idb.transaction(["MonsterScanResults", "MonsterSkills"], "readwrite");
+
+		collectRoundInfo();		// requires IndexedDB
+		if ((_round !== null) && (_round.currRound > 0) && _settings.isShowRoundCounter) {
+			showRoundCounter();	// requires _round
+		}
+		if ((_round !== null) && (HVStat.monsters.length > 0)){
+			showMonsterStats();	// requires _round, IndexedDB
+		}
+		if (_settings.isShowStatsPopup) {
+			registerEventHandlersForMonsterPopup();	// requires _round, IndexedDB
+		}
+	}
 	var waitForDocumentComplete = function () {
 		if (document.readyState !== "complete") {
 			setTimeout(waitForDocumentComplete, 10);
@@ -6181,20 +6610,10 @@ HVStat.main4 = function () {
 
 HVStat.main5 = function () {
 	//console.log("main5: document.readyState = " + document.readyState);
-	// processes require IndexedDB or alert/confirm immediately
+	// processes alert/confirm immediately
 	if (HVStat.duringBattle) {
-		HVStat.transaction = HVStat.idb.transaction(["MonsterScanResults", "MonsterSkills"], "readwrite");
+		HVStat.AlertAllFromQueue();
 
-		collectRoundInfo();		// using alert -- should be split to display part and warning part
-		if ((_round !== null) && (_round.currRound > 0) && _settings.isShowRoundCounter) {
-			showRoundCounter();	// requires _round
-		}
-		if ((_round !== null) && (HVStat.monsters.length > 0)){
-			showMonsterStats();	// requires _round, IndexedDB
-		}
-		if (_settings.isShowStatsPopup) {
-			registerEventHandlersForMonsterPopup();	// requires _round, IndexedDB
-		}
 		if (_settings.warnMode[_round.battleType]) {
 			HVStat.warnHealthStatus();		// using alert
 		}
@@ -6220,12 +6639,9 @@ HVStat.main5 = function () {
 			if (_settings.isTrackShrine) {
 				captureShrine();
 			}
-			if (HVStat.isChrome) {
+			if (HVStat.isChrome && _settings.enableShrineKeyPatch) {
 				window.document.onkeydown = null;	// workaround to make enable SPACE key
 			}
-		}
-		if ((_settings.isStartAlert || _settings.isShowEquippedSet) && !HVStat.usingHVFont) {
-			FindSettingsStats();
 		}
 		if (_settings.isStartAlert && !HVStat.usingHVFont) {
 			StartBattleAlerts();
