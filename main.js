@@ -489,9 +489,7 @@ HVStat.getElapsedFrom = function (date) {
 };
 
 HVStat.getGaugeRate = function (gaugeElement, gaugeMaxWidth) {
-	var reStyleWidth = /width\s*?:\s*?(\d+?)px/i;
-	var style = gaugeElement.getAttribute("style");
-	var result = reStyleWidth.exec(style);
+	var result = /width\s*?:\s*?(\d+?)px/i.exec(gaugeElement.style.cssText);
 	var rate;
 	if (result && result.length >= 2) {
 		rate = Number(result[1]) / gaugeMaxWidth;
@@ -881,12 +879,11 @@ HVStat.Monster = (function () {
 			if (barIndex >= _healthBars.length) {
 				return 0;
 			}
-			var v, style, bar = _healthBars[barIndex].querySelector("img.chb2");
+			var v, bar = _healthBars[barIndex].querySelector("img.chb2");
 			if (!bar) {
 				v = 0;
 			} else {
-				style = bar.getAttribute("style");
-				r = /width\s*?:\s*?(\d+?)px/i.exec(style);
+				r = /width\s*?:\s*?(\d+?)px/i.exec(bar.style.cssText);
 				if (r && r.length >= 2) {
 					v = Number(r[1]) / _maxBarWidth;
 				} else {
@@ -997,7 +994,7 @@ HVStat.Monster = (function () {
 					hpIndicator = _currHp() + " / " + _maxHp
 				}
 				div = document.createElement("div");
-				div.setAttribute("style", "position:absolute;z-index:1074;top:-1px;font-size:8pt;font-family:arial,helvetica,sans-serif;font-weight:bolder;color:yellow;width:120px;text-align:center");
+				div.style.cssText = "position:absolute;z-index:1074;top:-1px;font-size:8pt;font-family:arial,helvetica,sans-serif;font-weight:bolder;color:yellow;width:120px;text-align:center";
 				divText = document.createTextNode(hpIndicator);
 				div.appendChild(divText);
 				hpBarBaseElement.parentNode.insertBefore(div, hpBarBaseElement.nextSibling);
@@ -1005,7 +1002,7 @@ HVStat.Monster = (function () {
 			if (_settings.showMonsterMP) {
 				mpIndicator = (_currMpRate * 100).toFixed(1) + "%";
 				div = document.createElement("div");
-				div.setAttribute("style", "position:absolute;z-index:1074;top:11px;font-size:8pt;font-family:arial,helvetica,sans-serif;font-weight:bolder;color:yellow;width:120px;text-align:center");
+				div.style.cssText = "position:absolute;z-index:1074;top:11px;font-size:8pt;font-family:arial,helvetica,sans-serif;font-weight:bolder;color:yellow;width:120px;text-align:center";
 				divText = document.createTextNode(mpIndicator);
 				div.appendChild(divText);
 				mpBarBaseElement.parentNode.insertBefore(div, mpBarBaseElement.nextSibling);
@@ -1013,7 +1010,7 @@ HVStat.Monster = (function () {
 			if (_hasSpiritPoint && _settings.showMonsterSP) {
 				spIndicator = (_currSpRate * 100).toFixed(1) + "%";
 				div = document.createElement("div");
-				div.setAttribute("style", "position:absolute;z-index:1074;top:23px;font-size:8pt;font-family:arial,helvetica,sans-serif;font-weight:bolder;color:yellow;width:120px;text-align:center");
+				div.style.cssText = "position:absolute;z-index:1074;top:23px;font-size:8pt;font-family:arial,helvetica,sans-serif;font-weight:bolder;color:yellow;width:120px;text-align:center";
 				divText = document.createTextNode(spIndicator);
 				div.appendChild(divText);
 				spBarBaseElement.parentNode.insertBefore(div, spBarBaseElement.nextSibling);
@@ -2252,8 +2249,7 @@ HVStat.BattleCommandMenuItem = function (spec) {
 
 HVStat.BattleCommandMenuItem.prototype = {
 	get available() {
-		var style = this.element.getAttribute("style");
-		return !(style && style.match(/opacity\s*:\s*0/));
+		return !this.element.style.cssText.match(/opacity\s*:\s*0/);
 	},
 	fire: function () {
 		if (this.available) {
@@ -2290,8 +2286,7 @@ HVStat.BattleCommandMenu = function (spec) {
 
 HVStat.BattleCommandMenu.prototype = {
 	get opened() {
-		var style = this.element.getAttribute("style");
-		return !(style && style.match(/display\s*:\s*none/));
+		return !this.element.style.cssText.match(/display\s*:\s*none/);
 	},
 	open: function () {
 		while (!this.opened) {
@@ -2631,7 +2626,7 @@ function displayPowerupBox() {
 		powerBox = doc.createElement("div");
 		powerup = doc.getElementById("ikey_p");
 	
-	powerBox.setAttribute("style", "position:absolute;top:7px;right:5px;background-color:#EFEEDC;width:30px;height:32px;border-style:double;border-width:2px;border-color:#555555;");
+	powerBox.style.cssText = "position:absolute;top:7px;right:5px;background-color:#EFEEDC;width:30px;height:32px;border-style:double;border-width:2px;border-color:#555555;";
 	if (powerup === null) powerBox.innerHTML = "<span style='font-size:16px;font-weight:bold;font-family:arial,helvetica,sans-serif;text-align:center;line-height:32px;cursor:default'>P</span>";
 	else {
 		var powerInfo = powerup.getAttribute("onmouseover");
@@ -2818,7 +2813,7 @@ function showSidebarProfs() {
 	var div = document.createElement("div");
 	div.setAttribute("id", "_profbutton");
 	div.setAttribute("class", "ui-corner-all");
-	div.setAttribute("style", 'position:absolute;top:' + b + 'px;border:1px solid;margin-left:5px;padding:2px;width:132px;font-size:10pt;font-weight:bold;text-align:center;cursor:default;');
+	div.style.cssText = 'position:absolute;top:' + b + 'px;border:1px solid;margin-left:5px;padding:2px;width:132px;font-size:10pt;font-weight:bold;text-align:center;cursor:default;';
 	div.innerHTML = "Proficiency";
 	var leftBar = document.querySelector("div.clb");
 	leftBar.parentNode.insertBefore(div, leftBar.nextSibling);
@@ -3972,7 +3967,7 @@ function initUI() {
 	var div = document.createElement("div");
 	div.setAttribute("id", "HVStatMainButton");
 	div.setAttribute("class", "ui-state-default ui-corner-all");
-	div.setAttribute("style", "position:absolute; top:" + d + "px; left: " + c + "px; z-index:1074; cursor: pointer;");
+	div.style.cssText = "position:absolute; top:" + d + "px; left: " + c + "px; z-index:1074; cursor: pointer;";
 	div.innerHTML = '<span style="margin:3px" class="ui-icon ui-icon-wrench" title="Launch HV STAT UI"/>';
 	document.body.insertBefore(div, null);
 	div.addEventListener("click", initMainMenu);
@@ -4254,9 +4249,9 @@ function initSettingsPane() {
 		+ '<tr><td align="center" style="width:5px;padding-left:40px"><input type="checkbox" name="isShowEndProfsWeapon" /></td><td colspan="2" style="padding-left:30px">Show Weapon Proficiency Gain Summary</td></tr>'
 		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isAlertGem" /></td><td colspan="2">Alert on Powerup drops</td></tr>'
 		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isAlertOverchargeFull" /></td><td colspan="2">Alert when Overcharge is full</td></tr>'
-		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isShowMonsterNumber"></td><td colspan="2">Show Numbers instead of letters next to monsters.</td></tr>'
-		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isShowRoundCounter"></td><td colspan="2">Show Round Counter.</td></tr>'
-		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isShowPowerupBox"></td><td colspan="2">Show Powerup Box.</td></tr>'
+		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isShowMonsterNumber"></td><td colspan="2">Show Numbers instead of letters next to monsters</td></tr>'
+		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isShowRoundCounter"></td><td colspan="2">Show Round Counter</td></tr>'
+		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isShowPowerupBox"></td><td colspan="2">Show Powerup Box</td></tr>'
 		+ '<tr><td colspan="2" style="padding-left:10px">Display Monster Stats:</td></tr>'
 		+ '<tr><td align="center" style="width:5px;padding-left:20px"><input type="checkbox" name="showMonsterHP" /></td><td colspan="2">Show monster HP (<span style="color:red">Estimated</span>)</td><td></td></tr>'
 		+ '<tr><td align="center" style="width:5px;padding-left:40px"><input type="checkbox" name="showMonsterHPPercent" /></td><td colspan="2" style="padding-left:10px">Show monster HP in percentage</td></tr>'
@@ -6128,7 +6123,7 @@ HVStat.showScanAndSkillButtons = function () {
 			if (_settings.isShowScanButton) {
 				div = document.createElement("div");
 				div.setAttribute("id", "HVStatScan_" + monsterElementId);
-				div.setAttribute("style", "position:absolute; top:" + String(top) + "px; left:556px; background-color:#EFEEDC; width:25px; height:10px; border-style:double; border-width:2px; z-index:2; border-color:#555555;");
+				div.style.cssText = "position:absolute; top:" + String(top) + "px; left:556px; background-color:#EFEEDC; width:25px; height:10px; border-style:double; border-width:2px; z-index:2; border-color:#555555;";
 				div.innerHTML = "<span style='font-size:10px;font-weight:bold;font-family:arial,helvetica,sans-serif;text-align:center;vertical-align:text-top;cursor:default'>Scan</span>";
 				mainPane.parentNode.insertBefore(div, mainPane.nextSibling);
 				div.addEventListener("click", HVStat.scanButtonClickHandler);
@@ -6140,9 +6135,9 @@ HVStat.showScanAndSkillButtons = function () {
 					div.setAttribute("id", "HVStatSkill" + String(i + 1) + "_"+ monsterElementId);
 					style = "position:absolute; top:" + String(tops) + "px; left:556px; background-color:#EFEEDC; width:25px; height:10px; border-style:double; border-width:2px; z-index:2; border-color:#555555;"
 					if (!skills[i].available) {
-						div.setAttribute("style", style + "opacity:0.3;");
+						div.style.cssText = style + "opacity:0.3;";
 					} else {
-						div.setAttribute("style", style);
+						div.style.cssText = style;
 					}
 					div.innerHTML = "<span style='font-size:10px; font-weight:bold; font-family:arial,helvetica,sans-serif; text-align:center; vertical-align:text-top; cursor:default'>" + getButtonLabelFromSkillId(skills[i].id) + "</span>";
 					mainPane.parentNode.insertBefore(div, mainPane.nextSibling);
@@ -6218,15 +6213,20 @@ function StartBattleAlerts () {
 		g.attr("onclick", newOnClick);
 	});
 }
-function SetDisplay() {
+
+HVStat.showEquippedSet = function () {
 	loadCHARSSObject();
-	var set = String(_charss.set);
-	var g = $("div.clb table.cit").eq(5);
-	var af = g.children().eq(0).children().eq(0).children().eq(0).children().eq(0).html();
-	var a = '<table style="position:relative; z-index:999" class="cit"><tbody><tr><td><div style="width:105px; height:17px" id="Byledalej_equipped1" class="fd12">' + af + '</div></td></tr></tbody></table>';
-	$("div.clb table.cit").eq(-1).after(a);
-	$("#Byledalej_equipped1>div").text("Equipped set: " + set);
-}
+	var leftBar = document.querySelector("div.clb");
+	var cssText = leftBar.querySelector("table.cit td > div > div").style.cssText;
+	var table = document.createElement("table");
+	table.setAttribute("class", "cit");
+	table.innerHTML ='<tbody><tr><td><div class="fd12"><div id="HVStatEquippedSet"></div></div></td></tr></tbody>';
+	leftBar.insertBefore(table, null);
+	var equippedSet = document.getElementById("HVStatEquippedSet");
+	equippedSet.style.cssText = cssText;
+	equippedSet.innerHTML = "Equipped set: " + String(_charss.set);
+};
+
 function FindSettingsStats() {
 	loadCHARSSObject();
 	var pointsarray = $("div.clb > div.cwbdv").text();
@@ -6491,16 +6491,10 @@ HVStat.main2 = function () {
 		GM_addStyle(GM_getResourceText("jQueryUICSS"));
 		var a = document.createElement("div");
 		a.setAttribute("id", "cssdiv");
-		a.setAttribute("style", "visibility:hidden");
+		a.style.cssText = "visibility:hidden";
 		document.documentElement.appendChild(a);
 	}
 	initUI();
-	if (!HVStat.usingHVFont && _settings.isShowEquippedSet) {
-		SetDisplay();
-	}
-	if (_settings.isShowSidebarProfs) {
-		showSidebarProfs();
-	}
 	if (HVStat.duringBattle) {
 		// store static values
 		HVStat.numberOfMonsters = document.querySelectorAll("#monsterpane > div").length;
@@ -6534,6 +6528,9 @@ HVStat.main2 = function () {
 		}
 	} else {
 		localStorage.removeItem(HV_ROUND);
+		if ((_settings.isStartAlert || _settings.isShowEquippedSet) && !HVStat.usingHVFont) {
+			FindSettingsStats();
+		}
 		if (!HVStat.isRiddlePage) {
 			HVStat.resetHealthWarningStates();
 		}
@@ -6562,6 +6559,12 @@ HVStat.main2 = function () {
 				document.onkeypress = null;
 			}
 		}
+	}
+	if (!HVStat.usingHVFont && _settings.isShowEquippedSet) {
+		HVStat.showEquippedSet();
+	}
+	if (_settings.isShowSidebarProfs) {
+		showSidebarProfs();
 	}
 	document.addEventListener("keydown", HVStat.documentKeydownEventHandler);
 	setTimeout(HVStat.main3, 1);
@@ -6634,9 +6637,6 @@ HVStat.main5 = function () {
 			if (HVStat.isChrome && _settings.enableShrineKeyPatch) {
 				window.document.onkeydown = null;	// workaround to make enable SPACE key
 			}
-		}
-		if ((_settings.isStartAlert || _settings.isShowEquippedSet) && !HVStat.usingHVFont) {
-			FindSettingsStats();
 		}
 		if (_settings.isStartAlert && !HVStat.usingHVFont) {
 			StartBattleAlerts();
