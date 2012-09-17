@@ -76,8 +76,11 @@ var HVStat = {
 	//------------------------------------
 	// package scope global variables
 	//------------------------------------
+	// indexedDB
 	idb: null,
 	transaction: null,
+
+	// monster database import/export
 	dataURIMonsterScanResults: null,
 	dataURIMonsterSkills: null,
 	nRowsMonsterScanResultsTSV: 0,
@@ -6451,7 +6454,9 @@ function TaggingItems(clean) {
 // main routine
 //------------------------------------
 HVStat.main1 = function () {
-	//console.log("main1: document.readyState = " + document.readyState);
+	// open database
+	HVStat.openIndexedDB();
+
 	var waitForDocumentInteractive = function () {
 		if (document.readyState === "loading") {
 			setTimeout(waitForDocumentInteractive, 10);
@@ -6463,7 +6468,6 @@ HVStat.main1 = function () {
 }
 
 HVStat.main2 = function () {
-	//console.log("main2: document.readyState = " + document.readyState);
 	// store DOM caches
 	HVStat.popupElement = document.getElementById("popup_box");
 	HVStat.quickcastBarElement = document.getElementById("quickbar");
@@ -6572,17 +6576,18 @@ HVStat.main2 = function () {
 		showSidebarProfs();
 	}
 	document.addEventListener("keydown", HVStat.documentKeydownEventHandler);
-	setTimeout(HVStat.main3, 1);
+
+	var waitForIndexedDBOpened = function () {
+		if (!HVStat.idb) {
+			setTimeout(waitForIndexedDBOpened, 10);
+		} else {
+			setTimeout(HVStat.main3, 1);
+		}
+	};
+	waitForIndexedDBOpened();
 }
 
 HVStat.main3 = function () {
-	//console.log("main3: document.readyState = " + document.readyState);
-	// open database
-	HVStat.openIndexedDB(HVStat.main4);
-}
-
-HVStat.main4 = function () {
-	//console.log("main4: document.readyState = " + document.readyState);
 	// processes require IndexedDB
 	if (HVStat.duringBattle) {
 		HVStat.transaction = HVStat.idb.transaction(["MonsterScanResults", "MonsterSkills"], "readwrite");
@@ -6602,14 +6607,13 @@ HVStat.main4 = function () {
 		if (document.readyState !== "complete") {
 			setTimeout(waitForDocumentComplete, 10);
 		} else {
-			setTimeout(HVStat.main5, 1);
+			setTimeout(HVStat.main4, 1);
 		}
 	};
 	waitForDocumentComplete();
 }
 
-HVStat.main5 = function () {
-	//console.log("main5: document.readyState = " + document.readyState);
+HVStat.main4 = function () {
 	// processes alert/confirm immediately
 	if (HVStat.duringBattle) {
 		HVStat.AlertAllFromQueue();
