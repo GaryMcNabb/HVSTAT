@@ -6346,14 +6346,13 @@ function TaggingItems(clean) {
 		{id: _tags.LightIDs,		value: _tags.LightTAGs,		idClean: [], valueClean: []},
 		{id: _tags.HeavyIDs,		value: _tags.HeavyTAGs,		idClean: [], valueClean: []}
 	];
-	$("#inv_equip div.eqpp, #inv_equip div.eqp, #item_pane div.eqp, #item_pane div.eqpp, #equip div.eqp, #equip div.eqpp, #equip_pane div.eqp, #equip_pane div.eqpp").each(function() {
-		var eqp = $(this);
-		var eqdp = eqp.children().filter(".eqdp");
-		var equipType = String(eqdp.attr("onmouseover"))
+	var elements = document.querySelectorAll("#inv_equip div.eqdp, #item_pane div.eqdp, #equip div.eqdp, #equip_pane div.eqdp");
+	Array.prototype.forEach.call(elements, function (element) {
+		var equipType = String(element.onmouseover)
 			.match(/(One-handed Weapon|Two-handed Weapon|Staff|Shield|Cloth Armor|Light Armor|Heavy Armor) &nbsp; &nbsp; Level/i)[0]
 			.replace(/ &nbsp; &nbsp; Level/i, "")
 			.replace(/ (Weapon|Armor)/i, "");
-		var id = parseInt(String(eqdp.attr("id")).replace("item_pane", ""), 10);
+		var id = parseInt(String(element.id), 10);
 		var equipTypeIdx = -1;
 		if (/One-Handed/i.test(equipType)) {
 			equipTypeIdx = 0;
@@ -6376,7 +6375,7 @@ function TaggingItems(clean) {
 		var valueArray = equipTagArrayTable[equipTypeIdx].value;
 		var idCleanArray = equipTagArrayTable[equipTypeIdx].idClean;
 		var valueCleanArray = equipTagArrayTable[equipTypeIdx].valueClean;
-		var index = jQuery.inArray(id, idArray);
+		var index = idArray.indexOf(id);
 		var tagValue = "";
 		if (index < 0) {
 			tagValue = "_new";
@@ -6387,14 +6386,16 @@ function TaggingItems(clean) {
 				valueCleanArray.push(tagValue);
 			}
 		}
-		var html = "<div style='font-size:10px; font-weight:bold; font-family:arial,helvetica,sans-serif; text-align:right; position:absolute; bottom:-21px; Left:320px; opacity:0.8;'>"
-			+ "<input type='text' class='ByledalejTag' name='tagid_" + id + "' size='5' maxLength='6' value='" + tagValue + "' /></div>";
-		eqp.children().eq(1).after(html);
-		$("input.ByledalejTag[name=tagid_" + id + "]").change(function (event) {
+		var divElement = document.createElement("div");
+		divElement.style.cssText = "font-size:10px; font-weight:bold; font-family:arial,helvetica,sans-serif; text-align:right; position:absolute; bottom:-21px; Left:320px; opacity:0.8;";
+		divElement.innerHTML = '<input type="text" name="tagid_' + String(id) + '" size="5" maxLength="6" value="' + tagValue + '" />';
+		element.parentNode.insertBefore(divElement, null);
+		var inputElement = divElement.children[0];
+		inputElement.addEventListener("change", function () {
 			var target = event.target;
-			var tagId = parseInt(target.name.replace("tagid_", ""), 10);
+			var tagId = Number(target.name.replace("tagid_", ""));
 			var tagValue = target.value;
-			var index = jQuery.inArray(tagId, idArray);
+			var index = idArray.indexOf(tagId);
 			if (index >= 0) {
 				valueArray[index] = tagValue;
 			} else {
