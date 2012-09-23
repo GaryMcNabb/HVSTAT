@@ -24,6 +24,7 @@ var HVStat = {
 	IDBCursor: window.IDBCursor || window.webkitIDBCursor,
 	reMonsterScanResultsTSV: /^(\d+?)\t(.*?)\t(.*?)\t(.*?)\t(\d*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)$/gm,
 	reMonsterSkillsTSV: /^(\d+?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)$/gm,
+	reSetInfoPaneParameters: /battle\.set_infopane_(?:spell|skill|item|effect)\('((?:[^'\\]|\\.)*)'\s*,\s*'(?:[^'\\]|\\.)*'\s*,\s*(.+)\)/,
 	charGaugeMaxWidth: 120,
 	monsterGaugeMaxWidth: 120,
 
@@ -987,7 +988,6 @@ HVStat.Monster = (function () {
 			var spIndicator = "";
 			var html, statsHtml;
 			var div, divText;
-			var statsElement;
 			var abbrLevel;
 
 			if (_settings.showMonsterHP || _settings.showMonsterHPPercent) {
@@ -1115,15 +1115,16 @@ HVStat.Monster = (function () {
 					if (HVStat.usingHVFont) {
 						nameOuterFrameElement.style.width = "auto"; // tweak for Firefox
 						nameInnerFrameElement.style.width = "auto"; // tweak for Firefox
-						html = "<div style='font-family:arial; font-size:7pt; font-style:normal; font-weight:bold; cursor:default; position:relative; top:-1px; left:2px; padding:0 1px; margin-left:0px; white-space:nowrap;'>" + statsHtml + "</div>";
-						nameInnerFrameElement.after(html);
-						statsElement = nameInnerFrameElement.nextSibling;
-						//console.log("scrollWidth = " + statsElement.prop("scrollWidth"));
+						div = document.createElement("div");
+						div.style.cssText = "font-family:arial; font-size:7pt; font-style:normal; font-weight:bold; cursor:default; position:relative; top:-1px; left:2px; padding:0 1px; margin-left:0px; white-space:nowrap;";
+						div.innerHTML = statsHtml;
+						nameInnerFrameElement.parentNode.insertBefore(div, nameInnerFrameElement.nextSibling);
+						//console.log("scrollWidth = " + div.prop("scrollWidth"));
 						if (Number(nameOuterFrameElement.scrollWidth) <= maxStatsWidth) {	// does not work with Firefox without tweak
 							break;
 						} else if (abbrLevel < maxAbbrLevel - 1) {
 							// revert
-							statsElement.remove();
+							nameInnerFrameElement.parentNode.removeChild(div);
 						}
 					} else {
 						html = "<div style='font-family:arial; font-size:7pt; font-style:normal; font-weight:bold; display:inline; cursor:default; padding:0 1px; margin-left:1px; white-space:nowrap;'>" + statsHtml + "</div>";
@@ -2237,7 +2238,12 @@ HVStat.KeyCombination.prototype.toString = function () {
 HVStat.BattleCommandMenuItem = function (spec) {
 	this.parent = spec && spec.parent || null;
 	this.element = spec && spec.element || null;
-	this.name = spec && this.element && this.element.children[0].children[0].childNodes[0].nodeValue || "";	// TODO
+	var onmouseover = this.element.getAttribute("onmouseover").toString();
+	var result = HVStat.reSetInfoPaneParameters.exec(onmouseover);
+	if (!result || result.length < 3) {
+		return null;
+	}
+	this.name = result[1];
 	this.id = this.element && this.element.id || "";
 	this.boundKeys = [];
 	this.commandTarget = null;
@@ -2279,8 +2285,7 @@ HVStat.BattleCommandMenu = function (spec) {
 	this.element = this.elementId && document.getElementById(this.elementId) || null;
 
 	this.items = [];
-//	var itemElements = this.element.querySelectorAll("div.btsd, #ikey_p, img.btii");
-	var itemElements = this.element.querySelectorAll("div.btsd");
+	var itemElements = this.element.querySelectorAll("div.btsd, #ikey_p, img.btii");
 	var i;
 	for (i = 0; i < itemElements.length; i++) {
 		this.items[i] = new HVStat.BattleCommandMenuItem({ parent: this, element: itemElements[i] });
@@ -2640,10 +2645,9 @@ function displayPowerupBox() {
 		var powerInfo = powerup.getAttribute("onmouseover");
 		powerBox.setAttribute("onmouseover", powerInfo);
 		powerBox.setAttribute("onmouseout", powerup.getAttribute("onmouseout"));
-		powerBox.setAttribute("onclick", 'document.getElementById("ckey_items").onclick();document.getElementById("ikey_p").onclick();document.getElementById("ikey_p").onclick();');
-// 		powerBox.addEventListener("click", function (event) {
-// 			HVStat.battleCommandMenuItemMap["PowerupGem"].select();
-// 		});
+		powerBox.addEventListener("click", function (event) {
+			HVStat.battleCommandMenuItemMap["PowerupGem"].select();
+		});
 		if (powerInfo.indexOf('Health') > -1) powerBox.innerHTML = "<img class='PowerupGemIcon' src='"+ I_HEALTHPOT+ "' id='healthgem'>";
 		else if (powerInfo.indexOf('Mana') > -1) powerBox.innerHTML = "<img class='PowerupGemIcon' src='"+ I_MANAPOT+ "' id='managem'>";
 		else if (powerInfo.indexOf('Spirit') > -1) powerBox.innerHTML = "<img class='PowerupGemIcon' src='"+ I_SPIRITPOT+ "' id='spiritgem'>";
@@ -2912,7 +2916,7 @@ function collectRoundInfo() {
 				break;
 			}
 		}
-		if (!_round.isLoaded) { // should be changed to "if turn 0"
+		if (currentTurnNumberString === "0") {
 			if (logString.match(/HP=/)) {
 				HVStat.monsters[monsterIndex].fetchStartingLog(logString);
 				if (_settings.showMonsterInfoFromDB) {
@@ -4925,9 +4929,11 @@ function loadRoundObject() {
 	if (_round !== null) return;
 	_round = new HVRound();
 	_round.load();
-	_round.monsters.forEach(function (element, index, array) {
-		HVStat.monsters[index].setFromValueObject(element);
-	});
+	for (var i = 0; i < HVStat.monsters.length; i++) {
+		if (_round.monsters[i]) {
+			HVStat.monsters[i].setFromValueObject(_round.monsters[i]);
+		}
+	}
 }
 function getRelativeTime(b) {
 	var a = (arguments.length > 1) ? arguments[1] : new Date();
@@ -6291,15 +6297,15 @@ function AlertEffectsSelf() {
 	var elements = document.querySelectorAll("#battleform div.btps > img");
 	Array.prototype.forEach.call(elements, function (element) {
 		var onmouseover = element.getAttribute("onmouseover").toString();
-		var result = /battle\.set_infopane_effect\('([^']*)'\s*,\s*'[^']*'\s*,\s*(.+)\)/.exec(onmouseover);
-		if (result && result.length < 3) return;
+		var result = HVStat.reSetInfoPaneParameters.exec(onmouseover);
+		if (!result || result.length < 3) return;
 		var effectName = result[1];
 		var duration = result[2];
 		var i;
 		for (i = 0; i < effectNames.length; i++) {
 			if (_settings.isEffectsAlertSelf[i]
-					&& effectNames[i] === effectName
-					&& _settings.EffectsAlertSelfRounds[i] === duration) {
+					&& (effectName + " ").indexOf(effectNames[i] + " ") >= 0	// to match "Regen" and "Regen II", not "Regeneration"
+					&& String(_settings.EffectsAlertSelfRounds[i]) === duration) {
 				alert(effectName + " is expiring");
 			}
 		}
@@ -6314,17 +6320,19 @@ function AlertEffectsMonsters() {
 	var elements = document.querySelectorAll("#monsterpane div.btm6 > img");
 	Array.prototype.forEach.call(elements, function (element) {
 		var onmouseover = element.getAttribute("onmouseover").toString();
-		var result = /battle\.set_infopane_effect\('([^']*)'\s*,\s*'[^']*'\s*,\s*(.+)\)/.exec(onmouseover);
-		if (result && result.length < 3) return;
+		var result = HVStat.reSetInfoPaneParameters.exec(onmouseover);
+		if (!result || result.length < 3) return;
 		var effectName = result[1];
 		var duration = result[2];
 		var i, base, monsterNumber;
 		for (i = 0; i < effectNames.length; i++) {
 			if (_settings.isEffectsAlertMonsters[i]
 					&& effectNames[i] === effectName
-					&& _settings.EffectsAlertMonstersRounds[i] === duration) {
-				for (base = element; base && base.id.indexOf("mkey_") < 0; base = base.parentElement) {
-					;
+					&& String(_settings.EffectsAlertMonstersRounds[i]) === duration) {
+				for (base = element; base; base = base.parentElement) {
+					if (base.id && base.id.indexOf("mkey_") >= 0) {
+						break;
+					}
 				}
 				if (!base) continue;
 				monsterNumber = base.id.replace("mkey_", "");
