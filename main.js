@@ -6569,7 +6569,9 @@ HVStat.main2 = function () {
 			TaggingItems(false);
 		}
 		if (HVStat.isMoogleWrite && _settings.isShowTags[3]) {
-			$("#mailform #leftpane").children().eq(3).children().eq(1).click(TaggingItems);
+			$("#mailform #leftpane").children().eq(3).children().eq(1).click(function (event) {
+				TaggingItems(false);
+			});
 		}
 		if (HVStat.isForgePage && _settings.isShowTags[4]) {
 			TaggingItems(false);
