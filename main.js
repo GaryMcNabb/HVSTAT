@@ -105,7 +105,7 @@ var HVStat = {
 
 	// battle states
 	duringBattle: false,
-	isBattleOver: false,
+	isBattleRoundFinished: false,
 	numberOfMonsters: 0,
 	monsters: [],	// instances of HVStat.Monster
 	alertQueue: [],
@@ -2750,7 +2750,7 @@ HVStat.warnHealthStatus = function () {
 	var hpWarningResumeLevel = hpWarningLevel + 10;
 	var mpWarningResumeLevel = mpWarningLevel + 10;
 	var spWarningResumeLevel = spWarningLevel + 10;
-	if (!HVStat.isBattleOver) {
+	if (!HVStat.isBattleRoundFinished) {
 		if (_settings.isShowPopup) {
 			if (HVStat.currHpPercent <= hpWarningLevel && (!hpAlertAlreadyShown || _settings.isNagHP)) {
 				alert("Your health is dangerously low!");
@@ -6499,7 +6499,7 @@ HVStat.main2 = function () {
 	HVStat.currMpPercent = Math.floor(HVStat.currMpRate * 100);
 	HVStat.currSpPercent = Math.floor(HVStat.currSpRate * 100);
 	HVStat.duringBattle = !!HVStat.battleLogElement;
-	HVStat.isBattleOver = !!document.querySelector("#battleform div.btcp");
+	HVStat.isBattleRoundFinished = !!document.querySelector("#battleform div.btcp");
 
 	// processes not require IndexedDB and not alert/confirm immediately
 	if (_settings.isChangePageTitle && document.title === "The HentaiVerse") {
@@ -6628,17 +6628,18 @@ HVStat.main4 = function () {
 	// processes alert/confirm immediately
 	if (HVStat.duringBattle) {
 		HVStat.AlertAllFromQueue();
-
-		if (_settings.warnMode[_round.battleType]) {
-			HVStat.warnHealthStatus();		// using alert
+		if (!HVStat.isBattleRoundFinished) {
+			if (_settings.warnMode[_round.battleType]) {
+				HVStat.warnHealthStatus();		// using alert
+			}
+			if (_settings.isMainEffectsAlertSelf) {
+				AlertEffectsSelf();		// using alert
+			}
+			if (_settings.isMainEffectsAlertMonsters) {
+				AlertEffectsMonsters();		// using alert
+			}
 		}
-		if (_settings.isMainEffectsAlertSelf) {
-			AlertEffectsSelf();		// using alert
-		}
-		if (_settings.isMainEffectsAlertMonsters) {
-			AlertEffectsMonsters();		// using alert
-		}
-		if (HVStat.isBattleOver) {
+		if (HVStat.isBattleRoundFinished) {
 			if (_settings.isShowEndStats) {
 				showBattleEndStats();	// requires _round
 			}
@@ -6648,9 +6649,11 @@ HVStat.main4 = function () {
 	} else {
 		if (_settings.isColumnInventory && HVStat.isBattleItemsPage) {
 			initItemsView();
-		} else if (HVStat.isCharacterPage) {
+		}
+		if (HVStat.isCharacterPage) {
 			collectCurrentProfsData();
-		} else if (HVStat.isShrinePage) {
+		}
+		if (HVStat.isShrinePage) {
 			if (_settings.isTrackShrine) {
 				captureShrine();
 			}
