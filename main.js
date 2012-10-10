@@ -2604,10 +2604,7 @@ function addBattleLogDividers() {
 		currTurn = logRows[i].firstChild.innerHTML;
 		if (!isNaN(parseInt(currTurn))) {
 			if (prevTurn && prevTurn !== currTurn) {
-				divider = doc.createElement('tr');
-				divider.innerHTML = "<td colspan='3'><hr style='border:0; height:1px; background-color:#666666; color:#666666' /></td>";
-				parent = logRows[i].firstChild.parentNode;
-				parent.parentNode.insertBefore(divider, parent.nextSibling);
+				logRows[i].children[2].style.cssText += "border-bottom: 1px; border-bottom-style: solid; border-bottom-color: #5C0D11; padding-bottom: 3px";
 			}
 			prevTurn = currTurn;
 		}
