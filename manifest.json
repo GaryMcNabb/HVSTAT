@@ -1,18 +1,18 @@
 {
 	"name": "HV Statistics, Tracking, and Analysis Tool (Chrome Edition)",
-	"version": "5.4.3.1",
+	"version": "5.4.4",
 	"manifest_version": 2,
 	"description": "Collects data, analyzes statistics, and enhances the interface of the HentaiVerse",
 	"icons": {
-		"128": "128.png",
 		"16": "16.png",
-		"48": "48.png"
+		"48": "48.png",
+		"128": "128.png"
 	},
-   "content_scripts": [ {
-      "css": [ "jqueryui.css" ],
-      "js": [ "jquery.min.js", "jquery-ui.min.js", "main.js" ],
-      "matches": [ "http://hentaiverse.org/*" ],
-      "exclude_matches": ["http://hentaiverse.org/pages/showequip*"],
-	 "run_at": "document_end"
-   } ]
+	"content_scripts": [ {
+		"css": [ "jqueryui.css" ],
+		"js": [ "jquery.min.js", "jquery-ui.min.js", "main.js" ],
+		"matches": [ "http://hentaiverse.org/*" ],
+		"exclude_matches": [ "http://hentaiverse.org/pages/showequip*" ],
+		"run_at": "document_end"
+	} ]
 }
