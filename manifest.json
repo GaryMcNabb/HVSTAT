@@ -5,8 +5,8 @@
 	"description": "Collects data, analyzes statistics, and enhances the interface of the HentaiVerse",
 	"icons": {
 		"16": "16.png",
-		"48": "48.png"
-		"128": "128.png",
+		"48": "48.png",
+		"128": "128.png"
 	},
 	"content_scripts": [ {
 		"css": [ "jqueryui.css" ],
