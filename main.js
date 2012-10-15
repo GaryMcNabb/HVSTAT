@@ -3,8 +3,8 @@
 // @namespace        HV STAT
 // @description      Collects data, analyzes statistics, and enhances the interface of the HentaiVerse
 // @include          http://hentaiverse.org/*
-// @author           Various (http://forums.e-hentai.org/index.php?showtopic=50962)
-// @version          5.4.3.1
+// @author           Various (http://forums.e-hentai.org/index.php?showtopic=79552)
+// @version          5.4.4
 // @require          https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js
 // @require          https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.21/jquery-ui.min.js
 // @resource         jQueryUICSS http://www.starfleetplatoon.com/~cmal/HVSTAT/jqueryui.css
@@ -16,7 +16,7 @@ var HVStat = {
 	//------------------------------------
 	// package scope global constants
 	//------------------------------------
-	VERSION: "5.4.3.1",
+	VERSION: "5.4.4",
 	isChrome: navigator.userAgent.indexOf("Chrome") >= 0,
 	indexedDB: window.indexedDB || window.webkitIndexedDB || window.mozIndexedDB,
 	IDBTransaction: window.IDBTransaction || window.webkitIDBTransaction,
@@ -105,7 +105,7 @@ var HVStat = {
 
 	// battle states
 	duringBattle: false,
-	isBattleOver: false,
+	isBattleRoundFinished: false,
 	numberOfMonsters: 0,
 	monsters: [],	// instances of HVStat.Monster
 	alertQueue: [],
@@ -992,9 +992,9 @@ HVStat.Monster = (function () {
 
 			if (_settings.showMonsterHP || _settings.showMonsterHPPercent) {
 				if (_settings.showMonsterHPPercent) {
-					hpIndicator = (_currHpRate * 100).toFixed(2) + "%"
+					hpIndicator = (_currHpRate * 100).toFixed(2) + "%";
 				} else {
-					hpIndicator = _currHp() + " / " + _maxHp
+					hpIndicator = _currHp() + " / " + _maxHp;
 				}
 				div = document.createElement("div");
 				div.style.cssText = "position:absolute;z-index:1074;top:-1px;font-size:8pt;font-family:arial,helvetica,sans-serif;font-weight:bolder;color:yellow;width:120px;text-align:center";
@@ -2604,10 +2604,7 @@ function addBattleLogDividers() {
 		currTurn = logRows[i].firstChild.innerHTML;
 		if (!isNaN(parseInt(currTurn))) {
 			if (prevTurn && prevTurn !== currTurn) {
-				divider = doc.createElement('tr');
-				divider.innerHTML = "<td colspan='3'><hr style='border:0; height:1px; background-color:#666666; color:#666666' /></td>";
-				parent = logRows[i].firstChild.parentNode;
-				parent.parentNode.insertBefore(divider, parent.nextSibling);
+				logRows[i].children[2].style.cssText += "border-bottom: 1px; border-bottom-style: solid; border-bottom-color: #5C0D11; padding-bottom: 3px";
 			}
 			prevTurn = currTurn;
 		}
@@ -2750,7 +2747,7 @@ HVStat.warnHealthStatus = function () {
 	var hpWarningResumeLevel = hpWarningLevel + 10;
 	var mpWarningResumeLevel = mpWarningLevel + 10;
 	var spWarningResumeLevel = spWarningLevel + 10;
-	if (!HVStat.isBattleOver) {
+	if (!HVStat.isBattleRoundFinished) {
 		if (_settings.isShowPopup) {
 			if (HVStat.currHpPercent <= hpWarningLevel && (!hpAlertAlreadyShown || _settings.isNagHP)) {
 				alert("Your health is dangerously low!");
@@ -3777,9 +3774,16 @@ function getReportStatsHtml() {
 		var offhand = _stats.aOffhands[0] + _stats.aOffhands[2];
 		var offhanddam = _stats.aOffhands[1] + _stats.aOffhands[3];
 		if (HVStat.isChrome) dst1 = dst.toLocaleDateString() + " " + dst.toLocaleTimeString();
-		c += '<tr><td colspan="2"><b>Rounds tracked:</b> ' + _stats.rounds + ' <b>Since: </b>' + dst1 + '</td></tr><tr><td colspan="2"><b>Monsters killed:</b> ' + _stats.kills + '</td></tr><tr><td colspan="2"><b>Offensive Statistics:</b></td></tr><tr><td style="padding-left:10px"><b>Physical:</b></td><td style="padding-left:10px"><b>Magical:</b></td></tr><tr><td style="padding-left:20px">Accuracy: ' + (_stats.aAttempts === 0 ? 0 : (f / _stats.aAttempts * 100).toFixed(2)) + '%</td><td style="padding-left:20px">Accuracy: ' + (h === 0 ? 0 : (g / h * 100).toFixed(2)) + '%</td></tr><tr><td style="padding-left:20px">Crit chance: ' + (f === 0 ? 0 : (_stats.aHits[1] / f * 100).toFixed(2)) + '%</td><td style="padding-left:20px">Crit chance: ' + (e === 0 ? 0 : (_stats.sHits[1] / e * 100).toFixed(2)) + '%</td></tr><tr><td style="padding-left:20px">Overwhelming Strikes chance: ' + (f === 0 ? 0 : (_stats.overStrikes / f * 100).toFixed(2)) + '%</td></tr><tr><td style="padding-left:20px">Counter chance on block/parry: ' + (bp === 0 ? 0 : (_stats.aCounters[0]*100/bp).toFixed(2)) + '%</td></tr><tr><td style="padding-left:30px">Number of counters in turn:</td></tr>';
-		c +=  '<tr><td colspan="2" style="padding-left:30px">One - ' + (c1 === 0 ? 0 : (c1*100/call).toFixed(2)) + '% | Two - ' + (_stats.aCounters[2] === 0 ? 0 : (_stats.aCounters[2]*100/call).toFixed(2)) + '% | Three - ' + (_stats.aCounters[3] === 0 ? 0 :(_stats.aCounters[3]*100/call).toFixed(2));
-		c += '%</td></tr>';
+		c += '<tr><td colspan="2"><b>Rounds tracked:</b> ' + _stats.rounds + ' <b>Since: </b>' + dst1 + '</td></tr>'
+		c += '<tr><td colspan="2"><b>Monsters killed:</b> ' + _stats.kills + '</td></tr>'
+		c += '<tr><td colspan="2"><b>Offensive Statistics:</b></td></tr>'
+		c += '<tr><td style="padding-left:10px"><b>Physical:</b></td><td style="padding-left:10px"><b>Magical:</b></td></tr>'
+		c += '<tr><td style="padding-left:20px">Accuracy: ' + (_stats.aAttempts === 0 ? 0 : (f / _stats.aAttempts * 100).toFixed(2)) + '%</td><td style="padding-left:20px">Accuracy: ' + (h === 0 ? 0 : (g / h * 100).toFixed(2)) + '%</td></tr>'
+		c += '<tr><td style="padding-left:20px">Crit chance: ' + (f === 0 ? 0 : (_stats.aHits[1] / f * 100).toFixed(2)) + '%</td><td style="padding-left:20px">Crit chance: ' + (e === 0 ? 0 : (_stats.sHits[1] / e * 100).toFixed(2)) + '%</td></tr>'
+		c += '<tr><td style="padding-left:20px">Overwhelming Strikes chance: ' + (f === 0 ? 0 : (_stats.overStrikes / f * 100).toFixed(2)) + '%</td></tr>'
+		c += '<tr><td style="padding-left:20px">Counter chance on block/parry: ' + (bp === 0 ? 0 : (_stats.aCounters[0]*100/bp).toFixed(2)) + '%</td></tr>'
+		c += '<tr><td style="padding-left:30px">Number of counters in turn:</td></tr>';
+		c += '<tr><td colspan="2" style="padding-left:30px">One - ' + (c1 === 0 ? 0 : (c1*100/call).toFixed(2)) + '% | Two - ' + (_stats.aCounters[2] === 0 ? 0 : (_stats.aCounters[2]*100/call).toFixed(2)) + '% | Three - ' + (_stats.aCounters[3] === 0 ? 0 :(_stats.aCounters[3]*100/call).toFixed(2)) + '%</td></tr>';
 		c += '<tr><td style="padding-left:30px">Stun chance on counter: ' + (call === 0 ? 0 : (_stats.weaponprocs[7]*100/call).toFixed(2)) + '%</td></tr>';
 		c += '<tr><td style="padding-left:30px">Average Counter damage: ' + (_stats.aCounters[0] === 0 ? 0 : (_stats.aCounters[1] / _stats.aCounters[0]).toFixed(2)) + '</td></tr>';
 		c += '<tr><td style="padding-left:20px">Offhand Strike chance: ' + (f === 0 ? 0 : (offhand / f * 100).toFixed(2)) + '%</td><td style="padding-left:20px">Channeling chance: ' + (i === 0 ? 0 : (_stats.channel / i * 100).toFixed(2)) + '%</td></tr>';
@@ -3802,7 +3806,22 @@ function getReportStatsHtml() {
 		c += '<tr><td colspan="2" style="padding-left:20px">Drain HP chance: ' + (f === 0 ? 0 : (_stats.weaponprocs[4]*100 / f).toFixed(2)) + '%</td></tr>';
 		c += '<tr><td colspan="2" style="padding-left:20px">Drain MP chance: ' + (f === 0 ? 0 : (_stats.weaponprocs[5]*100 / f).toFixed(2)) + '%</td></tr>';
 		c += '<tr><td colspan="2" style="padding-left:20px">Drain SP chance: ' + (f === 0 ? 0 : (_stats.weaponprocs[6]*100 / f).toFixed(2)) + '%</td></tr>';
-		c += '<tr><td colspan="2"><b>Defensive Statistics:</b></td></tr><tr><td style="padding-left:10px">Overall chance of getting hit: ' + (_stats.mAttempts === 0 ? 0 : (d / _stats.mAttempts * 100).toFixed(2)) + '%</td><td style="padding-left:10px">Average HP restored by Cure:</td></tr><tr><td style="padding-left:20px">Miss chance: ' + (_stats.mAttempts === 0 ? 0 : (_stats.pDodges / _stats.mAttempts * 100).toFixed(2)) + '%</td><td style="padding-left:20px">Cure: ' + (_stats.cureCounts[0] === 0 ? 0 : (_stats.cureTotals[0] / _stats.cureCounts[0]).toFixed(2)) + ' HP/cast</td></tr><tr><td style="padding-left:20px">Evade chance: ' + (_stats.mAttempts === 0 ? 0 : (_stats.pEvades / _stats.mAttempts * 100).toFixed(2)) + '%</td><td style="padding-left:20px">Cure II: ' + (_stats.cureCounts[1] === 0 ? 0 : (_stats.cureTotals[1] / _stats.cureCounts[1]).toFixed(2)) + ' HP/cast</td></tr><tr><td style="padding-left:20px">Block chance: ' + (_stats.mAttempts === 0 ? 0 : (_stats.pBlocks / _stats.mAttempts * 100).toFixed(2)) + '%</td><td style="padding-left:20px">Cure III: ' + (_stats.cureCounts[2] === 0 ? 0 : (_stats.cureTotals[2] / _stats.cureCounts[2]).toFixed(2)) + ' HP/cast</td></tr><tr><td style="padding-left:20px">Parry chance: ' + (_stats.mAttempts === 0 ? 0 : (_stats.pParries / _stats.mAttempts * 100).toFixed(2)) + '%</td><td style="padding-left:10px">Absorb casting efficiency: ' + (_stats.absArry[0] === 0 ? 0 : (_stats.absArry[1] / _stats.absArry[0] * 100).toFixed(2)) + '%</td></tr><tr><td style="padding-left:20px">Resist chance: ' + (_stats.mSpells === 0 ? 0 : (_stats.pResists / _stats.mSpells * 100).toFixed(2)) + '%</td><td style="padding-left:20px">Average MP drained by Absorb: ' + (_stats.absArry[1] === 0 ? 0 : (_stats.absArry[2] / _stats.absArry[1]).toFixed(2)) + ' MP/trigger</td></tr><tr><td style="padding-left:10px">Monster crit chance: ' + (_stats.mAttempts === 0 ? 0 : (_stats.mHits[1] / _stats.mAttempts * 100).toFixed(2)) + '%</td><td style="padding-left:20px">Average MP returns of Absorb: ' + (_stats.absArry[0] === 0 ? 0 : (_stats.absArry[2] / _stats.absArry[0]).toFixed(2)) + ' MP/cast</td></tr><tr><td style="padding-left:20px">Percent of monster hits that are crits: ' + (d === 0 ? 0 : (_stats.mHits[1] / d * 100).toFixed(2)) + '%</td></tr><tr><td style="padding-left:10px">Average damage taken per hit: ' + (_stats.mHits[0] === 0 ? 0 : (_stats.dTaken[0] / _stats.mHits[0]).toFixed(2)) + '</td></tr><tr><td style="padding-left:10px">Average damage taken per crit: ' + (_stats.mHits[1] === 0 ? 0 : (_stats.dTaken[1] / _stats.mHits[1]).toFixed(2)) + '</td></tr><tr><td style="padding-left:10px">Average damage taken: ' + (d === 0 ? 0 : ((_stats.dTaken[0] + _stats.dTaken[1]) / d).toFixed(2)) + '</td></tr><tr><td style="padding-left:10px">Average total damage taken per round: ' + (_stats.rounds === 0 ? 0 : ((_stats.dTaken[0] + _stats.dTaken[1]) / _stats.rounds).toFixed(2)) + '</td></tr><tr><td align="left" colspan="7"><form>SelectBackup:<select id="BackupNumber"><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select>' + '<input type="button" class="_backupFunc" value="Save Backup" />' + '<input type="button" class="_backupFunc" value="Load Backup"/>' + '<input type="button" class="_backupFunc" value="AddTo Backup"/>' + '<input type="button" class="_backupFunc" value="AddFrom Backup"/>' + '<input type="button" class="_backupFunc" value="Remove Backup"/></td></tr></form>' + '<tr><td><input type="button" class="_checkBackups" value="Check Existing Backups"/></td></tr>' + '</td></tr><tr><td align="right" colspan="2"><input type="button" class="_resetStats" value="Reset Stats" /></td></tr>'
+		c += '<tr><td colspan="2"><b>Defensive Statistics:</b></td></tr>'
+		c += '<tr><td style="padding-left:10px">Overall chance of getting hit: ' + (_stats.mAttempts === 0 ? 0 : (d / _stats.mAttempts * 100).toFixed(2)) + '%</td><td style="padding-left:10px">Average HP restored by Cure:</td></tr>'
+		c += '<tr><td style="padding-left:20px">Miss chance: ' + (_stats.mAttempts === 0 ? 0 : (_stats.pDodges / _stats.mAttempts * 100).toFixed(2)) + '%</td><td style="padding-left:20px">Cure: ' + (_stats.cureCounts[0] === 0 ? 0 : (_stats.cureTotals[0] / _stats.cureCounts[0]).toFixed(2)) + ' HP/cast</td></tr>'
+		c += '<tr><td style="padding-left:20px">Evade chance: ' + (_stats.mAttempts === 0 ? 0 : (_stats.pEvades / _stats.mAttempts * 100).toFixed(2)) + '%</td><td style="padding-left:20px">Cure II: ' + (_stats.cureCounts[1] === 0 ? 0 : (_stats.cureTotals[1] / _stats.cureCounts[1]).toFixed(2)) + ' HP/cast</td></tr>'
+		c += '<tr><td style="padding-left:20px">Block chance: ' + (_stats.mAttempts === 0 ? 0 : (_stats.pBlocks / _stats.mAttempts * 100).toFixed(2)) + '%</td><td style="padding-left:20px">Cure III: ' + (_stats.cureCounts[2] === 0 ? 0 : (_stats.cureTotals[2] / _stats.cureCounts[2]).toFixed(2)) + ' HP/cast</td></tr>'
+		c += '<tr><td style="padding-left:20px">Parry chance: ' + (_stats.mAttempts === 0 ? 0 : (_stats.pParries / _stats.mAttempts * 100).toFixed(2)) + '%</td><td style="padding-left:10px">Absorb casting efficiency: ' + (_stats.absArry[0] === 0 ? 0 : (_stats.absArry[1] / _stats.absArry[0] * 100).toFixed(2)) + '%</td></tr>'
+		c += '<tr><td style="padding-left:20px">Resist chance: ' + (_stats.mSpells === 0 ? 0 : (_stats.pResists / _stats.mSpells * 100).toFixed(2)) + '%</td><td style="padding-left:20px">Average MP drained by Absorb: ' + (_stats.absArry[1] === 0 ? 0 : (_stats.absArry[2] / _stats.absArry[1]).toFixed(2)) + ' MP/trigger</td></tr>'
+		c += '<tr><td style="padding-left:10px">Monster crit chance: ' + (_stats.mAttempts === 0 ? 0 : (_stats.mHits[1] / _stats.mAttempts * 100).toFixed(2)) + '%</td><td style="padding-left:20px">Average MP returns of Absorb: ' + (_stats.absArry[0] === 0 ? 0 : (_stats.absArry[2] / _stats.absArry[0]).toFixed(2)) + ' MP/cast</td></tr>'
+		c += '<tr><td style="padding-left:20px">Percent of monster hits that are crits: ' + (d === 0 ? 0 : (_stats.mHits[1] / d * 100).toFixed(2)) + '%</td></tr>'
+		c += '<tr><td style="padding-left:10px">Average damage taken per hit: ' + (_stats.mHits[0] === 0 ? 0 : (_stats.dTaken[0] / _stats.mHits[0]).toFixed(2)) + '</td></tr>'
+		c += '<tr><td style="padding-left:10px">Average damage taken per crit: ' + (_stats.mHits[1] === 0 ? 0 : (_stats.dTaken[1] / _stats.mHits[1]).toFixed(2)) + '</td></tr>'
+		c += '<tr><td style="padding-left:10px">Average damage taken: ' + (d === 0 ? 0 : ((_stats.dTaken[0] + _stats.dTaken[1]) / d).toFixed(2)) + '</td></tr>'
+		c += '<tr><td style="padding-left:10px">Average total damage taken per round: ' + (_stats.rounds === 0 ? 0 : ((_stats.dTaken[0] + _stats.dTaken[1]) / _stats.rounds).toFixed(2)) + '</td></tr>'
+		c += '<tr><td align="left" colspan="7"><form>SelectBackup:<select id="BackupNumber"><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select>' + '<input type="button" class="_backupFunc" value="Save Backup" />' + '<input type="button" class="_backupFunc" value="Load Backup"/>' + '<input type="button" class="_backupFunc" value="AddTo Backup"/>' + '<input type="button" class="_backupFunc" value="AddFrom Backup"/>' + '<input type="button" class="_backupFunc" value="Remove Backup"/></form></td></tr>'
+		c += '<tr><td><input type="button" class="_checkBackups" value="Check Existing Backups"/></td></tr>' + '</td></tr>'
+		c += '<tr><td align="right" colspan="2"><input type="button" class="_resetStats" value="Reset Stats" /></td></tr>'
 	}
 	c += "</table>";
 	return c;
@@ -3824,12 +3843,34 @@ function getReportItemHtml() {
 		var b4 = _drops.artDropbyBT[4] + _drops.eqDropbyBT[4] + _drops.itemDropbyBT[4];
 		var d = b / 100;
 		var a = _drops.dropChances / 100;
-		e += '<tr><td colspan="4"><b>Total Item Drops:</b> ' + b + " from " + _drops.dropChances + " monsters (" + (b / a).toFixed(2) + '% total drop chance)</td></tr><tr><td colspan="4" style="padding-left:20px">Items: ' + _drops.itemDrop + " (" + (d === 0 ? 0 : (_drops.itemDrop / d).toFixed(2)) + "% of drops, " + (_drops.itemDrop / a).toFixed(2) + '% drop chance)</td></tr><tr><td colspan="4" style="padding-left:20px">Equipment: ' + _drops.eqDrop + " (" + (d === 0 ? 0 : (_drops.eqDrop / d).toFixed(2)) + "% of drops, " + (_drops.eqDrop / a).toFixed(2) + '% drop chance)</td></tr><tr><td colspan="4" style="padding-left:20px">Artifacts: ' + _drops.artDrop + " (" + (d === 0 ? 0 : (_drops.artDrop / d).toFixed(2)) + "% of drops, " + (_drops.artDrop / a).toFixed(2) + '% drop chance)</td></tr>'
-			+ '<tr><td colspan="4" style="padding-left:10px"><b>In hourly encounters:</b> ' + b0 + " from " + _drops.dropChancesbyBT[0] + " monsters (" + (b0*100 / _drops.dropChancesbyBT[0]).toFixed(2) + '% total drop chance)</td></tr><tr><td colspan="4" style="padding-left:20px">Items: ' + _drops.itemDropbyBT[0] + " (" + (b0 === 0 ? 0 : (_drops.itemDropbyBT[0]*100 / b0).toFixed(2)) + "% of drops, " + (_drops.itemDropbyBT[0]*100/_drops.dropChancesbyBT[0]).toFixed(2) + '% drop chance)</td></tr><tr><td colspan="4" style="padding-left:30px">Crystals: ' + _drops.crysDropbyBT[0] + " (" + (b0 === 0 ? 0 : (_drops.crysDropbyBT[0]*100 / b0).toFixed(2)) + "% of drops, " + (_drops.crysDropbyBT[0]*100/_drops.dropChancesbyBT[0]).toFixed(2) + '% drop chance)</td></tr><tr><td colspan="4" style="padding-left:20px">Equipment: ' + _drops.eqDropbyBT[0] + " (" + (b0 === 0 ? 0 : (_drops.eqDropbyBT[0]*100 / b0).toFixed(2)) + "% of drops, " + (_drops.eqDropbyBT[0]*100/_drops.dropChancesbyBT[0]).toFixed(2) + '% drop chance)</td></tr><tr><td colspan="4" style="padding-left:20px">Artifacts: ' + _drops.artDropbyBT[0] + " (" + (b0 === 0 ? 0 : (_drops.artDropbyBT[0]*100 / b0).toFixed(2)) + "% of drops, " + (_drops.artDropbyBT[0]*100/_drops.dropChancesbyBT[0]).toFixed(2) + '% drop chance)</td></tr>'
-			+ '<tr><td colspan="4" style="padding-left:10px"><b>In Arenas:</b> ' + b1 + " from " + _drops.dropChancesbyBT[1] + " monsters (" + (b1*100 / _drops.dropChancesbyBT[1]).toFixed(2) + '% total drop chance)</td></tr><tr><td colspan="4" style="padding-left:20px">Items: ' + _drops.itemDropbyBT[1] + " (" + (b1 === 0 ? 0 : (_drops.itemDropbyBT[1]*100 / b1).toFixed(2)) + "% of drops, " + (_drops.itemDropbyBT[1]*100/_drops.dropChancesbyBT[1]).toFixed(2) + '% drop chance)</td></tr><tr><td colspan="4" style="padding-left:30px">Crystals: ' + _drops.crysDropbyBT[1] + " (" + (b1 === 0 ? 0 : (_drops.crysDropbyBT[1]*100 / b1).toFixed(2)) + "% of drops, " + (_drops.crysDropbyBT[1]*100/_drops.dropChancesbyBT[1]).toFixed(2) + '% drop chance)</td></tr><tr><td colspan="4" style="padding-left:20px">Equipment: ' + _drops.eqDropbyBT[1] + " (" + (b1 === 0 ? 0 : (_drops.eqDropbyBT[1]*100 / b1).toFixed(2)) + "% of drops, " + (_drops.eqDropbyBT[1]*100/_drops.dropChancesbyBT[1]).toFixed(2) + '% drop chance)</td></tr><tr><td colspan="4" style="padding-left:20px">Artifacts: ' + _drops.artDropbyBT[1] + " (" + (b1 === 0 ? 0 : (_drops.artDropbyBT[1]*100 / b1).toFixed(2)) + "% of drops, " + (_drops.artDropbyBT[1]*100/_drops.dropChancesbyBT[1]).toFixed(2) + '% drop chance)</td></tr>'
-			+ '<tr><td colspan="4" style="padding-left:10px"><b>In GrindFests:</b> ' + b2 + " from " + _drops.dropChancesbyBT[2] + " monsters (" + (b2*100 / _drops.dropChancesbyBT[2]).toFixed(2) + '% total drop chance)</td></tr><tr><td colspan="4" style="padding-left:20px">Items: ' + _drops.itemDropbyBT[2] + " (" + (b2 === 0 ? 0 : (_drops.itemDropbyBT[2]*100 / b2).toFixed(2)) + "% of drops, " + (_drops.itemDropbyBT[2]*100/_drops.dropChancesbyBT[2]).toFixed(2) + '% drop chance)</td></tr><tr><td colspan="4" style="padding-left:30px">Crystals: ' + _drops.crysDropbyBT[2] + " (" + (b2 === 0 ? 0 : (_drops.crysDropbyBT[2]*100 / b2).toFixed(2)) + "% of drops, " + (_drops.crysDropbyBT[2]*100/_drops.dropChancesbyBT[2]).toFixed(2) + '% drop chance)</td></tr><tr><td colspan="4" style="padding-left:20px">Equipment: ' + _drops.eqDropbyBT[2] + " (" + (b2 === 0 ? 0 : (_drops.eqDropbyBT[2]*100 / b2).toFixed(2)) + "% of drops, " + (_drops.eqDropbyBT[2]*100/_drops.dropChancesbyBT[2]).toFixed(2) + '% drop chance)</td></tr><tr><td colspan="4" style="padding-left:20px">Artifacts: ' + _drops.artDropbyBT[2] + " (" + (b2 === 0 ? 0 : (_drops.artDropbyBT[2]*100 / b2).toFixed(2)) + "% of drops, " + (_drops.artDropbyBT[2]*100/_drops.dropChancesbyBT[2]).toFixed(2) + '% drop chance)</td></tr>'
-			+ '<tr><td colspan="4" style="padding-left:10px"><b>In CrysFests:</b> ' + b4 + " from " + _drops.dropChancesbyBT[4] + " monsters (" + (b4*100 / _drops.dropChancesbyBT[4]).toFixed(2) + '% total drop chance)</td></tr><tr><td colspan="4" style="padding-left:20px">Items: ' + _drops.itemDropbyBT[4] + " (" + (b4 === 0 ? 0 : (_drops.itemDropbyBT[4]*100 / b4).toFixed(2)) + "% of drops, " + (_drops.itemDropbyBT[4]*100/_drops.dropChancesbyBT[4]).toFixed(2) + '% drop chance)</td></tr><tr><td colspan="4" style="padding-left:30px">Crystals: ' + _drops.crysDropbyBT[4] + " (" + (b4 === 0 ? 0 : (_drops.crysDropbyBT[4]*100 / b4).toFixed(2)) + "% of drops, " + (_drops.crysDropbyBT[4]*100/_drops.dropChancesbyBT[4]).toFixed(2) + '% drop chance)</td></tr><tr><td colspan="4" style="padding-left:20px">Artifacts: ' + _drops.artDropbyBT[4] + " (" + (b4 === 0 ? 0 : (_drops.artDropbyBT[4]*100 / b4).toFixed(2)) + "% of drops, " + (_drops.artDropbyBT[4]*100/_drops.dropChancesbyBT[4]).toFixed(2) + '% drop chance)</td></tr>'
-			+ '<tr><td colspan="4" style="padding-left:10px"><b>In Item Worlds:</b> ' + b3 + " from " + _drops.dropChancesbyBT[3] + " monsters (" + (b3*100 / _drops.dropChancesbyBT[3]).toFixed(2) + '% total drop chance)</td></tr><tr><td colspan="4" style="padding-left:20px">Items: ' + _drops.itemDropbyBT[3] + " (" + (b3 === 0 ? 0 : (_drops.itemDropbyBT[3]*100 / b3).toFixed(2)) + "% of drops, " + (_drops.itemDropbyBT[3]*100/_drops.dropChancesbyBT[3]).toFixed(2) + '% drop chance)</td></tr><tr><td colspan="4" style="padding-left:30px">Crystals: ' + _drops.crysDropbyBT[3] + " (" + (b3 === 0 ? 0 : (_drops.crysDropbyBT[3]*100 / b3).toFixed(2)) + "% of drops, " + (_drops.crysDropbyBT[3]*100/_drops.dropChancesbyBT[3]).toFixed(2) + '% drop chance)</td></tr><tr><td colspan="4" style="padding-left:20px">Equipment: ' + _drops.eqDropbyBT[3] + " (" + (b3 === 0 ? 0 : (_drops.eqDropbyBT[3]*100 / b3).toFixed(2)) + "% of drops, " + (_drops.eqDropbyBT[3]*100/_drops.dropChancesbyBT[3]).toFixed(2) + '% drop chance)</td></tr><tr><td colspan="4" style="padding-left:20px">Artifacts: ' + _drops.artDropbyBT[3] + " (" + (b3 === 0 ? 0 : (_drops.artDropbyBT[3]*100 / b3).toFixed(2)) + "% of drops, " + (_drops.artDropbyBT[3]*100/_drops.dropChancesbyBT[3]).toFixed(2) + '% drop chance)</td></tr>'
+		e += '<tr><td colspan="4"><b>Total Item Drops:</b> ' + b + " from " + _drops.dropChances + " monsters (" + (b / a).toFixed(2) + '% total drop chance)</td></tr>'
+			+ '<tr><td colspan="4" style="padding-left:20px">Items: ' + _drops.itemDrop + " (" + (d === 0 ? 0 : (_drops.itemDrop / d).toFixed(2)) + "% of drops, " + (_drops.itemDrop / a).toFixed(2) + '% drop chance)</td></tr>'
+			+ '<tr><td colspan="4" style="padding-left:20px">Equipment: ' + _drops.eqDrop + " (" + (d === 0 ? 0 : (_drops.eqDrop / d).toFixed(2)) + "% of drops, " + (_drops.eqDrop / a).toFixed(2) + '% drop chance)</td></tr>'
+			+ '<tr><td colspan="4" style="padding-left:20px">Artifacts: ' + _drops.artDrop + " (" + (d === 0 ? 0 : (_drops.artDrop / d).toFixed(2)) + "% of drops, " + (_drops.artDrop / a).toFixed(2) + '% drop chance)</td></tr>'
+			+ '<tr><td colspan="4" style="padding-left:10px"><b>In hourly encounters:</b> ' + b0 + " from " + _drops.dropChancesbyBT[0] + " monsters (" + (b0*100 / _drops.dropChancesbyBT[0]).toFixed(2) + '% total drop chance)</td></tr>'
+			+ '<tr><td colspan="4" style="padding-left:20px">Items: ' + _drops.itemDropbyBT[0] + " (" + (b0 === 0 ? 0 : (_drops.itemDropbyBT[0]*100 / b0).toFixed(2)) + "% of drops, " + (_drops.itemDropbyBT[0]*100/_drops.dropChancesbyBT[0]).toFixed(2) + '% drop chance)</td></tr>'
+			+ '<tr><td colspan="4" style="padding-left:30px">Crystals: ' + _drops.crysDropbyBT[0] + " (" + (b0 === 0 ? 0 : (_drops.crysDropbyBT[0]*100 / b0).toFixed(2)) + "% of drops, " + (_drops.crysDropbyBT[0]*100/_drops.dropChancesbyBT[0]).toFixed(2) + '% drop chance)</td></tr>'
+			+ '<tr><td colspan="4" style="padding-left:20px">Equipment: ' + _drops.eqDropbyBT[0] + " (" + (b0 === 0 ? 0 : (_drops.eqDropbyBT[0]*100 / b0).toFixed(2)) + "% of drops, " + (_drops.eqDropbyBT[0]*100/_drops.dropChancesbyBT[0]).toFixed(2) + '% drop chance)</td></tr>'
+			+ '<tr><td colspan="4" style="padding-left:20px">Artifacts: ' + _drops.artDropbyBT[0] + " (" + (b0 === 0 ? 0 : (_drops.artDropbyBT[0]*100 / b0).toFixed(2)) + "% of drops, " + (_drops.artDropbyBT[0]*100/_drops.dropChancesbyBT[0]).toFixed(2) + '% drop chance)</td></tr>'
+			+ '<tr><td colspan="4" style="padding-left:10px"><b>In Arenas:</b> ' + b1 + " from " + _drops.dropChancesbyBT[1] + " monsters (" + (b1*100 / _drops.dropChancesbyBT[1]).toFixed(2) + '% total drop chance)</td></tr>'
+			+ '<tr><td colspan="4" style="padding-left:20px">Items: ' + _drops.itemDropbyBT[1] + " (" + (b1 === 0 ? 0 : (_drops.itemDropbyBT[1]*100 / b1).toFixed(2)) + "% of drops, " + (_drops.itemDropbyBT[1]*100/_drops.dropChancesbyBT[1]).toFixed(2) + '% drop chance)</td></tr>'
+			+ '<tr><td colspan="4" style="padding-left:30px">Crystals: ' + _drops.crysDropbyBT[1] + " (" + (b1 === 0 ? 0 : (_drops.crysDropbyBT[1]*100 / b1).toFixed(2)) + "% of drops, " + (_drops.crysDropbyBT[1]*100/_drops.dropChancesbyBT[1]).toFixed(2) + '% drop chance)</td></tr>'
+			+ '<tr><td colspan="4" style="padding-left:20px">Equipment: ' + _drops.eqDropbyBT[1] + " (" + (b1 === 0 ? 0 : (_drops.eqDropbyBT[1]*100 / b1).toFixed(2)) + "% of drops, " + (_drops.eqDropbyBT[1]*100/_drops.dropChancesbyBT[1]).toFixed(2) + '% drop chance)</td></tr>'
+			+ '<tr><td colspan="4" style="padding-left:20px">Artifacts: ' + _drops.artDropbyBT[1] + " (" + (b1 === 0 ? 0 : (_drops.artDropbyBT[1]*100 / b1).toFixed(2)) + "% of drops, " + (_drops.artDropbyBT[1]*100/_drops.dropChancesbyBT[1]).toFixed(2) + '% drop chance)</td></tr>'
+			+ '<tr><td colspan="4" style="padding-left:10px"><b>In GrindFests:</b> ' + b2 + " from " + _drops.dropChancesbyBT[2] + " monsters (" + (b2*100 / _drops.dropChancesbyBT[2]).toFixed(2) + '% total drop chance)</td></tr>'
+			+ '<tr><td colspan="4" style="padding-left:20px">Items: ' + _drops.itemDropbyBT[2] + " (" + (b2 === 0 ? 0 : (_drops.itemDropbyBT[2]*100 / b2).toFixed(2)) + "% of drops, " + (_drops.itemDropbyBT[2]*100/_drops.dropChancesbyBT[2]).toFixed(2) + '% drop chance)</td></tr>'
+			+ '<tr><td colspan="4" style="padding-left:30px">Crystals: ' + _drops.crysDropbyBT[2] + " (" + (b2 === 0 ? 0 : (_drops.crysDropbyBT[2]*100 / b2).toFixed(2)) + "% of drops, " + (_drops.crysDropbyBT[2]*100/_drops.dropChancesbyBT[2]).toFixed(2) + '% drop chance)</td></tr>'
+			+ '<tr><td colspan="4" style="padding-left:20px">Equipment: ' + _drops.eqDropbyBT[2] + " (" + (b2 === 0 ? 0 : (_drops.eqDropbyBT[2]*100 / b2).toFixed(2)) + "% of drops, " + (_drops.eqDropbyBT[2]*100/_drops.dropChancesbyBT[2]).toFixed(2) + '% drop chance)</td></tr>'
+			+ '<tr><td colspan="4" style="padding-left:20px">Artifacts: ' + _drops.artDropbyBT[2] + " (" + (b2 === 0 ? 0 : (_drops.artDropbyBT[2]*100 / b2).toFixed(2)) + "% of drops, " + (_drops.artDropbyBT[2]*100/_drops.dropChancesbyBT[2]).toFixed(2) + '% drop chance)</td></tr>'
+			+ '<tr><td colspan="4" style="padding-left:10px"><b>In CrysFests:</b> ' + b4 + " from " + _drops.dropChancesbyBT[4] + " monsters (" + (b4*100 / _drops.dropChancesbyBT[4]).toFixed(2) + '% total drop chance)</td></tr>'
+			+ '<tr><td colspan="4" style="padding-left:20px">Items: ' + _drops.itemDropbyBT[4] + " (" + (b4 === 0 ? 0 : (_drops.itemDropbyBT[4]*100 / b4).toFixed(2)) + "% of drops, " + (_drops.itemDropbyBT[4]*100/_drops.dropChancesbyBT[4]).toFixed(2) + '% drop chance)</td></tr>'
+			+ '<tr><td colspan="4" style="padding-left:30px">Crystals: ' + _drops.crysDropbyBT[4] + " (" + (b4 === 0 ? 0 : (_drops.crysDropbyBT[4]*100 / b4).toFixed(2)) + "% of drops, " + (_drops.crysDropbyBT[4]*100/_drops.dropChancesbyBT[4]).toFixed(2) + '% drop chance)</td></tr>'
+			+ '<tr><td colspan="4" style="padding-left:20px">Artifacts: ' + _drops.artDropbyBT[4] + " (" + (b4 === 0 ? 0 : (_drops.artDropbyBT[4]*100 / b4).toFixed(2)) + "% of drops, " + (_drops.artDropbyBT[4]*100/_drops.dropChancesbyBT[4]).toFixed(2) + '% drop chance)</td></tr>'
+			+ '<tr><td colspan="4" style="padding-left:10px"><b>In Item Worlds:</b> ' + b3 + " from " + _drops.dropChancesbyBT[3] + " monsters (" + (b3*100 / _drops.dropChancesbyBT[3]).toFixed(2) + '% total drop chance)</td></tr>'
+			+ '<tr><td colspan="4" style="padding-left:20px">Items: ' + _drops.itemDropbyBT[3] + " (" + (b3 === 0 ? 0 : (_drops.itemDropbyBT[3]*100 / b3).toFixed(2)) + "% of drops, " + (_drops.itemDropbyBT[3]*100/_drops.dropChancesbyBT[3]).toFixed(2) + '% drop chance)</td></tr>'
+			+ '<tr><td colspan="4" style="padding-left:30px">Crystals: ' + _drops.crysDropbyBT[3] + " (" + (b3 === 0 ? 0 : (_drops.crysDropbyBT[3]*100 / b3).toFixed(2)) + "% of drops, " + (_drops.crysDropbyBT[3]*100/_drops.dropChancesbyBT[3]).toFixed(2) + '% drop chance)</td></tr>'
+			+ '<tr><td colspan="4" style="padding-left:20px">Equipment: ' + _drops.eqDropbyBT[3] + " (" + (b3 === 0 ? 0 : (_drops.eqDropbyBT[3]*100 / b3).toFixed(2)) + "% of drops, " + (_drops.eqDropbyBT[3]*100/_drops.dropChancesbyBT[3]).toFixed(2) + '% drop chance)</td></tr>'
+			+ '<tr><td colspan="4" style="padding-left:20px">Artifacts: ' + _drops.artDropbyBT[3] + " (" + (b3 === 0 ? 0 : (_drops.artDropbyBT[3]*100 / b3).toFixed(2)) + "% of drops, " + (_drops.artDropbyBT[3]*100/_drops.dropChancesbyBT[3]).toFixed(2) + '% drop chance)</td></tr>'
 			+ '<tr><td colspan="4"><b>Item:</b></td></tr>';
 		for (var c = 0; c < _drops.itemArry.length; c = c + 2) {
 			e += "<tr><td style='width:25%;padding-left:10px'>" + _drops.itemArry[c] + "</td><td style='width:25%'>x " + _drops.itemQtyArry[c] + " (" + (_drops.itemDrop === 0 ? 0 : ((_drops.itemQtyArry[c] / _drops.itemDrop) * 100).toFixed(2)) + "%)</td>";
@@ -3857,7 +3898,11 @@ function getReportRewardHtml() {
 		var c = _rewards.totalRwrds / 100;
 		var a = _rewards.tokenDrops[0] + _rewards.tokenDrops[1] + _rewards.tokenDrops[2];
 		var b = a / 100;
-		e += '<tr><td style="width:50%"><b>Total Rewards:</b> ' + _rewards.totalRwrds + '</td><td style="width:50%"><b>Token Bonus:</b> ' + a + " (" + (a / c).toFixed(2) + '% chance)</td></tr><tr><td style="padding-left:10px;width:50%">Artifact: ' + _rewards.artRwrd + " (" + (c === 0 ? 0 : (_rewards.artRwrd / c).toFixed(2)) + '%)</td><td style="padding-left:10px;width:50%">[Token of Blood]: ' + _rewards.tokenDrops[0] + " (" + (b === 0 ? 0 : (_rewards.tokenDrops[0] / b).toFixed(2)) + '%)</td></tr><tr><td style="padding-left:10px;width:50%">Equipment: ' + _rewards.eqRwrd + " (" + (c === 0 ? 0 : (_rewards.eqRwrd / c).toFixed(2)) + '%)</td><td style="padding-left:10px;width:50%">[Token of Healing]: ' + _rewards.tokenDrops[1] + " (" + (b === 0 ? 0 : (_rewards.tokenDrops[1] / b).toFixed(2)) + '%)</td></tr><tr><td style="padding-left:10px;width:50%">Item: ' + _rewards.itemsRwrd + " (" + (c === 0 ? 0 : (_rewards.itemsRwrd / c).toFixed(2)) + '%)</td><td style="padding-left:10px;width:50%">[Chaos Token]: ' + _rewards.tokenDrops[2] + " (" + (b === 0 ? 0 : (_rewards.tokenDrops[2] / b).toFixed(2)) + '%)</td></tr><tr><td colspan="2"><b>Artifact:</b></td></tr>';
+		e += '<tr><td style="width:50%"><b>Total Rewards:</b> ' + _rewards.totalRwrds + '</td><td style="width:50%"><b>Token Bonus:</b> ' + a + " (" + (a / c).toFixed(2) + '% chance)</td></tr>'
+			+ '<tr><td style="padding-left:10px;width:50%">Artifact: ' + _rewards.artRwrd + " (" + (c === 0 ? 0 : (_rewards.artRwrd / c).toFixed(2)) + '%)</td><td style="padding-left:10px;width:50%">[Token of Blood]: ' + _rewards.tokenDrops[0] + " (" + (b === 0 ? 0 : (_rewards.tokenDrops[0] / b).toFixed(2)) + '%)</td></tr>'
+			+ '<tr><td style="padding-left:10px;width:50%">Equipment: ' + _rewards.eqRwrd + " (" + (c === 0 ? 0 : (_rewards.eqRwrd / c).toFixed(2)) + '%)</td><td style="padding-left:10px;width:50%">[Token of Healing]: ' + _rewards.tokenDrops[1] + " (" + (b === 0 ? 0 : (_rewards.tokenDrops[1] / b).toFixed(2)) + '%)</td></tr>'
+			+ '<tr><td style="padding-left:10px;width:50%">Item: ' + _rewards.itemsRwrd + " (" + (c === 0 ? 0 : (_rewards.itemsRwrd / c).toFixed(2)) + '%)</td><td style="padding-left:10px;width:50%">[Chaos Token]: ' + _rewards.tokenDrops[2] + " (" + (b === 0 ? 0 : (_rewards.tokenDrops[2] / b).toFixed(2)) + '%)</td></tr>'
+			+ '<tr><td colspan="2"><b>Artifact:</b></td></tr>';
 		var d = _rewards.artRwrdArry.length;
 		while (d--) e += '<tr><td colspan="2" style="padding-left:10px">' + _rewards.artRwrdArry[d] + " x " + _rewards.artRwrdQtyArry[d] + "</td></tr>";
 		e += '<tr><td colspan="2"><b>Equipment:</b></td></tr>';
@@ -4229,7 +4274,7 @@ function initSettingsPane() {
 		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isShowSidebarProfs" /></td><td colspan="2">Show proficiencies in sidebar</td><td></td></tr>'
 		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isColumnInventory" /></td><td colspan="2">Use column view for item inventory (<span style="color:red">Downloadable/Custom Local Fonts only!</span>)</td></tr>'
 		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isChangePageTitle" /></td><td colspan="2">Change HentaiVerse page title: <input type="text" name="customPageTitle" size="40" /></td><td></td></tr>'
-		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isStartAlert" /></td><td colspan="2">Warnings berfore starting Challenges when HP is below <input type="text" name="StartAlertHP" size="1" maxLength="2" style="text-align:right" />%, MP is below <input type="text" name="StartAlertMP" size="1" maxLength="2" style="text-align:right" />%, SP is below <input type="text" name="StartAlertSP" size="1" maxLength="2" style="text-align:right" />% or difficulty is over <select id="StartAlertDifficulty"><option id=diff1 value=1>Easy</option><option id=diff2 value=2>Normal</option><option id=diff3 value=3>Hard</option><option id=diff4 value=4>Heroic</option><option id=diff5 value=5>Nightmare</option><option id=diff6 value=6>Hell</option><option id=diff7 value=7>Nintendo</option><option id=diff8 value=8>Battletoads</option></select> (<span style="color:red">Downloadable/Custom Local Fonts only!</span>)</td><td></td></tr>'
+		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isStartAlert" /></td><td colspan="2">Warnings before starting Challenges when HP is below <input type="text" name="StartAlertHP" size="1" maxLength="2" style="text-align:right" />%, MP is below <input type="text" name="StartAlertMP" size="1" maxLength="2" style="text-align:right" />%, SP is below <input type="text" name="StartAlertSP" size="1" maxLength="2" style="text-align:right" />% or difficulty is over <select id="StartAlertDifficulty"><option id=diff1 value=1>Easy</option><option id=diff2 value=2>Normal</option><option id=diff3 value=3>Hard</option><option id=diff4 value=4>Heroic</option><option id=diff5 value=5>Nightmare</option><option id=diff6 value=6>Hell</option><option id=diff7 value=7>Nintendo</option><option id=diff8 value=8>Battletoads</option></select> (<span style="color:red">Downloadable/Custom Local Fonts only!</span>)</td><td></td></tr>'
 		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isShowScanButton" /></td><td colspan="2">Show scan buttons</td><td></td></tr>'
 		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isShowSkillButton" /></td><td colspan="2">Show skill buttons</td><td></td></tr>'
 		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isShowEquippedSet" /></td><td colspan="2">Show equipped set number at left panel (<span style="color:red">Downloadable/Custom Local Fonts only!</span>)</td><td></td></tr>'
@@ -4342,6 +4387,8 @@ function initSettingsPane() {
 		+ '<tr><td colspan="2"><b>Database Options:</b></td></tr>'
 		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isRememberScan" /></td><td colspan="2">Record monster scan results</td><td></td></tr>'
 		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isRememberSkillsTypes" /></td><td colspan="2">Record monster skills</td><td></td></tr>'
+		+ '<tr><td colspan="2"><b>Debug Option:</b></td></tr>'
+		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isDebugMode" /></td><td colspan="2">Debug Mode</td><td></td></tr>'
 		+ '</table><hr />'
 		+ '<table class="_settings" cellspacing="0" cellpadding="2" style="width:100%">'
 		+ '<tr><td align="center"><input type="button" class="_resetSettings" value="Default Settings" title="Reset settings to default."/></td><td align="center"><input type="button" class="_masterReset" value="MASTER RESET" title="Deletes all of STAT\'s saved data and settings."/></td></tr>'
@@ -5240,7 +5287,8 @@ function HVCacheDrops() {
 		"[Crystal of Knowledge]", " ",
 		"[Voidseeker Shard]", " ",
 		"[Aether Shard]", " ",
-		"[Featherweight Shard]", " "
+		"[Featherweight Shard]", " ",
+		"[Amnesia Shard]", " "
 	];
 	this.itemQtyArry = new Array(this.itemArry.length);
 	i = this.itemArry.length;
@@ -6499,7 +6547,7 @@ HVStat.main2 = function () {
 	HVStat.currMpPercent = Math.floor(HVStat.currMpRate * 100);
 	HVStat.currSpPercent = Math.floor(HVStat.currSpRate * 100);
 	HVStat.duringBattle = !!HVStat.battleLogElement;
-	HVStat.isBattleOver = !!document.querySelector("#battleform div.btcp");
+	HVStat.isBattleRoundFinished = !!document.querySelector("#battleform div.btcp");
 
 	// processes not require IndexedDB and not alert/confirm immediately
 	if (_settings.isChangePageTitle && document.title === "The HentaiVerse") {
@@ -6569,7 +6617,9 @@ HVStat.main2 = function () {
 			TaggingItems(false);
 		}
 		if (HVStat.isMoogleWrite && _settings.isShowTags[3]) {
-			$("#mailform #leftpane").children().eq(3).children().eq(1).click(TaggingItems);
+			$("#mailform #leftpane").children().eq(3).children().eq(1).click(function (event) {
+				TaggingItems(false);
+			});
 		}
 		if (HVStat.isForgePage && _settings.isShowTags[4]) {
 			TaggingItems(false);
@@ -6626,17 +6676,18 @@ HVStat.main4 = function () {
 	// processes alert/confirm immediately
 	if (HVStat.duringBattle) {
 		HVStat.AlertAllFromQueue();
-
-		if (_settings.warnMode[_round.battleType]) {
-			HVStat.warnHealthStatus();		// using alert
+		if (!HVStat.isBattleRoundFinished) {
+			if (_settings.warnMode[_round.battleType]) {
+				HVStat.warnHealthStatus();		// using alert
+			}
+			if (_settings.isMainEffectsAlertSelf) {
+				AlertEffectsSelf();		// using alert
+			}
+			if (_settings.isMainEffectsAlertMonsters) {
+				AlertEffectsMonsters();		// using alert
+			}
 		}
-		if (_settings.isMainEffectsAlertSelf) {
-			AlertEffectsSelf();		// using alert
-		}
-		if (_settings.isMainEffectsAlertMonsters) {
-			AlertEffectsMonsters();		// using alert
-		}
-		if (HVStat.isBattleOver) {
+		if (HVStat.isBattleRoundFinished) {
 			if (_settings.isShowEndStats) {
 				showBattleEndStats();	// requires _round
 			}
@@ -6646,9 +6697,11 @@ HVStat.main4 = function () {
 	} else {
 		if (_settings.isColumnInventory && HVStat.isBattleItemsPage) {
 			initItemsView();
-		} else if (HVStat.isCharacterPage) {
+		}
+		if (HVStat.isCharacterPage) {
 			collectCurrentProfsData();
-		} else if (HVStat.isShrinePage) {
+		}
+		if (HVStat.isShrinePage) {
 			if (_settings.isTrackShrine) {
 				captureShrine();
 			}
