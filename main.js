@@ -902,7 +902,7 @@ HVStat.Monster = (function () {
 		var _currSpRate = currBarRate(2);
 		var _hasSpiritPoint = _healthBars.length > 2;
 		var _currHp = function () {
-			var v = Math.ceil(_currHpRate * _maxHp);
+			var v = _currHpRate * _maxHp;
 			if (!_isDead && v === 0) {
 				v = 1;
 			}
@@ -994,7 +994,7 @@ HVStat.Monster = (function () {
 				if (_settings.showMonsterHPPercent) {
 					hpIndicator = (_currHpRate * 100).toFixed(2) + "%";
 				} else {
-					hpIndicator = _currHp() + " / " + _maxHp;
+					hpIndicator = _currHp().toFixed(0) + " / " + _maxHp.toFixed(0);
 				}
 				div = document.createElement("div");
 				div.style.cssText = "position:absolute;z-index:1074;top:-1px;font-size:8pt;font-family:arial,helvetica,sans-serif;font-weight:bolder;color:yellow;width:120px;text-align:center";
@@ -1164,7 +1164,7 @@ HVStat.Monster = (function () {
 			var html = '<table cellspacing="0" cellpadding="0" style="width:100%">'
 				+ '<tr class="monname"><td colspan="2"><b>' + _name + '</b></td></tr>'
 				+ '<tr><td width="33%">ID: </td><td>' + _id + '</td></tr>'
-				+ '<tr><td>Health: </td><td>' + _currHp() + ' / ' + _maxHp + '</td></tr>'
+				+ '<tr><td>Health: </td><td>' + _currHp().toFixed(1) + ' / ' + _maxHp.toFixed(1) + '</td></tr>'
 				+ '<tr><td>Mana: </td><td>' + (_currMpRate * 100).toFixed(2) + '%</td></tr>';
 			if (_hasSpiritPoint) {
 				html += '<tr><td>Spirit: </td><td>' + (_currSpRate * 100).toFixed(2) + '%</td></tr>';
