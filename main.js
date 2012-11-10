@@ -11,6 +11,28 @@
 // @run-at           document-end
 // ==/UserScript==
 
+var util = {
+	text: function (node) {
+		var s = "", t, i;
+		if (node.nodeType === document.TEXT_NODE) {
+			if (node.nodeValue) {
+				s = node.nodeValue;
+			}
+		} else if (node.nodeType === document.ELEMENT_NODE) {
+			for (i = 0; i < node.childNodes.length; i++) {
+				t = util.text(node.childNodes[i]);
+				if (t) {
+					if (s !== "") {
+						s += " ";
+					}
+					s += t;
+				}
+			}
+		}
+		return s;
+	},
+}
+
 // Package
 var HVStat = {
 	//------------------------------------
@@ -834,15 +856,16 @@ HVStat.MonsterScanResults = (function () {
 			});
 		}
 		vo.debuffsAffected = [];
-		$("#" + HVStat.Monster.getDomElementId(index) + " div.btm6 > img").each(function () {
-			var info = $(this).attr("onmouseover");
-			var debuffId;
+		var i, debuffElements, debuffInfo, debuffId;
+		debuffElements = document.querySelectorAll("#" + HVStat.Monster.getDomElementId(index) + " div.btm6 > img");
+		for (i = 0; i < debuffElements.length; i++) {
+			debuffInfo = debuffElements[i].getAttribute("onmouseover");
 			for (debuffId in HVStat.Debuff) {
-				if (info.indexOf(HVStat.Debuff[debuffId].name) >= 0) {
+				if (debuffInfo.indexOf(HVStat.Debuff[debuffId].name) >= 0) {
 					vo.debuffsAffected.push(debuffId);
 				}
 			}
-		});
+		}
 		return new MonsterScanResults(vo);
 	}
 
@@ -2507,10 +2530,6 @@ I_MANAPOT = "data:image/gif;base64,R0lGODlhHgAgAOYAACMRGiMIGkYrRmlPafbT9ox7jGkrc
 I_SPIRITPOT = "data:image/gif;base64,R0lGODlhHgAgAOYAACsACFcRI//k9tvTlcq4Rvbkla+MEdOvI6eMK+TBRu3Tcv/tr8GVGv/2255yAIxpEcGVK4xyNNO4cnJPAO2vI6dyEXJPEYxPAMqVT08rAK9yK4xPEREIAGk0CIxPGns0AMGVcmkrAKdPEXs0CGk0EadyT9OnjEYaAGkrCIxPK3s0EYM0EVcaAEYaCGkrEad7aXs0GmkaAEYRACsRCIM0Gv/k21caCGkrGpVXRrh7aSsIAHsrGkYaEUYRCFcaEVcRCHs0KysAABEAAEYICCsICFcREUYREXs0NBEICINGRuTKyv/29u3k5AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACwAAAAAHgAgAAAH/4AeKig2hRkZLTYoiyMqJC4pJTgwKR4dJS8lJRoeJRgQDxs0FqQeph4VFRspEgsSEBIaCA0NBQoJEBYaBAeqHhYbwagPFxcICwUQBwQQCg0LCgcUCR0jCAm4Dyo0KioVoBsVrQUVB83PCQfqEC4a4QoFCZweFwYHBg4GBQ0YDBAQCxpIMGCAgYYRQ0ooqKChADIC+OwdYEBgwQINECo4k1DBQSoPMnQceYZBQyto6bAlcBgLAgaBD0ZcCIaCBxEjIAIW8NDQooKfKhkYRAbBwYQNDx6g6EEEhoYHEp6BSIHhVjp///4VKNDrQYQKSpkmcRUBgQJX4Qwk+Olwq4S1Cf8MhEqqwgiRkbQkPMAw0B7bgLQGHFibMdwDEkaE+Mi55BkCBwzSEWBQIYEEh9AgYKPsYEOGGURuPC0xoEG6rQggYvBpMt7gXp0RA0jSYACIrwzOSiCAq4CAJQWCrY2cgPKGDkZ0AKG1hEk0hwkAN/it4EIIfeYUYEBQYUQPHTYw7KsVPV6DJegFPJOw4VjvAq88/OBgo4JZZOUr1jiPvvFkaAc4RAsIRXDQAirNFECAQ0I581sDTNQAQUUKGLCBBuKZYAQSPXjwgFpcrfSPg0xstVAr2AxQ0gMptMChh9/cAuJltCyAAAIbAJRMRet50AMSBwZTmQL+tDWAgsVUwFL/RibtB0JyLZASzkrFRYeMAhlFpsBkK7G3FwgB6BClBagkUEsqVWF2CwRCVUBAjRJgUJcOJ0ipj0CQvYYNBAbEGMt95+VgRBB1AgPBPho0hM1E+WgGj0WvEHCWCQEQYcNRG1Q0wAUD1BDPLSFctuYB8JQay3cuhFPZAiVN95MrHxBFWUGfrLWQDDYkekFuC7hUQw0rsaoBNBWIcIEDM1VQkDkssJBARwEmU4CnAPW6GkfBbLCCTB59FAMDHkWHJS0EEFDDAAa0QkAFF6zgwQYffHBBKht4gEBRh9oowa8auZJuMtaZQkOxqaiygQobXICBCSVsYIISJkQggQmJShDLCwYoqADDDvVmu20gADs=";
 I_CHANNELING = "data:image/gif;base64,R0lGODlhHgAgAOYAAEYjNBEAESMRIzQjNEY0RgAAERERIzQ0VyMjNEZGVyM0RjRGV09yjHKVryNGV3KvyityjE+v00+VrwAaI3LT7U9yeyuVp0/K03Lt9gARERFPTytychErKyNXV0+vryNGRnLT00+MjIz29jRXV3Kvr6f//4zT0yM0NKft7bj//zRGRk9pabjt7cr//4yvr0ZXV3KMjK/T08rt7Wl7e4OVlae4uMrb20/t23Lt25Xt26f/7YPKuLj/7a/t2yNXRsr/7U+ngzRXRtv/7XKvjCtGNE9pV9Pt22CMaSM0I4yvjEZXRoOeg6e4p7jKuGl7YP//5CsRETQjI0Y0NHtpabi4uKenp4ODg3t7e2lpaVdXV0ZGRjQ0NCMjIxEREQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACwAAAAAHgAgAAAH/4AjHx0VhSEwiEuKS1cziDAhkZIhhR0bFRshOzs5KCw/P0KhNVY1SS4pJSKrIjk4ICAeHpghsCI6OjygPzEvTExNGySqrBivFBYRPpkmOLe5Py0/My9WT1Y0G8SrON2xHhwjITk5IiU6ny0yKytUVjYyHSisIt04Fx4bBh/jziWeLFq4+FDNShMjPnZse3XPw4kCHEJ0u+WJRwsYJ1RkuUIjxokQOlYZA3HjggQOBU54mIgCBQ9dLzhs2aKECJYTK+bVw3ChJLgMH0g405EihS4XTrJgQZKxChYVIVRhwADiwgULHDL4AFGOKA8WMIKc2IJlBhIVTbSc+LBDxNSqEf8sIMjQAcQqXCxmfNiiRYsKK1acEjmBYAEJVxcixJ1b9y6PITL5+tUyZSkSLgIyaIBl1eQJunZFtBxxgoCUmVxOdNFChAuXKAYm1Kp6NWvd0D1kSpGiZcsJAVqyvB4gQMCED7Rr0yUBwtkOAwMAmB6LGXPxLgYMcHggK0IILhkcPICVowIHLgOiuB6wpUvx69gN7PgGgUsXB7Bw5JhgQABmBAagh4AA7l3n2nyJbQDebSCEkB121vm3hX0BBNBFfLVYtcFcm4FAAgcPPkigawjY10WFXBhQAWcQMOYBCStkJ2OFFxbnmo0BdvGBCbC0GF4DG/wmowEXWhhAhAIcSSTpEcw1yEEXJzCgwAQCDFlAkfEVZ0CFBmSgBAywhMDBkTMgQOWQWxpQgIUnundhBl6uMJ+YGXBwwgEDohmAmgVcGcCa2HWRgRYrMEfnCRUokGd2ezLap599/pmBFE4MsUMIn/GzwqInNtpFAV70WaSkSKxQC6YZnBAkmmluCeqjFT7axQuanMSBCipcGGKanT4aaZ8GnODEETuQ8IEgCRB44bLLxuprn15wMEMRRwDxQAj5KIols70+mwFEHxQxLAncWeBAiVDoyuaovoYKEQfiVuDBtRB0MCCzkVZYoRf89hutTEocIYEEgQAAOw==";
 
-jQuery.fn.outerHTML = function () {
-	return $("<div>").append(this.eq(0).clone()).html();
-};
-
 /* =====
  setLogCSS
  Creates the CSS used to color the Battlelog.
@@ -2711,13 +2730,19 @@ function showBattleEndStats() {
 	var battleLog = document.getElementById("togpane_log");
 	battleLog.innerHTML = "<div class='ui-state-default ui-corner-bottom' style='padding:10px;margin-bottom:10px;text-align:left'>" + getBattleEndStatsHtml() + "</div>" + battleLog.innerHTML;
 }
+
+function setMonsterNumberCSS() {
+	var styleContent = "img.btmi {visibility:hidden;} img.btmi + div {position:absolute; top:5px; left:14px; height:25px; font-size:1.6em; font-family:HentaiVerse; padding-top:0.4em; color:#be0019; text-shadow: -1px -1px 4px #000,1px -1px 4px #000,-1px 1px 4px #000,1px 1px 4px #000;}";
+	GM_addStyle(styleContent);
+}
+
 function showMonsterNumber() {
-	var targets = document.querySelectorAll('.btmi'), i = targets.length;
-	while (i-- > 0) targets[i].parentNode.appendChild(document.createElement('div')).innerHTML = (i+1)%10;
-	var style = '.btmi {display:none;} .btmi + div {height:25px; font-size:1.6em; font-family:HentaiVerse; color:black; padding-top:0.4em;}';
-	var style2 = document.createElement('style');
-	style2.innerHTML = style;
-	document.head.appendChild(style2);
+	var targets = document.querySelectorAll("img.btmi");
+	for (var i = 0; i < targets.length; i++) {
+		var div = document.createElement("div");
+		div.textContent = String((i + 1) % 10);
+		targets[i].parentNode.appendChild(div);
+	}
 }
 
 HVStat.highlightQuickcast = function () {
@@ -2793,24 +2818,25 @@ HVStat.resetHealthWarningStates = function () {
 }
 
 function collectCurrentProfsData() {
-	if (!HVStat.isCharacterPage || HVStat.usingHVFont)
+	if (!HVStat.isCharacterPage || HVStat.usingHVFont) {
 		return;
+	}
 	loadProfsObject();
-	var c = $("div.eqm").children().eq(0).children().eq(1).children();
-	var b = _profs.weapProfTotals.length;
-	while (b--)
-		_profs.weapProfTotals[b] = parseFloat(c.eq(0).children().eq(1).find("div.fd12").eq(b * 2 + 1).text());
-	b = _profs.armorProfTotals.length;
-	while (b--)
-		_profs.armorProfTotals[b] = parseFloat(c.eq(0).children().eq(1).find("div.fd12").eq(b * 2 + 7).text());
-	var a = c.eq(1).children().eq(1).find("div.fd12");
-	_profs.elemTotal = parseFloat(a.eq(1).text());
-	_profs.divineTotal = parseFloat(a.eq(3).text());
-	_profs.forbidTotal = parseFloat(a.eq(5).text());
-	_profs.spiritTotal = parseFloat(a.eq(7).text()); //spiritTotal added by Ilirith
-	_profs.depTotal = parseFloat(a.eq(9).text());
-	_profs.supportTotal = parseFloat(a.eq(11).text());
-	_profs.curativeTotal = parseFloat(a.eq(13).text());
+	var proficiencyTableElements = document.getElementById("leftpane").children[1].querySelectorAll("div.fd12");
+	_profs.weapProfTotals[0] = Number(util.text(proficiencyTableElements[2]));
+	_profs.weapProfTotals[1] = Number(util.text(proficiencyTableElements[4]));
+	_profs.weapProfTotals[2] = Number(util.text(proficiencyTableElements[6]));
+	_profs.weapProfTotals[3] = Number(util.text(proficiencyTableElements[8]));
+	_profs.armorProfTotals[0] = Number(util.text(proficiencyTableElements[10]));
+	_profs.armorProfTotals[1] = Number(util.text(proficiencyTableElements[12]));
+	_profs.armorProfTotals[2] = Number(util.text(proficiencyTableElements[14]));
+	_profs.elemTotal = Number(util.text(proficiencyTableElements[17]));
+	_profs.divineTotal = Number(util.text(proficiencyTableElements[19]));
+	_profs.forbidTotal = Number(util.text(proficiencyTableElements[21]));
+	_profs.spiritTotal = Number(util.text(proficiencyTableElements[23]));
+	_profs.depTotal = Number(util.text(proficiencyTableElements[25]));
+	_profs.supportTotal = Number(util.text(proficiencyTableElements[27]));
+	_profs.curativeTotal = Number(util.text(proficiencyTableElements[29]));
 	_profs.save();
 }
 function showSidebarProfs() {
@@ -2855,15 +2881,17 @@ function isProfTotalsRecorded() {
 }
 function inventoryWarning() {
 	var d = 4;
-	var c = $("div.stuffbox").width() - 85 - 4;
-	var a = document.createElement("div");
-	var b = "<div class='ui-state-error ui-corner-all' style='position:absolute; top:" + d + "px; left: " + c + "px; z-index:1074'><span style='margin:3px' class='ui-icon ui-icon-alert' title='Inventory Limit Exceeded.'/></div>";
-	$(a).html(b);
-	$(a).addClass("_warningButton");
-	$("body").append(a);
-	$(a).css("cursor", "pointer");
-	$("._warningButton").click(function () {
-		if (confirm("Reached equipment inventory limit (1000). Clear warning?")) deleteFromStorage(HV_EQUIP);
+	var rectObject = document.querySelector("div.stuffbox").getBoundingClientRect();
+	var c = rectObject.width - 85 - 4;
+	var div = document.createElement("div");
+	div.setAttribute("class", "ui-state-error ui-corner-all");
+	div.style.cssText = "position:absolute; top:" + d + "px; left: " + c + "px; z-index:1074; cursor:pointer";
+	div.innerHTML = '<span style="margin:3px" class="ui-icon ui-icon-alert" title="Inventory Limit Exceeded."/>';
+	document.body.insertBefore(div, null);
+	div.addEventListener("click", function (event) {
+		if (confirm("Reached equipment inventory limit (1000). Clear warning?")) {
+			deleteFromStorage(HV_EQUIP);
+		}
 	});
 }
 function collectRoundInfo() {
@@ -2905,7 +2933,7 @@ function collectRoundInfo() {
 			if (tempTurnNumberElement.innerHTML === String(currentTurnNumberString)) {
 				var tempRowNumberElement = currentTurnNumberElements[rowIndex].nextSibling;
 				var logElement = tempRowNumberElement.nextSibling;
-				joinedLogStringOfCurrentTurn += jQuery.text(logElement);
+				joinedLogStringOfCurrentTurn += util.text(logElement);
 				if (tempRowNumberElement.innerHTML === String(previousRowNumberOfCurrentTurn)) {
 					logStringOfPreviousRow = logElement.innerHTML;
 				}
@@ -3359,18 +3387,16 @@ function saveStats() {
 	loadDropsObject();
 	var d = 0;
 	var c = 0;
-	$("#togpane_log td:last-child").each(function () {
-		var f = $(this);
-		var e = f.html();
-		if (e.match(/you gain.*?credit/i)) {
-			c = parseInt(e.split(" ")[2]);
-			return true;
-		} else if (e.match(/you gain.*?exp/i)) {
-			d = parseFloat(e.split(" ")[2]);
-			return true;
+	var elements = document.querySelectorAll("#togpane_log td:last-child");
+	var i, html;
+	for (i = 0; i < elements.length; i++) {
+		html = elements[i].innerHTML;
+		if (html.match(/you gain.*?credit/i)) {
+			c = parseInt(html.split(" ")[2]);
+		} else if (html.match(/you gain.*?exp/i)) {
+			d = parseFloat(html.split(" ")[2]);
 		}
-		if (d > 0 && c > 0) return false;
-	});
+	}
 	var b = new Date();
 	var a = b.getTime();
 	if (_overview.startTime === 0) {
@@ -4919,23 +4945,33 @@ function initItemsView() {
 	$("#_event").appendTo("#_right");
 }
 function captureShrine() {
-	if ($("#messagebox").html() !== undefined) {
-		loadShrineObject();
-		var a = $(".cmb6:eq(0) div:eq(4)").text();
-		if (a.match(/power/i)) {
-			var b = $(".cmb6:eq(2) div:eq(4)").text();
-			_shrine.artifactsTraded++;
-			if (b.match(/ability point/i)) _shrine.artifactAP++;
-			else if (b.match(/crystal/i)) _shrine.artifactCrystal++;
-			else if (b.match(/increased/ig)) _shrine.artifactStat++;
-			else if (b.match(/(\d) hath/i)) {
-				_shrine.artifactHath++;
-				_shrine.artifactHathTotal += parseInt(RegExp.$1);
-			} else if (b.match(/energy drink/ig)) _shrine.artifactItem++;
-		} else if (a.match(/item/i)) _shrine.trophyArray.push($(".cmb6:eq(3) div:eq(4)").text().replace(/(^|\s)([a-z])/g, function (d, f, e){ return f + e.toUpperCase(); }).replace(" Of ", " of ").replace(" The ", " the "));
-		_shrine.save();
+	var messageBoxElement = document.querySelector("#messagebox");
+	if (!messageBoxElement) {
+		return;
 	}
-	return;
+	loadShrineObject();
+	var messageElements = messageBoxElement.querySelectorAll("div.cmb6");
+	var message0 = util.text(messageElements[0]);
+	if (message0.match(/power/i)) {
+		_shrine.artifactsTraded++;
+		var message2 = util.text(messageElements[2]);
+		if (message2.match(/ability point/i)) {
+			_shrine.artifactAP++;
+		} else if (message2.match(/crystal/i)) {
+			_shrine.artifactCrystal++;
+		} else if (message2.match(/increased/i)) {
+			_shrine.artifactStat++;
+		} else if (message2.match(/(\d) hath/i)) {
+			_shrine.artifactHath++;
+			_shrine.artifactHathTotal += Number(RegExp.$1);
+		} else if (message2.match(/energy drink/i)) {
+			_shrine.artifactItem++;
+		}
+	} else if (message0.match(/item/i)) {
+		var message3 = util.text(messageElements[3]);
+		_shrine.trophyArray.push(message3);
+	}
+	_shrine.save();
 }
 function loadOverviewObject() {
 	if (_overview !== null) return;
@@ -4999,7 +5035,7 @@ if (HVStat.isChrome) {	//=== Clones a few GreaseMonkey functions for Chrome User
 		var doc = document,
 		newStyle = doc.createElement("style");
 		newStyle.textContent = styleCSS;
-		doc.documentElement.insertBefore(newStyle);
+		doc.documentElement.insertBefore(newStyle, null);
 	}
 	function GM_getValue(b, a) {
 		var c = localStorage.getItem(b);
@@ -6259,21 +6295,28 @@ function registerEventHandlersForMonsterPopup() {
 	}
 }
 function StartBattleAlerts () {
-	var sHP = Math.floor(_charss.currHP * 100);
-	var sMP = Math.floor(_charss.currMP * 100);
-	var sSP = Math.floor(_charss.currSP * 100);
 	var diff = _charss.difficulty[1];
-	$('#arenaform img[onclick*="arenaform"]').each(function () {
-		var g = $(this);
-		var oldOnClick = g.attr("onclick");
+	var elements = document.querySelectorAll('#arenaform img[onclick*="arenaform"]');
+	var i, element;
+	for (i = 0; i < elements.length; i++) {
+		element = elements[i];
+		var oldOnClick = element.getAttribute("onclick");
 		var newOnClick = 'if(confirm("Are you sure you want to start this challenge on ' + diff + ' difficulty, with set number: ' + _charss.set + '?\\n';
-		if (_settings.StartAlertHP > sHP) newOnClick += '\\n - HP is only '+ sHP+ '%';
-		if (_settings.StartAlertMP > sMP) newOnClick += '\\n - MP is only '+ sMP+ '%';
-		if (_settings.StartAlertSP > sSP) newOnClick += '\\n - SP is only '+ sSP+ '%';
-		if (_settings.StartAlertDifficulty < _charss.difficulty[0]) newOnClick += '\\n - Difficulty is '+ diff;
+		if (_settings.StartAlertHP > sHP) {
+			newOnClick += '\\n - HP is only '+ HVStat.currHpPercent + '%';
+		}
+		if (_settings.StartAlertMP > sMP) {
+			newOnClick += '\\n - MP is only '+ HVStat.currMpPercent + '%';
+		}
+		if (_settings.StartAlertSP > sSP) {
+			newOnClick += '\\n - SP is only '+ HVStat.currSpPercent + '%';
+		}
+		if (_settings.StartAlertDifficulty < _charss.difficulty[0]) {
+			newOnClick += '\\n - Difficulty is '+ diff;
+		}
 		newOnClick += '")) {'+ oldOnClick+ '}';
-		g.attr("onclick", newOnClick);
-	});
+		element.setAttribute("onclick", newOnClick);
+	}
 }
 
 HVStat.showEquippedSet = function () {
@@ -6291,19 +6334,20 @@ HVStat.showEquippedSet = function () {
 
 function FindSettingsStats() {
 	loadCHARSSObject();
-	var pointsarray = $("div.clb > div.cwbdv").text();
-	if (pointsarray !== null) {
-		pointsarray = pointsarray.match(/\d+/g);
-		_charss.currHP = (pointsarray[0]/pointsarray[1]).toFixed(2);
-		_charss.currMP = (pointsarray[2]/pointsarray[3]).toFixed(2);
-		_charss.currSP = (pointsarray[4]/pointsarray[5]).toFixed(2);
+	_charss.currHP = HVStat.currHpRate;
+	_charss.currMP = HVStat.currMpRate;
+	_charss.currSP = HVStat.currSpRate;
+	var difficulty;
+	var elements = document.querySelectorAll("div.clb table.cit");
+	var i, element, text;
+	for (i = 0; i < elements.length; i++) {
+		element = elements[i];
+		text = util.text(element);
+		if (text.match(/Difficulty/ig)) {
+			difficulty = text.match(/Easy|Normal|Hard|Heroic|Nightmare|Hell|Nintendo|Battletoads|IWBTH/ig);
+		}
 	}
-	var difficulty = 0;
-	$("div.clb table.cit").each(function () {
-		var b = $(this);
-		if (b.text().match(/Difficulty/ig)) difficulty = b.text().match(/Easy|Normal|Hard|Heroic|Nightmare|Hell|Nintendo|Battletoads|IWBTH/ig);
-	});
-	if (difficulty !== 0) {
+	if (difficulty) {
 		_charss.difficulty[1] = difficulty;
 		switch (String(difficulty)) {
 			case "Easy":
@@ -6326,14 +6370,14 @@ function FindSettingsStats() {
 				_charss.difficulty[0] = 9;
 		}
 	}
-	var tyh = $("#setform img").length;
-	if (tyh > 2) {
-		var setnumstring = 0;
-		$("#setform img").each(function () {
-			var gat = String($(this).attr("src"));
-			if (gat.match(/set\d_on/)) setnumstring = parseInt(gat.match(/set\d_on/)[0].replace("set", "").replace("_on", ""));
-		});
-		_charss.set = parseInt(setnumstring);
+	elements = document.querySelectorAll("#setform img");
+	var result;
+	for (i = 0; i < elements.length; i++) {
+		result = /set(\d)_on/.exec(elements[i].getAttribute("src"));
+		if (result && result.length >= 2) {
+			_charss.set = Number(result[1]);
+			break;
+		}
 	}
 	_charss.save();
 }
@@ -6514,6 +6558,13 @@ HVStat.main1 = function () {
 	// open database
 	HVStat.openIndexedDB();
 
+	if (_settings.isShowMonsterNumber) {
+		setMonsterNumberCSS();
+	}
+	if (_settings.isShowHighlight) {
+		setLogCSS();
+	}
+
 	var waitForDocumentInteractive = function () {
 		if (document.readyState === "loading") {
 			setTimeout(waitForDocumentInteractive, 10);
@@ -6577,7 +6628,6 @@ HVStat.main2 = function () {
 			addBattleLogDividers();
 		}
 		if (_settings.isShowHighlight) {
-			setLogCSS();
 			highlightLogText();
 		}
 		if (_settings.isShowSelfDuration) {
@@ -6617,9 +6667,13 @@ HVStat.main2 = function () {
 			TaggingItems(false);
 		}
 		if (HVStat.isMoogleWrite && _settings.isShowTags[3]) {
-			$("#mailform #leftpane").children().eq(3).children().eq(1).click(function (event) {
-				TaggingItems(false);
-			});
+			var mailForm = document.querySelector("#mailform #leftpane");
+			if (mailForm) {
+				var attachEquipButton = mailForm.children[3].children[1];
+				attachEquipButton.addEventListener("click", function (event) {
+					TaggingItems(false);
+				});
+			}
 		}
 		if (HVStat.isForgePage && _settings.isShowTags[4]) {
 			TaggingItems(false);
