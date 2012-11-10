@@ -6447,7 +6447,7 @@ function TaggingItems(clean) {
 		divElement.innerHTML = '<input type="text" name="tagid_' + String(id) + '" size="5" maxLength="6" value="' + tagValue + '" />';
 		element.parentNode.insertBefore(divElement, null);
 		var inputElement = divElement.children[0];
-		inputElement.addEventListener("change", function () {
+		inputElement.addEventListener("change", function (event) {
 			var target = event.target;
 			var tagId = Number(target.name.replace("tagid_", ""));
 			var tagValue = target.value;
