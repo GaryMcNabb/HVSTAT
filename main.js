@@ -3,6 +3,7 @@
 // @namespace        HV STAT
 // @description      Collects data, analyzes statistics, and enhances the interface of the HentaiVerse
 // @include          http://hentaiverse.org/*
+// @exclude          http://hentaiverse.org/pages/showequip*
 // @author           Various (http://forums.e-hentai.org/index.php?showtopic=79552)
 // @version          5.4.4
 // @require          https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js
