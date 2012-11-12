@@ -1,0 +1,22 @@
+Version 1.9.1
+
+UI Core:
+	Core
+	Widget
+	Mouse
+	Position
+
+Interactions:
+	Draggable
+	Resizable
+
+Widgets:
+	Button
+	Dialog
+	Tabs
+
+Effects:
+	(Nothing)
+
+Theme:
+	no-theme
