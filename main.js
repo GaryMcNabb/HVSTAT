@@ -2770,9 +2770,9 @@ HVStat.warnHealthStatus = function () {
 	var hpWarningLevel = Number(_settings.warnAlertLevel);
 	var mpWarningLevel = Number(_settings.warnAlertLevelMP);
 	var spWarningLevel = Number(_settings.warnAlertLevelSP);
-	var hpWarningResumeLevel = hpWarningLevel + 10;
-	var mpWarningResumeLevel = mpWarningLevel + 10;
-	var spWarningResumeLevel = spWarningLevel + 10;
+	var hpWarningResumeLevel = Math.min(hpWarningLevel + 10, 100);
+	var mpWarningResumeLevel = Math.min(mpWarningLevel + 10, 100);
+	var spWarningResumeLevel = Math.min(spWarningLevel + 10, 100);
 	if (!HVStat.isBattleRoundFinished) {
 		if (_settings.isShowPopup) {
 			if (HVStat.currHpPercent <= hpWarningLevel && (!hpAlertAlreadyShown || _settings.isNagHP)) {
@@ -2797,13 +2797,13 @@ HVStat.warnHealthStatus = function () {
 			localStorage.setItem(HVStat.key_ocAlertAlreadyShown, "true");
 		}
 	}
-	if (hpWarningLevel > hpWarningResumeLevel) {
+	if (HVStat.currHpPercent >= hpWarningResumeLevel) {
 		localStorage.removeItem(HVStat.key_hpAlertAlreadyShown);
 	}
-	if (mpWarningLevel > mpWarningResumeLevel) {
+	if (HVStat.currMpPercent >= mpWarningResumeLevel) {
 		localStorage.removeItem(HVStat.key_mpAlertAlreadyShown);
 	}
-	if (spWarningLevel > spWarningResumeLevel) {
+	if (HVStat.currSpPercent >= spWarningResumeLevel) {
 		localStorage.removeItem(HVStat.key_spAlertAlreadyShown);
 	}
 	if (HVStat.currOcRate < 1.0) {
