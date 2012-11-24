@@ -6,9 +6,9 @@
 // @exclude          http://hentaiverse.org/pages/showequip*
 // @author           Various (http://forums.e-hentai.org/index.php?showtopic=79552)
 // @version          5.4.5
-// @require          https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js
-// @require          https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.21/jquery-ui.min.js
-// @resource         jQueryUICSS http://www.starfleetplatoon.com/~cmal/HVSTAT/jqueryui.css
+// @require          https://ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js
+// @require          https://raw.github.com/GaryMcNabb/HVSTAT/master/jquery-ui-1.9.1.custom.min.js
+// @resource         jQueryUICSS https://raw.github.com/GaryMcNabb/HVSTAT/master/jqueryui.css
 // @run-at           document-end
 // ==/UserScript==
 

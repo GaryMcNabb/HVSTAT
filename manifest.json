@@ -10,9 +10,9 @@
 	},
 	"content_scripts": [ {
 		"css": [ "jqueryui.css" ],
-		"js": [ "jquery-1.8.2.min.js", "jquery-ui-1.9.1.custom.min.js", "main.js" ],
+		"js": [ "jquery-1.8.3.min.js", "jquery-ui-1.9.1.custom.min.js", "main.js" ],
 		"matches": [ "http://hentaiverse.org/*" ],
 		"exclude_matches": [ "http://hentaiverse.org/pages/showequip*" ],
-		"run_at": "document_end"
+		"run_at": "document_start"
 	} ]
 }
