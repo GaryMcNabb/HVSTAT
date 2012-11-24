@@ -4335,6 +4335,7 @@ function initSettingsPane() {
 		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isShowMonsterNumber"></td><td colspan="2">Show Numbers instead of letters next to monsters</td></tr>'
 		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isShowRoundCounter"></td><td colspan="2">Show Round Counter</td></tr>'
 		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isShowPowerupBox"></td><td colspan="2">Show Powerup Box</td></tr>'
+		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="autoAdvanceBattleRound" /></td><td colspan="2">Automatically advance the round when "You are Victorious" - delay: <input type="text" name="autoAdvanceBattleRoundDelay" size="4" maxLength="5" style="text-align:right" />ms</td><td></td></tr>'
 		+ '<tr><td colspan="2" style="padding-left:10px">Display Monster Stats:</td></tr>'
 		+ '<tr><td align="center" style="width:5px;padding-left:20px"><input type="checkbox" name="showMonsterHP" /></td><td colspan="2">Show monster HP (<span style="color:red">Estimated</span>)</td><td></td></tr>'
 		+ '<tr><td align="center" style="width:5px;padding-left:40px"><input type="checkbox" name="showMonsterHPPercent" /></td><td colspan="2" style="padding-left:10px">Show monster HP in percentage</td></tr>'
@@ -4476,6 +4477,8 @@ function initSettingsPane() {
 	if (_settings.isShowMonsterNumber) $("input[name=isShowMonsterNumber]").attr("checked", "checked"); //isShowMonsterNumber stolen from HV Lite, and added by Ilirith
 	if (_settings.isShowRoundCounter) $("input[name=isShowRoundCounter]").attr("checked", "checked");
 	if (_settings.isShowPowerupBox) $("input[name=isShowPowerupBox]").attr("checked", "checked");
+	if (_settings.autoAdvanceBattleRound) $("input[name=autoAdvanceBattleRound]").attr("checked", "checked");
+	$("input[name=autoAdvanceBattleRoundDelay]").attr("value", _settings.autoAdvanceBattleRoundDelay);
 
 	// Display Monster Stats
 	if (_settings.showMonsterHP) $("input[name=showMonsterHP]").attr("checked", "checked");
@@ -4637,6 +4640,8 @@ function initSettingsPane() {
 	$("input[name=isShowMonsterNumber]").click(saveSettings);
 	$("input[name=isShowRoundCounter]").click(saveSettings);
 	$("input[name=isShowPowerupBox]").click(saveSettings);
+	$("input[name=autoAdvanceBattleRound]").click(saveSettings);
+	$("input[name=autoAdvanceBattleRoundDelay]").change(saveSettings);
 
 	// Display Monster Stats
 	$("input[name=showMonsterHP]").click(saveSettings);
@@ -4770,6 +4775,8 @@ function saveSettings() {
 	_settings.isShowMonsterNumber = $("input[name=isShowMonsterNumber]").get(0).checked;
 	_settings.isShowRoundCounter = $("input[name=isShowRoundCounter]").get(0).checked;
 	_settings.isShowPowerupBox = $("input[name=isShowPowerupBox]").get(0).checked;
+	_settings.autoAdvanceBattleRound = $("input[name=autoAdvanceBattleRound]").get(0).checked;
+	_settings.autoAdvanceBattleRoundDelay = $("input[name=autoAdvanceBattleRoundDelay]").get(0).value;
 
 	// Display Monster Stats
 	_settings.showMonsterHP = $("input[name=showMonsterHP]").get(0).checked;
@@ -5393,6 +5400,8 @@ function HVSettings() {
 	this.isShowMonsterNumber = false;
 	this.isShowRoundCounter = false;
 	this.isShowPowerupBox = false;
+	this.autoAdvanceBattleRound = false;
+	this.autoAdvanceBattleRoundDelay = 500;
 
 	// Display Monster Stats
 	this.showMonsterHP = true;
@@ -6550,6 +6559,21 @@ function TaggingItems(clean) {
 	}
 }
 
+HVStat.autoAdvanceBattleRound = function () {
+	var dialogButton = document.getElementById("ckey_continue");
+	if (dialogButton) {
+		var onclick = dialogButton.getAttribute("onclick");
+		if (onclick === "battle.battle_continue()") {
+			(function (dialogButton) {
+				setTimeout(function () {
+					dialogButton.click();
+					return 0;
+				}, _settings.autoAdvanceBattleRoundDelay);
+			})(dialogButton);
+		}
+	}
+}
+
 //------------------------------------
 // main routine
 //------------------------------------
@@ -6746,6 +6770,9 @@ HVStat.main4 = function () {
 			}
 			saveStats();
 			_round.reset();
+			if (_settings.autoAdvanceBattleRound) {
+				HVStat.autoAdvanceBattleRound();
+			}
 		}
 	} else {
 		if (_settings.isColumnInventory && HVStat.isBattleItemsPage) {
