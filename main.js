@@ -2867,9 +2867,9 @@ function showSidebarProfs() {
 			+ '<tr><td>Two-handed:</td><td>' + _profs.weapProfTotals[1].toFixed(2) + '</td><td>Divine:</td><td>' + _profs.divineTotal.toFixed(2) + '</td></tr>'
 			+ '<tr><td>Dual wielding:</td><td>' + _profs.weapProfTotals[2].toFixed(2) + '</td><td>Forbidden:</td><td>' + _profs.forbidTotal.toFixed(2) + '</td></tr>'
 			+ '<tr><td>Staff:</td><td>' + _profs.weapProfTotals[3].toFixed(2) + '</td><td>Spiritual:</td><td>' + _profs.spiritTotal.toFixed(2) + '</td></tr>'
-			+ '<tr><td>Cloth armor:</td><td>' + _profs.armorProfTotals[1].toFixed(2) + '</td><td>Deprecating:</td><td>' + _profs.depTotal.toFixed(2) + '</td></tr>'
-			+ '<tr><td>Light armor:</td><td>' + _profs.armorProfTotals[2].toFixed(2) + '</td><td>Supportive:</td><td>' + _profs.supportTotal.toFixed(2) + '</td></tr>'
-			+ '<tr><td>Heavy armor:</td><td>' + _profs.armorProfTotals[3].toFixed(2) + '</td><td>Curative:</td><td>' + _profs.curativeTotal.toFixed(2) + '</td></tr></table>'; //spiritTotal added by Ilirith
+			+ '<tr><td>Cloth armor:</td><td>' + _profs.armorProfTotals[0].toFixed(2) + '</td><td>Deprecating:</td><td>' + _profs.depTotal.toFixed(2) + '</td></tr>'
+			+ '<tr><td>Light armor:</td><td>' + _profs.armorProfTotals[1].toFixed(2) + '</td><td>Supportive:</td><td>' + _profs.supportTotal.toFixed(2) + '</td></tr>'
+			+ '<tr><td>Heavy armor:</td><td>' + _profs.armorProfTotals[2].toFixed(2) + '</td><td>Curative:</td><td>' + _profs.curativeTotal.toFixed(2) + '</td></tr></table>'; //spiritTotal added by Ilirith
 		c.style.visibility = "visible";
 	});
 	div.addEventListener("mouseout", function () {
@@ -3014,14 +3014,14 @@ function collectRoundInfo() {
 				_profs.weapProfTotals[3] += p;
 				_round.weapProfGain[3] += p;
 			} else if (r.match(/cloth armor/)) {
+				_profs.armorProfTotals[0] += p;
+				_round.armorProfGain[0] += p;
+			} else if (r.match(/light armor/)) {
 				_profs.armorProfTotals[1] += p;
 				_round.armorProfGain[1] += p;
-			} else if (r.match(/light armor/)) {
+			} else if (r.match(/heavy armor/)) {
 				_profs.armorProfTotals[2] += p;
 				_round.armorProfGain[2] += p;
-			} else if (r.match(/heavy armor/)) {
-				_profs.armorProfTotals[3] += p;
-				_round.armorProfGain[3] += p;
 			} else if (r.match(/elemental magic/)) {
 				_profs.elemTotal += p;
 				_round.elemGain += p;
@@ -3517,7 +3517,6 @@ function saveStats() {
 		_stats.armorProfGain[0] += _round.armorProfGain[0];
 		_stats.armorProfGain[1] += _round.armorProfGain[1];
 		_stats.armorProfGain[2] += _round.armorProfGain[2];
-		_stats.armorProfGain[3] += _round.armorProfGain[3];
 		_stats.weaponprocs[0] += _round.weaponprocs[0];
 		_stats.weaponprocs[1] += _round.weaponprocs[1];
 		_stats.weaponprocs[2] += _round.weaponprocs[2];
@@ -3591,9 +3590,9 @@ function getBattleEndStatsHtml() {
 		}
 		if (_settings.isShowEndProfsArmor) {
 			a += "<hr style='height:1px;border:0;background-color:#333333;color:#333333' />"
-				+ "<b>Cloth Gain</b>: " + _round.armorProfGain[1].toFixed(2)
-				+ ", <b>Light Armor Gain</b>: " + _round.armorProfGain[2].toFixed(2)
-				+ ", <b>Heavy Armor Gain</b>: " + _round.armorProfGain[3].toFixed(2);
+				+ "<b>Cloth Gain</b>: " + _round.armorProfGain[0].toFixed(2)
+				+ ", <b>Light Armor Gain</b>: " + _round.armorProfGain[1].toFixed(2)
+				+ ", <b>Heavy Armor Gain</b>: " + _round.armorProfGain[2].toFixed(2);
 		}
 		if (_settings.isShowEndProfsWeapon) {
 			a += "<hr style='height:1px;border:0;background-color:#333333;color:#333333' />"
@@ -5148,8 +5147,7 @@ function HVRound() {
 	this.supportGain = 0;
 	this.curativeGain = 0;
 	this.weapProfGain = [0, 0, 0, 0];
-	this.armorProfGain = [0, 0, 0, 0];
-	this.scan = [0, 0, 0, 0, 0, 0, 0, 0];
+	this.armorProfGain = [0, 0, 0];
 	this.weaponprocs = [0, 0, 0, 0, 0, 0, 0, 0];
 	this.pskills = [0, 0, 0, 0, 0, 0, 0];
 	this.isLoaded = false;
@@ -5227,7 +5225,7 @@ function HVCacheStats() {
 	this.supportGain = 0;
 	this.curativeGain = 0;
 	this.weapProfGain = [0, 0, 0, 0];
-	this.armorProfGain = [0, 0, 0, 0];
+	this.armorProfGain = [0, 0, 0];
 	this.weaponprocs = [0, 0, 0, 0, 0, 0, 0, 0];
 	this.pskills = [0, 0, 0, 0, 0, 0, 0];
 	this.datestart = 0;
@@ -5246,7 +5244,7 @@ function HVCacheProf() {
 	this.supportTotal = 0;
 	this.curativeTotal = 0;
 	this.weapProfTotals = [0, 0, 0, 0];
-	this.armorProfTotals = [0, 0, 0, 0];
+	this.armorProfTotals = [0, 0, 0];
 	this.isLoaded = false;
 }
 function HVCacheRewards() {
