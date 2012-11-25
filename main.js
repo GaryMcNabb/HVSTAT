@@ -5,10 +5,10 @@
 // @include          http://hentaiverse.org/*
 // @exclude          http://hentaiverse.org/pages/showequip*
 // @author           Various (http://forums.e-hentai.org/index.php?showtopic=79552)
-// @version          5.4.5
-// @require          https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js
-// @require          https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.21/jquery-ui.min.js
-// @resource         jQueryUICSS http://www.starfleetplatoon.com/~cmal/HVSTAT/jqueryui.css
+// @version          5.4.6
+// @require          https://ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js
+// @require          https://raw.github.com/GaryMcNabb/HVSTAT/master/jquery-ui-1.9.1.custom.min.js
+// @resource         jQueryUICSS https://raw.github.com/GaryMcNabb/HVSTAT/master/jqueryui.css
 // @run-at           document-end
 // ==/UserScript==
 
@@ -39,7 +39,7 @@ var HVStat = {
 	//------------------------------------
 	// package scope global constants
 	//------------------------------------
-	VERSION: "5.4.5",
+	VERSION: "5.4.6",
 	isChrome: navigator.userAgent.indexOf("Chrome") >= 0,
 	indexedDB: window.indexedDB || window.webkitIndexedDB || window.mozIndexedDB,
 	IDBTransaction: window.IDBTransaction || window.webkitIDBTransaction,
@@ -2770,9 +2770,9 @@ HVStat.warnHealthStatus = function () {
 	var hpWarningLevel = Number(_settings.warnAlertLevel);
 	var mpWarningLevel = Number(_settings.warnAlertLevelMP);
 	var spWarningLevel = Number(_settings.warnAlertLevelSP);
-	var hpWarningResumeLevel = hpWarningLevel + 10;
-	var mpWarningResumeLevel = mpWarningLevel + 10;
-	var spWarningResumeLevel = spWarningLevel + 10;
+	var hpWarningResumeLevel = Math.min(hpWarningLevel + 10, 100);
+	var mpWarningResumeLevel = Math.min(mpWarningLevel + 10, 100);
+	var spWarningResumeLevel = Math.min(spWarningLevel + 10, 100);
 	if (!HVStat.isBattleRoundFinished) {
 		if (_settings.isShowPopup) {
 			if (HVStat.currHpPercent <= hpWarningLevel && (!hpAlertAlreadyShown || _settings.isNagHP)) {
@@ -2797,13 +2797,13 @@ HVStat.warnHealthStatus = function () {
 			localStorage.setItem(HVStat.key_ocAlertAlreadyShown, "true");
 		}
 	}
-	if (hpWarningLevel > hpWarningResumeLevel) {
+	if (HVStat.currHpPercent >= hpWarningResumeLevel) {
 		localStorage.removeItem(HVStat.key_hpAlertAlreadyShown);
 	}
-	if (mpWarningLevel > mpWarningResumeLevel) {
+	if (HVStat.currMpPercent >= mpWarningResumeLevel) {
 		localStorage.removeItem(HVStat.key_mpAlertAlreadyShown);
 	}
-	if (spWarningLevel > spWarningResumeLevel) {
+	if (HVStat.currSpPercent >= spWarningResumeLevel) {
 		localStorage.removeItem(HVStat.key_spAlertAlreadyShown);
 	}
 	if (HVStat.currOcRate < 1.0) {
@@ -2867,9 +2867,9 @@ function showSidebarProfs() {
 			+ '<tr><td>Two-handed:</td><td>' + _profs.weapProfTotals[1].toFixed(2) + '</td><td>Divine:</td><td>' + _profs.divineTotal.toFixed(2) + '</td></tr>'
 			+ '<tr><td>Dual wielding:</td><td>' + _profs.weapProfTotals[2].toFixed(2) + '</td><td>Forbidden:</td><td>' + _profs.forbidTotal.toFixed(2) + '</td></tr>'
 			+ '<tr><td>Staff:</td><td>' + _profs.weapProfTotals[3].toFixed(2) + '</td><td>Spiritual:</td><td>' + _profs.spiritTotal.toFixed(2) + '</td></tr>'
-			+ '<tr><td>Cloth armor:</td><td>' + _profs.armorProfTotals[1].toFixed(2) + '</td><td>Deprecating:</td><td>' + _profs.depTotal.toFixed(2) + '</td></tr>'
-			+ '<tr><td>Light armor:</td><td>' + _profs.armorProfTotals[2].toFixed(2) + '</td><td>Supportive:</td><td>' + _profs.supportTotal.toFixed(2) + '</td></tr>'
-			+ '<tr><td>Heavy armor:</td><td>' + _profs.armorProfTotals[3].toFixed(2) + '</td><td>Curative:</td><td>' + _profs.curativeTotal.toFixed(2) + '</td></tr></table>'; //spiritTotal added by Ilirith
+			+ '<tr><td>Cloth armor:</td><td>' + _profs.armorProfTotals[0].toFixed(2) + '</td><td>Deprecating:</td><td>' + _profs.depTotal.toFixed(2) + '</td></tr>'
+			+ '<tr><td>Light armor:</td><td>' + _profs.armorProfTotals[1].toFixed(2) + '</td><td>Supportive:</td><td>' + _profs.supportTotal.toFixed(2) + '</td></tr>'
+			+ '<tr><td>Heavy armor:</td><td>' + _profs.armorProfTotals[2].toFixed(2) + '</td><td>Curative:</td><td>' + _profs.curativeTotal.toFixed(2) + '</td></tr></table>'; //spiritTotal added by Ilirith
 		c.style.visibility = "visible";
 	});
 	div.addEventListener("mouseout", function () {
@@ -3014,14 +3014,14 @@ function collectRoundInfo() {
 				_profs.weapProfTotals[3] += p;
 				_round.weapProfGain[3] += p;
 			} else if (r.match(/cloth armor/)) {
+				_profs.armorProfTotals[0] += p;
+				_round.armorProfGain[0] += p;
+			} else if (r.match(/light armor/)) {
 				_profs.armorProfTotals[1] += p;
 				_round.armorProfGain[1] += p;
-			} else if (r.match(/light armor/)) {
+			} else if (r.match(/heavy armor/)) {
 				_profs.armorProfTotals[2] += p;
 				_round.armorProfGain[2] += p;
-			} else if (r.match(/heavy armor/)) {
-				_profs.armorProfTotals[3] += p;
-				_round.armorProfGain[3] += p;
 			} else if (r.match(/elemental magic/)) {
 				_profs.elemTotal += p;
 				_round.elemGain += p;
@@ -3517,7 +3517,6 @@ function saveStats() {
 		_stats.armorProfGain[0] += _round.armorProfGain[0];
 		_stats.armorProfGain[1] += _round.armorProfGain[1];
 		_stats.armorProfGain[2] += _round.armorProfGain[2];
-		_stats.armorProfGain[3] += _round.armorProfGain[3];
 		_stats.weaponprocs[0] += _round.weaponprocs[0];
 		_stats.weaponprocs[1] += _round.weaponprocs[1];
 		_stats.weaponprocs[2] += _round.weaponprocs[2];
@@ -3591,9 +3590,9 @@ function getBattleEndStatsHtml() {
 		}
 		if (_settings.isShowEndProfsArmor) {
 			a += "<hr style='height:1px;border:0;background-color:#333333;color:#333333' />"
-				+ "<b>Cloth Gain</b>: " + _round.armorProfGain[1].toFixed(2)
-				+ ", <b>Light Armor Gain</b>: " + _round.armorProfGain[2].toFixed(2)
-				+ ", <b>Heavy Armor Gain</b>: " + _round.armorProfGain[3].toFixed(2);
+				+ "<b>Cloth Gain</b>: " + _round.armorProfGain[0].toFixed(2)
+				+ ", <b>Light Armor Gain</b>: " + _round.armorProfGain[1].toFixed(2)
+				+ ", <b>Heavy Armor Gain</b>: " + _round.armorProfGain[2].toFixed(2);
 		}
 		if (_settings.isShowEndProfsWeapon) {
 			a += "<hr style='height:1px;border:0;background-color:#333333;color:#333333' />"
@@ -4336,6 +4335,7 @@ function initSettingsPane() {
 		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isShowMonsterNumber"></td><td colspan="2">Show Numbers instead of letters next to monsters</td></tr>'
 		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isShowRoundCounter"></td><td colspan="2">Show Round Counter</td></tr>'
 		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isShowPowerupBox"></td><td colspan="2">Show Powerup Box</td></tr>'
+		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="autoAdvanceBattleRound" /></td><td colspan="2">Automatically advance the round when "You are Victorious" - delay: <input type="text" name="autoAdvanceBattleRoundDelay" size="4" maxLength="5" style="text-align:right" />ms</td><td></td></tr>'
 		+ '<tr><td colspan="2" style="padding-left:10px">Display Monster Stats:</td></tr>'
 		+ '<tr><td align="center" style="width:5px;padding-left:20px"><input type="checkbox" name="showMonsterHP" /></td><td colspan="2">Show monster HP (<span style="color:red">Estimated</span>)</td><td></td></tr>'
 		+ '<tr><td align="center" style="width:5px;padding-left:40px"><input type="checkbox" name="showMonsterHPPercent" /></td><td colspan="2" style="padding-left:10px">Show monster HP in percentage</td></tr>'
@@ -4477,6 +4477,8 @@ function initSettingsPane() {
 	if (_settings.isShowMonsterNumber) $("input[name=isShowMonsterNumber]").attr("checked", "checked"); //isShowMonsterNumber stolen from HV Lite, and added by Ilirith
 	if (_settings.isShowRoundCounter) $("input[name=isShowRoundCounter]").attr("checked", "checked");
 	if (_settings.isShowPowerupBox) $("input[name=isShowPowerupBox]").attr("checked", "checked");
+	if (_settings.autoAdvanceBattleRound) $("input[name=autoAdvanceBattleRound]").attr("checked", "checked");
+	$("input[name=autoAdvanceBattleRoundDelay]").attr("value", _settings.autoAdvanceBattleRoundDelay);
 
 	// Display Monster Stats
 	if (_settings.showMonsterHP) $("input[name=showMonsterHP]").attr("checked", "checked");
@@ -4638,6 +4640,8 @@ function initSettingsPane() {
 	$("input[name=isShowMonsterNumber]").click(saveSettings);
 	$("input[name=isShowRoundCounter]").click(saveSettings);
 	$("input[name=isShowPowerupBox]").click(saveSettings);
+	$("input[name=autoAdvanceBattleRound]").click(saveSettings);
+	$("input[name=autoAdvanceBattleRoundDelay]").change(saveSettings);
 
 	// Display Monster Stats
 	$("input[name=showMonsterHP]").click(saveSettings);
@@ -4771,6 +4775,8 @@ function saveSettings() {
 	_settings.isShowMonsterNumber = $("input[name=isShowMonsterNumber]").get(0).checked;
 	_settings.isShowRoundCounter = $("input[name=isShowRoundCounter]").get(0).checked;
 	_settings.isShowPowerupBox = $("input[name=isShowPowerupBox]").get(0).checked;
+	_settings.autoAdvanceBattleRound = $("input[name=autoAdvanceBattleRound]").get(0).checked;
+	_settings.autoAdvanceBattleRoundDelay = $("input[name=autoAdvanceBattleRoundDelay]").get(0).value;
 
 	// Display Monster Stats
 	_settings.showMonsterHP = $("input[name=showMonsterHP]").get(0).checked;
@@ -5148,8 +5154,7 @@ function HVRound() {
 	this.supportGain = 0;
 	this.curativeGain = 0;
 	this.weapProfGain = [0, 0, 0, 0];
-	this.armorProfGain = [0, 0, 0, 0];
-	this.scan = [0, 0, 0, 0, 0, 0, 0, 0];
+	this.armorProfGain = [0, 0, 0];
 	this.weaponprocs = [0, 0, 0, 0, 0, 0, 0, 0];
 	this.pskills = [0, 0, 0, 0, 0, 0, 0];
 	this.isLoaded = false;
@@ -5227,7 +5232,7 @@ function HVCacheStats() {
 	this.supportGain = 0;
 	this.curativeGain = 0;
 	this.weapProfGain = [0, 0, 0, 0];
-	this.armorProfGain = [0, 0, 0, 0];
+	this.armorProfGain = [0, 0, 0];
 	this.weaponprocs = [0, 0, 0, 0, 0, 0, 0, 0];
 	this.pskills = [0, 0, 0, 0, 0, 0, 0];
 	this.datestart = 0;
@@ -5246,7 +5251,7 @@ function HVCacheProf() {
 	this.supportTotal = 0;
 	this.curativeTotal = 0;
 	this.weapProfTotals = [0, 0, 0, 0];
-	this.armorProfTotals = [0, 0, 0, 0];
+	this.armorProfTotals = [0, 0, 0];
 	this.isLoaded = false;
 }
 function HVCacheRewards() {
@@ -5395,6 +5400,8 @@ function HVSettings() {
 	this.isShowMonsterNumber = false;
 	this.isShowRoundCounter = false;
 	this.isShowPowerupBox = false;
+	this.autoAdvanceBattleRound = false;
+	this.autoAdvanceBattleRoundDelay = 500;
 
 	// Display Monster Stats
 	this.showMonsterHP = true;
@@ -6552,6 +6559,21 @@ function TaggingItems(clean) {
 	}
 }
 
+HVStat.autoAdvanceBattleRound = function () {
+	var dialogButton = document.getElementById("ckey_continue");
+	if (dialogButton) {
+		var onclick = dialogButton.getAttribute("onclick");
+		if (onclick === "battle.battle_continue()") {
+			(function (dialogButton) {
+				setTimeout(function () {
+					dialogButton.click();
+					return 0;
+				}, _settings.autoAdvanceBattleRoundDelay);
+			})(dialogButton);
+		}
+	}
+}
+
 //------------------------------------
 // main routine
 //------------------------------------
@@ -6748,6 +6770,9 @@ HVStat.main4 = function () {
 			}
 			saveStats();
 			_round.reset();
+			if (_settings.autoAdvanceBattleRound) {
+				HVStat.autoAdvanceBattleRound();
+			}
 		}
 	} else {
 		if (_settings.isColumnInventory && HVStat.isBattleItemsPage) {
