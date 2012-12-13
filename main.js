@@ -6388,13 +6388,13 @@ function StartBattleAlerts () {
 		element = elements[i];
 		var oldOnClick = element.getAttribute("onclick");
 		var newOnClick = 'if(confirm("Are you sure you want to start this challenge on ' + diff + ' difficulty, with set number: ' + _charss.set + '?\\n';
-		if (_settings.StartAlertHP > HVStat.currHpRate) {
+		if (_settings.StartAlertHP > HVStat.currHpPercent) {
 			newOnClick += '\\n - HP is only '+ HVStat.currHpPercent + '%';
 		}
-		if (_settings.StartAlertMP > HVStat.currMpRate) {
+		if (_settings.StartAlertMP > HVStat.currMpPercent) {
 			newOnClick += '\\n - MP is only '+ HVStat.currMpPercent + '%';
 		}
-		if (_settings.StartAlertSP > HVStat.currSpRate) {
+		if (_settings.StartAlertSP > HVStat.currSpPercent) {
 			newOnClick += '\\n - SP is only '+ HVStat.currSpPercent + '%';
 		}
 		if (_settings.StartAlertDifficulty < _charss.difficulty[0]) {
