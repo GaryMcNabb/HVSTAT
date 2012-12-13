@@ -2953,6 +2953,10 @@ function inventoryWarning() {
 	});
 }
 function collectRoundInfo() {
+	HVStat.idbAccessQueue.add(function () {
+		HVStat.transaction = HVStat.idb.transaction(["MonsterScanResults", "MonsterSkills"], "readwrite");
+	});
+
 	var a = 0;
 	var ac = 0;
 	var d;
@@ -6664,9 +6668,6 @@ HVStat.main1 = function () {
 	// open database
 	HVStat.openIndexedDB(function (event) {
 		HVStat.idbAccessQueue.execute();
-	});
-	HVStat.idbAccessQueue.add(function () {
-		HVStat.transaction = HVStat.idb.transaction(["MonsterScanResults", "MonsterSkills"], "readwrite");
 	});
 
 	if (_settings.isShowMonsterNumber) {
