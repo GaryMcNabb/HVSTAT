@@ -35,7 +35,34 @@ var util = {
 		}
 		return s;
 	},
+	CallbackQueue: function () {
+		this.closures = [];
+		this.executed = false;
+		this.context = null;
+	},
 }
+util.CallbackQueue.prototype = {
+	add: function (fn) {
+		if (!(fn instanceof Function)) {
+			return;
+		}
+		if (this.executed) {
+			fn(this.context);
+		} else {
+			this.closures.push(fn);
+		}
+	},
+	execute: function(context) {
+		if (this.executed) {
+			return;
+		}
+		this.executed = true;
+		this.context = context;
+		while (this.closures[0]) {
+			this.closures.shift()(this.context);
+		}
+	},
+};
 
 // Package
 var HVStat = {
@@ -106,6 +133,7 @@ var HVStat = {
 	// indexedDB
 	idb: null,
 	transaction: null,
+	idbAccessQueue: null,
 
 	// monster database import/export
 	dataURIMonsterScanResults: null,
@@ -1376,6 +1404,9 @@ HVStat.Monster = (function () {
 						//console.log("get from MonsterScanResults: success: id = " + _id);
 						_scanResult = new HVStat.MonsterScanResults(event.target.result);
 					}
+					if (!_waitingForDBResponse()) {
+						callback();
+					}
 				};
 				reqGet.onerror = function (event) {
 					_waitingForGetResponseOfMonsterScanResults = false;
@@ -1397,22 +1428,14 @@ HVStat.Monster = (function () {
 						_waitingForGetResponseOfMonsterSkills = false;
 						//console.log("get from MonsterSkills: finished: id = " + _id);
 					}
+					if (!_waitingForDBResponse()) {
+						callback();
+					}
 				}
 				reqOpen.onerror = function(){
 					_waitingForGetResponseOfMonsterSkills = false;
 					console.log('request error.');
 				}
-				var doCallback = function () {
-					if (callback instanceof Function) {
-						if (!_waitingForDBResponse()) {
-							callback();
-						} else {
-							//console.log("waiting");
-							setTimeout(arguments.callee, 10);
-						}
-					}
-				};
-				doCallback();
 			},
 			putScanResultToDB: function (transaction) {
 				if (!_id || !_scanResult) {
@@ -2937,7 +2960,12 @@ function collectRoundInfo() {
 			if (logHTML.match(/HP=/)) {
 				HVStat.monsters[monsterIndex].fetchStartingLog(logHTML);
 				if (_settings.showMonsterInfoFromDB) {
-					HVStat.monsters[monsterIndex].getFromDB(HVStat.transaction, RoundSave);
+					HVStat.loadingMonsterInfoFromDB = true;
+					(function (monsterIndex) {
+						HVStat.idbAccessQueue.add(function () {
+							HVStat.monsters[monsterIndex].getFromDB(HVStat.transaction, RoundSave);	// *TRANSACTION*
+						});
+					})(monsterIndex);
 				}
 				if (_settings.isTrackItems) {
 					_round.dropChances++;
@@ -3046,7 +3074,13 @@ function collectRoundInfo() {
 						for (i = 0; i < len; i++) {
 							monster = HVStat.monsters[i];
 							if (monster.name === scanningMonsterName) {
-								monster.fetchScanningLog(logText, HVStat.transaction);
+								HVStat.loadingMonsterInfoFromDB = true;
+								(function (monster, logText) {
+									HVStat.idbAccessQueue.add(function () {
+										monster.fetchScanningLog(logText, HVStat.transaction);	// *TRANSACTION*
+										RoundSave();
+									});
+								})(monster, logText);
 							}
 						}
 					}
@@ -6569,9 +6603,21 @@ HVStat.autoAdvanceBattleRound = function () {
 //------------------------------------
 // main routine
 //------------------------------------
+HVStat.documentReadyStateChangeHandler = function (event) {
+	document.removeEventListener("readystatechange", HVStat.documentReadyStateChangeHandler);
+	HVStat.main2();
+};
+
+// readyState: loading
 HVStat.main1 = function () {
+	HVStat.idbAccessQueue = new util.CallbackQueue();
 	// open database
-	HVStat.openIndexedDB();
+	HVStat.openIndexedDB(function (event) {
+		HVStat.idbAccessQueue.execute();
+	});
+	HVStat.idbAccessQueue.add(function () {
+		HVStat.transaction = HVStat.idb.transaction(["MonsterScanResults", "MonsterSkills"], "readwrite");
+	});
 
 	if (_settings.isShowMonsterNumber) {
 		setMonsterNumberCSS();
@@ -6579,17 +6625,14 @@ HVStat.main1 = function () {
 	if (_settings.isShowHighlight) {
 		setLogCSS();
 	}
-
-	var waitForDocumentInteractive = function () {
-		if (document.readyState === "loading") {
-			setTimeout(waitForDocumentInteractive, 10);
-		} else {
-			setTimeout(HVStat.main2, 1);
-		}
-	};
-	waitForDocumentInteractive();
+	if (document.readyState === "loading") {
+		document.addEventListener("readystatechange", HVStat.documentReadyStateChangeHandler);
+	} else {
+		HVStat.main2();
+	}
 };
 
+// readyState: interactive
 HVStat.main2 = function () {
 	// store DOM caches
 	HVStat.popupElement = document.getElementById("popup_box");
@@ -6619,25 +6662,21 @@ HVStat.main2 = function () {
 	if (_settings.isChangePageTitle && document.title === "The HentaiVerse") {
 		document.title = _settings.customPageTitle;
 	}
-	if (!HVStat.isChrome && !document.getElementById("cssdiv")) {
-		GM_addStyle(GM_getResourceText("jQueryUICSS"));
-		var a = document.createElement("div");
-		a.setAttribute("id", "cssdiv");
-		a.style.cssText = "visibility:hidden";
-		document.documentElement.appendChild(a);
-	}
-	initUI();
 	if (HVStat.duringBattle) {
 		// store static values
 		HVStat.numberOfMonsters = document.querySelectorAll("#monsterpane > div").length;
+
 		HVStat.buildBattleCommandMap();
 		HVStat.buildBattleCommandMenuItemMap();
 
-		if (_settings.isHighlightQC) {
-			HVStat.highlightQuickcast();
+		if (_settings.isShowSelfDuration) {
+			showSelfEffectsDuration();
 		}
 		if (_settings.isShowPowerupBox) {
 			displayPowerupBox();
+		}
+		if (_settings.isHighlightQC) {
+			HVStat.highlightQuickcast();
 		}
 		if (_settings.isShowDivider) {
 			addBattleLogDividers();
@@ -6645,17 +6684,56 @@ HVStat.main2 = function () {
 		if (_settings.isShowHighlight) {
 			highlightLogText();
 		}
-		if (_settings.isShowSelfDuration) {
-			showSelfEffectsDuration();
+		if (_settings.isShowScanButton || _settings.isShowSkillButton) {
+			HVStat.showScanAndSkillButtons();
 		}
 		if (_settings.isShowMonsterNumber) {
 			showMonsterNumber();
 		}
-		if (_settings.isShowScanButton || _settings.isShowSkillButton) {
-			HVStat.showScanAndSkillButtons();
-		}
 		if (_settings.isShowMonsterDuration) {
 			showMonsterEffectsDuration();
+		}
+
+		collectRoundInfo();
+		if ((_round !== null) && (_round.currRound > 0) && _settings.isShowRoundCounter) {
+			showRoundCounter();
+		}
+		if ((_round !== null) && (HVStat.monsters.length > 0)){
+			if (!HVStat.loadingMonsterInfoFromDB) {
+				showMonsterStats();
+			} else {
+				HVStat.idbAccessQueue.add(function () {
+					showMonsterStats();
+				});
+			}
+		}
+		if (_settings.isShowStatsPopup) {
+			registerEventHandlersForMonsterPopup();
+		}
+
+		// show warnings
+		HVStat.AlertAllFromQueue();
+		if (!HVStat.isBattleRoundFinished) {
+			if (_settings.warnMode[_round.battleType]) {
+				HVStat.warnHealthStatus();
+			}
+			if (_settings.isMainEffectsAlertSelf) {
+				AlertEffectsSelf();
+			}
+			if (_settings.isMainEffectsAlertMonsters) {
+				AlertEffectsMonsters();
+			}
+		}
+
+		if (HVStat.isBattleRoundFinished) {
+			if (_settings.isShowEndStats) {
+				showBattleEndStats();
+			}
+			saveStats();
+			_round.reset();
+			if (_settings.autoAdvanceBattleRound) {
+				HVStat.autoAdvanceBattleRound();
+			}
 		}
 	} else {
 		localStorage.removeItem(HV_ROUND);
@@ -6696,77 +6774,6 @@ HVStat.main2 = function () {
 				document.onkeypress = null;
 			}
 		}
-	}
-	if (!HVStat.usingHVFont && _settings.isShowEquippedSet) {
-		HVStat.showEquippedSet();
-	}
-	if (_settings.isShowSidebarProfs) {
-		showSidebarProfs();
-	}
-	document.addEventListener("keydown", HVStat.documentKeydownEventHandler);
-
-	var waitForIndexedDBOpened = function () {
-		if (!HVStat.idb) {
-			setTimeout(waitForIndexedDBOpened, 10);
-		} else {
-			setTimeout(HVStat.main3, 1);
-		}
-	};
-	waitForIndexedDBOpened();
-}
-
-HVStat.main3 = function () {
-	// processes require IndexedDB
-	if (HVStat.duringBattle) {
-		HVStat.transaction = HVStat.idb.transaction(["MonsterScanResults", "MonsterSkills"], "readwrite");
-
-		collectRoundInfo();		// requires IndexedDB
-		if ((_round !== null) && (_round.currRound > 0) && _settings.isShowRoundCounter) {
-			showRoundCounter();	// requires _round
-		}
-		if ((_round !== null) && (HVStat.monsters.length > 0)){
-			showMonsterStats();	// requires _round, IndexedDB
-		}
-		if (_settings.isShowStatsPopup) {
-			registerEventHandlersForMonsterPopup();	// requires _round, IndexedDB
-		}
-	}
-	var waitForDocumentComplete = function () {
-		if (document.readyState !== "complete") {
-			setTimeout(waitForDocumentComplete, 10);
-		} else {
-			setTimeout(HVStat.main4, 1);
-		}
-	};
-	waitForDocumentComplete();
-}
-
-HVStat.main4 = function () {
-	// processes alert/confirm immediately
-	if (HVStat.duringBattle) {
-		HVStat.AlertAllFromQueue();
-		if (!HVStat.isBattleRoundFinished) {
-			if (_settings.warnMode[_round.battleType]) {
-				HVStat.warnHealthStatus();		// using alert
-			}
-			if (_settings.isMainEffectsAlertSelf) {
-				AlertEffectsSelf();		// using alert
-			}
-			if (_settings.isMainEffectsAlertMonsters) {
-				AlertEffectsMonsters();		// using alert
-			}
-		}
-		if (HVStat.isBattleRoundFinished) {
-			if (_settings.isShowEndStats) {
-				showBattleEndStats();	// requires _round
-			}
-			saveStats();
-			_round.reset();
-			if (_settings.autoAdvanceBattleRound) {
-				HVStat.autoAdvanceBattleRound();
-			}
-		}
-	} else {
 		if (_settings.isColumnInventory && HVStat.isBattleItemsPage) {
 			initItemsView();
 		}
@@ -6785,9 +6792,27 @@ HVStat.main4 = function () {
 			StartBattleAlerts();
 		}
 	}
+	if (!HVStat.usingHVFont && _settings.isShowEquippedSet) {
+		HVStat.showEquippedSet();
+	}
+	if (_settings.isShowSidebarProfs) {
+		showSidebarProfs();
+	}
+
 	var invAlert = localStorage.getItem(HV_EQUIP);
 	var invFull = (invAlert === null) ? false : JSON.parse(invAlert);
 	if (invFull) inventoryWarning();
+
+	document.addEventListener("keydown", HVStat.documentKeydownEventHandler);
+
+	if (!HVStat.isChrome && !document.getElementById("cssdiv")) {
+		GM_addStyle(GM_getResourceText("jQueryUICSS"));
+		var a = document.createElement("div");
+		a.setAttribute("id", "cssdiv");
+		a.style.cssText = "visibility:hidden";
+		document.documentElement.appendChild(a);
+	}
+	initUI();
 };
 
 //------------------------------------
