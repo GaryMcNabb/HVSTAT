@@ -1045,47 +1045,12 @@ HVStat.Monster = (function () {
 
 			var nameOuterFrameElement = _baseElement.children[1];
 			var nameInnerFrameElement = _baseElement.children[1].children[0];
-			var hpBarBaseElement = _baseElement.children[2].children[0];
-			var mpBarBaseElement = _baseElement.children[2].children[1];
-			var spBarBaseElement = _baseElement.children[2].children[2];
 			var maxAbbrLevel = _settings.ResizeMonsterInfo ? 5 : 1;
 			var maxStatsWidth = 315;
 
-			var hpIndicator = "";
-			var mpIndicator = "";
-			var spIndicator = "";
 			var html, statsHtml;
 			var div, divText;
 			var abbrLevel;
-
-			if (_settings.showMonsterHP || _settings.showMonsterHPPercent) {
-				if (_settings.showMonsterHPPercent) {
-					hpIndicator = (_currHpRate * 100).toFixed(2) + "%";
-				} else {
-					hpIndicator = _currHp().toFixed(0) + " / " + _maxHp.toFixed(0);
-				}
-				div = document.createElement("div");
-				div.style.cssText = "position:absolute;z-index:1074;top:-1px;font-size:8pt;font-family:arial,helvetica,sans-serif;font-weight:bolder;color:yellow;width:120px;text-align:center";
-				divText = document.createTextNode(hpIndicator);
-				div.appendChild(divText);
-				hpBarBaseElement.parentNode.insertBefore(div, hpBarBaseElement.nextSibling);
-			}
-			if (_settings.showMonsterMP) {
-				mpIndicator = (_currMpRate * 100).toFixed(1) + "%";
-				div = document.createElement("div");
-				div.style.cssText = "position:absolute;z-index:1074;top:11px;font-size:8pt;font-family:arial,helvetica,sans-serif;font-weight:bolder;color:yellow;width:120px;text-align:center";
-				divText = document.createTextNode(mpIndicator);
-				div.appendChild(divText);
-				mpBarBaseElement.parentNode.insertBefore(div, mpBarBaseElement.nextSibling);
-			}
-			if (_hasSpiritPoint && _settings.showMonsterSP) {
-				spIndicator = (_currSpRate * 100).toFixed(1) + "%";
-				div = document.createElement("div");
-				div.style.cssText = "position:absolute;z-index:1074;top:23px;font-size:8pt;font-family:arial,helvetica,sans-serif;font-weight:bolder;color:yellow;width:120px;text-align:center";
-				divText = document.createTextNode(spIndicator);
-				div.appendChild(divText);
-				spBarBaseElement.parentNode.insertBefore(div, spBarBaseElement.nextSibling);
-			}
 
 			if (_settings.showMonsterInfoFromDB) {
 				for (abbrLevel = 0; abbrLevel < maxAbbrLevel; abbrLevel++) {
@@ -1490,6 +1455,55 @@ HVStat.Monster = (function () {
 				reqOpen.onerror = function () {
 					console.log('request error.');
 					alert('request error.');
+				}
+			},
+
+			renderHealth: function () {
+				if (this.isDead || !_settings.showMonsterHP && !_settings.showMonsterMP && !_settings.showMonsterSP) {
+					return;
+				}
+
+				var nameOuterFrameElement = this.baseElement.children[1];
+				var nameInnerFrameElement = this.baseElement.children[1].children[0];
+				var hpBarBaseElement = this.baseElement.children[2].children[0];
+				var mpBarBaseElement = this.baseElement.children[2].children[1];
+				var spBarBaseElement = this.baseElement.children[2].children[2];
+				var sharedCssText = "position: absolute; z-index: 1074; font-size: 8pt; font-family: arial,helvetica,sans-serif; font-weight: bolder; color: yellow; width: 120px; text-align: center;"
+				var hpIndicator = "";
+				var mpIndicator = "";
+				var spIndicator = "";
+				var div, divText;
+
+				if (_settings.showMonsterHP || _settings.showMonsterHPPercent) {
+					div = document.createElement("div");
+					div.style.cssText = sharedCssText;
+					div.style.cssText += "top: -1px;";
+					if (_settings.showMonsterHPPercent) {
+						hpIndicator = (this.currHpRate * 100).toFixed(2) + "%";
+					} else {
+						hpIndicator = this.currHp.toFixed(0) + " / " + this.maxHp.toFixed(0);
+					}
+					divText = document.createTextNode(hpIndicator);
+					div.appendChild(divText);
+					hpBarBaseElement.parentNode.insertBefore(div, hpBarBaseElement.nextSibling);
+				}
+				if (_settings.showMonsterMP) {
+					div = document.createElement("div");
+					div.style.cssText = sharedCssText;
+					div.style.cssText += "top: 11px;";
+					mpIndicator = (this.currMpRate * 100).toFixed(1) + "%";
+					divText = document.createTextNode(mpIndicator);
+					div.appendChild(divText);
+					mpBarBaseElement.parentNode.insertBefore(div, mpBarBaseElement.nextSibling);
+				}
+				if (_settings.showMonsterSP && this.hasSpiritPoint) {
+					div = document.createElement("div");
+					div.style.cssText = sharedCssText;
+					div.style.cssText += "top: 23px;";
+					spIndicator = (this.currSpRate * 100).toFixed(1) + "%";
+					divText = document.createTextNode(spIndicator);
+					div.appendChild(divText);
+					spBarBaseElement.parentNode.insertBefore(div, spBarBaseElement.nextSibling);
 				}
 			},
 			renderStats: function () {
@@ -2709,6 +2723,11 @@ function displayPowerupBox() {
 		else if (powerInfo.indexOf('Mystic') > -1) powerBox.innerHTML = "<img class='PowerupGemIcon' src='"+ I_CHANNELING+ "' id='channelgem'>";
 	}
 	battleMenu[0].appendChild(powerBox);
+}
+function showMonsterHealth() {
+	for (var i = 0; i < HVStat.numberOfMonsters; i++) {
+		HVStat.monsters[i].renderHealth();
+	}
 }
 function showMonsterStats() {
 	for (var i = 0; i < HVStat.numberOfMonsters; i++) {
@@ -6699,6 +6718,7 @@ HVStat.main2 = function () {
 			showRoundCounter();
 		}
 		if ((_round !== null) && (HVStat.monsters.length > 0)){
+			showMonsterHealth();
 			if (!HVStat.loadingMonsterInfoFromDB) {
 				showMonsterStats();
 			} else {
