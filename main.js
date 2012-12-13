@@ -5,7 +5,7 @@
 // @include          http://hentaiverse.org/*
 // @exclude          http://hentaiverse.org/pages/showequip*
 // @author           Various (http://forums.e-hentai.org/index.php?showtopic=79552)
-// @version          5.4.6
+// @version          5.4.7
 // @require          https://ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js
 // @require          https://raw.github.com/GaryMcNabb/HVSTAT/master/jquery-ui-1.9.1.custom.min.js
 // @resource         jQueryUICSS https://raw.github.com/GaryMcNabb/HVSTAT/master/jqueryui.css
@@ -69,7 +69,7 @@ var HVStat = {
 	//------------------------------------
 	// package scope global constants
 	//------------------------------------
-	VERSION: "5.4.6",
+	VERSION: "5.4.7",
 	isChrome: navigator.userAgent.indexOf("Chrome") >= 0,
 	indexedDB: window.indexedDB || window.webkitIndexedDB || window.mozIndexedDB,
 	IDBTransaction: window.IDBTransaction || window.webkitIDBTransaction,
