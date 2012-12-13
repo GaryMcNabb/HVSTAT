@@ -4427,6 +4427,12 @@ function initSettingsPane() {
 		+ '<tr><td align="center" style="width:5px;padding-left:30px"><input type="checkbox" name="isEffectsAlertSelf7" /></td><td style="padding-left:10px">Arcane Focus</td><td style="width:440px">- alert on <input type="text" name="EffectsAlertSelfRounds7" size="1" maxLength="3" style="text-align:right;font-size:11px;font-weight:bold" />rounds remaining</td><td></td></tr>'
 		+ '<tr><td align="center" style="width:5px;padding-left:30px"><input type="checkbox" name="isEffectsAlertSelf8" /></td><td style="padding-left:10px">Heartseeker</td><td style="width:440px">- alert on <input type="text" name="EffectsAlertSelfRounds8" size="1" maxLength="3" style="text-align:right;font-size:11px;font-weight:bold" />rounds remaining</td><td></td></tr>'
 		+ '<tr><td align="center" style="width:5px;padding-left:30px"><input type="checkbox" name="isEffectsAlertSelf9" /></td><td style="padding-left:10px">Spirit Shield</td><td style="width:440px">- alert on <input type="text" name="EffectsAlertSelfRounds9" size="1" maxLength="3" style="text-align:right;font-size:11px;font-weight:bold" />rounds remaining</td><td></td></tr>'
+		+ '<tr><td align="center" style="width:5px;padding-left:30px"><input type="checkbox" name="isEffectsAlertSelf10" /></td><td style="padding-left:10px">Flame Spikes</td><td style="width:440px">- alert on <input type="text" name="EffectsAlertSelfRounds10" size="1" maxLength="3" style="text-align:right;font-size:11px;font-weight:bold" />rounds remaining</td><td></td></tr>'
+		+ '<tr><td align="center" style="width:5px;padding-left:30px"><input type="checkbox" name="isEffectsAlertSelf11" /></td><td style="padding-left:10px">Frost Spikes</td><td style="width:440px">- alert on <input type="text" name="EffectsAlertSelfRounds11" size="1" maxLength="3" style="text-align:right;font-size:11px;font-weight:bold" />rounds remaining</td><td></td></tr>'
+		+ '<tr><td align="center" style="width:5px;padding-left:30px"><input type="checkbox" name="isEffectsAlertSelf12" /></td><td style="padding-left:10px">Lightning Spikes</td><td style="width:440px">- alert on <input type="text" name="EffectsAlertSelfRounds12" size="1" maxLength="3" style="text-align:right;font-size:11px;font-weight:bold" />rounds remaining</td><td></td></tr>'
+		+ '<tr><td align="center" style="width:5px;padding-left:30px"><input type="checkbox" name="isEffectsAlertSelf13" /></td><td style="padding-left:10px">Storm Spikes</td><td style="width:440px">- alert on <input type="text" name="EffectsAlertSelfRounds13" size="1" maxLength="3" style="text-align:right;font-size:11px;font-weight:bold" />rounds remaining</td><td></td></tr>'
+		+ '<tr><td align="center" style="width:5px;padding-left:30px"><input type="checkbox" name="isEffectsAlertSelf14" /></td><td style="padding-left:10px">Chain 1</td><td style="width:440px">- alert on <input type="text" name="EffectsAlertSelfRounds14" size="1" maxLength="1" style="text-align:right;font-size:11px;font-weight:bold" />rounds remaining</td><td></td></tr>'
+		+ '<tr><td align="center" style="width:5px;padding-left:30px"><input type="checkbox" name="isEffectsAlertSelf15" /></td><td style="padding-left:10px">Chain 2</td><td style="width:440px">- alert on <input type="text" name="EffectsAlertSelfRounds15" size="1" maxLength="1" style="text-align:right;font-size:11px;font-weight:bold" />rounds remaining</td><td></td></tr>'
 		+ '<tr><td align="center" style="width:5px;padding-left:5px"><input type="checkbox" name="isMainEffectsAlertMonsters" /></td><td colspan="2">Alert when effects on monsters are expiring</td></tr>'
 		+ '<tr><td align="center" style="width:5px;padding-left:30px"><input type="checkbox" name="isEffectsAlertMonsters11" /></td><td style="padding-left:10px">Coalesced Mana</td><td style="width:440px">- alert on <input type="text" name="EffectsAlertMonstersRounds11" size="1" maxLength="3" style="text-align:right;font-size:11px;font-weight:bold" />rounds remaining</td><td></td></tr>'
 		+ '<tr><td align="center" style="width:5px;padding-left:30px"><input type="checkbox" name="isEffectsAlertMonsters0" /></td><td style="padding-left:10px">Spreading Poison</td><td style="width:440px">- alert on <input type="text" name="EffectsAlertMonstersRounds0" size="1" maxLength="3" style="text-align:right;font-size:11px;font-weight:bold" />rounds remaining</td><td></td></tr>'
@@ -4574,6 +4580,12 @@ function initSettingsPane() {
 	if (_settings.isEffectsAlertSelf[7]) $("input[name=isEffectsAlertSelf7]").attr("checked", "checked");
 	if (_settings.isEffectsAlertSelf[8]) $("input[name=isEffectsAlertSelf8]").attr("checked", "checked");
 	if (_settings.isEffectsAlertSelf[9]) $("input[name=isEffectsAlertSelf9]").attr("checked", "checked");
+	if (_settings.isEffectsAlertSelf[10]) $("input[name=isEffectsAlertSelf10]").attr("checked", "checked");
+	if (_settings.isEffectsAlertSelf[11]) $("input[name=isEffectsAlertSelf11]").attr("checked", "checked");
+	if (_settings.isEffectsAlertSelf[12]) $("input[name=isEffectsAlertSelf12]").attr("checked", "checked");
+	if (_settings.isEffectsAlertSelf[13]) $("input[name=isEffectsAlertSelf13]").attr("checked", "checked");
+	if (_settings.isEffectsAlertSelf[14]) $("input[name=isEffectsAlertSelf14]").attr("checked", "checked");
+	if (_settings.isEffectsAlertSelf[15]) $("input[name=isEffectsAlertSelf15]").attr("checked", "checked");
 	$("input[name=EffectsAlertSelfRounds0]").attr("value", _settings.EffectsAlertSelfRounds[0]);
 	$("input[name=EffectsAlertSelfRounds1]").attr("value", _settings.EffectsAlertSelfRounds[1]);
 	$("input[name=EffectsAlertSelfRounds2]").attr("value", _settings.EffectsAlertSelfRounds[2]);
@@ -4583,6 +4595,12 @@ function initSettingsPane() {
 	$("input[name=EffectsAlertSelfRounds7]").attr("value", _settings.EffectsAlertSelfRounds[7]);
 	$("input[name=EffectsAlertSelfRounds8]").attr("value", _settings.EffectsAlertSelfRounds[8]);
 	$("input[name=EffectsAlertSelfRounds9]").attr("value", _settings.EffectsAlertSelfRounds[9]);
+	$("input[name=EffectsAlertSelfRounds10]").attr("value", _settings.EffectsAlertSelfRounds[10]);
+	$("input[name=EffectsAlertSelfRounds11]").attr("value", _settings.EffectsAlertSelfRounds[11]);
+	$("input[name=EffectsAlertSelfRounds12]").attr("value", _settings.EffectsAlertSelfRounds[12]);
+	$("input[name=EffectsAlertSelfRounds13]").attr("value", _settings.EffectsAlertSelfRounds[13]);
+	$("input[name=EffectsAlertSelfRounds14]").attr("value", _settings.EffectsAlertSelfRounds[14]);
+	$("input[name=EffectsAlertSelfRounds15]").attr("value", _settings.EffectsAlertSelfRounds[15]);
 	if (_settings.isMainEffectsAlertMonsters) $("input[name=isMainEffectsAlertMonsters]").attr("checked", "checked");
 	if (_settings.isEffectsAlertMonsters[0]) $("input[name=isEffectsAlertMonsters0]").attr("checked", "checked");
 	if (_settings.isEffectsAlertMonsters[1]) $("input[name=isEffectsAlertMonsters1]").attr("checked", "checked");
@@ -4873,7 +4891,12 @@ function saveSettings() {
 	_settings.isEffectsAlertSelf[7] = $("input[name=isEffectsAlertSelf7]").get(0).checked;
 	_settings.isEffectsAlertSelf[8] = $("input[name=isEffectsAlertSelf8]").get(0).checked;
 	_settings.isEffectsAlertSelf[9] = $("input[name=isEffectsAlertSelf9]").get(0).checked;
-	_settings.isEffectsAlertSelf[9] = $("input[name=isEffectsAlertSelf9]").get(0).checked;
+	_settings.isEffectsAlertSelf[10] = $("input[name=isEffectsAlertSelf10]").get(0).checked;
+	_settings.isEffectsAlertSelf[11] = $("input[name=isEffectsAlertSelf11]").get(0).checked;
+	_settings.isEffectsAlertSelf[12] = $("input[name=isEffectsAlertSelf12]").get(0).checked;
+	_settings.isEffectsAlertSelf[13] = $("input[name=isEffectsAlertSelf13]").get(0).checked;
+	_settings.isEffectsAlertSelf[14] = $("input[name=isEffectsAlertSelf14]").get(0).checked;
+	_settings.isEffectsAlertSelf[15] = $("input[name=isEffectsAlertSelf15]").get(0).checked;
 	_settings.EffectsAlertSelfRounds[0] = $("input[name=EffectsAlertSelfRounds0]").get(0).value;
 	_settings.EffectsAlertSelfRounds[1] = $("input[name=EffectsAlertSelfRounds1]").get(0).value;
 	_settings.EffectsAlertSelfRounds[2] = $("input[name=EffectsAlertSelfRounds2]").get(0).value;
@@ -4884,6 +4907,12 @@ function saveSettings() {
 	_settings.EffectsAlertSelfRounds[7] = $("input[name=EffectsAlertSelfRounds7]").get(0).value;
 	_settings.EffectsAlertSelfRounds[8] = $("input[name=EffectsAlertSelfRounds8]").get(0).value;
 	_settings.EffectsAlertSelfRounds[9] = $("input[name=EffectsAlertSelfRounds9]").get(0).value;
+	_settings.EffectsAlertSelfRounds[10] = $("input[name=EffectsAlertSelfRounds10]").get(0).value;
+	_settings.EffectsAlertSelfRounds[11] = $("input[name=EffectsAlertSelfRounds11]").get(0).value;
+	_settings.EffectsAlertSelfRounds[12] = $("input[name=EffectsAlertSelfRounds12]").get(0).value;
+	_settings.EffectsAlertSelfRounds[13] = $("input[name=EffectsAlertSelfRounds13]").get(0).value;
+	_settings.EffectsAlertSelfRounds[14] = $("input[name=EffectsAlertSelfRounds14]").get(0).value;
+	_settings.EffectsAlertSelfRounds[15] = $("input[name=EffectsAlertSelfRounds15]").get(0).value;
 	_settings.isMainEffectsAlertMonsters = $("input[name=isMainEffectsAlertMonsters]").get(0).checked;
 	_settings.isEffectsAlertMonsters[0] = $("input[name=isEffectsAlertMonsters0]").get(0).checked;
 	_settings.isEffectsAlertMonsters[1] = $("input[name=isEffectsAlertMonsters1]").get(0).checked;
@@ -5478,8 +5507,8 @@ function HVSettings() {
 	// Warning System
 	// Effects Expiring Warnings
 	this.isMainEffectsAlertSelf = false;
-	this.isEffectsAlertSelf = [false, false, false, false, false, false, false, false, false, false];
-	this.EffectsAlertSelfRounds = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+	this.isEffectsAlertSelf = [false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false];
+	this.EffectsAlertSelfRounds = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
 	this.isMainEffectsAlertMonsters = false;
 	this.isEffectsAlertMonsters = [false, false, false, false, false, false, false, false, false, false, false, false];
 	this.EffectsAlertMonstersRounds = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
@@ -6437,7 +6466,9 @@ function FindSettingsStats() {
 function AlertEffectsSelf() {
 	var effectNames = [
 		"Protection", "Hastened", "Shadow Veil", "Regen", "Absorbing Ward",
-		"Spark of Life", "Channeling", "Arcane Focus", "Heartseeker", "Spirit Shield"
+		"Spark of Life", "Channeling", "Arcane Focus", "Heartseeker", "Spirit Shield",
+		"Flame Spikes", "Frost Spikes", "Lightning Spikes", "Storm Spikes",
+		"Chain 1", "Chain 2",
 	];
 	var elements = document.querySelectorAll("#battleform div.btps > img");
 	Array.prototype.forEach.call(elements, function (element) {
