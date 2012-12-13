@@ -12,6 +12,9 @@
 // @run-at           document-end
 // ==/UserScript==
 
+//------------------------------------
+// generic utilities
+//------------------------------------
 var util = {
 	text: function (node) {
 		var s = "", t, i;
@@ -915,7 +918,7 @@ HVStat.Monster = (function () {
 				if (r && r.length >= 2) {
 					v = Number(r[1]) / _maxBarWidth;
 				} else {
-					v = bar.width() / _maxBarWidth;
+					v = bar.width() / _maxBarWidth;	// TODO: remove jQuery call
 				}
 			}
 			return v;
@@ -2497,7 +2500,6 @@ HV_ROUND = "HVRound";
 HV_EQUIP = "inventoryAlert";
 HV_DBASE = "HVMonsterDatabase";
 HV_COLL = "HVCollectData";
-HV_LTC = "HVLoadTimeCounters";
 HV_CHSS = "HVCharacterSettingsandStats";
 HV_TAGS = "HVTags";
 HOURLY = 0;
@@ -6572,7 +6574,7 @@ HVStat.autoAdvanceBattleRound = function () {
 			})(dialogButton);
 		}
 	}
-}
+};
 
 //------------------------------------
 // main routine
@@ -6596,7 +6598,7 @@ HVStat.main1 = function () {
 		}
 	};
 	waitForDocumentInteractive();
-}
+};
 
 HVStat.main2 = function () {
 	// store DOM caches
@@ -6623,7 +6625,7 @@ HVStat.main2 = function () {
 	HVStat.duringBattle = !!HVStat.battleLogElement;
 	HVStat.isBattleRoundFinished = !!document.querySelector("#battleform div.btcp");
 
-	// processes not require IndexedDB and not alert/confirm immediately
+	// processes not require IndexedDB and not alert/confirm
 	if (_settings.isChangePageTitle && document.title === "The HentaiVerse") {
 		document.title = _settings.customPageTitle;
 	}
@@ -6786,7 +6788,7 @@ HVStat.main4 = function () {
 				captureShrine();
 			}
 			if (HVStat.isChrome && _settings.enableShrineKeyPatch) {
-				window.document.onkeydown = null;	// workaround to make enable SPACE key
+				document.onkeydown = null;	// workaround to make enable SPACE key
 			}
 		}
 		if (_settings.isStartAlert && !HVStat.usingHVFont) {
@@ -6796,7 +6798,7 @@ HVStat.main4 = function () {
 	var invAlert = localStorage.getItem(HV_EQUIP);
 	var invFull = (invAlert === null) ? false : JSON.parse(invAlert);
 	if (invFull) inventoryWarning();
-}
+};
 
 //------------------------------------
 // execute
