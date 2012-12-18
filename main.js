@@ -2986,7 +2986,7 @@ function collectRoundInfo() {
 					HVStat.loadingMonsterInfoFromDB = true;
 					(function (monsterIndex) {
 						HVStat.idbAccessQueue.add(function () {
-							HVStat.monsters[monsterIndex].getFromDB(HVStat.transaction, RoundSave);	// *TRANSACTION*
+							HVStat.monsters[monsterIndex].getFromDB(HVStat.transaction, RoundSave);
 						});
 					})(monsterIndex);
 				}
@@ -3100,7 +3100,7 @@ function collectRoundInfo() {
 								HVStat.loadingMonsterInfoFromDB = true;
 								(function (monster, logText) {
 									HVStat.idbAccessQueue.add(function () {
-										monster.fetchScanningLog(logText, HVStat.transaction);	// *TRANSACTION*
+										monster.fetchScanningLog(logText, HVStat.transaction);
 										RoundSave();
 									});
 								})(monster, logText);
@@ -6709,12 +6709,10 @@ HVStat.main2 = function () {
 	HVStat.duringBattle = !!HVStat.battleLogElement;
 	HVStat.isBattleRoundFinished = !!document.querySelector("#battleform div.btcp");
 
-	// processes not require IndexedDB and not alert/confirm
 	if (_settings.isChangePageTitle && document.title === "The HentaiVerse") {
 		document.title = _settings.customPageTitle;
 	}
 	if (HVStat.duringBattle) {
-		// store static values
 		HVStat.numberOfMonsters = document.querySelectorAll("#monsterpane > div").length;
 
 		HVStat.buildBattleCommandMap();
