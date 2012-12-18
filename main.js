@@ -5,7 +5,7 @@
 // @include          http://hentaiverse.org/*
 // @exclude          http://hentaiverse.org/pages/showequip*
 // @author           Various (http://forums.e-hentai.org/index.php?showtopic=79552)
-// @version          5.4.7
+// @version          5.4.8
 // @require          https://ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js
 // @require          https://raw.github.com/GaryMcNabb/HVSTAT/master/jquery-ui-1.9.1.custom.min.js
 // @resource         jQueryUICSS https://raw.github.com/GaryMcNabb/HVSTAT/master/jqueryui.css
@@ -69,7 +69,7 @@ var HVStat = {
 	//------------------------------------
 	// package scope global constants
 	//------------------------------------
-	VERSION: "5.4.7",
+	VERSION: "5.4.8",
 	isChrome: navigator.userAgent.indexOf("Chrome") >= 0,
 	indexedDB: window.indexedDB || window.webkitIndexedDB || window.mozIndexedDB,
 	IDBTransaction: window.IDBTransaction || window.webkitIDBTransaction,
@@ -547,6 +547,9 @@ HVStat.getElapsedFrom = function (date) {
 };
 
 HVStat.getGaugeRate = function (gaugeElement, gaugeMaxWidth) {
+	if (!gaugeElement) {
+		return 0;
+	}
 	var result = /width\s*?:\s*?(\d+?)px/i.exec(gaugeElement.style.cssText);
 	var rate;
 	if (result && result.length >= 2) {
@@ -2986,7 +2989,7 @@ function collectRoundInfo() {
 					HVStat.loadingMonsterInfoFromDB = true;
 					(function (monsterIndex) {
 						HVStat.idbAccessQueue.add(function () {
-							HVStat.monsters[monsterIndex].getFromDB(HVStat.transaction, RoundSave);	// *TRANSACTION*
+							HVStat.monsters[monsterIndex].getFromDB(HVStat.transaction, RoundSave);
 						});
 					})(monsterIndex);
 				}
@@ -3100,7 +3103,7 @@ function collectRoundInfo() {
 								HVStat.loadingMonsterInfoFromDB = true;
 								(function (monster, logText) {
 									HVStat.idbAccessQueue.add(function () {
-										monster.fetchScanningLog(logText, HVStat.transaction);	// *TRANSACTION*
+										monster.fetchScanningLog(logText, HVStat.transaction);
 										RoundSave();
 									});
 								})(monster, logText);
@@ -6690,10 +6693,10 @@ HVStat.main2 = function () {
 	HVStat.quickcastBarElement = document.getElementById("quickbar");
 	HVStat.battleLogElement = document.getElementById("togpane_log");
 	HVStat.monsterPaneElement = document.getElementById("monsterpane");
-	HVStat.charHpGaugeElement = document.getElementsByTagName("img")[2];
-	HVStat.charMpGaugeElement = document.getElementsByTagName("img")[5];
-	HVStat.charSpGaugeElement = document.getElementsByTagName("img")[8];
-	HVStat.charOcGaugeElement = document.getElementsByTagName("img")[11];
+	HVStat.charHpGaugeElement = document.querySelector('img[alt="health"]');
+	HVStat.charMpGaugeElement = document.querySelector('img[alt="magic"]');
+	HVStat.charSpGaugeElement = document.querySelector('img[alt="spirit"]');
+	HVStat.charOcGaugeElement = document.querySelector('img[alt="overcharge"]');
 
 	// store static values
 	HVStat.isCharacterPage = !!document.getElementById("pattrform");
@@ -6709,12 +6712,10 @@ HVStat.main2 = function () {
 	HVStat.duringBattle = !!HVStat.battleLogElement;
 	HVStat.isBattleRoundFinished = !!document.querySelector("#battleform div.btcp");
 
-	// processes not require IndexedDB and not alert/confirm
 	if (_settings.isChangePageTitle && document.title === "The HentaiVerse") {
 		document.title = _settings.customPageTitle;
 	}
 	if (HVStat.duringBattle) {
-		// store static values
 		HVStat.numberOfMonsters = document.querySelectorAll("#monsterpane > div").length;
 
 		HVStat.buildBattleCommandMap();
