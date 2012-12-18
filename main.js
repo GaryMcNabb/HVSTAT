@@ -547,6 +547,9 @@ HVStat.getElapsedFrom = function (date) {
 };
 
 HVStat.getGaugeRate = function (gaugeElement, gaugeMaxWidth) {
+	if (!gaugeElement) {
+		return 0;
+	}
 	var result = /width\s*?:\s*?(\d+?)px/i.exec(gaugeElement.style.cssText);
 	var rate;
 	if (result && result.length >= 2) {
@@ -6690,10 +6693,10 @@ HVStat.main2 = function () {
 	HVStat.quickcastBarElement = document.getElementById("quickbar");
 	HVStat.battleLogElement = document.getElementById("togpane_log");
 	HVStat.monsterPaneElement = document.getElementById("monsterpane");
-	HVStat.charHpGaugeElement = document.getElementsByTagName("img")[2];
-	HVStat.charMpGaugeElement = document.getElementsByTagName("img")[5];
-	HVStat.charSpGaugeElement = document.getElementsByTagName("img")[8];
-	HVStat.charOcGaugeElement = document.getElementsByTagName("img")[11];
+	HVStat.charHpGaugeElement = document.querySelector('img[alt="health"]');
+	HVStat.charMpGaugeElement = document.querySelector('img[alt="magic"]');
+	HVStat.charSpGaugeElement = document.querySelector('img[alt="spirit"]');
+	HVStat.charOcGaugeElement = document.querySelector('img[alt="overcharge"]');
 
 	// store static values
 	HVStat.isCharacterPage = !!document.getElementById("pattrform");
