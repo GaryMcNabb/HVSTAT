@@ -1,21 +1,42 @@
 // ==UserScript==
-// @name             HV Statistics, Tracking, and Analysis Tool
-// @namespace        HV STAT
-// @description      Collects data, analyzes statistics, and enhances the interface of the HentaiVerse
-// @include          http://hentaiverse.org/*
-// @exclude          http://hentaiverse.org/pages/showequip*
-// @author           Various (http://forums.e-hentai.org/index.php?showtopic=79552)
-// @version          5.4.8
-// @require          https://ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js
-// @require          https://raw.github.com/GaryMcNabb/HVSTAT/master/jquery-ui-1.9.1.custom.min.js
-// @resource         jQueryUICSS https://raw.github.com/GaryMcNabb/HVSTAT/master/jqueryui.css
-// @run-at           document-end
+// @name            HV Statistics, Tracking, and Analysis Tool
+// @namespace       HV STAT
+// @description     Collects data, analyzes statistics, and enhances the interface of the HentaiVerse
+// @include         http://hentaiverse.org/*
+// @exclude         http://hentaiverse.org/pages/showequip*
+// @author          Various (http://forums.e-hentai.org/index.php?showtopic=79552)
+// @version         5.4.8
+// @resource        jquery-1.8.3.min.js                         scripts/jquery-1.8.3.min.js
+// @resource        jquery-ui-1.9.2.custom.min.js               scripts/jquery-ui-1.9.2.custom.min.js
+// @resource        jquery-ui-1.9.2.custom.min.css              resources/jquery-ui-1.9.2.custom.min.css
+// @resource        monster-database-pane.html                  resources/monster-database-pane.html
+// @resource        settings-pane.html                          resources/settings-pane.html
+// @resource        channeling.png                              images/channeling.png
+// @resource        healthpot.png                               images/healthpot.png
+// @resource        manapot.png                                 images/manapot.png
+// @resource        spiritpot.png                               images/spiritpot.png
+// @resource        ui-bg_flat_0_aaaaaa_40x100.png              images/ui-bg_flat_0_aaaaaa_40x100.png
+// @resource        ui-bg_flat_55_fbf9ee_40x100.png             images/ui-bg_flat_55_fbf9ee_40x100.png
+// @resource        ui-bg_flat_65_edebdf_40x100.png             images/ui-bg_flat_65_edebdf_40x100.png
+// @resource        ui-bg_flat_75_e3e0d1_40x100.png             images/ui-bg_flat_75_e3e0d1_40x100.png
+// @resource        ui-bg_flat_75_edebdf_40x100.png             images/ui-bg_flat_75_edebdf_40x100.png
+// @resource        ui-bg_flat_95_fef1ec_40x100.png             images/ui-bg_flat_95_fef1ec_40x100.png
+// @resource        ui-icons_2e83ff_256x240.png                 images/ui-icons_2e83ff_256x240.png
+// @resource        ui-icons_5c0d11_256x240.png                 images/ui-icons_5c0d11_256x240.png
+// @resource        ui-icons_cd0a0a_256x240.png                 images/ui-icons_cd0a0a_256x240.png
+// @run-at          document-start
 // ==/UserScript==
 
 //------------------------------------
 // generic utilities
 //------------------------------------
 var util = {
+	isChrome: navigator.userAgent.indexOf("Chrome") >= 0,
+
+	escapeRegex: function (value) {
+		return value.replace(/[\-\[\]{}()*+?.,\\\^$|#\s]/g, "\\$&");
+	},
+
 	text: function (node) {
 		var s = "", t, i;
 		if (node.nodeType === document.TEXT_NODE) {
@@ -64,7 +85,70 @@ util.CallbackQueue.prototype = {
 	},
 };
 
-// Package
+var browserExtension = {
+	ImageResourceInfo: function (originalPath, name, resourcePath) {
+		this.originalPath = originalPath;
+		this.name = name;
+		this.resourcePath = resourcePath;
+	},
+	getResourceURL: function (resourcePath, resourceName) {
+		var resourceURL;
+		if (util.isChrome) {
+			resourceURL = chrome.extension.getURL(resourcePath + resourceName);
+		} else {
+			resourceURL = GM_getResourceURL(resourceName);
+		}
+		return resourceURL;
+	},
+	requestResourceText: function (resoucePath, resourceName, callback) {
+		if (util.isChrome) {
+			var request = new XMLHttpRequest();
+			var resourceURL = browserExtension.getResourceURL(resoucePath, resourceName);
+			request.open("GET", resourceURL);
+			request.onreadystatechange = function (event) {
+				if (request.readyState === 4) {
+					if (request.status === 200) {
+						if (callback instanceof Function) {
+							callback(request.responseText);
+						}
+					} else {
+						console.log("Error loading page, status = " + request.status + ", responseText = [" + request.responseText + "]");
+					}
+				}
+			};
+			request.send(null);
+		} else {
+			if (callback instanceof Function) {
+				callback(GM_getResourceText(resourceName));
+			}
+		}
+	},
+	addStyle: function (styleText) {
+		if (util.isChrome) {
+			var styleElement = document.createElement("style");
+			styleElement.textContent = styleText;
+			document.documentElement.insertBefore(styleElement, null);
+		} else {
+			GM_addStyle(styleText);
+		}
+	},
+	addStyleFromResource: function (styleResourcePath, styleResouceName, imageResouceInfoArray) {
+		browserExtension.requestResourceText(styleResourcePath, styleResouceName, function (styleText) {
+			// replace image URLs
+			for (var i = 0; i < imageResouceInfoArray.length; i++) {
+				var imageResourceName = imageResouceInfoArray[i].name;
+				var imageOriginalPath = imageResouceInfoArray[i].originalPath;
+				var imageResourcePath = imageResouceInfoArray[i].resourcePath;
+				var imageResourceURL = browserExtension.getResourceURL(imageResourcePath, imageResourceName);
+				var regex = new RegExp(util.escapeRegex(imageOriginalPath + imageResourceName), "g");
+				styleText = styleText.replace(regex, imageResourceURL);
+			}
+			// add style
+			browserExtension.addStyle(styleText);
+		});
+	},
+}
+
 var HVStat = {
 	//------------------------------------
 	// package scope global constants
@@ -2581,10 +2665,10 @@ _lastArtName = "";
 _tokenDrops = [0, 0, 0];
 
 /* ========== EMBEDDED IMAGES ========== */
-I_HEALTHPOT = "data:image/gif;base64,R0lGODlhHgAgAOYAAPbt9ho9IwArCAArAAARAAhGCAgrCBFXERFGETR7NAgRCEaDRmmvacrkyvb/9uTt5BFXCDR7KxFGCBpXERpGEQgrABFXACtpGleVRhpXCE+nNBppABFGACt7ERErCDSMETR7GiuMABpXACt7CBpGCCtpETR7ETRpGkanETR7CCtpCE+MK4OvaafTjHKnT5XKcjR7ACtpAAgRAE+MGkZ7GnLBKytXAE+MEUZ7EU+MAHLBEcHklWCnAHKnK57bRq/bcnKnEZXKK57BT5XBGvb/28HkRnKMEa/TI9PtcuT2lfb2r9vTI/bt2wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACwAAAAAHgAgAAAH/4AzJioZhRsbEBkqiykmHSUrLhggKzMjLgwuLj0zLkJBKDc0H6QzpjNAQDcrP0o/QT89NURESUhFQR89PkeqMx83wagoOTk1SklBRz5BSERKSEdLRSMpNUW4KCY0JiZAoDdArUlAR83PRUfqQSU94UhJRZwzOTpHOjw6SURCQ0FBSoj80KFjSI8UHlwgAdIjCTIf+OwdGeJDiZIeQYA4+wGER6oZHCokeCakRyto6bAVcRgriBCBKFLkCKbigAEELwImmdHQIpKfKocYRBaER4gbKFCokGAARA8UP569WCHkVjp///4lSdILhQYgSpkucKWhBhJX4XQU+elw64+1Rf90hEpqAoGBkbR+oBAy0B7bgLR2HFmbMRyKDggITMjp4FkNHkPS+RgCpMgPh9CCYKPM48aGAgYuPHWxg0i6rTUgCvFpMt7gXp0RK1hAZMeLr0PO/vCBKwkAB0mCrY1chPKNEQgqRKDl4EE0h0UAE/mNJEcMfeaQCKkBJIWEChmE7KsVPR4RB+gBPPtx41jvJK9mkBiQAYhZZOUrMjmPvvFkaEc4RMsLFAwAASrNJOGDQ0I58xsRDzARREVI6HBDD+K1gIAAEsyAglpcrfSPgw9stVAr2OxQEgorQMChh9/cAuJltChRQw03AJRMRevNIIEABwZTGRL+tLWDgsUAwVL/Ribt90JyEJASzkrFRYcMEhlFhsRkK7G31wsBVBDlB6gUUUsqVWF2SxBCAeFDjT8IUVcFFkipj0CQvYZNEDrEGMt957GAgAx1AhPEPj00hM1E+WgGj0Wv+HBWCwEYkMFRN1S0Qw47MBHPLTFctuYR8JQay3clhFOZEiVN95MrMBBFWUGfrLUQBxkkmkNuSrjEBBMrsdoDNEAYkQMPMwFRkDkiiFBERwEmk4SnAPW6GkfB3ICDTB59ZMMQHkWHJS0++MDEDjq04gMQOeAwww0wwJBDKjfMUENRh9r4w68auZJuMtaZQkOxqahygwk35CBECy7c0EIDLWjwQwuJ/hDLCw0qmADCCfVmu20gADs=";
-I_MANAPOT = "data:image/gif;base64,R0lGODlhHgAgAOYAACMRGiMIGkYrRmlPafbT9ox7jGkrcvbT/5V7p0YrYD0aYBEIGq+ewWlPjD0acisaRkYrcntXuCMRRsq47QgAGkYrgysRchEARisaYIx7wZ6M0yMRYNvT9j0jpyMaRhEAYCMRcisacmBPpysag089pxEAexEIRisalSMaYAgARhEIYAgAYGBXuAAATwAARgAAGggIYAgIRhERPQgIGisrafb2/z1GaT1PjCMrRmlyjLjB05Wnnmlyaaeeg1dPPfbt5MGvp9uVeysaGoxyctPBwdvT0/b29gAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACwAAAAAHgAgAAAH/4AQGBImhTIyMSYSiw8YKBsVIiQhFRAeIiwiIg0QIggFNgkONKQQphADAwkVDD8MBQwNOUZGRURABTQNOz2qEDQJwag2AgI5P0UFPTsFREY/RD1BQB4POUC4NhgOGBgDoAkDrUUDPc3PQD3qBRsN4URFQJwQAjw9PD48RUYIQwUFP4ww4MFjSIMHKUQQGdCgCLId+Oz1GLLjx48GBQY4YzDARyoIFF6ceIagQSto6bABcRirAAKBNh4ICCYBhosVGQIWgdDQIpGfKocYRFbAB44ENmxISOEiRAMbDJ5lqIDgVjp///4VKdLLxo0BSpl2cHUjBxFX4XgA+elwK4O1QP94hEqKYYWLkbQY2EAw0B7bgLR09FibMZwNFCteqMhZ41kOH0PS7RgyAAgDh9AKYKPsI4EMFy5APBWhw0i6rTkgIvBpMt7gXp0Rt+hgREeGr0POMtiBq8iBGkWCrY0MhHICD4lH0KrBIZpDIICN/CYiAIA+c0QQ5BiA8IUJBPtqQY9npIb5A88YJDjWu8grCBe8DzCLbHxFAuXNN54MrYdDWhl88EIMqDRTxA4OCeXMb0ZwQEABFRHBQwINgKeBXSlAYINaXK30z4IcbLVQK9joUJINFcTgQoY2fHMLh5fR8kMOOSQAUDIVpQcBUwQGUxkR/rSlw4HFDMBSRibhl0H/YjGQEs5KxUGHDBEZRUbEZCupt1cGJQxYSmW1pFIVZrcUINQAO8jIAAJ1vTCDk/oIBNlr2BTAg4ux0FdeBIm9CUwB+zTQEDYT5aMZPBa9ssNZGpTggglHJVCRDgLoQEA8twBwWZk9wONpLCm8sEE4lf1QknQ/uSIEUZQV9MlaC1FggqAC5PaDSwQQsJKpDUAzgAEC+DDTAAWZs8ACQHTkXzJFXArQratxFEwCCsjk0UcBDOERdFTSssMOBOjAQys7DCCAAhAkIIQQAqSSAAQ5FAXojAzkqpEr4yZTnSkO/JqKKglgkIAACGggQgIaTKDBDQxoICgDsSQgAQYhWPDuBLTVBgIAOw==";
-I_SPIRITPOT = "data:image/gif;base64,R0lGODlhHgAgAOYAACsACFcRI//k9tvTlcq4Rvbkla+MEdOvI6eMK+TBRu3Tcv/tr8GVGv/2255yAIxpEcGVK4xyNNO4cnJPAO2vI6dyEXJPEYxPAMqVT08rAK9yK4xPEREIAGk0CIxPGns0AMGVcmkrAKdPEXs0CGk0EadyT9OnjEYaAGkrCIxPK3s0EYM0EVcaAEYaCGkrEad7aXs0GmkaAEYRACsRCIM0Gv/k21caCGkrGpVXRrh7aSsIAHsrGkYaEUYRCFcaEVcRCHs0KysAABEAAEYICCsICFcREUYREXs0NBEICINGRuTKyv/29u3k5AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACwAAAAAHgAgAAAH/4AeKig2hRkZLTYoiyMqJC4pJTgwKR4dJS8lJRoeJRgQDxs0FqQeph4VFRspEgsSEBIaCA0NBQoJEBYaBAeqHhYbwagPFxcICwUQBwQQCg0LCgcUCR0jCAm4Dyo0KioVoBsVrQUVB83PCQfqEC4a4QoFCZweFwYHBg4GBQ0YDBAQCxpIMGCAgYYRQ0ooqKChADIC+OwdYEBgwQINECo4k1DBQSoPMnQceYZBQyto6bAlcBgLAgaBD0ZcCIaCBxEjIAIW8NDQooKfKhkYRAbBwYQNDx6g6EEEhoYHEp6BSIHhVjp///4VKNDrQYQKSpkmcRUBgQJX4Qwk+Olwq4S1Cf8MhEqqwgiRkbQkPMAw0B7bgLQGHFibMdwDEkaE+Mi55BkCBwzSEWBQIYEEh9AgYKPsYEOGGURuPC0xoEG6rQggYvBpMt7gXp0RA0jSYACIrwzOSiCAq4CAJQWCrY2cgPKGDkZ0AKG1hEk0hwkAN/it4EIIfeYUYEBQYUQPHTYw7KsVPV6DJegFPJOw4VjvAq88/OBgo4JZZOUr1jiPvvFkaAc4RAsIRXDQAirNFECAQ0I581sDTNQAQUUKGLCBBuKZYAQSPXjwgFpcrfSPg0xstVAr2AxQ0gMptMChh9/cAuJltCyAAAIbAJRMRet50AMSBwZTmQL+tDWAgsVUwFL/RibtB0JyLZASzkrFRYeMAhlFpsBkK7G3FwgB6BClBagkUEsqVWF2CwRCVUBAjRJgUJcOJ0ipj0CQvYYNBAbEGMt95+VgRBB1AgPBPho0hM1E+WgGj0WvEHCWCQEQYcNRG1Q0wAUD1BDPLSFctuYB8JQay3cuhFPZAiVN95MrHxBFWUGfrLWQDDYkekFuC7hUQw0rsaoBNBWIcIEDM1VQkDkssJBARwEmU4CnAPW6GkfBbLCCTB59FAMDHkWHJS0EEFDDAAa0QkAFF6zgwQYffHBBKht4gEBRh9oowa8auZJuMtaZQkOxqaiygQobXICBCSVsYIISJkQggQmJShDLCwYoqADDDvVmu20gADs=";
-I_CHANNELING = "data:image/gif;base64,R0lGODlhHgAgAOYAAEYjNBEAESMRIzQjNEY0RgAAERERIzQ0VyMjNEZGVyM0RjRGV09yjHKVryNGV3KvyityjE+v00+VrwAaI3LT7U9yeyuVp0/K03Lt9gARERFPTytychErKyNXV0+vryNGRnLT00+MjIz29jRXV3Kvr6f//4zT0yM0NKft7bj//zRGRk9pabjt7cr//4yvr0ZXV3KMjK/T08rt7Wl7e4OVlae4uMrb20/t23Lt25Xt26f/7YPKuLj/7a/t2yNXRsr/7U+ngzRXRtv/7XKvjCtGNE9pV9Pt22CMaSM0I4yvjEZXRoOeg6e4p7jKuGl7YP//5CsRETQjI0Y0NHtpabi4uKenp4ODg3t7e2lpaVdXV0ZGRjQ0NCMjIxEREQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACwAAAAAHgAgAAAH/4AjHx0VhSEwiEuKS1cziDAhkZIhhR0bFRshOzs5KCw/P0KhNVY1SS4pJSKrIjk4ICAeHpghsCI6OjygPzEvTExNGySqrBivFBYRPpkmOLe5Py0/My9WT1Y0G8SrON2xHhwjITk5IiU6ny0yKytUVjYyHSisIt04Fx4bBh/jziWeLFq4+FDNShMjPnZse3XPw4kCHEJ0u+WJRwsYJ1RkuUIjxokQOlYZA3HjggQOBU54mIgCBQ9dLzhs2aKECJYTK+bVw3ChJLgMH0g405EihS4XTrJgQZKxChYVIVRhwADiwgULHDL4AFGOKA8WMIKc2IJlBhIVTbSc+LBDxNSqEf8sIMjQAcQqXCxmfNiiRYsKK1acEjmBYAEJVxcixJ1b9y6PITL5+tUyZSkSLgIyaIBl1eQJunZFtBxxgoCUmVxOdNFChAuXKAYm1Kp6NWvd0D1kSpGiZcsJAVqyvB4gQMCED7Rr0yUBwtkOAwMAmB6LGXPxLgYMcHggK0IILhkcPICVowIHLgOiuB6wpUvx69gN7PgGgUsXB7Bw5JhgQABmBAagh4AA7l3n2nyJbQDebSCEkB121vm3hX0BBNBFfLVYtcFcm4FAAgcPPkigawjY10WFXBhQAWcQMOYBCStkJ2OFFxbnmo0BdvGBCbC0GF4DG/wmowEXWhhAhAIcSSTpEcw1yEEXJzCgwAQCDFlAkfEVZ0CFBmSgBAywhMDBkTMgQOWQWxpQgIUnundhBl6uMJ+YGXBwwgEDohmAmgVcGcCa2HWRgRYrMEfnCRUokGd2ezLap599/pmBFE4MsUMIn/GzwqInNtpFAV70WaSkSKxQC6YZnBAkmmluCeqjFT7axQuanMSBCipcGGKanT4aaZ8GnODEETuQ8IEgCRB44bLLxuprn15wMEMRRwDxQAj5KIols70+mwFEHxQxLAncWeBAiVDoyuaovoYKEQfiVuDBtRB0MCCzkVZYoRf89hutTEocIYEEgQAAOw==";
+I_HEALTHPOT = browserExtension.getResourceURL("images/", "healthpot.png");
+I_MANAPOT = browserExtension.getResourceURL("images/", "manapot.png");
+I_SPIRITPOT = browserExtension.getResourceURL("images/", "spiritpot.png");
+I_CHANNELING = browserExtension.getResourceURL("images/", "channeling.png");
 
 /* =====
  setLogCSS
@@ -3656,6 +3740,23 @@ function getBattleEndStatsHtml() {
 	}
 	return a;
 }
+
+function addUIStyle() {
+	var Obj = browserExtension.ImageResourceInfo;
+	var imageResouceInfoArray = [
+		new Obj("images/", "ui-bg_flat_0_aaaaaa_40x100.png", "images/"),
+		new Obj("images/", "ui-bg_flat_55_fbf9ee_40x100.png", "images/"),
+		new Obj("images/", "ui-bg_flat_65_edebdf_40x100.png", "images/"),
+		new Obj("images/", "ui-bg_flat_75_e3e0d1_40x100.png", "images/"),
+		new Obj("images/", "ui-bg_flat_75_edebdf_40x100.png", "images/"),
+		new Obj("images/", "ui-bg_flat_95_fef1ec_40x100.png", "images/"),
+		new Obj("images/", "ui-icons_2e83ff_256x240.png", "images/"),
+		new Obj("images/", "ui-icons_5c0d11_256x240.png", "images/"),
+		new Obj("images/", "ui-icons_cd0a0a_256x240.png", "images/"),
+	];
+	browserExtension.addStyleFromResource("resources/", "jquery-ui-1.9.2.custom.min.css", imageResouceInfoArray);
+}
+
 function getReportOverviewHtml() {
 	var a = '<span style="color:green"><b>ON</b></span>';
 	var w = '<span style="color:red"><b>OFF</b></span>';
@@ -4034,68 +4135,6 @@ function getReportShrineHtml() {
 	c += "</table>";
 	return c;
 }
-function getMonsterStatsHtml() {
-	var oldDatabaseSize = localStorage.HVMonsterDatabase ? localStorage.HVMonsterDatabase.length : 0;
-	var h = "";
-	h += '<div>';
-	h += '<h2>Administration</h2>';
-	h += '<h3>Export</h3>';
-	h += '<p>Monster scan results and monster skill data can be exported as a TSV (tab-seperated-values) format text file. You can import the data using the exported file.</p>';
-	h += '<div>';
-	h += '<table><tr>';
-	h += '<td><span style="font-weight: bold;">Monster Scan Results</span></td>';
-	h += '<td><input type="button" id="exportMonsterScanResults" value="Export" />';
-	h += '<a id="downloadLinkMonsterScanResults" style="visibility:hidden;" href="#">Download</a></td>';
-	h += '</tr><tr>';
-	h += '<td><span style="font-weight: bold;">Monster Skill Data</span></td>';
-	h += '<td><input type="button" id="exportMonsterSkills" value="Export" />';
-	h += '<a id="downloadLinkMonsterSkills" style="visibility:hidden;" href="#">Download</a></td>';
-	h += '</tr></table>';
-	h += '</div>';
-	h += '<h3>Import</h3>';
-	h += '<p>The contents of TSV file will be merged into the database. The rows of TSV file which have older date will be skipped.</p>';
-	h += '<div>';
-	h += '<table><tr>';
-	h += '<td><span style="font-weight: bold;">Monster Scan Results</span></td>';
-	h += '<td><input type="file" id="importMonsterScanResults" /></td>';
-	h += '</tr><tr>';
-	h += '<td><span style="font-weight: bold;">Monster Skill Data</span></td>';
-	h += '<td><input type="file" id="importMonsterSkills" /></td>';
-	h += '</tr></table>';
-	h += '</div>';
-	h += '<h3>Delete Data</h3>';
-	h += '<p>If you want to clean the database, delete data.</p>';
-	h += '<table><tr>';
-	h += '<td><span style="font-weight: bold;">Monster Scan Results</span></td>';
-	h += '<td><input type="button" id="deleteMonsterScanResults" value="Delete" /></td>';
-	h += '</tr><tr>';
-	h += '<td><span style="font-weight: bold;">Monster Skill Data</span></td>';
-	h += '<td><input type="button" id="deleteMonsterSkills" value="Delete" /></td>';
-	h += '</tr></table>';
-	h += '</div>';
-	h += '<h3>Delete Database</h3>';
-	h += '<div>';
-	h += '<p>If you are facing a problem with database, and the problem can not be resolved, delete the database.</p>';
-	h += '<p>In order to re-create database, reload the page. After that, you can import data previously exported.</p>';
-	h += '<input type="button" id="deleteDatabase" value="Delete Database" />';
-	h += '</div>';
-	h += '<h2>Migration</h2>';
-	h += '<h3>Migrate to New Database</h3>';
-	h += '<div>';
-	h += '<p>HVSTAT will now use the new IndexedDB database instead of the localStorage database. You can migrate your old database into the new database.</p>'
-	h += '<p><span style="color: red;">If you have already scanned, note that this operation will overwrite existing data on the new database.</span></p>';
-	h += '<input type="button" id="migrateDatabase" value="Migrate" />';
-	h += '</div>';
-	h += '<h3>Delete Old Database (localStorage)</h3>';
-	h += '<div>';
-	h += '<p>Currently your old database occupies <span id="oldDatabaseSize" style="font-weight: bold;">'
-		+ (oldDatabaseSize / 1024 / 1024 * (HVStat.isChrome ? 2 : 1)).toFixed(2)
-		+ '</span> MB on the localStorage. In order to free up space for other HV scripts, delete the old database after migration.</p>';
-	h += '<p><span style="color: red;"></span></p>';
-	h += '<input type="button" id="deleteOldDatabase" value="Delete" />';
-	h += '</div>';
-	return h;
-}
 function initUI() {
 	var d = 4;
 	var c = document.querySelector("div.stuffbox").scrollWidth - 60 - 4;
@@ -4105,8 +4144,21 @@ function initUI() {
 	div.style.cssText = "position:absolute; top:" + d + "px; left: " + c + "px; z-index:1074; cursor: pointer;";
 	div.innerHTML = '<span style="margin:3px" class="ui-icon ui-icon-wrench" title="Launch HV STAT UI"/>';
 	document.body.insertBefore(div, null);
-	div.addEventListener("click", initMainMenu);
+	div.addEventListener("click", loadExternalScripts);
 }
+
+function loadExternalScripts(event) {
+	event.currentTarget.removeEventListener("click", loadExternalScripts);
+	// load jQuery and jQuery UI
+	browserExtension.requestResourceText("scripts/", "jquery-1.8.3.min.js", function (resourceText) {
+		eval.call(window, resourceText);
+		browserExtension.requestResourceText("scripts/", "jquery-ui-1.9.2.custom.min.js", function (resourceText) {
+			eval.call(window, resourceText);
+			initMainMenu();
+		});
+	});
+}
+
 function initMainMenu() {
 	if (_isMenuInitComplete) return;
 	var b = "[STAT] HentaiVerse Statistics, Tracking, and Analysis Tool v." + HVStat.VERSION + (HVStat.isChrome ? " (Chrome Edition)" : "");
@@ -4147,10 +4199,15 @@ function initMainMenu() {
 	initItemPane();
 	initRewardsPane();
 	initShrinePane();
-	initSettingsPane();
-	initMonsterStatsPane();
+	browserExtension.requestResourceText("resources/", "settings-pane.html", function (resourceText) {
+		$("#pane6").html(resourceText);
+		initSettingsPane();
+	});
+	browserExtension.requestResourceText("resources/", "monster-database-pane.html", function (resourceText) {
+		$("#pane7").html(resourceText);
+		initMonsterStatsPane();
+	});
 	var mainButton = document.getElementById("HVStatMainButton");
-	mainButton.removeEventListener("click", initMainMenu);
 	mainButton.addEventListener("click", function () {
 		if ($(c).dialog("isOpen"))
 			$(c).dialog("close");
@@ -4271,7 +4328,12 @@ function initShrinePane() {
 	});
 }
 function initMonsterStatsPane() {
-	$("#pane7").html(getMonsterStatsHtml());
+	function showOldDatabaseSize() {
+		var oldDatabaseSize = ((localStorage.HVMonsterDatabase ? localStorage.HVMonsterDatabase.length : 0) / 1024 / 1024 * (HVStat.isChrome ? 2 : 1)).toFixed(2);
+		var e = document.getElementById("hvstat-monster-database-old-database-size");
+		e.textContent = String(oldDatabaseSize);
+	}
+	showOldDatabaseSize();
 	$("#importMonsterScanResults").change(function (event) {
 		var file = event.target.files[0]; 
 		if (!file) {
@@ -4341,145 +4403,11 @@ function initMonsterStatsPane() {
 	$("#deleteOldDatabase").click(function () {
 		if (confirm("Are you really sure to delete your old monster database?")) {
 			HVStat.migration.deleteOldDatabase();
-			// TODO: update Monster Stats pane
+			showOldDatabaseSize();
 		}
 	});
 }
 function initSettingsPane() {
-	var a = '<a style="color:red;padding-bottom:10px">All changes will take effect on next page load.</a>'
-		+ '<table class="_settings" cellspacing="0" cellpadding="2" style="width:100%">'
-		+ '<tr><td colspan="3"><b>General Options:</b></td><td></td></tr>'
-		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isShowSidebarProfs" /></td><td colspan="2">Show proficiencies in sidebar</td><td></td></tr>'
-		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isColumnInventory" /></td><td colspan="2">Use column view for item inventory (<span style="color:red">Downloadable/Custom Local Fonts only!</span>)</td></tr>'
-		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isChangePageTitle" /></td><td colspan="2">Change HentaiVerse page title: <input type="text" name="customPageTitle" size="40" /></td><td></td></tr>'
-		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isStartAlert" /></td><td colspan="2">Warnings before starting Challenges when HP is below <input type="text" name="StartAlertHP" size="1" maxLength="2" style="text-align:right" />%, MP is below <input type="text" name="StartAlertMP" size="1" maxLength="2" style="text-align:right" />%, SP is below <input type="text" name="StartAlertSP" size="1" maxLength="2" style="text-align:right" />% or difficulty is over <select id="StartAlertDifficulty"><option id=diff1 value=1>Easy</option><option id=diff2 value=2>Normal</option><option id=diff3 value=3>Hard</option><option id=diff4 value=4>Heroic</option><option id=diff5 value=5>Nightmare</option><option id=diff6 value=6>Hell</option><option id=diff7 value=7>Nintendo</option><option id=diff8 value=8>Battletoads</option></select> (<span style="color:red">Downloadable/Custom Local Fonts only!</span>)</td><td></td></tr>'
-		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isShowScanButton" /></td><td colspan="2">Show scan buttons</td><td></td></tr>'
-		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isShowSkillButton" /></td><td colspan="2">Show skill buttons</td><td></td></tr>'
-		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isShowEquippedSet" /></td><td colspan="2">Show equipped set number at left panel (<span style="color:red">Downloadable/Custom Local Fonts only!</span>)</td><td></td></tr>'
-		+ '<tr><td colspan="3">Show equipment tags in:</td><td></td></tr>'
-		+ '<tr><td align="center" style="width:5px;padding-left:15px"><input type="checkbox" name="isShowTags0" /></td><td colspan="3" style="padding-left:15px">Equipment page </td></tr>'
-		+ '<tr><td align="center" style="width:5px;padding-left:15px"><input type="checkbox" name="isShowTags1" /></td><td colspan="3" style="padding-left:15px">Bazaar shop page </td></tr>'
-		+ '<tr><td align="center" style="width:5px;padding-left:15px"><input type="checkbox" name="isShowTags2" /></td><td colspan="3" style="padding-left:15px">Item World </td></tr>'
-		+ '<tr><td align="center" style="width:5px;padding-left:15px"><input type="checkbox" name="isShowTags3" /></td><td colspan="3" style="padding-left:15px">Moogle Mail Attachments list </td></tr>'
-		+ '<tr><td align="center" style="width:5px;padding-left:15px"><input type="checkbox" name="isShowTags4" /></td><td colspan="3" style="padding-left:15px">Forge </td></tr>'
-		+ '<tr><td align="center" style="width:5px;padding-left:15px"><input type="checkbox" name="isShowTags5" /></td><td colspan="3" style="padding-left:15px">Inventory (<span style="color:red">Strongly suggested to turn it on and visit inventory once for a while</span>)</td></tr>'
-		+ '<tr><td colspan="2"><b>Keyboard Options:</b></td></tr>'
-		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isEnableScanHotkey" /></td><td colspan="2">Enable Scan Hotkeys: numpad","/numpad delete</td><td></td></tr>'
-		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isEnableSkillHotkey" /></td><td colspan="2">Enable Weapon Skill Hotkeys: "+" / "=" and numpad"+"</td><td></td></tr>'
-		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="enableOFCHotkey" /></td><td colspan="2">Enable Orbital Friendship Cannon Hotkeys: "-" / "_" and numpad"-"</td><td></td></tr>'
-		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="enableScrollHotkey" /></td><td colspan="2">Enable Page Up/Down key on scrollable panes</td><td></td></tr>'
-		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isDisableForgeHotKeys" /></td><td colspan="2">Disable hotkeys in the Forge (<span style="color:red">Strongly recommended if using equipment tags</span>)</td><td></td></tr>'
-		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="enableShrineKeyPatch" /></td><td colspan="2">Patch to enable Space key in the Shrine (Chrome only)</td><td></td></tr>'
-		+ '<tr><td colspan="2"><b>Battle Enhancement:</b></td></tr>'
-		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isShowHighlight" /></td><td colspan="2">Highlight battle log</td><td></td></tr>'
-		+ '<tr><td align="center" style="width:5px;padding-left:20px"><input type="checkbox" name="isAltHighlight" /></td><td colspan="2" style="padding-left:10px">Use alternate highlighting</td></tr>'
-		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isShowDivider" /></td><td colspan="2">Show turn divider</td><td></td></tr>'
-		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isShowSelfDuration" /></td><td colspan="2">Show self effect durations</td><td></td></tr>'
-		+ '<tr><td align="center" style="width:5px;padding-left:30px"><input type="checkbox" name="isSelfEffectsWarnColor" /></td><td colspan="2" style="padding-left:10px">Highlight duration badges - <span style="color:orange">Orange</span>: on <input type="text" name="SelfWarnOrangeRounds" size="1" maxLength="2" style="text-align:right" /> rounds; <span style="color:red">Red</span>: on <input type="text" name="SelfWarnRedRounds" size="1" maxLength="1" style="text-align:right" /> rounds</td></tr>'
-		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isShowRoundReminder" /></td><td colspan="2">Final round reminder - minimum <input type="text" name="reminderMinRounds" size="1" maxLength="3" style="text-align:right" /> rounds; Alert <input type="text" name="reminderBeforeEnd" size="1" maxLength="1" style="text-align:right" /> rounds before end</td></tr>'
-		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isShowEndStats" /></td><td colspan="2">Show Battle Summary</td><td></td></tr>'
-		+ '<tr><td align="center" style="width:5px;padding-left:20px"><input type="checkbox" name="isShowEndProfs" /></td><td colspan="2" style="padding-left:10px">Show Proficiency Gain Summary</td></tr>'
-		+ '<tr><td align="center" style="width:5px;padding-left:40px"><input type="checkbox" name="isShowEndProfsMagic" /></td><td colspan="2" style="padding-left:30px">Show Magic Proficiency Gain Summary</td></tr>'
-		+ '<tr><td align="center" style="width:5px;padding-left:40px"><input type="checkbox" name="isShowEndProfsArmor" /></td><td colspan="2" style="padding-left:30px">Show Armor Proficiency Gain Summary</td></tr>'
-		+ '<tr><td align="center" style="width:5px;padding-left:40px"><input type="checkbox" name="isShowEndProfsWeapon" /></td><td colspan="2" style="padding-left:30px">Show Weapon Proficiency Gain Summary</td></tr>'
-		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isAlertGem" /></td><td colspan="2">Alert on Powerup drops</td></tr>'
-		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isAlertOverchargeFull" /></td><td colspan="2">Alert when Overcharge is full</td></tr>'
-		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isShowMonsterNumber"></td><td colspan="2">Show Numbers instead of letters next to monsters</td></tr>'
-		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isShowRoundCounter"></td><td colspan="2">Show Round Counter</td></tr>'
-		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isShowPowerupBox"></td><td colspan="2">Show Powerup Box</td></tr>'
-		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="autoAdvanceBattleRound" /></td><td colspan="2">Automatically advance the round when "You are Victorious" - delay: <input type="text" name="autoAdvanceBattleRoundDelay" size="4" maxLength="5" style="text-align:right" />ms</td><td></td></tr>'
-		+ '<tr><td colspan="2" style="padding-left:10px">Display Monster Stats:</td></tr>'
-		+ '<tr><td align="center" style="width:5px;padding-left:20px"><input type="checkbox" name="showMonsterHP" /></td><td colspan="2">Show monster HP (<span style="color:red">Estimated</span>)</td><td></td></tr>'
-		+ '<tr><td align="center" style="width:5px;padding-left:40px"><input type="checkbox" name="showMonsterHPPercent" /></td><td colspan="2" style="padding-left:10px">Show monster HP in percentage</td></tr>'
-		+ '<tr><td align="center" style="width:5px;padding-left:20px"><input type="checkbox" name="showMonsterMP" /></td><td  colspan="2">Show monster MP percentage</td><td></td></tr>'
-		+ '<tr><td align="center" style="width:5px;padding-left:20px"><input type="checkbox" name="showMonsterSP" /></td><td colspan="2">Show monster SP percentage</td><td></td></tr>'
-		+ '<tr><td align="center" style="width:5px;padding-left:40px"><input type="checkbox" name="showMonsterInfoFromDB" /></td><td colspan="2" style="padding-left:10px">Show monster info from database</td><td></td></tr>'
-		+ '<tr><td align="center" style="width:5px;padding-left:60px"><input type="checkbox" name="showMonsterClassFromDB" /></td><td colspan="2" style="padding-left:20px">Show monster class from database</td></tr>'
-		+ '<tr><td align="center" style="width:5px;padding-left:60px"><input type="checkbox" name="showMonsterPowerLevelFromDB" /></td><td colspan="2" style="padding-left:20px">Show monster power level from database</td></tr>'
-		+ '<tr><td align="center" style="width:5px;padding-left:60px"><input type="checkbox" name="showMonsterAttackTypeFromDB" /></td><td colspan="2" style="padding-left:20px">Show monster attack type from database</td></tr>'
-		+ '<tr><td align="center" style="width:5px;padding-left:60px"><input type="checkbox" name="showMonsterWeaknessesFromDB" /></td><td colspan="2" style="padding-left:20px">Show monster weaknesses from database</td></tr>'
-		+ '<tr><td align="center" style="width:5px;padding-left:60px"><input type="checkbox" name="showMonsterResistancesFromDB" /></td><td colspan="2" style="padding-left:20px">Show monster resistances from database</td></tr>'
-		+ '<tr><td colspan="3" style="padding-left:85px">Hide specific weaknesses/resitances: </td></tr>'
-		+ '<tr><td align="center" style="width:5px;padding-left:65px"><input type="checkbox" name="hideSpecificDamageType0" /></td><td colspan="2" style="padding-left:20px">Crushing</td></tr>'
-		+ '<tr><td align="center" style="width:5px;padding-left:65px"><input type="checkbox" name="hideSpecificDamageType1" /></td><td colspan="2" style="padding-left:20px">Slashing</td></tr>'
-		+ '<tr><td align="center" style="width:5px;padding-left:65px"><input type="checkbox" name="hideSpecificDamageType2" /></td><td colspan="2" style="padding-left:20px">Piercing</td></tr>'
-		+ '<tr><td align="center" style="width:5px;padding-left:65px"><input type="checkbox" name="hideSpecificDamageType3" /></td><td colspan="2" style="padding-left:20px">Fire</td></tr>'
-		+ '<tr><td align="center" style="width:5px;padding-left:65px"><input type="checkbox" name="hideSpecificDamageType4" /></td><td colspan="2" style="padding-left:20px">Cold</td></tr>'
-		+ '<tr><td align="center" style="width:5px;padding-left:65px"><input type="checkbox" name="hideSpecificDamageType5" /></td><td colspan="2" style="padding-left:20px">Elec</td></tr>'
-		+ '<tr><td align="center" style="width:5px;padding-left:65px"><input type="checkbox" name="hideSpecificDamageType6" /></td><td colspan="2" style="padding-left:20px">Wind</td></tr>'
-		+ '<tr><td align="center" style="width:5px;padding-left:65px"><input type="checkbox" name="hideSpecificDamageType7" /></td><td colspan="2" style="padding-left:20px">Holy</td></tr>'
-		+ '<tr><td align="center" style="width:5px;padding-left:65px"><input type="checkbox" name="hideSpecificDamageType8" /></td><td colspan="2" style="padding-left:20px">Dark</td></tr>'
-		+ '<tr><td align="center" style="width:5px;padding-left:65px"><input type="checkbox" name="hideSpecificDamageType9" /></td><td colspan="2" style="padding-left:20px">Soul</td></tr>'
-		+ '<tr><td align="center" style="width:5px;padding-left:65px"><input type="checkbox" name="hideSpecificDamageType10" /></td><td colspan="2" style="padding-left:20px">Void</td></tr>'
-		+ '<tr><td align="center" style="width:5px;padding-left:60px"><input type="checkbox" name="ResizeMonsterInfo" /></td><td colspan="2" style="padding-left:20px">Resize Monster Info if longer than Info box</td></tr>'
-		+ '<tr><td align="center" style="width:5px;padding-left:40px"><input type="checkbox" name="isShowStatsPopup" /></td><td colspan="2" style="padding-left:10px">Show monster statistics on mouseover - delay: <input type="text" name="monsterPopupDelay" size="3" maxLength="4" style="text-align:right" />ms</td><td></td></tr>'
-		+ '<tr><td align="center" style="width:5px;padding-left:50px"><input type="checkbox" name="isMonsterPopupPlacement" /></td><td colspan="2" style="padding-left:20px">Alternative placement for mouseover popup</td></tr></tr>'
-		+ '<tr><td align="center" style="width:5px;padding-left:20px"><input type="checkbox" name="isShowMonsterDuration" /></td><td colspan="2">Show monster effect durations</td><td></td></tr>'
-		+ '<tr><td align="center" style="width:5px;padding-left:30px"><input type="checkbox" name="isMonstersEffectsWarnColor" /></td><td colspan="2" style="padding-left:10px">Highlight duration badges - <span style="color:orange">Orange</span>: below <input type="text" name="MonstersWarnOrangeRounds" size="1" maxLength="2" style="text-align:right" /> rounds; <span style="color:red">Red</span>: below <input type="text" name="MonstersWarnRedRounds" size="1" maxLength="1" style="text-align:right" /> rounds</td></tr>'
-		+ '<tr><td colspan="2"><b>Tracking Functions:</b></td></tr>'
-		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isTrackStats" /></td><td colspan="2">Track Battle Statistics</td><td></td></tr>'
-		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isTrackItems" /></td><td colspan="2">Track Item Drops</td><td></td></tr>'
-		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isTrackRewards" /></td><td colspan="2">Track Arena Rewards</td></tr>'
-		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isTrackShrine" /></td><td colspan="2">Track Shrine (<span style="color:red">Downloadable/Custom Local Fonts only!</span>)</td></tr>'
-		+ '<tr><td style="padding-left:20px" colspan="2"><input type="button" class="_resetAll" value="Reset" title="Reset all tracking data." /></td></tr>'
-		+ '<tr><td colspan="3"><b>Warning System:</b></td><td></td></tr>'
-		+ '<tr><td colspan="2" style="padding-left:10px">Effects Expiring Warnings:</td></tr>'
-		+ '<tr><td align="center" style="width:5px;padding-left:5px"><input type="checkbox" name="isMainEffectsAlertSelf" /></td><td colspan="2">Alert when effects on yourself are expiring</td></tr>'
-		+ '<tr><td align="center" style="width:5px;padding-left:30px"><input type="checkbox" name="isEffectsAlertSelf6" /></td><td style="padding-left:10px">Channeling</td><td style="width:440px">- alert on <input type="text" name="EffectsAlertSelfRounds6" size="1" maxLength="3" style="text-align:right;font-size:11px;font-weight:bold"/>rounds remaining</td><td></td></tr>'
-		+ '<tr><td align="center" style="width:5px;padding-left:30px"><input type="checkbox" name="isEffectsAlertSelf0" /></td><td style="padding-left:10px">Protection</td><td style="width:440px">- alert on <input type="text" name="EffectsAlertSelfRounds0" size="1" maxLength="3" style="text-align:right;font-size:11px;font-weight:bold" />rounds remaining</td><td></td></tr>'
-		+ '<tr><td align="center" style="width:5px;padding-left:30px"><input type="checkbox" name="isEffectsAlertSelf1" /></td><td style="padding-left:10px">Hastened</td><td style="width:440px">- alert on <input type="text" name="EffectsAlertSelfRounds1" size="1" maxLength="3" style="text-align:right;font-size:11px;font-weight:bold" />rounds remaining</td><td></td></tr>'
-		+ '<tr><td align="center" style="width:5px;padding-left:30px"><input type="checkbox" name="isEffectsAlertSelf2" /></td><td style="padding-left:10px">Shadow Veil</td><td style="width:440px">- alert on <input type="text" name="EffectsAlertSelfRounds2" size="1" maxLength="3" style="text-align:right;font-size:11px;font-weight:bold" />rounds remaining</td><td></td></tr>'
-		+ '<tr><td align="center" style="width:5px;padding-left:30px"><input type="checkbox" name="isEffectsAlertSelf3" /></td><td style="padding-left:10px">Regen</td><td style="width:440px">- alert on <input type="text" name="EffectsAlertSelfRounds3" size="1" maxLength="3" style="text-align:right;font-size:11px;font-weight:bold" />rounds remaining</td><td></td></tr>'
-		+ '<tr><td align="center" style="width:5px;padding-left:30px"><input type="checkbox" name="isEffectsAlertSelf5" /></td><td style="padding-left:10px">Spark of Life</td><td style="width:440px">- alert on <input type="text" name="EffectsAlertSelfRounds5" size="1" maxLength="3" style="text-align:right;font-size:11px;font-weight:bold" />rounds remaining</td><td></td></tr>'
-		+ '<tr><td align="center" style="width:5px;padding-left:30px"><input type="checkbox" name="isEffectsAlertSelf7" /></td><td style="padding-left:10px">Arcane Focus</td><td style="width:440px">- alert on <input type="text" name="EffectsAlertSelfRounds7" size="1" maxLength="3" style="text-align:right;font-size:11px;font-weight:bold" />rounds remaining</td><td></td></tr>'
-		+ '<tr><td align="center" style="width:5px;padding-left:30px"><input type="checkbox" name="isEffectsAlertSelf8" /></td><td style="padding-left:10px">Heartseeker</td><td style="width:440px">- alert on <input type="text" name="EffectsAlertSelfRounds8" size="1" maxLength="3" style="text-align:right;font-size:11px;font-weight:bold" />rounds remaining</td><td></td></tr>'
-		+ '<tr><td align="center" style="width:5px;padding-left:30px"><input type="checkbox" name="isEffectsAlertSelf9" /></td><td style="padding-left:10px">Spirit Shield</td><td style="width:440px">- alert on <input type="text" name="EffectsAlertSelfRounds9" size="1" maxLength="3" style="text-align:right;font-size:11px;font-weight:bold" />rounds remaining</td><td></td></tr>'
-		+ '<tr><td align="center" style="width:5px;padding-left:30px"><input type="checkbox" name="isEffectsAlertSelf10" /></td><td style="padding-left:10px">Flame Spikes</td><td style="width:440px">- alert on <input type="text" name="EffectsAlertSelfRounds10" size="1" maxLength="3" style="text-align:right;font-size:11px;font-weight:bold" />rounds remaining</td><td></td></tr>'
-		+ '<tr><td align="center" style="width:5px;padding-left:30px"><input type="checkbox" name="isEffectsAlertSelf11" /></td><td style="padding-left:10px">Frost Spikes</td><td style="width:440px">- alert on <input type="text" name="EffectsAlertSelfRounds11" size="1" maxLength="3" style="text-align:right;font-size:11px;font-weight:bold" />rounds remaining</td><td></td></tr>'
-		+ '<tr><td align="center" style="width:5px;padding-left:30px"><input type="checkbox" name="isEffectsAlertSelf12" /></td><td style="padding-left:10px">Lightning Spikes</td><td style="width:440px">- alert on <input type="text" name="EffectsAlertSelfRounds12" size="1" maxLength="3" style="text-align:right;font-size:11px;font-weight:bold" />rounds remaining</td><td></td></tr>'
-		+ '<tr><td align="center" style="width:5px;padding-left:30px"><input type="checkbox" name="isEffectsAlertSelf13" /></td><td style="padding-left:10px">Storm Spikes</td><td style="width:440px">- alert on <input type="text" name="EffectsAlertSelfRounds13" size="1" maxLength="3" style="text-align:right;font-size:11px;font-weight:bold" />rounds remaining</td><td></td></tr>'
-		+ '<tr><td align="center" style="width:5px;padding-left:30px"><input type="checkbox" name="isEffectsAlertSelf14" /></td><td style="padding-left:10px">Chain 1</td><td style="width:440px">- alert on <input type="text" name="EffectsAlertSelfRounds14" size="1" maxLength="1" style="text-align:right;font-size:11px;font-weight:bold" />rounds remaining</td><td></td></tr>'
-		+ '<tr><td align="center" style="width:5px;padding-left:30px"><input type="checkbox" name="isEffectsAlertSelf15" /></td><td style="padding-left:10px">Chain 2</td><td style="width:440px">- alert on <input type="text" name="EffectsAlertSelfRounds15" size="1" maxLength="1" style="text-align:right;font-size:11px;font-weight:bold" />rounds remaining</td><td></td></tr>'
-		+ '<tr><td align="center" style="width:5px;padding-left:5px"><input type="checkbox" name="isMainEffectsAlertMonsters" /></td><td colspan="2">Alert when effects on monsters are expiring</td></tr>'
-		+ '<tr><td align="center" style="width:5px;padding-left:30px"><input type="checkbox" name="isEffectsAlertMonsters11" /></td><td style="padding-left:10px">Coalesced Mana</td><td style="width:440px">- alert on <input type="text" name="EffectsAlertMonstersRounds11" size="1" maxLength="3" style="text-align:right;font-size:11px;font-weight:bold" />rounds remaining</td><td></td></tr>'
-		+ '<tr><td align="center" style="width:5px;padding-left:30px"><input type="checkbox" name="isEffectsAlertMonsters0" /></td><td style="padding-left:10px">Spreading Poison</td><td style="width:440px">- alert on <input type="text" name="EffectsAlertMonstersRounds0" size="1" maxLength="3" style="text-align:right;font-size:11px;font-weight:bold" />rounds remaining</td><td></td></tr>'
-		+ '<tr><td align="center" style="width:5px;padding-left:30px"><input type="checkbox" name="isEffectsAlertMonsters1" /></td><td style="padding-left:10px">Slowed</td><td style="width:440px">- alert on <input type="text" name="EffectsAlertMonstersRounds1" size="1" maxLength="3" style="text-align:right;font-size:11px;font-weight:bold" />rounds remaining</td><td></td></tr>'
-		+ '<tr><td align="center" style="width:5px;padding-left:30px"><input type="checkbox" name="isEffectsAlertMonsters2" /></td><td style="padding-left:10px">Weakened</td><td style="width:440px">- alert on <input type="text" name="EffectsAlertMonstersRounds2" size="1" maxLength="3" style="text-align:right;font-size:11px;font-weight:bold" />rounds remaining</td><td></td></tr>'
-		+ '<tr><td align="center" style="width:5px;padding-left:30px"><input type="checkbox" name="isEffectsAlertMonsters3" /></td><td style="padding-left:10px">Asleep</td><td style="width:440px">- alert on <input type="text" name="EffectsAlertMonstersRounds3" size="1" maxLength="3" style="text-align:right;font-size:11px;font-weight:bold" />rounds remaining</td><td></td></tr>'
-		+ '<tr><td align="center" style="width:5px;padding-left:30px"><input type="checkbox" name="isEffectsAlertMonsters4" /></td><td style="padding-left:10px">Confused</td><td style="width:440px">- alert on <input type="text" name="EffectsAlertMonstersRounds4" size="1" maxLength="3" style="text-align:right;font-size:11px;font-weight:bold" />rounds remaining</td><td></td></tr>'
-		+ '<tr><td align="center" style="width:5px;padding-left:30px"><input type="checkbox" name="isEffectsAlertMonsters5" /></td><td style="padding-left:10px">Imperiled</td><td style="width:440px">- alert on <input type="text" name="EffectsAlertMonstersRounds5" size="1" maxLength="3" style="text-align:right;font-size:11px;font-weight:bold" />rounds remaining</td><td></td></tr>'
-		+ '<tr><td align="center" style="width:5px;padding-left:30px"><input type="checkbox" name="isEffectsAlertMonsters6" /></td><td style="padding-left:10px">Blinded</td><td style="width:440px">- alert on <input type="text" name="EffectsAlertMonstersRounds6" size="1" maxLength="3" style="text-align:right;font-size:11px;font-weight:bold" />rounds remaining</td><td></td></tr>'
-		+ '<tr><td align="center" style="width:5px;padding-left:30px"><input type="checkbox" name="isEffectsAlertMonsters7" /></td><td style="padding-left:10px">Silenced</td><td style="width:440px">- alert on <input type="text" name="EffectsAlertMonstersRounds7" size="1" maxLength="3" style="text-align:right;font-size:11px;font-weight:bold" />rounds remaining</td><td></td></tr>'
-		+ '<tr><td align="center" style="width:5px;padding-left:30px"><input type="checkbox" name="isEffectsAlertMonsters8" /></td><td style="padding-left:10px">Nerfed</td><td style="width:440px">- alert on <input type="text" name="EffectsAlertMonstersRounds8" size="1" maxLength="3" style="text-align:right;font-size:11px;font-weight:bold" />rounds remaining</td><td></td></tr>'
-		+ '<tr><td align="center" style="width:5px;padding-left:30px"><input type="checkbox" name="isEffectsAlertMonsters9" /></td><td style="padding-left:10px">Magically Snared</td><td style="width:440px">- alert on <input type="text" name="EffectsAlertMonstersRounds9" size="1" maxLength="3" style="text-align:right;font-size:11px;font-weight:bold" />rounds remaining</td><td></td></tr>'
-		+ '<tr><td align="center" style="width:5px;padding-left:30px"><input type="checkbox" name="isEffectsAlertMonsters10" /></td><td style="padding-left:10px">Lifestream</td><td style="width:440px">- alert on <input type="text" name="EffectsAlertMonstersRounds10" size="1" maxLength="3" style="text-align:right;font-size:11px;font-weight:bold" />rounds remaining</td><td></td></tr>'
-		+ '<tr><td colspan="2" style="padding-left:10px">Specific Spell Warnings:</td></tr>'
-		+ '<tr><td align="center" style="width:5px;padding-left:20px"><input type="checkbox" name="isWarnAbsorbTrigger" /></td><td colspan="2">Alert when Absorbing Ward triggers</td></tr>'
-		+ '<tr><td align="center" style="width:5px;padding-left:20px"><input type="checkbox" name="isWarnSparkTrigger" /></td><td colspan="2">Alert when Spark of Life triggers</td></tr>'
-		+ '<tr><td align="center" style="width:5px;padding-left:20px"><input type="checkbox" name="isWarnSparkExpire" /></td><td colspan="2">Alert when Spark of Life expires</td></tr>'
-		+ '<tr><td colspan="2" style="padding-left:10px">Alert Mode:</td></tr>'
-		+ '<tr><td align="center" style="width:5px;padding-left:20px"><input type="checkbox" name="isHighlightQC" /></td><td colspan="2">Highlight Quickcast - <span style="color:orange">Orange</span>: <input type="text" name="warnOrangeLevel" size="1" maxLength="2" style="text-align:right" />% HP; <span style="color:red">Red</span>: <input type="text" name="warnRedLevel" size="1" maxLength="2" style="text-align:right" />% HP; <span style="color:blue">Blue</span>: <input type="text" name="warnOrangeLevelMP" size="1" maxLength="2" style="text-align:right" />% MP; <span style="color:darkblue">Darkblue</span>: <input type="text" name="warnRedLevelMP" size="1" maxLength="2" style="text-align:right" />% MP; <span style="color:lime">Lime</span>: <input type="text" name="warnOrangeLevelSP" size="1" maxLength="2" style="text-align:right" />% SP; <span style="color:green">Green</span>: <input type="text" name="warnRedLevelSP" size="1" maxLength="2" style="text-align:right" />% SP</td></tr>'
-		+ '<tr><td align="center" style="width:5px;padding-left:20px"><input type="checkbox" name="isShowPopup" /></td><td colspan="2">Alert Message - <input type="text" name="warnAlertLevel" size="1" maxLength="2" style="text-align:right" />% HP; <input type="text" name="warnAlertLevelMP" size="1" maxLength="2" style="text-align:right" />% MP; <input type="text" name="warnAlertLevelSP" size="1" maxLength="2" style="text-align:right" />% SP</td></tr>'
-		+ '<tr><td align="center" style="width:5px;padding-left:30px"><input type="checkbox" name="isNagHP" /></td><td colspan="2" style="padding-left:10px">HP Nag Mode - Alert message appears every turn your HP is critical</td></tr>'
-		+ '<tr><td align="center" style="width:5px;padding-left:30px"><input type="checkbox" name="isNagMP" /></td><td colspan="2" style="padding-left:10px">MP Nag Mode - Alert message appears every turn your MP is critical</td></tr>'
-		+ '<tr><td align="center" style="width:5px;padding-left:30px"><input type="checkbox" name="isNagSP" /></td><td colspan="2" style="padding-left:10px">SP Nag Mode - Alert message appears every turn your SP is critical</td></tr>'
-		+ '<tr><td colspan="2" style="padding-left:10px">Battle Type:</td></tr>'
-		+ '<tr><td align="center" style="width:5px;padding-left:20px"><input type="checkbox" name="isWarnH" /></td><td colspan="2" style="padding-left:10px">Hourly encounters</td></tr>'
-		+ '<tr><td align="center" style="width:5px;padding-left:20px"><input type="checkbox" name="isWarnA" /></td><td colspan="2" style="padding-left:10px">Arena</td></tr>'
-		+ '<tr><td align="center" style="width:5px;padding-left:20px"><input type="checkbox" name="isWarnGF" /></td><td colspan="2" style="padding-left:10px">Grindfest</td></tr>'
-		+ '<tr><td align="center" style="width:5px;padding-left:20px"><input type="checkbox" name="isWarnCF" /></td><td colspan="2" style="padding-left:10px">Crystfest</td></tr>'
-		+ '<tr><td align="center" style="width:5px;padding-left:20px"><input type="checkbox" name="isWarnIW" /></td><td colspan="2" style="padding-left:10px">Item World</td></tr>'
-		+ '<tr><td colspan="2"><b>Database Options:</b></td></tr>'
-		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isRememberScan" /></td><td colspan="2">Record monster scan results</td><td></td></tr>'
-		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isRememberSkillsTypes" /></td><td colspan="2">Record monster skills</td><td></td></tr>'
-		+ '<tr><td colspan="2"><b>Debug Option:</b></td></tr>'
-		+ '<tr><td align="center" style="width:5px"><input type="checkbox" name="isDebugMode" /></td><td colspan="2">Debug Mode</td><td></td></tr>'
-		+ '</table><hr />'
-		+ '<table class="_settings" cellspacing="0" cellpadding="2" style="width:100%">'
-		+ '<tr><td align="center"><input type="button" class="_resetSettings" value="Default Settings" title="Reset settings to default."/></td><td align="center"><input type="button" class="_masterReset" value="MASTER RESET" title="Deletes all of STAT\'s saved data and settings."/></td></tr>'
-		+ '</table>';
-	$("#pane6").html(a);
-
 	// General Options
 	if (_settings.isShowSidebarProfs) $("input[name=isShowSidebarProfs]").attr("checked", "checked");
 	if (_settings.isColumnInventory) $("input[name=isColumnInventory]").attr("checked", "checked");
@@ -6126,11 +6054,6 @@ function HVCharacterStatsSettings() {
 	//1-easy, 2-normal, 3-hard, 4-heroic, 5-
 	this.difficulty = [0, 0];
 	this.set = 0;
-	//0-Misc Posting, 1-Adept Learner, 2-Assimilator, 3-Ability Boost, 4-Karma Amplifier
-	//5-Karma Shield, 6-Power Saver, 7-Power Regen, 8-Power Tank, 9-Scavenger
-	//10-Luck of the Draw, 11-Quartermaster, 12-Archaeologist, 13-Spelunker
-	//14-Set Collector, 15-Pack Rat, 16-Refined Aura
-	this.training = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
 	this.isLoaded = false;
 }
 function loadCHARSSObject() {
@@ -6673,12 +6596,6 @@ HVStat.main1 = function () {
 		HVStat.idbAccessQueue.execute();
 	});
 
-	if (_settings.isShowMonsterNumber) {
-		setMonsterNumberCSS();
-	}
-	if (_settings.isShowHighlight) {
-		setLogCSS();
-	}
 	if (document.readyState === "loading") {
 		document.addEventListener("readystatechange", HVStat.documentReadyStateChangeHandler);
 	} else {
@@ -6688,6 +6605,12 @@ HVStat.main1 = function () {
 
 // readyState: interactive
 HVStat.main2 = function () {
+	if (_settings.isShowMonsterNumber) {
+		setMonsterNumberCSS();
+	}
+	if (_settings.isShowHighlight) {
+		setLogCSS();
+	}
 	// store DOM caches
 	HVStat.popupElement = document.getElementById("popup_box");
 	HVStat.quickcastBarElement = document.getElementById("quickbar");
@@ -6858,13 +6781,7 @@ HVStat.main2 = function () {
 
 	document.addEventListener("keydown", HVStat.documentKeydownEventHandler);
 
-	if (!HVStat.isChrome && !document.getElementById("cssdiv")) {
-		GM_addStyle(GM_getResourceText("jQueryUICSS"));
-		var a = document.createElement("div");
-		a.setAttribute("id", "cssdiv");
-		a.style.cssText = "visibility:hidden";
-		document.documentElement.appendChild(a);
-	}
+	addUIStyle();
 	initUI();
 };
 
