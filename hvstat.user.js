@@ -1,13 +1,13 @@
 // ==UserScript==
-// @name             HV Statistics, Tracking, and Analysis Tool
-// @namespace        HV STAT
-// @description      Collects data, analyzes statistics, and enhances the interface of the HentaiVerse
-// @include          http://hentaiverse.org/*
-// @exclude          http://hentaiverse.org/pages/showequip*
-// @author           Various (http://forums.e-hentai.org/index.php?showtopic=79552)
-// @version          5.4.8
-// @require         scripts/jquery-1.8.3.min.js
-// @require         scripts/jquery-ui-1.9.2.custom.min.js
+// @name            HV Statistics, Tracking, and Analysis Tool
+// @namespace       HV STAT
+// @description     Collects data, analyzes statistics, and enhances the interface of the HentaiVerse
+// @include         http://hentaiverse.org/*
+// @exclude         http://hentaiverse.org/pages/showequip*
+// @author          Various (http://forums.e-hentai.org/index.php?showtopic=79552)
+// @version         5.4.8
+// @resource        jquery-1.8.3.min.js                         scripts/jquery-1.8.3.min.js
+// @resource        jquery-ui-1.9.2.custom.min.js               scripts/jquery-ui-1.9.2.custom.min.js
 // @resource        jquery-ui-1.9.2.custom.min.css              resources/jquery-ui-1.9.2.custom.min.css
 // @resource        monster-database-pane.html                  resources/monster-database-pane.html
 // @resource        settings-pane.html                          resources/settings-pane.html
@@ -20,7 +20,7 @@
 // @resource        ui-icons_2e83ff_256x240.png                 images/ui-icons_2e83ff_256x240.png
 // @resource        ui-icons_5c0d11_256x240.png                 images/ui-icons_5c0d11_256x240.png
 // @resource        ui-icons_cd0a0a_256x240.png                 images/ui-icons_cd0a0a_256x240.png
-// @run-at          document-end
+// @run-at          document-start
 // ==/UserScript==
 
 //------------------------------------
@@ -4140,8 +4140,21 @@ function initUI() {
 	div.style.cssText = "position:absolute; top:" + d + "px; left: " + c + "px; z-index:1074; cursor: pointer;";
 	div.innerHTML = '<span style="margin:3px" class="ui-icon ui-icon-wrench" title="Launch HV STAT UI"/>';
 	document.body.insertBefore(div, null);
-	div.addEventListener("click", initMainMenu);
+	div.addEventListener("click", loadExternalScripts);
 }
+
+function loadExternalScripts(event) {
+	event.currentTarget.removeEventListener("click", loadExternalScripts);
+	// load jQuery and jQuery UI
+	browserExtension.requestResourceText("scripts/", "jquery-1.8.3.min.js", function (resourceText) {
+		eval.call(window, resourceText);
+		browserExtension.requestResourceText("scripts/", "jquery-ui-1.9.2.custom.min.js", function (resourceText) {
+			eval.call(window, resourceText);
+			initMainMenu();
+		});
+	});
+}
+
 function initMainMenu() {
 	if (_isMenuInitComplete) return;
 	var b = "[STAT] HentaiVerse Statistics, Tracking, and Analysis Tool v." + HVStat.VERSION + (HVStat.isChrome ? " (Chrome Edition)" : "");
@@ -4191,7 +4204,6 @@ function initMainMenu() {
 		initMonsterStatsPane();
 	});
 	var mainButton = document.getElementById("HVStatMainButton");
-	mainButton.removeEventListener("click", initMainMenu);
 	mainButton.addEventListener("click", function () {
 		if ($(c).dialog("isOpen"))
 			$(c).dialog("close");
@@ -6580,12 +6592,6 @@ HVStat.main1 = function () {
 		HVStat.idbAccessQueue.execute();
 	});
 
-	if (_settings.isShowMonsterNumber) {
-		setMonsterNumberCSS();
-	}
-	if (_settings.isShowHighlight) {
-		setLogCSS();
-	}
 	if (document.readyState === "loading") {
 		document.addEventListener("readystatechange", HVStat.documentReadyStateChangeHandler);
 	} else {
@@ -6595,6 +6601,12 @@ HVStat.main1 = function () {
 
 // readyState: interactive
 HVStat.main2 = function () {
+	if (_settings.isShowMonsterNumber) {
+		setMonsterNumberCSS();
+	}
+	if (_settings.isShowHighlight) {
+		setLogCSS();
+	}
 	// store DOM caches
 	HVStat.popupElement = document.getElementById("popup_box");
 	HVStat.quickcastBarElement = document.getElementById("quickbar");
