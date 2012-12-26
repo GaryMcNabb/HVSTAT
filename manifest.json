@@ -9,9 +9,7 @@
 		"48": "icons/48.png"
 	},
 	"content_scripts": [ {
-		"js": [
-			"hvstat.user.js"
-		],
+		"js": [ "hvstat.user.js" ],
 		"matches": [ "http://hentaiverse.org/*" ],
 		"exclude_matches": [ "http://hentaiverse.org/pages/showequip*" ],
 		"run_at": "document_start"
@@ -22,6 +20,10 @@
 		"resources/jquery-ui-1.9.2.custom.min.css",
 		"resources/monster-database-pane.html",
 		"resources/settings-pane.html",
+		"images/channeling.png",
+		"images/healthpot.png",
+		"images/manapot.png",
+		"images/spiritpot.png",
 		"images/ui-bg_flat_0_aaaaaa_40x100.png",
 		"images/ui-bg_flat_55_fbf9ee_40x100.png",
 		"images/ui-bg_flat_65_edebdf_40x100.png",
