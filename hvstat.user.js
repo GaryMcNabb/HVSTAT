@@ -100,28 +100,18 @@ var browserExtension = {
 		}
 		return resourceURL;
 	},
-	requestResourceText: function (resoucePath, resourceName, callback) {
+	getResourceText: function (resoucePath, resourceName) {
+		var resourceText;
 		if (util.isChrome) {
 			var request = new XMLHttpRequest();
 			var resourceURL = browserExtension.getResourceURL(resoucePath, resourceName);
-			request.open("GET", resourceURL);
-			request.onreadystatechange = function (event) {
-				if (request.readyState === 4) {
-					if (request.status === 200) {
-						if (callback instanceof Function) {
-							callback(request.responseText);
-						}
-					} else {
-						console.log("Error loading page, status = " + request.status + ", responseText = [" + request.responseText + "]");
-					}
-				}
-			};
+			request.open("GET", resourceURL, false);
 			request.send(null);
+			resourceText = request.responseText;
 		} else {
-			if (callback instanceof Function) {
-				callback(GM_getResourceText(resourceName));
-			}
+			resourceText = GM_getResourceText(resourceName);
 		}
+		return resourceText;
 	},
 	addStyle: function (styleText) {
 		if (util.isChrome) {
@@ -133,19 +123,18 @@ var browserExtension = {
 		}
 	},
 	addStyleFromResource: function (styleResourcePath, styleResouceName, imageResouceInfoArray) {
-		browserExtension.requestResourceText(styleResourcePath, styleResouceName, function (styleText) {
-			// replace image URLs
-			for (var i = 0; i < imageResouceInfoArray.length; i++) {
-				var imageResourceName = imageResouceInfoArray[i].name;
-				var imageOriginalPath = imageResouceInfoArray[i].originalPath;
-				var imageResourcePath = imageResouceInfoArray[i].resourcePath;
-				var imageResourceURL = browserExtension.getResourceURL(imageResourcePath, imageResourceName);
-				var regex = new RegExp(util.escapeRegex(imageOriginalPath + imageResourceName), "g");
-				styleText = styleText.replace(regex, imageResourceURL);
-			}
-			// add style
-			browserExtension.addStyle(styleText);
-		});
+		var styleText = browserExtension.getResourceText(styleResourcePath, styleResouceName);
+		// replace image URLs
+		for (var i = 0; i < imageResouceInfoArray.length; i++) {
+			var imageResourceName = imageResouceInfoArray[i].name;
+			var imageOriginalPath = imageResouceInfoArray[i].originalPath;
+			var imageResourcePath = imageResouceInfoArray[i].resourcePath;
+			var imageResourceURL = browserExtension.getResourceURL(imageResourcePath, imageResourceName);
+			var regex = new RegExp(util.escapeRegex(imageOriginalPath + imageResourceName), "g");
+			styleText = styleText.replace(regex, imageResourceURL);
+		}
+		// add style
+		browserExtension.addStyle(styleText);
 	},
 }
 
@@ -4142,23 +4131,15 @@ function initUI() {
 	div.style.cssText = "position:absolute; top:" + d + "px; left: " + c + "px; z-index:1074; cursor: pointer;";
 	div.innerHTML = '<span style="margin:3px" class="ui-icon ui-icon-wrench" title="Launch HV STAT UI"/>';
 	document.body.insertBefore(div, null);
-	div.addEventListener("click", loadExternalScripts);
+	div.addEventListener("click", initMainMenu);
 }
 
-function loadExternalScripts(event) {
-	event.currentTarget.removeEventListener("click", loadExternalScripts);
+function initMainMenu(event) {
+	event.currentTarget.removeEventListener("click", initMainMenu);
 	// load jQuery and jQuery UI
-	browserExtension.requestResourceText("scripts/", "jquery-1.8.3.min.js", function (resourceText) {
-		eval.call(window, resourceText);
-		browserExtension.requestResourceText("scripts/", "jquery-ui-1.9.2.custom.min.js", function (resourceText) {
-			eval.call(window, resourceText);
-			initMainMenu();
-		});
-	});
-}
+	eval.call(window, browserExtension.getResourceText("scripts/", "jquery-1.8.3.min.js"));
+	eval.call(window, browserExtension.getResourceText("scripts/", "jquery-ui-1.9.2.custom.min.js"));
 
-function initMainMenu() {
-	if (_isMenuInitComplete) return;
 	var b = "[STAT] HentaiVerse Statistics, Tracking, and Analysis Tool v." + HVStat.VERSION + (HVStat.isChrome ? " (Chrome Edition)" : "");
 	var c = document.createElement("div");
 	$(c).addClass("_mainMenu").css("text-align", "left");
@@ -4197,14 +4178,10 @@ function initMainMenu() {
 	initItemPane();
 	initRewardsPane();
 	initShrinePane();
-	browserExtension.requestResourceText("resources/", "settings-pane.html", function (resourceText) {
-		$("#pane6").html(resourceText);
-		initSettingsPane();
-	});
-	browserExtension.requestResourceText("resources/", "monster-database-pane.html", function (resourceText) {
-		$("#pane7").html(resourceText);
-		initMonsterStatsPane();
-	});
+	$("#pane6").html(browserExtension.getResourceText("resources/", "settings-pane.html"));
+	initSettingsPane();
+	$("#pane7").html(browserExtension.getResourceText("resources/", "monster-database-pane.html"));
+	initMonsterStatsPane();
 	var mainButton = document.getElementById("HVStatMainButton");
 	mainButton.addEventListener("click", function () {
 		if ($(c).dialog("isOpen"))
