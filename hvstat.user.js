@@ -136,6 +136,9 @@ var browserExtension = {
 		// add style
 		browserExtension.addStyle(styleText);
 	},
+	loadScript: function (scriptPath, scriptName) {
+		eval.call(window, browserExtension.getResourceText(scriptPath, scriptName));
+	}
 }
 
 var HVStat = {
@@ -4137,8 +4140,8 @@ function initUI() {
 function initMainMenu(event) {
 	event.currentTarget.removeEventListener("click", initMainMenu);
 	// load jQuery and jQuery UI
-	eval.call(window, browserExtension.getResourceText("scripts/", "jquery-1.8.3.min.js"));
-	eval.call(window, browserExtension.getResourceText("scripts/", "jquery-ui-1.9.2.custom.min.js"));
+	browserExtension.loadScript("scripts/", "jquery-1.8.3.min.js");
+	browserExtension.loadScript("scripts/", "jquery-ui-1.9.2.custom.min.js");
 
 	var b = "[STAT] HentaiVerse Statistics, Tracking, and Analysis Tool v." + HVStat.VERSION + (HVStat.isChrome ? " (Chrome Edition)" : "");
 	var c = document.createElement("div");
