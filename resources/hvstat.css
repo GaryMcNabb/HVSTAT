@@ -1,0 +1,215 @@
+/* proficiency sidebar */
+.hvstat-proficiency-sidebar {
+	width: 100%;
+}
+.hvstat-proficiency-sidebar th {
+	font-size: 10pt;
+	font-weight: bold;
+	text-align: center
+}
+.hvstat-proficiency-sidebar td {
+	font-size: 9pt;
+	font-weight: normal;
+	text-align: left
+}
+
+/* duration badge */
+.hvstat-duration-badge {
+	width: 30px;
+	display: inline-block;
+	text-align: center;
+	position: relative;
+	margin-left: -30px;
+}
+.hvstat-duration-badge > div {
+	background: #EFEEDC;
+	border: 1px solid #5C0D11;
+	padding: 0px 2px;
+	display: inline-block;
+	min-width: 15px;
+	font-weight: bold;
+}
+.hvstat-duration-badge-player { top: 2px; }
+.hvstat-duration-badge-monster { top: -25px; }
+.hvstat-duration-badge-yellow-alert > div { background-color: orange; }
+.hvstat-duration-badge-red-alert > div { background-color: red; }
+
+/* powerup box */
+.hvstat-powerup-box {
+	position: absolute;
+	top: 7px;
+	right: 5px;
+	width: 30px;
+	height: 32px;
+	background-color: #EFEEDC;
+	border: 2px double #555555;
+}
+.hvstat-powerup-box-none {
+	background-image: none;
+	font-size: 16px;
+	font-weight: bold;
+	text-align: center;
+	line-height: 32px;
+	cursor: default;
+}
+.hvstat-powerup-box-channeling { background-image: url(images/channeling.png); cursor: pointer; }
+.hvstat-powerup-box-health { background-image: url(images/healthpot.png); cursor: pointer; }
+.hvstat-powerup-box-mana { background-image: url(images/manapot.png); cursor: pointer; }
+.hvstat-powerup-box-spirit { background-image: url(images/spiritpot.png); cursor: pointer; }
+
+/* quickcast highlight */
+.hvstat-quickcast-highlight-health-yellow-alert { color: orange; }
+.hvstat-quickcast-highlight-health-red-alert { color: red; }
+.hvstat-quickcast-highlight-magic-yellow-alert { color: blue; }
+.hvstat-quickcast-highlight-magic-red-alert { color: darkblue; }
+.hvstat-quickcast-highlight-spirit-yellow-alert { color: lime; }
+.hvstat-quickcast-highlight-spirit-red-alert { color: green; }
+
+/* battle log turn divider */
+.hvstat-turn-divider { border-bottom: 1px solid #5c0d11; padding-bottom: 3px; }
+
+/* round counter */
+.hvstat-round-counter {
+	font-size: 18px;
+	font-weight: bold;
+	text-align: right;
+	position: absolute;
+	top: 6px;
+	right: 17px;
+}
+.hvstat-round-counter-second-last { color: orange; }
+.hvstat-round-counter-last { color: red; }
+
+/* scan/skill button */
+.hvstat-scan-button {
+	top: -2px;
+	left: -32px;
+	position: absolute;
+	background-color: #EFEEDC;
+	width: 25px;
+	height:10px;
+	border: 2px double #555555;
+	font-size: 9px;
+	font-weight: bold;
+	text-align: center;
+	cursor: pointer;
+}
+.hvstat-skill-button {
+	left: -32px;
+	position: absolute;
+	background-color: #EFEEDC;
+	width: 25px;
+	height:10px;
+	border: 2px double #555555;
+	font-size: 9px;
+	font-weight: bold;
+	text-align: center;
+	cursor: pointer;
+}
+.hvstat-skill-button1 { top: 12px; }
+.hvstat-skill-button2 { top: 26px; }
+.hvstat-skill-button3 { top: 40px; }
+
+/* monster */
+.hvstat-monster-number { display: none; }
+.hvstat-monster-number + div {
+	position: relative;
+	display: inline-block;
+	top: 0px;
+	left: 0px;
+	width: 25px;
+	font-size: 6pt;
+	font-weight: bold;
+	padding-top: 0.0em;
+	color: rgb(92,13,17);
+	text-shadow: 0px 0px 1px rgba(92,13,17,0.5);
+}
+.hvstat-monster-number + div + div {
+	position: relative;
+	display: inline-block;
+	top: 0px;
+	left: 0px;
+	width: 25px;
+	font-size: 12pt;
+	font-weight: bold;
+	margin-top: -2px;
+	margin-bottom: 2px;
+	color: rgb(193,0,19);
+	text-shadow: -1px -1px 5px #000,1px -1px 5px #000,-1px 1px 5px #000,1px 1px 5px #000;
+}
+
+div.hvstat-monster-health {
+	z-index: 10;
+	position: absolute;
+	top: -1px;
+	width: 120px;
+	text-align: center;
+	font-size: 8pt;
+	font-weight: bolder;
+	color: yellow;
+}
+div.hvstat-monster-magic {
+	z-index: 10;
+	position: absolute;
+	top: 11px;
+	width: 120px;
+	text-align: center;
+	font-size: 8pt;
+	font-weight: bolder;
+	color: yellow;
+}
+div.hvstat-monster-spirit {
+	z-index: 10;
+	position: absolute;
+	top: 23px;
+	width: 120px;
+	text-align: center;
+	font-size: 8pt;
+	font-weight: bolder;
+	color: yellow;
+}
+
+.hvstat-monster-status-on-hv-font {
+	font-family: arial;
+	font-size: 7pt;
+	font-weight: bold;
+	padding: 0 1px;
+	white-space: nowrap;
+}
+.hvstat-monster-status-on-custom-font {
+	display: inline;
+	margin-left: 1px;
+	font-family: arial;
+	font-size: 7pt;
+	font-weight: bold;
+	padding: 0 1px;
+	white-space: nowrap;
+}
+.hvstat-monster-status-unknown { color: red; }
+.hvstat-monster-status-class { color: blue; }
+.hvstat-monster-status-power-level { color: blue; }
+.hvstat-monster-status-weakness { color: #3CB878; }
+.hvstat-monster-status-resistance { color: #FF3300; }
+.hvstat-monster-status-imperviableness { color: #990000; text-decoration: underline; }
+.hvstat-monster-status-melee-attack-type { color: black; }
+.hvstat-monster-status-magic-skill-attack-type { color: blue; }
+.hvstat-monster-status-spirit-skill-attack-type { color: red; }
+
+/* monster popup */
+
+/* battle round stats */
+.hvstat-battle-round-stats {
+}
+
+/* equipment tag */
+input.hvstat-equipment-tag {
+	position: absolute;
+	right: 44px;
+	/*left: 320px;*/
+	bottom: -21px;
+	opacity: 0.8;
+	font-size: 8pt;
+}
+input.hvstat-equipment-tag-new {
+	color: Red;
+}

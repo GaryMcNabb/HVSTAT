@@ -9,12 +9,6 @@
 // @resource        jquery-1.8.3.min.js                         scripts/jquery-1.8.3.min.js
 // @resource        jquery-ui-1.9.2.custom.min.js               scripts/jquery-ui-1.9.2.custom.min.js
 // @resource        jquery-ui-1.9.2.custom.min.css              resources/jquery-ui-1.9.2.custom.min.css
-// @resource        monster-database-pane.html                  resources/monster-database-pane.html
-// @resource        settings-pane.html                          resources/settings-pane.html
-// @resource        channeling.png                              images/channeling.png
-// @resource        healthpot.png                               images/healthpot.png
-// @resource        manapot.png                                 images/manapot.png
-// @resource        spiritpot.png                               images/spiritpot.png
 // @resource        ui-bg_flat_0_aaaaaa_40x100.png              images/ui-bg_flat_0_aaaaaa_40x100.png
 // @resource        ui-bg_flat_55_fbf9ee_40x100.png             images/ui-bg_flat_55_fbf9ee_40x100.png
 // @resource        ui-bg_flat_65_edebdf_40x100.png             images/ui-bg_flat_65_edebdf_40x100.png
@@ -24,6 +18,15 @@
 // @resource        ui-icons_2e83ff_256x240.png                 images/ui-icons_2e83ff_256x240.png
 // @resource        ui-icons_5c0d11_256x240.png                 images/ui-icons_5c0d11_256x240.png
 // @resource        ui-icons_cd0a0a_256x240.png                 images/ui-icons_cd0a0a_256x240.png
+// @resource        hvstat.css                                  resources/hvstat.css
+// @resource        battle-log-type0.css                        resources/battle-log-type0.css
+// @resource        battle-log-type1.css                        resources/battle-log-type1.css
+// @resource        channeling.png                              images/channeling.png
+// @resource        healthpot.png                               images/healthpot.png
+// @resource        manapot.png                                 images/manapot.png
+// @resource        spiritpot.png                               images/spiritpot.png
+// @resource        monster-database-pane.html                  resources/monster-database-pane.html
+// @resource        settings-pane.html                          resources/settings-pane.html
 // @run-at          document-start
 // ==/UserScript==
 
@@ -124,14 +127,16 @@ var browserExtension = {
 	},
 	addStyleFromResource: function (styleResourcePath, styleResouceName, imageResouceInfoArray) {
 		var styleText = browserExtension.getResourceText(styleResourcePath, styleResouceName);
-		// replace image URLs
-		for (var i = 0; i < imageResouceInfoArray.length; i++) {
-			var imageResourceName = imageResouceInfoArray[i].name;
-			var imageOriginalPath = imageResouceInfoArray[i].originalPath;
-			var imageResourcePath = imageResouceInfoArray[i].resourcePath;
-			var imageResourceURL = browserExtension.getResourceURL(imageResourcePath, imageResourceName);
-			var regex = new RegExp(util.escapeRegex(imageOriginalPath + imageResourceName), "g");
-			styleText = styleText.replace(regex, imageResourceURL);
+		if (imageResouceInfoArray instanceof Array) {
+			// replace image URLs
+			for (var i = 0; i < imageResouceInfoArray.length; i++) {
+				var imageResourceName = imageResouceInfoArray[i].name;
+				var imageOriginalPath = imageResouceInfoArray[i].originalPath;
+				var imageResourcePath = imageResouceInfoArray[i].resourcePath;
+				var imageResourceURL = browserExtension.getResourceURL(imageResourcePath, imageResourceName);
+				var regex = new RegExp(util.escapeRegex(imageOriginalPath + imageResourceName), "g");
+				styleText = styleText.replace(regex, imageResourceURL);
+			}
 		}
 		// add style
 		browserExtension.addStyle(styleText);
@@ -140,6 +145,22 @@ var browserExtension = {
 		eval.call(window, browserExtension.getResourceText(scriptPath, scriptName));
 	}
 }
+
+//------------------------------------
+// HV STAT features
+//------------------------------------
+var hvStat = {};
+
+hvStat.addStyle = function () {
+	var C = browserExtension.ImageResourceInfo;
+	var imageResouces = [
+		new C("images/", "channeling.png", "images/"),
+		new C("images/", "healthpot.png", "images/"),
+		new C("images/", "manapot.png", "images/"),
+		new C("images/", "spiritpot.png", "images/"),
+	];
+	browserExtension.addStyleFromResource("resources/", "hvstat.css", imageResouces);
+};
 
 var HVStat = {
 	//------------------------------------
@@ -612,12 +633,12 @@ HVStat.getElapsedFrom = function (date) {
 		days = Math.floor(hours / 24);
 		hours = hours % 24;
 	}
-	str = String(mins) + " mins";
+	str = String(mins) + ((mins > 1) ? " mins" : " min");
 	if (hours > 0) {
-		str = String(hours) + " hours, " + str;
+		str = String(hours) + ((hours > 1) ? " hours, " : " hour, ") + str;
 	}
 	if (days > 0) {
-		str = String(days) + " days, " + str;
+		str = String(days) + ((days > 1) ? " days, " : " day, ") + str;
 	}
 	return str;
 };
@@ -1128,37 +1149,41 @@ HVStat.Monster = (function () {
 			var maxStatsWidth = 315;
 
 			var html, statsHtml;
-			var div, divText;
+			var div;
 			var abbrLevel;
 
 			if (_settings.showMonsterInfoFromDB) {
 				for (abbrLevel = 0; abbrLevel < maxAbbrLevel; abbrLevel++) {
 					statsHtml = '';
 					if (!_scanResult || !_scanResult.monsterClass) {
-						statsHtml = '[<span style="color:red;font-weight:bold">NEW</span>]';
+						statsHtml = '[<span class="hvstat-monster-status-unknown">NEW</span>]';
 					} else {
 						// class and power level
 						if (_settings.showMonsterClassFromDB || _settings.showMonsterPowerLevelFromDB) {
-							statsHtml += '{<span style="color: blue;">';
+							statsHtml += '{';
 						}
 						if (_settings.showMonsterClassFromDB) {
+							statsHtml += '<span class="hvstat-monster-status-class">';
 							statsHtml += _scanResult.monsterClass.toString(abbrLevel);
+							statsHtml += '</span>';
 						}
 						if (_settings.showMonsterPowerLevelFromDB && _scanResult.powerLevel) {
 							if (_settings.showMonsterClassFromDB) {
 								statsHtml += HVStat.delimiter.toString(abbrLevel);
 							}
+							statsHtml += '<span class="hvstat-monster-status-power-level">';
 							statsHtml += _scanResult.powerLevel + '+';
+							statsHtml += '</span>';
 						}
 						if (_settings.showMonsterClassFromDB || _settings.showMonsterPowerLevelFromDB) {
-							statsHtml += '</span>}';
+							statsHtml += '}';
 						}
 						// weaknesses and resistances
 						if (_settings.showMonsterWeaknessesFromDB || _settings.showMonsterResistancesFromDB) {
 							statsHtml += '[';
 						}
 						if (_settings.showMonsterWeaknessesFromDB) {
-							statsHtml += '<span style="color: #3CB878;">';
+							statsHtml += '<span class="hvstat-monster-status-weakness">';
 							statsHtml += (_scanResult.defWeak.length > 0) ? _scanResult.getDefWeakString(true, true, abbrLevel) : "-";
 							statsHtml += '</span>';
 						}
@@ -1166,11 +1191,11 @@ HVStat.Monster = (function () {
 							if (_settings.showMonsterWeaknessesFromDB) {
 								statsHtml += '|';
 							}
-							statsHtml += '<span style="color: #FF3300;">';
+							statsHtml += '<span class="hvstat-monster-status-resistance">';
 							statsHtml += (_scanResult.defResistant.length > 0) ? _scanResult.getDefResistantString(true, true, abbrLevel) : '-';
 							statsHtml += '</span>';
 							if (_scanResult.defImpervious.length > 0) {
-								statsHtml += '|<span style="font-weight: bold; color: #990000; text-decoration: underline;">';
+								statsHtml += '|<span class="hvstat-monster-status-imperviableness">';
 								statsHtml += _scanResult.getDefImperviousString(true, true, abbrLevel);
 								statsHtml += '</span>';
 							}
@@ -1180,11 +1205,13 @@ HVStat.Monster = (function () {
 						}
 						// melee attack and skills
 						if (_settings.showMonsterAttackTypeFromDB) {
-							statsHtml += '(<span style="color: black;">' + _scanResult.meleeAttack.toString(abbrLevel > 0 ? abbrLevel : 1) + '</span>';
+							statsHtml += '(<span class="hvstat-monster-status-melee-attack-type">';
+							statsHtml += _scanResult.meleeAttack.toString(abbrLevel > 0 ? abbrLevel : 1);
+							statsHtml += '</span>';
 							var manaSkills = _getManaSkills();
 							var manaSkillsExist = manaSkills.length > 0;
 							if (manaSkillsExist) {
-								statsHtml += ';<span style="color:blue">';
+								statsHtml += ';<span class="hvstat-monster-status-magic-skill-attack-type">';
 							}
 							var skillTable = _getManaSkillTable();
 							var attackTypeCount, damageTypeCount
@@ -1219,7 +1246,9 @@ HVStat.Monster = (function () {
 								} else {
 									statsHtml += '|';
 								}
-								statsHtml += '<span style="color:red">' + spiritSkill.toString(abbrLevel > 0 ? abbrLevel : 1) + '</span>';
+								statsHtml += '<span class="hvstat-monster-status-spirit-skill-attack-type">';
+								statsHtml += spiritSkill.toString(abbrLevel > 0 ? abbrLevel : 1);
+								statsHtml += '</span>';
 							}
 							statsHtml += ')';
 						}
@@ -1228,7 +1257,7 @@ HVStat.Monster = (function () {
 						nameOuterFrameElement.style.width = "auto"; // tweak for Firefox
 						nameInnerFrameElement.style.width = "auto"; // tweak for Firefox
 						div = document.createElement("div");
-						div.style.cssText = "font-family:arial; font-size:7pt; font-style:normal; font-weight:bold; cursor:default; position:relative; top:-1px; left:2px; padding:0 1px; margin-left:0px; white-space:nowrap;";
+						div.className ="hvstat-monster-status-on-hv-font";
 						div.innerHTML = statsHtml;
 						nameInnerFrameElement.parentNode.insertBefore(div, nameInnerFrameElement.nextSibling);
 						//console.log("scrollWidth = " + div.prop("scrollWidth"));
@@ -1239,7 +1268,7 @@ HVStat.Monster = (function () {
 							nameInnerFrameElement.parentNode.removeChild(div);
 						}
 					} else {
-						html = "<div style='font-family:arial; font-size:7pt; font-style:normal; font-weight:bold; display:inline; cursor:default; padding:0 1px; margin-left:1px; white-space:nowrap;'>" + statsHtml + "</div>";
+						html = '<div class="hvstat-monster-status-on-custom-font">' + statsHtml + "</div>";
 						var nameElement = nameInnerFrameElement.children[0];
 						var name = nameElement.innerHTML;
 						nameOuterFrameElement.style.width = "auto"; // tweak for Firefox
@@ -1547,41 +1576,34 @@ HVStat.Monster = (function () {
 				var hpBarBaseElement = this.baseElement.children[2].children[0];
 				var mpBarBaseElement = this.baseElement.children[2].children[1];
 				var spBarBaseElement = this.baseElement.children[2].children[2];
-				var sharedCssText = "position: absolute; z-index: 1074; font-size: 8pt; font-family: arial,helvetica,sans-serif; font-weight: bolder; color: yellow; width: 120px; text-align: center;"
 				var hpIndicator = "";
 				var mpIndicator = "";
 				var spIndicator = "";
-				var div, divText;
+				var div;
 
 				if (_settings.showMonsterHP || _settings.showMonsterHPPercent) {
 					div = document.createElement("div");
-					div.style.cssText = sharedCssText;
-					div.style.cssText += "top: -1px;";
+					div.className = "hvstat-monster-health";
 					if (_settings.showMonsterHPPercent) {
 						hpIndicator = (this.currHpRate * 100).toFixed(2) + "%";
-					} else {
+					} else if (this.currHp && this.maxHp) {
 						hpIndicator = this.currHp.toFixed(0) + " / " + this.maxHp.toFixed(0);
 					}
-					divText = document.createTextNode(hpIndicator);
-					div.appendChild(divText);
+					div.textContent = hpIndicator;
 					hpBarBaseElement.parentNode.insertBefore(div, hpBarBaseElement.nextSibling);
 				}
 				if (_settings.showMonsterMP) {
 					div = document.createElement("div");
-					div.style.cssText = sharedCssText;
-					div.style.cssText += "top: 11px;";
+					div.className = "hvstat-monster-magic";
 					mpIndicator = (this.currMpRate * 100).toFixed(1) + "%";
-					divText = document.createTextNode(mpIndicator);
-					div.appendChild(divText);
+					div.textContent = mpIndicator;
 					mpBarBaseElement.parentNode.insertBefore(div, mpBarBaseElement.nextSibling);
 				}
 				if (_settings.showMonsterSP && this.hasSpiritPoint) {
 					div = document.createElement("div");
-					div.style.cssText = sharedCssText;
-					div.style.cssText += "top: 23px;";
+					div.className = "hvstat-monster-spirit";
 					spIndicator = (this.currSpRate * 100).toFixed(1) + "%";
-					divText = document.createTextNode(spIndicator);
-					div.appendChild(divText);
+					div.textContent = spIndicator;
 					spBarBaseElement.parentNode.insertBefore(div, spBarBaseElement.nextSibling);
 				}
 			},
@@ -2654,72 +2676,20 @@ _artifacts = 0;
 _lastArtName = "";
 _tokenDrops = [0, 0, 0];
 
-/* ========== EMBEDDED IMAGES ========== */
-I_HEALTHPOT = browserExtension.getResourceURL("images/", "healthpot.png");
-I_MANAPOT = browserExtension.getResourceURL("images/", "manapot.png");
-I_SPIRITPOT = browserExtension.getResourceURL("images/", "spiritpot.png");
-I_CHANNELING = browserExtension.getResourceURL("images/", "channeling.png");
-
 /* =====
  setLogCSS
  Creates the CSS used to color the Battlelog.
  It uses complex selectors, so be careful!
 ===== */
 function setLogCSS() {
-	var bTD = "td[title*=",
-		bCSS = "";
-		
-	if (_settings.isAltHighlight){
-		bCSS = bTD+ "'hits']:not([title*='hits you']), "+ bTD+ "'blasts'], "+ bTD+ "'crits']:not([title*='crits you'])"
-		+ "{color:black}"
-		+ bTD+ "'you hit'], "+ bTD+ "'you crit'], "+ bTD+ "'you counter'], "+ bTD+ "'your offhand hit'], "+ bTD+ "'your offhand crit'], "+ bTD+ "'unleash']"
-		+ "{color:black !important}"
-		+ bTD+ "'gains the effect'], "+ bTD+ "'penetrated'], "+ bTD+ "'stun'], "+ bTD+ "'ripened soul']"
-		+ "{color:purple}"
-		+ bTD+ "'proficiency']"
-		+ "{color:#BA9E1C}"
-		+ bTD+ "'you resist'], "+ bTD+ "'you dodge'], "+ bTD+ "'you evade'], "+ bTD+ "'you block'], "+ bTD+ "'you parry'], "+ bTD+ "'misses'][title*='against you']"
-		+ "{color:#555}"
-		+ bTD+ "'misses its mark'][title^='your']"
-		+ "{color:orange}"
-		+ bTD+ "'uses']"
-		+ "{color:blue}";
+	var styleName;
+	if (_settings.isAltHighlight) {
+		styleName = "battle-log-type1.css";
 	} else {
-		bCSS = bTD+ "'hits']:not([title*='hits you']), "+ bTD+ "'blasts'], "+ bTD+ "'crits']:not([title*='crits you'])"
-		+ "{color:teal}"
-		+ bTD+ "'procs the effect']"
-		+ "{color:purple}"
-		+ bTD+ "'you hit'], "+ bTD+ "'you crit'], "+ bTD+ "'you counter'], "+ bTD+ "'your offhand hit'], "+ bTD+ "'your offhand crit'], "+ bTD+ "'unleash']"
-		+ "{color:blue !important}"
-		+ bTD+ "'you resist'], "+ bTD+ "'you dodge'], "+ bTD+ "'you evade'], "+ bTD+ "'you block'], "+ bTD+ "'you parry'], "+ bTD+ "'misses'][title*='against you'], "+ bTD+ "'misses its mark'][title^='your']"
-		+ "{color:#999}"
-		+ bTD+ "'you gain']:not([title*='drained'])"
-		+ "{color:#BA9E1C}"
-		+ bTD+ "'uses']"
-		+ "{color:orange}";
+		styleName = "battle-log-type0.css";
 	}
-	bCSS += bTD+ "'you crit'], "+ bTD+ "'crits'], "+ bTD+ "'blasts'],"+ bTD+ "'unleash']"
-	+ "{font-weight:bold}"
-	+ bTD+ "'you cast'], "+ bTD+ "'explodes for']"
-	+ "{color:teal}"
-	+ bTD+ "'bleeding wound hits'], "+ bTD+ "'spreading poison hits'], "+ bTD+ "'your spike shield hits'], "+ bTD+ "'searing skin hits'], "+ bTD+ "'burning soul hits']"
-	+ "{color:purple !important}"
-	+ bTD+ "'restores'], "+ bTD+ "'you are healed'], "+ bTD+ "'recovered'], "+ bTD+ "'hostile spell is drained'], "+ bTD+ "'you drain'], "+ bTD+ "'ether theft drains'], "+ bTD+ "'lifestream drains']"
-	+ "{color:green}"
-	+ bTD+ "'enough mp']"
-	+ "{color:#F77}"
-	+ bTD+ "'its you for']:not([title*='its you for 1 '])"
-	+ "{color:red}"
-	+ bTD+ "'its you for 1 ']"
-	+ "{color:#999}"
-	+ bTD+ "'casts']"
-	+ "{color:#0016B8}"
-	+ bTD+ "'powerup']"
-	+ "{color:#F0F}"
-	+ bTD+ "'charging soul'], "+ bTD+ "'your spirit shield absorbs']"
-	+ "{color:#C97600}";
-	
-	GM_addStyle(bCSS);
+	var styleText = browserExtension.getResourceText("resources/", styleName);
+	browserExtension.addStyle(styleText);
 }
 /* =====
  highlightLogText
@@ -2733,7 +2703,7 @@ function highlightLogText() {
 
 	while (i--) {
 		currRow = logRows[i].lastChild;
-		currRow.title = currRow.textContent.toLowerCase();
+		currRow.title = currRow.textContent;
 	}
 }
 /* =====
@@ -2753,7 +2723,7 @@ function addBattleLogDividers() {
 		currTurn = logRows[i].firstChild.innerHTML;
 		if (!isNaN(parseInt(currTurn))) {
 			if (prevTurn && prevTurn !== currTurn) {
-				logRows[i].children[2].style.cssText += "border-bottom: 1px; border-bottom-style: solid; border-bottom-color: #5C0D11; padding-bottom: 3px";
+				logRows[i].children[2].className += " hvstat-turn-divider";
 			}
 			prevTurn = currTurn;
 		}
@@ -2770,8 +2740,13 @@ function showRoundCounter() {
 		dispRound = maxRound > 0 ? curRound + "/" + maxRound : "#" + curRound,
 		div = doc.createElement('div');
 	
-	div.setAttribute('style', 'font-size:18px;font-weight:bold;font-family:arial,helvetica,sans-serif;text-align:right;position:absolute;top:6px;right:17px;');
-	div.innerHTML = "<div style='" + (curRound === maxRound - 1 ? "color:orange;'>" : curRound === maxRound ? "color:red;'>" : "'>") + dispRound + "</div>";
+	div.className = "hvstat-round-counter";
+	div.textContent = dispRound;
+	if (curRound === maxRound - 1) {
+		div.className += " hvstat-round-counter-second-last";
+	} else if (curRound === maxRound) {
+		div.className += " hvstat-round-counter-last";
+	}
 	doc.getElementById('battleform').children[0].appendChild(div);
 }
 /* =====
@@ -2780,24 +2755,30 @@ function showRoundCounter() {
  Creates a shortcut to the powerup if one is available.
 ===== */
 function displayPowerupBox() {
-	var doc = document,
-		battleMenu = doc.getElementsByClassName("btp"),
-		powerBox = doc.createElement("div");
-		powerup = doc.getElementById("ikey_p");
-	
-	powerBox.style.cssText = "position:absolute;top:7px;right:5px;background-color:#EFEEDC;width:30px;height:32px;border-style:double;border-width:2px;border-color:#555555;";
-	if (powerup === null) powerBox.innerHTML = "<span style='font-size:16px;font-weight:bold;font-family:arial,helvetica,sans-serif;text-align:center;line-height:32px;cursor:default'>P</span>";
-	else {
+	var battleMenu = document.getElementsByClassName("btp"),
+		powerBox = document.createElement("div");
+		powerup = document.getElementById("ikey_p");
+
+	powerBox.className = "hvstat-powerup-box";
+	if (!powerup) {
+		powerBox.className += " hvstat-powerup-box-none";
+		powerBox.textContent = "P";
+	} else {
 		var powerInfo = powerup.getAttribute("onmouseover");
 		powerBox.setAttribute("onmouseover", powerInfo);
 		powerBox.setAttribute("onmouseout", powerup.getAttribute("onmouseout"));
 		powerBox.addEventListener("click", function (event) {
 			HVStat.battleCommandMenuItemMap["PowerupGem"].select();
 		});
-		if (powerInfo.indexOf('Health') > -1) powerBox.innerHTML = "<img class='PowerupGemIcon' src='"+ I_HEALTHPOT+ "' id='healthgem'>";
-		else if (powerInfo.indexOf('Mana') > -1) powerBox.innerHTML = "<img class='PowerupGemIcon' src='"+ I_MANAPOT+ "' id='managem'>";
-		else if (powerInfo.indexOf('Spirit') > -1) powerBox.innerHTML = "<img class='PowerupGemIcon' src='"+ I_SPIRITPOT+ "' id='spiritgem'>";
-		else if (powerInfo.indexOf('Mystic') > -1) powerBox.innerHTML = "<img class='PowerupGemIcon' src='"+ I_CHANNELING+ "' id='channelgem'>";
+		if (powerInfo.indexOf('Health') > -1) {
+			powerBox.className += " hvstat-powerup-box-health";
+		} else if (powerInfo.indexOf('Mana') > -1) {
+			powerBox.className += " hvstat-powerup-box-mana";
+		} else if (powerInfo.indexOf('Spirit') > -1) {
+			powerBox.className += " hvstat-powerup-box-spirit";
+		} else if (powerInfo.indexOf('Mystic') > -1) {
+			powerBox.className += " hvstat-powerup-box-channeling";
+		}
 	}
 	battleMenu[0].appendChild(powerBox);
 }
@@ -2811,72 +2792,71 @@ function showMonsterStats() {
 		HVStat.monsters[i].renderStats();
 	}
 }
+
 function showMonsterEffectsDuration() {
 	for (var i = 0; i < HVStat.numberOfMonsters; i++) {
 		var baseElement = document.getElementById(HVStat.Monster.getDomElementId(i));
-		var array = baseElement.children[3].getElementsByTagName("img");
-		var j = array.length
-		while(j--)createDurationBadge(array[j], j);
-	}
-}
-function showSelfEffectsDuration() {
-	var array = document.getElementsByClassName("btps")[0].getElementsByTagName("img");
-	var i = array.length;
-	while(i--)createDurationBadge(array[i], i);
-}
-function createDurationBadge(a, x) {
-	var SELF_EFF_TOP = 34;
-	var SELF_EFF_LEFT = 8;
-	var MON_EFF_TOP = -3;
-	var MON_EFF_LEFT = 5;
-	var FIRST_EFF = 33;
-	var e = a;
-	var g, d;
-	var c, f;
-	d = e.outerHTML.match(/\s\d+?\)/);
-	if (d !== null) g = d[0].replace(")", "").replace(" ", "");
-	if (g >= 0) {
-		var h = e.parentNode.parentNode.parentNode.id === "monsterpane";
-		c = h ? MON_EFF_TOP : SELF_EFF_TOP;
-		f = (h ? MON_EFF_LEFT : SELF_EFF_LEFT) + FIRST_EFF * x;
-		var b = "<div style='position:absolute;";
-		if (h) {
-			if (_settings.isMonstersEffectsWarnColor) {
-				if (g <= Number(_settings.MonstersWarnRedRounds))
-					b += "background-color:red;";
-				else if (g <= Number(_settings.MonstersWarnOrangeRounds))
-					b += "background-color:orange;";
-				else b += "background-color:#EFEEDC;";
-			} else  b += "background-color:#EFEEDC;";
-		} else if (!h) {
-			if (_settings.isSelfEffectsWarnColor) {
-				if (g <= Number(_settings.SelfWarnRedRounds))
-					b += "background-color:red;";
-				else if (g <= Number(_settings.SelfWarnOrangeRounds))
-					b += "background-color:orange;";
-				else b += "background-color:#EFEEDC;";
-			} else b += "background-color:#EFEEDC;";
+		var effectIcons = baseElement.querySelectorAll('img[onmouseover^="battle.set_infopane_effect"]');
+		for (var j = 0; j < effectIcons.length; j++) {
+			var badge = createDurationBadge(effectIcons[j]);
+			if (badge) {
+				badge.className += " hvstat-duration-badge-monster";
+			}
 		}
-		b += "font-size:11px;font-weight:bold;font-family:arial,helvetica,sans-serif;line-height:12px;text-align:center;width:20px;height:12px;border-style:solid;border-width:1px;border-color:#5C0D11;overflow:hidden;top:" + c + "px;left:" + f + "px;cursor:default;'>" + g + "</div>";
-		e.parentNode.innerHTML += b;
 	}
 }
+
+function showSelfEffectsDuration() {
+	var effectIcons = document.querySelectorAll('#battleform div.btps img[onmouseover^="battle.set_infopane_effect"]');
+	for (var i = 0; i < effectIcons.length; i++) {
+		var badge = createDurationBadge(effectIcons[i]);
+		if (badge) {
+			badge.className += " hvstat-duration-badge-player";
+		}
+	}
+}
+
+function createDurationBadge(effectIcon) {
+	var result = HVStat.reSetInfoPaneParameters.exec(effectIcon.getAttribute("onmouseover"));
+	if (!result || result.length < 3) {
+		return;
+	}
+	var duration = parseFloat(result[2]);
+	if (isNaN(duration)) {
+		return;
+	}
+	var badgeBase = document.createElement("div");
+	badgeBase.className = "hvstat-duration-badge";
+	if (_settings.isSelfEffectsWarnColor) {
+		if (duration <= Number(_settings.SelfWarnRedRounds)) {
+			badgeBase.className += " hvstat-duration-badge-red-alert";
+		} else if (duration <= Number(_settings.SelfWarnOrangeRounds)) {
+			badgeBase.className += " hvstat-duration-badge-yellow-alert";
+		}
+	}
+	var badge = badgeBase.appendChild(document.createElement('div'));
+	badge.textContent = String(duration);
+	effectIcon.parentNode.insertBefore(badgeBase, effectIcon.nextSibling);
+	return badgeBase;
+}
+
 function showBattleEndStats() {
 	var battleLog = document.getElementById("togpane_log");
 	battleLog.innerHTML = "<div class='ui-state-default ui-corner-bottom' style='padding:10px;margin-bottom:10px;text-align:left'>" + getBattleEndStatsHtml() + "</div>" + battleLog.innerHTML;
 }
 
-function setMonsterNumberCSS() {
-	var styleContent = "img.btmi {visibility:hidden;} img.btmi + div {position:absolute; top:5px; left:14px; height:25px; font-size:1.6em; font-family:HentaiVerse; padding-top:0.4em; color:#be0019; text-shadow: -1px -1px 4px #000,1px -1px 4px #000,-1px 1px 4px #000,1px 1px 4px #000;}";
-	GM_addStyle(styleContent);
-}
-
 function showMonsterNumber() {
 	var targets = document.querySelectorAll("img.btmi");
 	for (var i = 0; i < targets.length; i++) {
+		var target = targets[i];
+		target.className += " hvstat-monster-number";
+		var parentNode = target.parentNode;
+		var div = document.createElement("div");
+		div.textContent = "MON";
+		parentNode.appendChild(div);
 		var div = document.createElement("div");
 		div.textContent = String((i + 1) % 10);
-		targets[i].parentNode.appendChild(div);
+		parentNode.appendChild(div);
 	}
 }
 
@@ -6209,26 +6189,25 @@ HVStat.showScanAndSkillButtons = function () {
 			var rectObject = u.getBoundingClientRect();
 			var top = rectObject.top;
 			if (_settings.isShowScanButton) {
+				HVStat.monsterPaneElement.style.overflow = "visible";
 				div = document.createElement("div");
 				div.setAttribute("id", "HVStatScan_" + monsterElementId);
-				div.style.cssText = "position:absolute; top:" + String(top) + "px; left:556px; background-color:#EFEEDC; width:25px; height:10px; border-style:double; border-width:2px; z-index:2; border-color:#555555;";
-				div.innerHTML = "<span style='font-size:10px;font-weight:bold;font-family:arial,helvetica,sans-serif;text-align:center;vertical-align:text-top;cursor:default'>Scan</span>";
-				mainPane.parentNode.insertBefore(div, mainPane.nextSibling);
+				div.className = "hvstat-scan-button";
+				div.textContent = "Scan";
+				u.insertBefore(div, null);
 				div.addEventListener("click", HVStat.scanButtonClickHandler);
 			}
 			if (_settings.isShowSkillButton) {
+				HVStat.monsterPaneElement.style.overflow = "visible";
 				for (i = 0; i < skills.length; i++) {
 					div = document.createElement("div");
-					var tops = top + (i + 1) * 14;
 					div.setAttribute("id", "HVStatSkill" + String(i + 1) + "_"+ monsterElementId);
-					style = "position:absolute; top:" + String(tops) + "px; left:556px; background-color:#EFEEDC; width:25px; height:10px; border-style:double; border-width:2px; z-index:2; border-color:#555555;"
+					div.className = "hvstat-skill-button hvstat-skill-button" + String(i + 1);
 					if (!skills[i].available) {
-						div.style.cssText = style + "opacity:0.3;";
-					} else {
-						div.style.cssText = style;
+						div.style.cssText += "opacity: 0.3;";
 					}
-					div.innerHTML = "<span style='font-size:10px; font-weight:bold; font-family:arial,helvetica,sans-serif; text-align:center; vertical-align:text-top; cursor:default'>" + getButtonLabelFromSkillId(skills[i].id) + "</span>";
-					mainPane.parentNode.insertBefore(div, mainPane.nextSibling);
+					div.textContent = getButtonLabelFromSkillId(skills[i].id);
+					u.insertBefore(div, null);
 					div.addEventListener("click", HVStat.skillButtonClickHandler);
 				}
 			}
@@ -6468,21 +6447,25 @@ function TaggingItems(clean) {
 		var idCleanArray = equipTagArrayTable[equipTypeIdx].idClean;
 		var valueCleanArray = equipTagArrayTable[equipTypeIdx].valueClean;
 		var index = idArray.indexOf(id);
+		var inputElement = document.createElement("input");
+		inputElement.type = "text";
+		inputElement.className = "hvstat-equipment-tag";
+		inputElement.name = "tagid_" + String(id);
+		inputElement.size = 5;
+		inputElement.maxLength = 6;
+		inputElement.value = tagValue;
 		var tagValue = "";
 		if (index < 0) {
-			tagValue = "_new";
+			inputElement.className += " hvstat-equipment-tag-new";
+			inputElement.value = "*NEW*";
 		} else {
-			tagValue = valueArray[index];
+			inputElement.value = valueArray[index];
 			if (clean) {
 				idCleanArray.push(id);
 				valueCleanArray.push(tagValue);
 			}
 		}
-		var divElement = document.createElement("div");
-		divElement.style.cssText = "font-size:10px; font-weight:bold; font-family:arial,helvetica,sans-serif; text-align:right; position:absolute; bottom:-21px; Left:320px; opacity:0.8;";
-		divElement.innerHTML = '<input type="text" name="tagid_' + String(id) + '" size="5" maxLength="6" value="' + tagValue + '" />';
-		element.parentNode.insertBefore(divElement, null);
-		var inputElement = divElement.children[0];
+		element.parentNode.insertBefore(inputElement, null);
 		inputElement.addEventListener("change", function (event) {
 			var target = event.target;
 			var tagId = Number(target.name.replace("tagid_", ""));
@@ -6494,6 +6477,7 @@ function TaggingItems(clean) {
 				idArray.push(tagId);
 				valueArray.push(tagValue);
 			}
+			target.className = target.className.replace(" hvstat-equipment-tag-new", "");
 			_tags.save();
 		});
 	});
@@ -6583,9 +6567,8 @@ HVStat.main1 = function () {
 
 // readyState: interactive
 HVStat.main2 = function () {
-	if (_settings.isShowMonsterNumber) {
-		setMonsterNumberCSS();
-	}
+	hvStat.addStyle();
+
 	if (_settings.isShowHighlight) {
 		setLogCSS();
 	}
