@@ -172,7 +172,6 @@ var HVStat = {
 	// package scope global constants
 	//------------------------------------
 	VERSION: "5.4.8",
-	isChrome: navigator.userAgent.indexOf("Chrome") >= 0,
 	indexedDB: window.indexedDB || window.webkitIndexedDB || window.mozIndexedDB,
 	IDBTransaction: window.IDBTransaction || window.webkitIDBTransaction,
 	IDBKeyRange: window.IDBKeyRange|| window.webkitIDBKeyRange,
