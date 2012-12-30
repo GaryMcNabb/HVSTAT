@@ -204,8 +204,7 @@ div.hvstat-monster-spirit {
 /* equipment tag */
 input.hvstat-equipment-tag {
 	position: absolute;
-	right: 44px;
-	/*left: 320px;*/
+	left: 330px;
 	bottom: -21px;
 	opacity: 0.8;
 	font-size: 8pt;
