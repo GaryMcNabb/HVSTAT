@@ -31,6 +31,14 @@
 // ==/UserScript==
 
 //------------------------------------
+// remove vendor prefix
+//------------------------------------
+window.indexedDB = window.indexedDB || window.webkitIndexedDB || window.mozIndexedDB;
+window.IDBTransaction = window.IDBTransaction || window.webkitIDBTransaction;
+window.IDBKeyRange = window.IDBKeyRange|| window.webkitIDBKeyRange;
+window.IDBCursor = window.IDBCursor || window.webkitIDBCursor;
+
+//------------------------------------
 // generic utilities
 //------------------------------------
 var util = {
@@ -273,10 +281,6 @@ var HVStat = {
 	// package scope global constants
 	//------------------------------------
 	VERSION: "5.4.8",
-	indexedDB: window.indexedDB || window.webkitIndexedDB || window.mozIndexedDB,
-	IDBTransaction: window.IDBTransaction || window.webkitIDBTransaction,
-	IDBKeyRange: window.IDBKeyRange|| window.webkitIDBKeyRange,
-	IDBCursor: window.IDBCursor || window.webkitIDBCursor,
 	reMonsterScanResultsTSV: /^(\d+?)\t(.*?)\t(.*?)\t(.*?)\t(\d*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)$/gm,
 	reMonsterSkillsTSV: /^(\d+?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)$/gm,
 	reSetInfoPaneParameters: /battle\.set_infopane_(?:spell|skill|item|effect)\('((?:[^'\\]|\\.)*)'\s*,\s*'(?:[^'\\]|\\.)*'\s*,\s*(.+)\)/,
@@ -1552,7 +1556,7 @@ HVStat.Monster = (function () {
 				// MonsterSkills
 				var reqGet = skillsStore.get(_id);
 				var idx = skillsStore.index("ix_id");
-				var range = HVStat.IDBKeyRange.bound(_id, _id);
+				var range = IDBKeyRange.bound(_id, _id);
 				var reqOpen = idx.openCursor(range, "next");
 				_waitingForGetResponseOfMonsterSkills = true;
 				reqOpen.onsuccess = function(){
@@ -1596,7 +1600,7 @@ HVStat.Monster = (function () {
 				}
 				// put after delete
 				var skillsStore = transaction.objectStore("MonsterSkills");
-				var range = HVStat.IDBKeyRange.bound(_id, _id);
+				var range = IDBKeyRange.bound(_id, _id);
 				var reqOpen = skillsStore.openCursor(range, "next");
 				reqOpen.onsuccess = function () {
 					var i;
@@ -1706,7 +1710,7 @@ HVStat.deleteIndexedDB = function () {
 	HVStat.idb = null;
 
 	// delete database
-	var reqDelete = HVStat.indexedDB.deleteDatabase("HVStat");
+	var reqDelete = indexedDB.deleteDatabase("HVStat");
 	reqDelete.onsuccess = function (event) {
 		alert("Your database has been deleted.");
 		//console.log("deleteIndexedDB: success");
@@ -1779,7 +1783,7 @@ HVStat.openIndexedDB = function (callback) {
 	var errorMessage;
 
 	var idbVersion = 1; // must be an integer
-	var reqOpen = HVStat.indexedDB.open("HVStat", idbVersion);
+	var reqOpen = indexedDB.open("HVStat", idbVersion);
 	reqOpen.onerror = function (event) {
 		errorMessage = "Database open error: " + event.target.errorCode;
 		alert(errorMessage);
