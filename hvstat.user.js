@@ -175,6 +175,8 @@ var HV = (function () {
 	var getCharacterGaugeRate = function (gauge) {
 		return getGaugeRate(gauge, 120);
 	};
+	var Effect = function (effectIconElement) {
+	};
 
 	// constructor
 	function HV() {
@@ -197,7 +199,8 @@ var HV = (function () {
 			quickcastBar: document.getElementById("quickbar"),
 			battleLog: document.getElementById("togpane_log"),
 			monsterPane: document.getElementById("monsterpane"),
-			roundFinishMessage: document.querySelector('#battleform div.btcp'),
+			roundFinishedMessage: document.querySelector('#battleform div.btcp'),
+			characterEffectIcons: document.querySelectorAll('#battleform div.btps img[onmouseover^="battle.set_infopane_effect"]'),
 		};
 
 		var settings = {
@@ -231,8 +234,11 @@ var HV = (function () {
 
 		var battle = {
 			active: !!elementCache.battleLog,
-			finished: false,
+			finished: false, // TODO
 			characterEffects: [],
+		};
+		battle.round = {
+			finished: !!elementCache.roundFinishedMessage,
 		};
 
 		return {
@@ -240,7 +246,7 @@ var HV = (function () {
 			elementCache: elementCache,
 			settings: settings,
 			character: character,
-			battle: null,
+			battle: battle,
 		};
 	}
 	return HV;
@@ -274,18 +280,7 @@ var HVStat = {
 	reMonsterScanResultsTSV: /^(\d+?)\t(.*?)\t(.*?)\t(.*?)\t(\d*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)$/gm,
 	reMonsterSkillsTSV: /^(\d+?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)$/gm,
 	reSetInfoPaneParameters: /battle\.set_infopane_(?:spell|skill|item|effect)\('((?:[^'\\]|\\.)*)'\s*,\s*'(?:[^'\\]|\\.)*'\s*,\s*(.+)\)/,
-	charGaugeMaxWidth: 120,
 	monsterGaugeMaxWidth: 120,
-
-	// page identification
-	isBattleItemsPage: document.location.search === "?s=Character&ss=it",
-	isInventoryPage: document.location.search === "?s=Character&ss=in",
-	isEquipmentPage: document.location.search.indexOf("?s=Character&ss=eq") > -1,
-	isItemWorldPage: document.location.search.indexOf("?s=Battle&ss=iw") > -1,
-	isMoogleWrite: document.location.search.indexOf("?s=Bazaar&ss=mm&filter=Write") > -1,
-	isShopPage: document.location.search.indexOf("?s=Bazaar&ss=es") > -1,
-	isForgePage: document.location.search.indexOf("?s=Bazaar&ss=fr") > -1,
-	isShrinePage: document.location.search === "?s=Bazaar&ss=ss",
 
 	// temporary localStorage keys (attach the prefix "HVStat" to avoid conflicts with other scripts)
 	key_hpAlertAlreadyShown: "HVStatHpAlertAlreadyShown",
@@ -312,18 +307,6 @@ var HVStat = {
 	],
 
 	//------------------------------------
-	// DOM caches
-	//------------------------------------
-	popupElement: null,
-	quickcastBarElement: null,
-	battleLogElement: null,
-	monsterPaneElement: null,
-	charHpGaugeElement: null,
-	charMpGaugeElement: null,
-	charSpGaugeElement: null,
-	charOcGaugeElement: null,
-
-	//------------------------------------
 	// package scope global variables
 	//------------------------------------
 	// indexedDB
@@ -337,25 +320,7 @@ var HVStat = {
 	nRowsMonsterScanResultsTSV: 0,
 	nRowsMonsterSkillsTSV: 0,
 
-	// page identification
-	isCharacterPage: false,
-	isRiddlePage: false,
-
-	// page states
-	usingHVFont: true,
-
-	// character states
-	currHpRate: 0,
-	currMpRate: 0,
-	currSpRate: 0,
-	currOcRate: 0,
-	currHpPercent: 0,
-	currMpPercent: 0,
-	currSpPercent: 0,
-
 	// battle states
-	duringBattle: false,
-	isBattleRoundFinished: false,
 	numberOfMonsters: 0,
 	monsters: [],	// instances of HVStat.Monster
 	alertQueue: [],
@@ -1764,8 +1729,8 @@ HVStat.maintainObjectStores = function (event) {
 	var oldVer = event.oldVersion;	// does not work with Chrome
 	var newVer = event.newVersion || Number(idb.version);
 	var store;
-	//console.log("maintainObjectStores: old version = " + oldVer);
-	//console.log("maintainObjectStores: new version = " + newVer);
+//	console.debug(event);
+//	console.debug(idb);
 
 	if (newVer >= 1) {
 		// MonsterScanResults
@@ -1820,7 +1785,7 @@ HVStat.openIndexedDB = function (callback) {
 		alert(errorMessage);
 		console.log(errorMessage);
 	};
-	// latest W3C draft (Firefox supports)
+	// latest W3C draft (Firefox and Chrome 23 or later)
 	reqOpen.onupgradeneeded = function (event) {
 		console.log("onupgradeneeded");
 		HVStat.idb = reqOpen.result;
@@ -1830,12 +1795,13 @@ HVStat.openIndexedDB = function (callback) {
 	reqOpen.onsuccess = function (event) {
 		var idb = HVStat.idb = reqOpen.result;
 		if (Number(idb.version) === idbVersion) {
-			// always come here if Firefox
+			// always come here if Firefox and Chrome 23 or later
 			if (callback instanceof Function) {
 				callback(event);
 			}
 		} else {
-			// for Chrome ('setVersion' style will soon be obsolete)
+			// obsolete Chrome style (Chrome 22 or earlier)
+			console.debug("came setVersion route");
 			var reqVersion = idb.setVersion(idbVersion);
 			reqVersion.onerror = function (event) {
 				errorMessage = "Database setVersion error: " + event.target.errorCode;
@@ -2985,7 +2951,7 @@ HVStat.warnHealthStatus = function () {
 	var hpWarningResumeLevel = Math.min(hpWarningLevel + 10, 100);
 	var mpWarningResumeLevel = Math.min(mpWarningLevel + 10, 100);
 	var spWarningResumeLevel = Math.min(spWarningLevel + 10, 100);
-	if (!HVStat.isBattleRoundFinished) {
+	if (!hv.battle.round.finished) {
 		if (_settings.isShowPopup) {
 			if (hv.character.healthPercent <= hpWarningLevel && (!hpAlertAlreadyShown || _settings.isNagHP)) {
 				alert("Your health is dangerously low!");
@@ -3031,7 +2997,7 @@ HVStat.resetHealthWarningStates = function () {
 }
 
 function collectCurrentProfsData() {
-	if (!HVStat.isCharacterPage || hv.settings.useHVFontEngine) {
+	if (!hv.location.isCharacter || hv.settings.useHVFontEngine) {
 		return;
 	}
 	loadProfsObject();
@@ -6141,7 +6107,7 @@ HVStat.documentKeydownEventHandler = function (event) {
 		}
 	}
 	var boundKeys, i, j;
-	if (HVStat.duringBattle) {
+	if (hv.battle.active) {
 		var miScan = HVStat.battleCommandMenuItemMap["Scan"];
 		var miSkill1 = HVStat.battleCommandMenuItemMap["Skill1"];
 		var miSkill2 = HVStat.battleCommandMenuItemMap["Skill2"];
@@ -6655,16 +6621,10 @@ HVStat.main2 = function () {
 	hv = new HV();
 	console.debug(hv);
 	
-	// store static values
-	HVStat.isCharacterPage = !!document.getElementById("pattrform");
-	HVStat.isRiddlePage = !!document.getElementById("riddleform");
-	HVStat.duringBattle = !!hv.elementCache.battleLog;
-	HVStat.isBattleRoundFinished = !!document.querySelector("#battleform div.btcp");
-
 	if (_settings.isChangePageTitle && document.title === "The HentaiVerse") {
 		document.title = _settings.customPageTitle;
 	}
-	if (HVStat.duringBattle) {
+	if (hv.battle.active) {
 		HVStat.numberOfMonsters = document.querySelectorAll("#monsterpane > div").length;
 
 		HVStat.buildBattleCommandMap();
@@ -6715,7 +6675,7 @@ HVStat.main2 = function () {
 
 		// show warnings
 		HVStat.AlertAllFromQueue();
-		if (!HVStat.isBattleRoundFinished) {
+		if (!hv.battle.round.finished) {
 			if (_settings.warnMode[_round.battleType]) {
 				HVStat.warnHealthStatus();
 			}
@@ -6727,7 +6687,7 @@ HVStat.main2 = function () {
 			}
 		}
 
-		if (HVStat.isBattleRoundFinished) {
+		if (hv.battle.round.finished) {
 			if (_settings.isShowEndStats) {
 				showBattleEndStats();
 			}
@@ -6742,26 +6702,26 @@ HVStat.main2 = function () {
 		if ((_settings.isStartAlert || _settings.isShowEquippedSet) && !hv.settings.useHVFontEngine) {
 			FindSettingsStats();
 		}
-		if (!HVStat.isRiddlePage) {
+		if (!hv.location.isRiddle) {
 			HVStat.resetHealthWarningStates();
 		}
 		if (_settings.enableScrollHotkey) {
 			HVStat.registerScrollTargetMouseEventListeners();
 		}
 		// equipment tag
-		if (HVStat.isEquipmentPage && _settings.isShowTags[0]) {
+		if (hv.location.isEquipment && _settings.isShowTags[0]) {
 			TaggingItems(false);
 		}
-		if (HVStat.isInventoryPage && _settings.isShowTags[5]) {
+		if (hv.location.isInventory && _settings.isShowTags[5]) {
 			TaggingItems(true);
 		}
-		if (HVStat.isShopPage && _settings.isShowTags[1]) {
+		if (hv.location.isEquipmentShop && _settings.isShowTags[1]) {
 			TaggingItems(false);
 		}
-		if (HVStat.isItemWorldPage && _settings.isShowTags[2]) {
+		if (hv.location.isItemWorld && _settings.isShowTags[2]) {
 			TaggingItems(false);
 		}
-		if (HVStat.isMoogleWrite && _settings.isShowTags[3]) {
+		if (hv.location.isMoogleWrite && _settings.isShowTags[3]) {
 			var mailForm = document.querySelector("#mailform #leftpane");
 			if (mailForm) {
 				var attachEquipButton = mailForm.children[3].children[1];
@@ -6770,19 +6730,19 @@ HVStat.main2 = function () {
 				});
 			}
 		}
-		if (HVStat.isForgePage && _settings.isShowTags[4]) {
+		if (hv.location.isForge && _settings.isShowTags[4]) {
 			TaggingItems(false);
 			if (_settings.isDisableForgeHotKeys) {
 				document.onkeypress = null;
 			}
 		}
-		if (_settings.isColumnInventory && HVStat.isBattleItemsPage) {
+		if (_settings.isColumnInventory && hv.location.isBattleItems) {
 			initItemsView();
 		}
-		if (HVStat.isCharacterPage) {
+		if (hv.location.isCharacter) {
 			collectCurrentProfsData();
 		}
-		if (HVStat.isShrinePage) {
+		if (hv.location.isShrine) {
 			if (_settings.isTrackShrine) {
 				captureShrine();
 			}
