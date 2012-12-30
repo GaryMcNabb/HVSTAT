@@ -147,7 +147,7 @@ browser.extension = {
 		browser.extension.addStyle(styleText);
 	},
 	loadScript: function (scriptPath, scriptName) {
-		eval.call(window, browserExtension.getResourceText(scriptPath, scriptName));
+		eval.call(window, browser.extension.getResourceText(scriptPath, scriptName));
 	}
 }
 
@@ -3716,7 +3716,7 @@ function getBattleEndStatsHtml() {
 }
 
 function addUIStyle() {
-	var Obj = browserExtension.ImageResourceInfo;
+	var Obj = browser.extension.ImageResourceInfo;
 	var imageResouceInfoArray = [
 		new Obj("images/", "ui-bg_flat_0_aaaaaa_40x100.png", "images/"),
 		new Obj("images/", "ui-bg_flat_55_fbf9ee_40x100.png", "images/"),
@@ -3728,7 +3728,7 @@ function addUIStyle() {
 		new Obj("images/", "ui-icons_5c0d11_256x240.png", "images/"),
 		new Obj("images/", "ui-icons_cd0a0a_256x240.png", "images/"),
 	];
-	browserExtension.addStyleFromResource("resources/", "jquery-ui-1.9.2.custom.min.css", imageResouceInfoArray);
+	browser.extension.addStyleFromResource("resources/", "jquery-ui-1.9.2.custom.min.css", imageResouceInfoArray);
 }
 
 function getReportOverviewHtml() {
@@ -4124,8 +4124,8 @@ function initUI() {
 function initMainMenu(event) {
 	event.currentTarget.removeEventListener("click", initMainMenu);
 	// load jQuery and jQuery UI
-	browserExtension.loadScript("scripts/", "jquery-1.8.3.min.js");
-	browserExtension.loadScript("scripts/", "jquery-ui-1.9.2.custom.min.js");
+	browser.extension.loadScript("scripts/", "jquery-1.8.3.min.js");
+	browser.extension.loadScript("scripts/", "jquery-ui-1.9.2.custom.min.js");
 
 	var b = "[STAT] HentaiVerse Statistics, Tracking, and Analysis Tool v." + HVStat.VERSION + (browser.isChrome ? " (Chrome Edition)" : "");
 	var c = document.createElement("div");
@@ -4165,9 +4165,9 @@ function initMainMenu(event) {
 	initItemPane();
 	initRewardsPane();
 	initShrinePane();
-	$("#pane6").html(browserExtension.getResourceText("resources/", "settings-pane.html"));
+	$("#pane6").html(browser.extension.getResourceText("resources/", "settings-pane.html"));
 	initSettingsPane();
-	$("#pane7").html(browserExtension.getResourceText("resources/", "monster-database-pane.html"));
+	$("#pane7").html(browser.extension.getResourceText("resources/", "monster-database-pane.html"));
 	initMonsterStatsPane();
 	var mainButton = document.getElementById("HVStatMainButton");
 	mainButton.addEventListener("click", function () {
