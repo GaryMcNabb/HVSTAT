@@ -1352,7 +1352,7 @@ HVStat.Monster = (function () {
 							statsHtml += ')';
 						}
 					}
-					if (HVStat.usingHVFont) {
+					if (hv.settings.useHVFontEngine) {
 						nameOuterFrameElement.style.width = "auto"; // tweak for Firefox
 						nameInnerFrameElement.style.width = "auto"; // tweak for Firefox
 						div = document.createElement("div");
@@ -2965,12 +2965,12 @@ HVStat.highlightQuickcast = function () {
 	var mpHighlightLevel2 = Number(_settings.warnRedLevelMP);
 	var spHighlightLevel1 = Number(_settings.warnOrangeLevelSP);
 	var spHighlightLevel2 = Number(_settings.warnRedLevelSP);
-	if (HVStat.currHpPercent <= hpHighlightLevel1) {
-		hv.elementCache.quickcastBar.style.backgroundColor = (HVStat.currHpPercent > hpHighlightLevel2) ? "orange" : "red";
-	} else if (HVStat.currMpPercent <= mpHighlightLevel1) {
-		hv.elementCache.quickcastBar.style.backgroundColor = (HVStat.currMpPercent > mpHighlightLevel2) ? "blue" : "darkblue";
-	} else if (HVStat.currSpPercent <= spHighlightLevel1) {
-		hv.elementCache.quickcastBar.style.backgroundColor = (HVStat.currSpPercent > spHighlightLevel2) ? "lime" : "green";
+	if (hv.character.healthPercent <= hpHighlightLevel1) {
+		hv.elementCache.quickcastBar.style.backgroundColor = (hv.character.healthPercent > hpHighlightLevel2) ? "orange" : "red";
+	} else if (hv.character.magicPercent <= mpHighlightLevel1) {
+		hv.elementCache.quickcastBar.style.backgroundColor = (hv.character.magicPercent > mpHighlightLevel2) ? "blue" : "darkblue";
+	} else if (hv.character.spiritPercent <= spHighlightLevel1) {
+		hv.elementCache.quickcastBar.style.backgroundColor = (hv.character.spiritPercent > spHighlightLevel2) ? "lime" : "green";
 	}
 }
 
@@ -2987,38 +2987,38 @@ HVStat.warnHealthStatus = function () {
 	var spWarningResumeLevel = Math.min(spWarningLevel + 10, 100);
 	if (!HVStat.isBattleRoundFinished) {
 		if (_settings.isShowPopup) {
-			if (HVStat.currHpPercent <= hpWarningLevel && (!hpAlertAlreadyShown || _settings.isNagHP)) {
+			if (hv.character.healthPercent <= hpWarningLevel && (!hpAlertAlreadyShown || _settings.isNagHP)) {
 				alert("Your health is dangerously low!");
 				hpAlertAlreadyShown = true;
 				localStorage.setItem(HVStat.key_hpAlertAlreadyShown, "true");
 			}
-			if (HVStat.currMpPercent <= mpWarningLevel && (!mpAlertAlreadyShown || _settings.isNagMP)) {
+			if (hv.character.magicPercent <= mpWarningLevel && (!mpAlertAlreadyShown || _settings.isNagMP)) {
 				alert("Your mana is dangerously low!");
 				mpAlertAlreadyShown = true;
 				localStorage.setItem(HVStat.key_mpAlertAlreadyShown, "true");
 			}
-			if (HVStat.currSpPercent <= spWarningLevel && (!spAlertAlreadyShown || _settings.isNagSP)) {
+			if (hv.character.spiritPercent <= spWarningLevel && (!spAlertAlreadyShown || _settings.isNagSP)) {
 				alert("Your spirit is dangerously low!");
 				spAlertAlreadyShown = true;
 				localStorage.setItem(HVStat.key_spAlertAlreadyShown, "true");
 			}
 		}
-		if (_settings.isAlertOverchargeFull && HVStat.currOcRate >= 1.0 && !ocAlertAlreadyShown) {
+		if (_settings.isAlertOverchargeFull && hv.character.overchargeRate >= 1.0 && !ocAlertAlreadyShown) {
 			alert("Your overcharge is full.");
 			ocAlertAlreadyShown = true;
 			localStorage.setItem(HVStat.key_ocAlertAlreadyShown, "true");
 		}
 	}
-	if (HVStat.currHpPercent >= hpWarningResumeLevel) {
+	if (hv.character.healthPercent >= hpWarningResumeLevel) {
 		localStorage.removeItem(HVStat.key_hpAlertAlreadyShown);
 	}
-	if (HVStat.currMpPercent >= mpWarningResumeLevel) {
+	if (hv.character.magicPercent >= mpWarningResumeLevel) {
 		localStorage.removeItem(HVStat.key_mpAlertAlreadyShown);
 	}
-	if (HVStat.currSpPercent >= spWarningResumeLevel) {
+	if (hv.character.spiritPercent >= spWarningResumeLevel) {
 		localStorage.removeItem(HVStat.key_spAlertAlreadyShown);
 	}
-	if (HVStat.currOcRate < 1.0) {
+	if (hv.character.overchargeRate < 1.0) {
 		localStorage.removeItem(HVStat.key_ocAlertAlreadyShown);
 	}
 }
@@ -3031,7 +3031,7 @@ HVStat.resetHealthWarningStates = function () {
 }
 
 function collectCurrentProfsData() {
-	if (!HVStat.isCharacterPage || HVStat.usingHVFont) {
+	if (!HVStat.isCharacterPage || hv.settings.useHVFontEngine) {
 		return;
 	}
 	loadProfsObject();
@@ -6351,14 +6351,14 @@ function StartBattleAlerts () {
 		element = elements[i];
 		var oldOnClick = element.getAttribute("onclick");
 		var newOnClick = 'if(confirm("Are you sure you want to start this challenge on ' + diff + ' difficulty, with set number: ' + _charss.set + '?\\n';
-		if (_settings.StartAlertHP > HVStat.currHpPercent) {
-			newOnClick += '\\n - HP is only '+ HVStat.currHpPercent + '%';
+		if (_settings.StartAlertHP > hv.character.healthPercent) {
+			newOnClick += '\\n - HP is only '+ hv.character.healthPercent + '%';
 		}
-		if (_settings.StartAlertMP > HVStat.currMpPercent) {
-			newOnClick += '\\n - MP is only '+ HVStat.currMpPercent + '%';
+		if (_settings.StartAlertMP > hv.character.magicPercent) {
+			newOnClick += '\\n - MP is only '+ hv.character.magicPercent + '%';
 		}
-		if (_settings.StartAlertSP > HVStat.currSpPercent) {
-			newOnClick += '\\n - SP is only '+ HVStat.currSpPercent + '%';
+		if (_settings.StartAlertSP > hv.character.spiritPercent) {
+			newOnClick += '\\n - SP is only '+ hv.character.spiritPercent + '%';
 		}
 		if (_settings.StartAlertDifficulty < _charss.difficulty[0]) {
 			newOnClick += '\\n - Difficulty is '+ diff;
@@ -6383,9 +6383,9 @@ HVStat.showEquippedSet = function () {
 
 function FindSettingsStats() {
 	loadCHARSSObject();
-	_charss.currHP = HVStat.currHpRate;
-	_charss.currMP = HVStat.currMpRate;
-	_charss.currSP = HVStat.currSpRate;
+	_charss.currHP = hv.character.healthRate;
+	_charss.currMP = hv.character.magicRate;
+	_charss.currSP = hv.character.spiritRate;
 	var difficulty;
 	var elements = document.querySelectorAll("div.clb table.cit");
 	var i, element, text;
@@ -6655,27 +6655,9 @@ HVStat.main2 = function () {
 	hv = new HV();
 	console.debug(hv);
 	
-	// store DOM caches
-//	hv.elementCache.popup = document.getElementById("popup_box");
-//	hv.elementCache.quickcastBar = document.getElementById("quickbar");
-//	hv.elementCache.battleLog = document.getElementById("togpane_log");
-//	hv.elementCache.monsterPane = document.getElementById("monsterpane");
-	HVStat.charHpGaugeElement = document.querySelector('img[alt="health"]');
-	HVStat.charMpGaugeElement = document.querySelector('img[alt="magic"]');
-	HVStat.charSpGaugeElement = document.querySelector('img[alt="spirit"]');
-	HVStat.charOcGaugeElement = document.querySelector('img[alt="overcharge"]');
-
 	// store static values
 	HVStat.isCharacterPage = !!document.getElementById("pattrform");
 	HVStat.isRiddlePage = !!document.getElementById("riddleform");
-	HVStat.usingHVFont = document.getElementsByClassName('fd10')[0].textContent !== "Health points";
-	HVStat.currHpRate = HVStat.getGaugeRate(HVStat.charHpGaugeElement, HVStat.charGaugeMaxWidth);
-	HVStat.currMpRate = HVStat.getGaugeRate(HVStat.charMpGaugeElement, HVStat.charGaugeMaxWidth);
-	HVStat.currSpRate = HVStat.getGaugeRate(HVStat.charSpGaugeElement, HVStat.charGaugeMaxWidth);
-	HVStat.currOcRate = HVStat.getGaugeRate(HVStat.charOcGaugeElement, HVStat.charGaugeMaxWidth);
-	HVStat.currHpPercent = Math.floor(HVStat.currHpRate * 100);
-	HVStat.currMpPercent = Math.floor(HVStat.currMpRate * 100);
-	HVStat.currSpPercent = Math.floor(HVStat.currSpRate * 100);
 	HVStat.duringBattle = !!hv.elementCache.battleLog;
 	HVStat.isBattleRoundFinished = !!document.querySelector("#battleform div.btcp");
 
@@ -6757,7 +6739,7 @@ HVStat.main2 = function () {
 		}
 	} else {
 		localStorage.removeItem(HV_ROUND);
-		if ((_settings.isStartAlert || _settings.isShowEquippedSet) && !HVStat.usingHVFont) {
+		if ((_settings.isStartAlert || _settings.isShowEquippedSet) && !hv.settings.useHVFontEngine) {
 			FindSettingsStats();
 		}
 		if (!HVStat.isRiddlePage) {
@@ -6808,11 +6790,11 @@ HVStat.main2 = function () {
 				document.onkeydown = null;	// workaround to make enable SPACE key
 			}
 		}
-		if (_settings.isStartAlert && !HVStat.usingHVFont) {
+		if (_settings.isStartAlert && !hv.settings.useHVFontEngine) {
 			StartBattleAlerts();
 		}
 	}
-	if (!HVStat.usingHVFont && _settings.isShowEquippedSet) {
+	if (!hv.settings.useHVFontEngine && _settings.isShowEquippedSet) {
 		HVStat.showEquippedSet();
 	}
 	if (_settings.isShowSidebarProfs) {
