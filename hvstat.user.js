@@ -2963,7 +2963,7 @@ function showSidebarProfs() {
 	if (!isProfTotalsRecorded())
 		return;
 	var b = document.querySelector("div.stuffbox").scrollHeight - 31;
-	GM_addStyle(".prof_sidebar td {font-family:arial,helvetica,sans-serif; font-size:9pt; font-weight:normal; text-align:left}.prof_sidebar_top td {font-family:arial,helvetica,sans-serif; font-size:10pt; font-weight:bold; text-align:center}");
+	browser.extension.addStyle(".prof_sidebar td {font-family:arial,helvetica,sans-serif; font-size:9pt; font-weight:normal; text-align:left}.prof_sidebar_top td {font-family:arial,helvetica,sans-serif; font-size:10pt; font-weight:bold; text-align:center}");
 	var div = document.createElement("div");
 	div.setAttribute("id", "_profbutton");
 	div.setAttribute("class", "ui-corner-all");
@@ -4878,7 +4878,7 @@ function reminderAndSaveSettings() {
 }
 function initItemsView() {
 	$("#leftpane").hide();
-	GM_addStyle("#hv_item_grid * {font-family:arial,helvetica,sans-serif !important;font-size:9pt !important;font-weight:bold !important;line-height:72% !important;padding-top:2px;text-transform:capitalize;}#_health, #_mana, #_spirit, #_other, #_infusion, #_scroll, #_special div div div {cursor:pointer;}#_artifact, #_trophy, #_event, #_token, #_crystal div div div {cursor:default;}#_left {width:194px;height:660px;float:left;overflow:auto;}#_right {width:206px;height:660px;float:left;overflow:auto;}._spacer {padding:1px;float:right;width:194px;}");
+	browser.extionsion.addStyle("#hv_item_grid * {font-family:arial,helvetica,sans-serif !important;font-size:9pt !important;font-weight:bold !important;line-height:72% !important;padding-top:2px;text-transform:capitalize;}#_health, #_mana, #_spirit, #_other, #_infusion, #_scroll, #_special div div div {cursor:pointer;}#_artifact, #_trophy, #_event, #_token, #_crystal div div div {cursor:default;}#_left {width:194px;height:660px;float:left;overflow:auto;}#_right {width:206px;height:660px;float:left;overflow:auto;}._spacer {padding:1px;float:right;width:194px;}");
 	var a = 11101;
 	var k = 11201;
 	var e = 11301;
@@ -5006,24 +5006,6 @@ function getRelativeTime(b) {
 	if (c < (24 * 60 * 60)) return "about " + (parseInt(c / 3600)).toString() + " hours ago";
 	if (c < (48 * 60 * 60)) return "1 day ago";
 	return (parseInt(c / 86400)).toString() + " days ago";
-}
-if (browser.isChrome) {	//=== Clones a few GreaseMonkey functions for Chrome Users.
-	unsafeWindow = window;
-	function GM_addStyle(styleCSS) {
-		var doc = document,
-		newStyle = doc.createElement("style");
-		newStyle.textContent = styleCSS;
-		doc.documentElement.insertBefore(newStyle, null);
-	}
-	function GM_getValue(b, a) {
-		var c = localStorage.getItem(b);
-		if (c === "false") return false;
-		return c || a;
-	}
-	function GM_deleteValue(a) { localStorage.removeItem(a); }
-	function GM_log(a) { console.log(a); }
-	function GM_setValue(a, b) { localStorage.setItem(a, b); }
-	function GM_getResourceText(a) {}
 }
 function HVResetTracking() {
 	_overview.reset();
