@@ -40,7 +40,7 @@ var util = {
 		return value.replace(/[\-\[\]{}()*+?.,\\\^$|#\s]/g, "\\$&");
 	},
 
-	text: function (node) {
+	innerText: function (node) {
 		var s = "", t, i;
 		if (node.nodeType === document.TEXT_NODE) {
 			if (node.nodeValue) {
@@ -48,7 +48,7 @@ var util = {
 			}
 		} else if (node.nodeType === document.ELEMENT_NODE) {
 			for (i = 0; i < node.childNodes.length; i++) {
-				t = util.text(node.childNodes[i]);
+				t = util.innerText(node.childNodes[i]);
 				if (t) {
 					if (s !== "") {
 						s += " ";
@@ -678,7 +678,7 @@ HVStat.TurnLog = function (specifiedTurn) {
 	this.innerHTMLs = [];
 
 	var turnElements = document.querySelectorAll("#togpane_log td:first-child");
-	this.lastTurn = Number(util.text(turnElements[0]));
+	this.lastTurn = Number(util.innerText(turnElements[0]));
 	if (isNaN(parseFloat(specifiedTurn))) {
 		specifiedTurn = this.lastTurn;
 	} else {
@@ -688,10 +688,10 @@ HVStat.TurnLog = function (specifiedTurn) {
 
 	for (var i = 0; i < turnElements.length; i++) {
 		var turnElement = turnElements[i];
-		var turn = Number(util.text(turnElement));
+		var turn = Number(util.innerText(turnElement));
 		if (turn === specifiedTurn) {
 			var logTextElement = turnElement.nextSibling.nextSibling;
-			this.texts.push(util.text(logTextElement));
+			this.texts.push(util.innerText(logTextElement));
 			this.innerHTMLs.push(logTextElement.innerHTML);
 		}
 	}
@@ -2938,20 +2938,20 @@ function collectCurrentProfsData() {
 	}
 	loadProfsObject();
 	var proficiencyTableElements = document.getElementById("leftpane").children[1].querySelectorAll("div.fd12");
-	_profs.weapProfTotals[0] = Number(util.text(proficiencyTableElements[2]));
-	_profs.weapProfTotals[1] = Number(util.text(proficiencyTableElements[4]));
-	_profs.weapProfTotals[2] = Number(util.text(proficiencyTableElements[6]));
-	_profs.weapProfTotals[3] = Number(util.text(proficiencyTableElements[8]));
-	_profs.armorProfTotals[0] = Number(util.text(proficiencyTableElements[10]));
-	_profs.armorProfTotals[1] = Number(util.text(proficiencyTableElements[12]));
-	_profs.armorProfTotals[2] = Number(util.text(proficiencyTableElements[14]));
-	_profs.elemTotal = Number(util.text(proficiencyTableElements[17]));
-	_profs.divineTotal = Number(util.text(proficiencyTableElements[19]));
-	_profs.forbidTotal = Number(util.text(proficiencyTableElements[21]));
-	_profs.spiritTotal = Number(util.text(proficiencyTableElements[23]));
-	_profs.depTotal = Number(util.text(proficiencyTableElements[25]));
-	_profs.supportTotal = Number(util.text(proficiencyTableElements[27]));
-	_profs.curativeTotal = Number(util.text(proficiencyTableElements[29]));
+	_profs.weapProfTotals[0] = Number(util.innerText(proficiencyTableElements[2]));
+	_profs.weapProfTotals[1] = Number(util.innerText(proficiencyTableElements[4]));
+	_profs.weapProfTotals[2] = Number(util.innerText(proficiencyTableElements[6]));
+	_profs.weapProfTotals[3] = Number(util.innerText(proficiencyTableElements[8]));
+	_profs.armorProfTotals[0] = Number(util.innerText(proficiencyTableElements[10]));
+	_profs.armorProfTotals[1] = Number(util.innerText(proficiencyTableElements[12]));
+	_profs.armorProfTotals[2] = Number(util.innerText(proficiencyTableElements[14]));
+	_profs.elemTotal = Number(util.innerText(proficiencyTableElements[17]));
+	_profs.divineTotal = Number(util.innerText(proficiencyTableElements[19]));
+	_profs.forbidTotal = Number(util.innerText(proficiencyTableElements[21]));
+	_profs.spiritTotal = Number(util.innerText(proficiencyTableElements[23]));
+	_profs.depTotal = Number(util.innerText(proficiencyTableElements[25]));
+	_profs.supportTotal = Number(util.innerText(proficiencyTableElements[27]));
+	_profs.curativeTotal = Number(util.innerText(proficiencyTableElements[29]));
 	_profs.save();
 }
 function showSidebarProfs() {
@@ -4925,10 +4925,10 @@ function captureShrine() {
 	}
 	loadShrineObject();
 	var messageElements = messageBoxElement.querySelectorAll("div.cmb6");
-	var message0 = util.text(messageElements[0]);
+	var message0 = util.innerText(messageElements[0]);
 	if (message0.match(/power/i)) {
 		_shrine.artifactsTraded++;
-		var message2 = util.text(messageElements[2]);
+		var message2 = util.innerText(messageElements[2]);
 		if (message2.match(/ability point/i)) {
 			_shrine.artifactAP++;
 		} else if (message2.match(/crystal/i)) {
@@ -4942,7 +4942,7 @@ function captureShrine() {
 			_shrine.artifactItem++;
 		}
 	} else if (message0.match(/item/i)) {
-		var message3 = util.text(messageElements[3]);
+		var message3 = util.innerText(messageElements[3]);
 		_shrine.trophyArray.push(message3);
 	}
 	_shrine.save();
@@ -6311,7 +6311,7 @@ function FindSettingsStats() {
 	var i, element, text;
 	for (i = 0; i < elements.length; i++) {
 		element = elements[i];
-		text = util.text(element);
+		text = util.innerText(element);
 		if (text.match(/Difficulty/ig)) {
 			difficulty = text.match(/Easy|Normal|Hard|Heroic|Nightmare|Hell|Nintendo|Battletoads|IWBTH/ig);
 		}
