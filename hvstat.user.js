@@ -34,8 +34,6 @@
 // generic utilities
 //------------------------------------
 var util = {
-	isChrome: navigator.userAgent.indexOf("Chrome") >= 0,
-
 	escapeRegex: function (value) {
 		return value.replace(/[\-\[\]{}()*+?.,\\\^$|#\s]/g, "\\$&");
 	},
@@ -88,7 +86,14 @@ util.CallbackQueue.prototype = {
 	},
 };
 
-var browserExtension = {
+//------------------------------------
+// browser utilities
+//------------------------------------
+var browser = {
+	isChrome: navigator.userAgent.indexOf("Chrome") >= 0,
+};
+
+browser.extension = {
 	ImageResourceInfo: function (originalPath, name, resourcePath) {
 		this.originalPath = originalPath;
 		this.name = name;
@@ -96,7 +101,7 @@ var browserExtension = {
 	},
 	getResourceURL: function (resourcePath, resourceName) {
 		var resourceURL;
-		if (util.isChrome) {
+		if (browser.isChrome) {
 			resourceURL = chrome.extension.getURL(resourcePath + resourceName);
 		} else {
 			resourceURL = GM_getResourceURL(resourceName);
@@ -105,9 +110,9 @@ var browserExtension = {
 	},
 	getResourceText: function (resoucePath, resourceName) {
 		var resourceText;
-		if (util.isChrome) {
+		if (browser.isChrome) {
 			var request = new XMLHttpRequest();
-			var resourceURL = browserExtension.getResourceURL(resoucePath, resourceName);
+			var resourceURL = browser.extension.getResourceURL(resoucePath, resourceName);
 			request.open("GET", resourceURL, false);
 			request.send(null);
 			resourceText = request.responseText;
@@ -117,7 +122,7 @@ var browserExtension = {
 		return resourceText;
 	},
 	addStyle: function (styleText) {
-		if (util.isChrome) {
+		if (browser.isChrome) {
 			var styleElement = document.createElement("style");
 			styleElement.textContent = styleText;
 			document.documentElement.insertBefore(styleElement, null);
@@ -126,20 +131,20 @@ var browserExtension = {
 		}
 	},
 	addStyleFromResource: function (styleResourcePath, styleResouceName, imageResouceInfoArray) {
-		var styleText = browserExtension.getResourceText(styleResourcePath, styleResouceName);
+		var styleText = browser.extension.getResourceText(styleResourcePath, styleResouceName);
 		if (imageResouceInfoArray instanceof Array) {
 			// replace image URLs
 			for (var i = 0; i < imageResouceInfoArray.length; i++) {
 				var imageResourceName = imageResouceInfoArray[i].name;
 				var imageOriginalPath = imageResouceInfoArray[i].originalPath;
 				var imageResourcePath = imageResouceInfoArray[i].resourcePath;
-				var imageResourceURL = browserExtension.getResourceURL(imageResourcePath, imageResourceName);
+				var imageResourceURL = browser.extension.getResourceURL(imageResourcePath, imageResourceName);
 				var regex = new RegExp(util.escapeRegex(imageOriginalPath + imageResourceName), "g");
 				styleText = styleText.replace(regex, imageResourceURL);
 			}
 		}
 		// add style
-		browserExtension.addStyle(styleText);
+		browser.extension.addStyle(styleText);
 	},
 	loadScript: function (scriptPath, scriptName) {
 		eval.call(window, browserExtension.getResourceText(scriptPath, scriptName));
@@ -152,14 +157,14 @@ var browserExtension = {
 var hvStat = {};
 
 hvStat.addStyle = function () {
-	var C = browserExtension.ImageResourceInfo;
+	var C = browser.extension.ImageResourceInfo;
 	var imageResouces = [
 		new C("images/", "channeling.png", "images/"),
 		new C("images/", "healthpot.png", "images/"),
 		new C("images/", "manapot.png", "images/"),
 		new C("images/", "spiritpot.png", "images/"),
 	];
-	browserExtension.addStyleFromResource("resources/", "hvstat.css", imageResouces);
+	browser.extension.addStyleFromResource("resources/", "hvstat.css", imageResouces);
 };
 
 var HVStat = {
@@ -612,7 +617,7 @@ HVStat.MonsterVO = function () {
 //------------------------------------
 
 HVStat.getDateTimeString = function (date) {
-	if (HVStat.isChrome) {
+	if (browser.isChrome) {
 		// see http://code.google.com/p/chromium/issues/detail?id=3607
 		return date.toLocaleDateString() + " " + date.toLocaleTimeString();
 	} else {
@@ -2688,8 +2693,8 @@ function setLogCSS() {
 	} else {
 		styleName = "battle-log-type0.css";
 	}
-	var styleText = browserExtension.getResourceText("resources/", styleName);
-	browserExtension.addStyle(styleText);
+	var styleText = browser.extension.getResourceText("resources/", styleName);
+	browser.extension.addStyle(styleText);
 }
 /* =====
  highlightLogText
@@ -3803,7 +3808,7 @@ function getReportOverviewHtml() {
 		else E = K + " days, " + Math.floor((v / 60) - (K * 24)) + " hours, " + (v % 60).toFixed() + " mins";
 		var e = f.toLocaleString();
 		var z = r.toLocaleString();
-		if (HVStat.isChrome) {
+		if (browser.isChrome) {
 			e = f.toLocaleDateString() + " " + f.toLocaleTimeString();
 			z = r.toLocaleDateString() + " " + r.toLocaleTimeString();
 		}
@@ -3922,7 +3927,7 @@ function getReportStatsHtml() {
 		var forall = _stats.forbidSpells[1] + _stats.forbidSpells[3];
 		var offhand = _stats.aOffhands[0] + _stats.aOffhands[2];
 		var offhanddam = _stats.aOffhands[1] + _stats.aOffhands[3];
-		if (HVStat.isChrome) dst1 = dst.toLocaleDateString() + " " + dst.toLocaleTimeString();
+		if (browser.isChrome) dst1 = dst.toLocaleDateString() + " " + dst.toLocaleTimeString();
 		c += '<tr><td colspan="2"><b>Rounds tracked:</b> ' + _stats.rounds + ' <b>Since: </b>' + dst1 + '</td></tr>'
 		c += '<tr><td colspan="2"><b>Monsters killed:</b> ' + _stats.kills + '</td></tr>'
 		c += '<tr><td colspan="2"><b>Offensive Statistics:</b></td></tr>'
@@ -4123,7 +4128,7 @@ function initMainMenu(event) {
 	browserExtension.loadScript("scripts/", "jquery-1.8.3.min.js");
 	browserExtension.loadScript("scripts/", "jquery-ui-1.9.2.custom.min.js");
 
-	var b = "[STAT] HentaiVerse Statistics, Tracking, and Analysis Tool v." + HVStat.VERSION + (HVStat.isChrome ? " (Chrome Edition)" : "");
+	var b = "[STAT] HentaiVerse Statistics, Tracking, and Analysis Tool v." + HVStat.VERSION + (browser.isChrome ? " (Chrome Edition)" : "");
 	var c = document.createElement("div");
 	$(c).addClass("_mainMenu").css("text-align", "left");
 	var a = '<div id="tabs"><ul>'
@@ -4201,12 +4206,12 @@ function initStatsPane() {
 			if (_backup[i].datesave !== 0) {
 				nd.setTime( _backup[i].datesave);
 				ds[i] = nd.toLocaleString();
-				if (HVStat.isChrome) ds[i] = nd.toLocaleDateString() + " " + nd.toLocaleTimeString();
+				if (browser.isChrome) ds[i] = nd.toLocaleDateString() + " " + nd.toLocaleTimeString();
 			}
 			if (_backup[i].datestart !== 0) {
 				nd.setTime( _backup[i].datestart);
 				d[i] = nd.toLocaleString();
-				if (HVStat.isChrome) d[i] = nd.toLocaleDateString() + " " + nd.toLocaleTimeString();
+				if (browser.isChrome) d[i] = nd.toLocaleDateString() + " " + nd.toLocaleTimeString();
 			}
 			
 		}
@@ -4287,7 +4292,7 @@ function initShrinePane() {
 }
 function initMonsterStatsPane() {
 	function showOldDatabaseSize() {
-		var oldDatabaseSize = ((localStorage.HVMonsterDatabase ? localStorage.HVMonsterDatabase.length : 0) / 1024 / 1024 * (HVStat.isChrome ? 2 : 1)).toFixed(2);
+		var oldDatabaseSize = ((localStorage.HVMonsterDatabase ? localStorage.HVMonsterDatabase.length : 0) / 1024 / 1024 * (browser.isChrome ? 2 : 1)).toFixed(2);
 		var e = document.getElementById("hvstat-monster-database-old-database-size");
 		e.textContent = String(oldDatabaseSize);
 	}
@@ -5003,7 +5008,7 @@ function getRelativeTime(b) {
 	if (c < (48 * 60 * 60)) return "1 day ago";
 	return (parseInt(c / 86400)).toString() + " days ago";
 }
-if (HVStat.isChrome) {	//=== Clones a few GreaseMonkey functions for Chrome Users.
+if (browser.isChrome) {	//=== Clones a few GreaseMonkey functions for Chrome Users.
 	unsafeWindow = window;
 	function GM_addStyle(styleCSS) {
 		var doc = document,
@@ -6721,7 +6726,7 @@ HVStat.main2 = function () {
 			if (_settings.isTrackShrine) {
 				captureShrine();
 			}
-			if (HVStat.isChrome && _settings.enableShrineKeyPatch) {
+			if (browser.isChrome && _settings.enableShrineKeyPatch) {
 				document.onkeydown = null;	// workaround to make enable SPACE key
 			}
 		}
