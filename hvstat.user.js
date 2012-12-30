@@ -34,10 +34,12 @@
 // generic utilities
 //------------------------------------
 var util = {
+	percent: function (value) {
+		return Math.floor(value * 100);
+	},
 	escapeRegex: function (value) {
 		return value.replace(/[\-\[\]{}()*+?.,\\\^$|#\s]/g, "\\$&");
 	},
-
 	innerText: function (node) {
 		var s = "", t, i;
 		if (node.nodeType === document.TEXT_NODE) {
@@ -150,6 +152,99 @@ browser.extension = {
 		eval.call(window, browser.extension.getResourceText(scriptPath, scriptName));
 	}
 }
+
+//------------------------------------
+// HV utility object
+//------------------------------------
+var hv;
+var HV = (function () {
+	// private static
+	var getGaugeRate = function (gaugeElement, gaugeMaxWidth) {
+		if (!gaugeElement) {
+			return 0;
+		}
+		var result = /width\s*?:\s*?(\d+?)px/i.exec(gaugeElement.style.cssText);
+		var rate = 0;
+		if (result && result.length >= 2) {
+			rate = Number(result[1]) / gaugeMaxWidth;
+		} else {
+			rate = gaugeElement.width / gaugeMaxWidth;
+		}
+		return rate;
+	};
+	var getCharacterGaugeRate = function (gauge) {
+		return getGaugeRate(gauge, 120);
+	};
+
+	// constructor
+	function HV() {
+		var location = {
+			isBattleItems: document.location.search === "?s=Character&ss=it",
+			isInventory: document.location.search === "?s=Character&ss=in",
+			isEquipment: document.location.search.indexOf("?s=Character&ss=eq") > -1,
+			isItemWorld: document.location.search.indexOf("?s=Battle&ss=iw") > -1,
+			isMoogleWrite: document.location.search.indexOf("?s=Bazaar&ss=mm&filter=Write") > -1,
+			isEquipmentShop: document.location.search.indexOf("?s=Bazaar&ss=es") > -1,
+			isForge: document.location.search.indexOf("?s=Bazaar&ss=fr") > -1,
+			isShrine: document.location.search === "?s=Bazaar&ss=ss",
+			isMonsterLab: document.location.search.indexOf("?s=Bazaar&ss=ml") > -1,
+			isCharacter: !!document.getElementById("pattrform"),
+			isRiddle: !!document.getElementById("riddleform"),
+		};
+
+		var elementCache = {
+			popup: document.getElementById("popup_box"),
+			quickcastBar: document.getElementById("quickbar"),
+			battleLog: document.getElementById("togpane_log"),
+			monsterPane: document.getElementById("monsterpane"),
+			roundFinishMessage: document.querySelector('#battleform div.btcp'),
+		};
+
+		var settings = {
+			useHVFontEngine: document.getElementsByClassName('fd10')[0].textContent !== "Health points",
+			difficulty: null,
+		};
+		var e = document.querySelectorAll('div.clb table.cit div.fd12 > div');
+		var i, r;
+		for (i = 0; i < e.length; i++) {
+			r = /(Easy|Normal|Hard|Heroic|Nightmare|Hell|Nintendo|Battletoads|IWBTH)/.exec(util.innerText(e[i]));
+			if (r && r.length >= 2) {
+				settings.difficulty = r[1];
+				break;
+			}
+		}
+
+		var character = {
+			healthRate: getCharacterGaugeRate(document.querySelector('img[alt="health"]')),
+			magicRate: getCharacterGaugeRate(document.querySelector('img[alt="magic"]')),
+			spiritRate: getCharacterGaugeRate(document.querySelector('img[alt="spirit"]')),
+			overchargeRate: getCharacterGaugeRate(document.querySelector('img[alt="overcharge"]')),
+			healthPercent: 0,
+			magicPercent: 0,
+			spiritPercent: 0,
+			overchargePercent: 0,
+		};
+		character.healthPercent = util.percent(character.healthRate);
+		character.magicPercent = util.percent(character.magicRate);
+		character.spiritPercent = util.percent(character.spiritRate);
+		character.overchargePercent = util.percent(character.overchargeRate);
+
+		var battle = {
+			active: !!elementCache.battleLog,
+			finished: false,
+			characterEffects: [],
+		};
+
+		return {
+			location: location,
+			elementCache: elementCache,
+			settings: settings,
+			character: character,
+			battle: null,
+		};
+	}
+	return HV;
+})();
 
 //------------------------------------
 // HV STAT features
@@ -2683,7 +2778,6 @@ _tokenDrops = [0, 0, 0];
 /* =====
  setLogCSS
  Creates the CSS used to color the Battlelog.
- It uses complex selectors, so be careful!
 ===== */
 function setLogCSS() {
 	var styleName;
@@ -2872,11 +2966,11 @@ HVStat.highlightQuickcast = function () {
 	var spHighlightLevel1 = Number(_settings.warnOrangeLevelSP);
 	var spHighlightLevel2 = Number(_settings.warnRedLevelSP);
 	if (HVStat.currHpPercent <= hpHighlightLevel1) {
-		HVStat.quickcastBarElement.style.backgroundColor = (HVStat.currHpPercent > hpHighlightLevel2) ? "orange" : "red";
+		hv.elementCache.quickcastBar.style.backgroundColor = (HVStat.currHpPercent > hpHighlightLevel2) ? "orange" : "red";
 	} else if (HVStat.currMpPercent <= mpHighlightLevel1) {
-		HVStat.quickcastBarElement.style.backgroundColor = (HVStat.currMpPercent > mpHighlightLevel2) ? "blue" : "darkblue";
+		hv.elementCache.quickcastBar.style.backgroundColor = (HVStat.currMpPercent > mpHighlightLevel2) ? "blue" : "darkblue";
 	} else if (HVStat.currSpPercent <= spHighlightLevel1) {
-		HVStat.quickcastBarElement.style.backgroundColor = (HVStat.currSpPercent > spHighlightLevel2) ? "lime" : "green";
+		hv.elementCache.quickcastBar.style.backgroundColor = (HVStat.currSpPercent > spHighlightLevel2) ? "lime" : "green";
 	}
 }
 
@@ -2973,7 +3067,7 @@ function showSidebarProfs() {
 	leftBar.parentNode.insertBefore(div, leftBar.nextSibling);
 
 	div.addEventListener("mouseover", function () {
-		var c = HVStat.popupElement;
+		var c = hv.elementCache.popup;
 		var rectObject = div.getBoundingClientRect();
 		c.style.left = rectObject.left + 145 + "px";
 		c.style.top = rectObject.top - 126 + "px";
@@ -2991,7 +3085,7 @@ function showSidebarProfs() {
 		c.style.visibility = "visible";
 	});
 	div.addEventListener("mouseout", function () {
-		HVStat.popupElement.style.visibility = "hidden";
+		hv.elementCache.popup.style.visibility = "hidden";
 	});
 }
 function isProfTotalsRecorded() {
@@ -6175,7 +6269,7 @@ HVStat.showScanAndSkillButtons = function () {
 			var rectObject = u.getBoundingClientRect();
 			var top = rectObject.top;
 			if (_settings.isShowScanButton) {
-				HVStat.monsterPaneElement.style.overflow = "visible";
+				hv.elementCache.monsterPane.style.overflow = "visible";
 				div = document.createElement("div");
 				div.setAttribute("id", "HVStatScan_" + monsterElementId);
 				div.className = "hvstat-scan-button";
@@ -6184,7 +6278,7 @@ HVStat.showScanAndSkillButtons = function () {
 				div.addEventListener("click", HVStat.scanButtonClickHandler);
 			}
 			if (_settings.isShowSkillButton) {
-				HVStat.monsterPaneElement.style.overflow = "visible";
+				hv.elementCache.monsterPane.style.overflow = "visible";
 				for (i = 0; i < skills.length; i++) {
 					div = document.createElement("div");
 					div.setAttribute("id", "HVStatSkill" + String(i + 1) + "_"+ monsterElementId);
@@ -6218,17 +6312,17 @@ function registerEventHandlersForMonsterPopup() {
 		}
 		if (index < 0) return;
 		var html = HVStat.monsters[index].renderPopup();
-		HVStat.popupElement.style.width = "270px";
-		HVStat.popupElement.style.height = "auto";
-		HVStat.popupElement.innerHTML = html;
-		var popupTopOffset = HVStat.monsterPaneElement.offsetTop
-			+ index * ((HVStat.monsterPaneElement.scrollHeight - HVStat.popupElement.scrollHeight) / 9);
-		HVStat.popupElement.style.top = popupTopOffset + "px";
-		HVStat.popupElement.style.left = popupLeftOffset + "px";
-		HVStat.popupElement.style.visibility = "visible";
+		hv.elementCache.popup.style.width = "270px";
+		hv.elementCache.popup.style.height = "auto";
+		hv.elementCache.popup.innerHTML = html;
+		var popupTopOffset = hv.elementCache.monsterPane.offsetTop
+			+ index * ((hv.elementCache.monsterPane.scrollHeight - hv.elementCache.popup.scrollHeight) / 9);
+		hv.elementCache.popup.style.top = popupTopOffset + "px";
+		hv.elementCache.popup.style.left = popupLeftOffset + "px";
+		hv.elementCache.popup.style.visibility = "visible";
 	};
 	var hidePopup = function () {
-		HVStat.popupElement.style.visibility = "hidden";
+		hv.elementCache.popup.style.visibility = "hidden";
 	};
 	var timerId;
 	var prepareForShowingPopup = function (event) {
@@ -6558,11 +6652,14 @@ HVStat.main2 = function () {
 	if (_settings.isShowHighlight) {
 		setLogCSS();
 	}
+	hv = new HV();
+	console.debug(hv);
+	
 	// store DOM caches
-	HVStat.popupElement = document.getElementById("popup_box");
-	HVStat.quickcastBarElement = document.getElementById("quickbar");
-	HVStat.battleLogElement = document.getElementById("togpane_log");
-	HVStat.monsterPaneElement = document.getElementById("monsterpane");
+//	hv.elementCache.popup = document.getElementById("popup_box");
+//	hv.elementCache.quickcastBar = document.getElementById("quickbar");
+//	hv.elementCache.battleLog = document.getElementById("togpane_log");
+//	hv.elementCache.monsterPane = document.getElementById("monsterpane");
 	HVStat.charHpGaugeElement = document.querySelector('img[alt="health"]');
 	HVStat.charMpGaugeElement = document.querySelector('img[alt="magic"]');
 	HVStat.charSpGaugeElement = document.querySelector('img[alt="spirit"]');
@@ -6579,7 +6676,7 @@ HVStat.main2 = function () {
 	HVStat.currHpPercent = Math.floor(HVStat.currHpRate * 100);
 	HVStat.currMpPercent = Math.floor(HVStat.currMpRate * 100);
 	HVStat.currSpPercent = Math.floor(HVStat.currSpRate * 100);
-	HVStat.duringBattle = !!HVStat.battleLogElement;
+	HVStat.duringBattle = !!hv.elementCache.battleLog;
 	HVStat.isBattleRoundFinished = !!document.querySelector("#battleform div.btcp");
 
 	if (_settings.isChangePageTitle && document.title === "The HentaiVerse") {
