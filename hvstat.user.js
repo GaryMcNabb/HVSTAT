@@ -42,7 +42,7 @@ window.IDBCursor = window.IDBCursor || window.webkitIDBCursor;
 // generic utilities
 //------------------------------------
 var util = {
-	percent: function (value) {
+	percent: function (value) { // refactor -> hvStat
 		return Math.floor(value * 100);
 	},
 	escapeRegex: function (value) {
@@ -230,10 +230,10 @@ var HV = (function () {
 			magicRate: getCharacterGaugeRate(document.querySelector('img[alt="magic"]')),
 			spiritRate: getCharacterGaugeRate(document.querySelector('img[alt="spirit"]')),
 			overchargeRate: getCharacterGaugeRate(document.querySelector('img[alt="overcharge"]')),
-			healthPercent: 0,
-			magicPercent: 0,
-			spiritPercent: 0,
-			overchargePercent: 0,
+			healthPercent: 0,	// refactor -> hvStat
+			magicPercent: 0,	// refactor -> hvStat
+			spiritPercent: 0,	// refactor -> hvStat
+			overchargePercent: 0,	// refactor -> hvStat
 		};
 		character.healthPercent = util.percent(character.healthRate);
 		character.magicPercent = util.percent(character.magicRate);
@@ -247,6 +247,7 @@ var HV = (function () {
 		};
 		battle.round = {
 			finished: !!elementCache.roundFinishedMessage,
+			monsters: [],
 		};
 
 		return {
@@ -264,6 +265,26 @@ var HV = (function () {
 // HV STAT features
 //------------------------------------
 var hvStat = {};
+
+hvStat.util = {
+	percent: function (value, digits) {
+		var v = value * 100;
+		if (digits) {
+			v = v.toFixed(digits);
+		}
+		return v;
+	},
+	ratio: function (numerator, denominator) {
+		if (denominator === 0) {
+			return 0;
+		} else {
+			return numerator / denominator;
+		}
+	},
+	percentRatio: function (numerator, denominator, digits) {
+		return this.percent(this.ratio(numerator, denominator), digits);
+	},
+};
 
 hvStat.addStyle = function () {
 	var C = browser.extension.ImageResourceInfo;
@@ -3611,7 +3632,6 @@ function saveStats() {
 		_stats.sAttempts += _round.sAttempts;
 		_stats.sHits[0] += _round.sHits[0];
 		_stats.sHits[1] += _round.sHits[1];
-		_stats.sInterfs += _round.sInterfs;
 		_stats.mAttempts += _round.mAttempts;
 		_stats.mHits[0] += _round.mHits[0];
 		_stats.mHits[1] += _round.mHits[1];
@@ -3717,34 +3737,38 @@ function saveStats() {
 	_drops.save();
 }
 function getBattleEndStatsHtml() {
+	function formatProbability(numerator, denominator, digits) {
+		return String(numerator) + "/" + String(denominator)
+			+ " (" + String(hvStat.util.percentRatio(numerator, denominator, digits)) + "%)";
+	}
+
 	var f = _round.sHits[0] + _round.sHits[1] + _round.depSpells[1] + _round.sResists;
 	var e = _round.sHits[0] + _round.sHits[1] + _round.depSpells[1];
 	var d = _round.aHits[0] + _round.aHits[1];
 	var c = _round.sHits[0] + _round.sHits[1];
 	var b = _round.mHits[0] + _round.mHits[1];
 	var ab = _round.aOffhands[0] + _round.aOffhands[2];
-	var a = "<b>Accuracy</b>: " + d + "/" + _round.aAttempts + " (" + (_round.aAttempts === 0 ? 0 : (d / _round.aAttempts * 100).toFixed(2))
-		+ "%), <b>Crits</b>: "+ _round.aHits[1] + "/" + d + " (" + (d === 0 ? 0 : (_round.aHits[1] / d * 100).toFixed(2))
-		+ "%), <b>Offhand</b>: " + ab + "/" + d + " (" + (d === 0 ? 0 : (ab / d * 100).toFixed(2))
-		+ "%), <b>Domino</b>: " + _round.aDomino[0] + "/" + d + " (" + (d === 0 ? 0 : (_round.aDomino[0] / d * 100).toFixed(2))
-		+ "%), <b>OverStrikes</b>: " + _round.overStrikes + "/" + d + " (" + (d === 0 ? 0 : (_round.overStrikes / d * 100).toFixed(2))
-		+ "%), <b>Coalesce</b>: " + _round.coalesce + "/" + e + " (" + (e === 0 ? 0 : (_round.coalesce / e * 100).toFixed(2))
-		+ "%), <b>Interference</b>: " + _round.sInterfs + "/" + _round.sAttempts + " (" + (_round.sAttempts === 0 ? 0 : (_round.sInterfs / _round.sAttempts * 100).toFixed(2))
-		+ "%), <b>M. Accuracy</b>: " + e + "/" + f + " (" + (f === 0 ? 0 : (e / f * 100).toFixed(2))
-		+ "%), <b>Spell Crits</b>: " + _round.sHits[1] + "/" + c + " (" + (c === 0 ? 0 : (_round.sHits[1] / c * 100).toFixed(2))
-		+ "%), <b>Avg hit dmg</b>: " + (_round.aHits[0] === 0 ? 0 : (_round.dDealt[0] / _round.aHits[0]).toFixed(2)) + "|" + (_round.sHits[0] === 0 ? 0 : (_round.dDealtSp[0] / _round.sHits[0]).toFixed(2))
-		+ ", <b>Avg crit dmg</b>: " + (_round.aHits[1] === 0 ? 0 : (_round.dDealt[1] / _round.aHits[1]).toFixed(2)) + "|" + (_round.sHits[1] === 0 ? 0 : (_round.dDealtSp[1] / _round.sHits[1]).toFixed(2))
-		+ ", <b>Avg dmg</b>: " + (d === 0 ? 0 : ((_round.dDealt[0] + _round.dDealt[1]) / d).toFixed(2)) + "|" + (c === 0 ? 0 : ((_round.dDealtSp[0] + _round.dDealtSp[1]) / c).toFixed(2))
+	var a = "<b>Accuracy</b>: " + formatProbability(d, _round.aAttempts, 2) + ", "
+		+ "<b>Crits</b>: " + formatProbability(_round.aHits[1], d, 2) + ", "
+		+ "<b>Offhand</b>: " + formatProbability(ab, d, 2) + ", "
+		+ "<b>Domino</b>: " + formatProbability(_round.aDomino[0], d, 2) + ", "
+		+ "<b>OverStrikes</b>: " + formatProbability(_round.overStrikes, d, 2) + ", "
+		+ "<b>Coalesce</b>: " + formatProbability(_round.coalesce, e, 2) + ", "
+		+ "<b>M. Accuracy</b>: " + formatProbability(e, f, 2) + ", "
+		+ "<b>Spell Crits</b>: " + formatProbability(_round.sHits[1], c, 2) + ", "
+		+ "<b>Avg hit dmg</b>: " + hvStat.util.ratio(_round.dDealt[0], _round.aHits[0]).toFixed(2) + "|" + hvStat.util.ratio(_round.dDealtSp[0], _round.sHits[0]).toFixed(2) + ", "
+		+ "<b>Avg crit dmg</b>: " + hvStat.util.ratio(_round.dDealt[1], _round.aHits[1]).toFixed(2) + "|" + hvStat.util.ratio(_round.dDealtSp[1], _round.sHits[1]).toFixed(2) + ", "
+		+ "<b>Avg dmg</b>: " + hvStat.util.ratio(_round.dDealt[0] + _round.dDealt[1], d).toFixed(2) + "|" + hvStat.util.ratio(_round.dDealtSp[0] + _round.dDealtSp[1], c).toFixed(2)
 		+ "<hr style='height:1px;border:0;background-color:#333333;color:#333333' />"
-		+ "<b>Hits taken</b>: " + b + "/" + _round.mAttempts + " (" + (_round.mAttempts === 0 ? 0 : (b / _round.mAttempts * 100).toFixed(2))
-		+ "%), <b>Missed</b>: " + _round.pDodges + "/" + _round.mAttempts + " (" + (_round.mAttempts === 0 ? 0 : (_round.pDodges / _round.mAttempts * 100).toFixed(2))
-		+ "%), <b>Evaded</b>: " + _round.pEvades + "/" + _round.mAttempts + " (" + (_round.mAttempts === 0 ? 0 : (_round.pEvades / _round.mAttempts * 100).toFixed(2))
-		+ "%), <b>Blocked</b>: " + _round.pBlocks + "/" + _round.mAttempts + " (" + (_round.mAttempts === 0 ? 0 : (_round.pBlocks / _round.mAttempts * 100).toFixed(2))
-		+ "%), <b>Parried</b>: " + _round.pParries + "/" + _round.mAttempts + " (" + (_round.mAttempts === 0 ? 0 : (_round.pParries / _round.mAttempts * 100).toFixed(2))
-		+ "%), <b>Resisted</b>: " + _round.pResists + "/" + _round.mSpells + " (" + (_round.mSpells === 0 ? 0 : (_round.pResists / _round.mSpells * 100).toFixed(2))
-		+ "%), <b>Crits taken</b>: " + _round.mHits[1] + "/" + b + " (" + (b === 0 ? 0 : (_round.mHits[1] / b * 100).toFixed(2))
-		+ "%), <b>Total taken</b>: " + (_round.dTaken[0] + _round.dTaken[1])
-		+ ", <b>Avg taken</b>: " + (b === 0 ? 0 : ((_round.dTaken[0] + _round.dTaken[1]) / b).toFixed(2));
+		+ "<b>Hits taken</b>: " + formatProbability(b, _round.mAttempts, 2) + ", "
+		+ "<b>Missed</b>: " + formatProbability(_round.pDodges, _round.mAttempts, 2) + ", "
+		+ "<b>Evaded</b>: " + formatProbability(_round.pEvades, _round.mAttempts, 2) + ", "
+		+ "<b>Blocked</b>: " + formatProbability(_round.pBlocks, _round.mAttempts, 2) + ", "
+		+ "<b>Parried</b>: " + formatProbability(_round.pParries, _round.mAttempts, 2) + ", "
+		+ "<b>Resisted</b>: " + formatProbability(_round.pResists, _round.mAttempts, 2) + ", "
+		+ "<b>Crits taken</b>: " + formatProbability(_round.mHits[1], b, 2) + ", "
+		+ "<b>Total dmg taken</b>: " + (_round.dTaken[0] + _round.dTaken[1]) + ", "
+		+ "<b>Avg dmg taken</b>: " + hvStat.util.ratio(_round.dTaken[0] + _round.dTaken[1], b).toFixed(2);
 	if (_settings.isShowEndProfs && (_settings.isShowEndProfsMagic || _settings.isShowEndProfsArmor || _settings.isShowEndProfsWeapon)) { //isShowEndProfs added by Ilirith
 		if (_settings.isShowEndProfsMagic) {
 			a += "<hr style='height:1px;border:0;background-color:#333333;color:#333333' />"
@@ -4474,6 +4498,7 @@ function initSettingsPane() {
 	if (_settings.isShowRoundReminder) $("input[name=isShowRoundReminder]").attr("checked", "checked");
 	$("input[name=reminderMinRounds]").attr("value", _settings.reminderMinRounds);
 	$("input[name=reminderBeforeEnd]").attr("value", _settings.reminderBeforeEnd);
+	$("input[name=isShowEndStats]").attr("value", _settings.isShowEndStats).attr("checked", "checked");
 	if (_settings.isShowEndProfs) {	//isShowEndProfs added by Ilirith
 		$("input[name=isShowEndProfs]").attr("checked", "checked");
 		if (_settings.isShowEndProfsMagic) $("input[name=isShowEndProfsMagic]").attr("checked", "checked");
@@ -4941,8 +4966,10 @@ function reminderAndSaveSettings() {
 	saveSettings();
 }
 function initItemsView() {
+	browser.extension.loadScript("scripts/", "jquery-1.8.3.min.js");
+	browser.extension.loadScript("scripts/", "jquery-ui-1.9.2.custom.min.js");
 	$("#leftpane").hide();
-	browser.extionsion.addStyle("#hv_item_grid * {font-family:arial,helvetica,sans-serif !important;font-size:9pt !important;font-weight:bold !important;line-height:72% !important;padding-top:2px;text-transform:capitalize;}#_health, #_mana, #_spirit, #_other, #_infusion, #_scroll, #_special div div div {cursor:pointer;}#_artifact, #_trophy, #_event, #_token, #_crystal div div div {cursor:default;}#_left {width:194px;height:660px;float:left;overflow:auto;}#_right {width:206px;height:660px;float:left;overflow:auto;}._spacer {padding:1px;float:right;width:194px;}");
+	browser.extension.addStyle("#hv_item_grid * {font-family:arial,helvetica,sans-serif !important;font-size:9pt !important;font-weight:bold !important;line-height:72% !important;padding-top:2px;text-transform:capitalize;}#_health, #_mana, #_spirit, #_other, #_infusion, #_scroll, #_special div div div {cursor:pointer;}#_artifact, #_trophy, #_event, #_token, #_crystal div div div {cursor:default;}#_left {width:194px;height:660px;float:left;overflow:auto;}#_right {width:206px;height:660px;float:left;overflow:auto;}._spacer {padding:1px;float:right;width:194px;}");
 	var a = 11101;
 	var k = 11201;
 	var e = 11301;
@@ -5139,7 +5166,6 @@ function HVRound() {
 	this.sResists = 0;
 	this.dDealtSp = [0, 0];
 	this.sAttempts = 0;
-	this.sInterfs = 0;
 	this.absArry = [0, 0, 0];
 	this.mAttempts = 0;
 	this.mHits = [0, 0];
@@ -5215,7 +5241,6 @@ function HVCacheStats() {
 	this.aCounters = [0, 0, 0, 0];
 	this.dDealt = [0, 0, 0];
 	this.sHits = [0, 0];
-	this.sInterfs = 0;
 	this.sResists = 0;
 	this.dDealtSp = [0, 0];
 	this.absArry = [0, 0, 0];
@@ -5518,7 +5543,6 @@ function saveStatsBackup(back) {
 	ba.dDealt[2] = _stats.dDealt[2];
 	ba.sHits[0] = _stats.sHits[0];
 	ba.sHits[1] = _stats.sHits[1];
-	ba.sInterfs = _stats.sInterfs;
 	ba.sResists = _stats.sResists;
 	ba.dDealtSp[0] = _stats.dDealtSp[0];
 	ba.dDealtSp[1] = _stats.dDealtSp[1];
@@ -5633,7 +5657,6 @@ function addtoStatsBackup(back) {
 	ba.dDealt[2] += _stats.dDealt[2];
 	ba.sHits[0] += _stats.sHits[0];
 	ba.sHits[1] += _stats.sHits[1];
-	ba.sInterfs += _stats.sInterfs;
 	ba.sResists += _stats.sResists;
 	ba.dDealtSp[0] += _stats.dDealtSp[0];
 	ba.dDealtSp[1] += _stats.dDealtSp[1];
@@ -5747,7 +5770,6 @@ function loadStatsBackup(back) {
 	_stats.dDealt[2] = ba.dDealt[2];
 	_stats.sHits[0] = ba.sHits[0];
 	_stats.sHits[1] = ba.sHits[1];
-	_stats.sInterfs = ba.sInterfs;
 	_stats.sResists = ba.sResists;
 	_stats.dDealtSp[0] = ba.dDealtSp[0];
 	_stats.dDealtSp[1] = ba.dDealtSp[1];
@@ -5862,7 +5884,6 @@ function addfromStatsBackup(back) {
 	_stats.dDealt[2] += ba.dDealt[2];
 	_stats.sHits[0] += ba.sHits[0];
 	_stats.sHits[1] += ba.sHits[1];
-	_stats.sInterfs += ba.sInterfs;
 	_stats.sResists += ba.sResists;
 	_stats.dDealtSp[0] += ba.dDealtSp[0];
 	_stats.dDealtSp[1] += ba.dDealtSp[1];
@@ -5984,7 +6005,6 @@ function HVCacheBackup(ID) {
 	this.aCounters = [0, 0, 0, 0];
 	this.dDealt = [0, 0, 0];
 	this.sHits = [0, 0];
-	this.sInterfs = 0;
 	this.sResists = 0;
 	this.dDealtSp = [0, 0];
 	this.absArry = [0, 0, 0];
@@ -6100,11 +6120,11 @@ HVStat.documentKeydownEventHandler = function (event) {
 		if (HVStat.scrollTarget && !event.altKey && !event.ctrlKey && !event.shiftKey) {
 			switch (event.keyCode) {
 			case 33:	// PAGE UP
-				HVStat.scrollTarget.scrollTop -= HVStat.scrollTarget.clientHeight;
+				HVStat.scrollTarget.scrollTop -= HVStat.scrollTarget.clientHeight - 20;
 				event.preventDefault();
 				break;
 			case 34:	// PAGE DOWN
-				HVStat.scrollTarget.scrollTop += HVStat.scrollTarget.clientHeight;
+				HVStat.scrollTarget.scrollTop += HVStat.scrollTarget.clientHeight - 20;
 				event.preventDefault();
 				break;
 			}
@@ -6602,11 +6622,21 @@ HVStat.documentReadyStateChangeHandler = function (event) {
 
 // readyState: loading
 HVStat.main1 = function () {
+	document.onkeydown = null;
 	HVStat.idbAccessQueue = new util.CallbackQueue();
 	// open database
 	HVStat.openIndexedDB(function (event) {
 		HVStat.idbAccessQueue.execute();
 	});
+
+	if (document.documentElement) {
+		// workaround Scriptish issue #16
+		hvStat.addStyle();
+		if (_settings.isShowHighlight) {
+			setLogCSS();
+		}
+		hvStat.addedStyles = true;
+	}
 
 	if (document.readyState === "loading") {
 		document.addEventListener("readystatechange", HVStat.documentReadyStateChangeHandler);
@@ -6617,10 +6647,15 @@ HVStat.main1 = function () {
 
 // readyState: interactive
 HVStat.main2 = function () {
-	hvStat.addStyle();
+	// TODO: should be an option
+	hvStat.onkeydown = document.onkeydown;
+	document.onkeydown = null;
 
-	if (_settings.isShowHighlight) {
-		setLogCSS();
+	if (!hvStat.addedStyles) {
+		hvStat.addStyle();
+		if (_settings.isShowHighlight) {
+			setLogCSS();
+		}
 	}
 	hv = new HV();
 	console.debug(hv);
@@ -6773,6 +6808,9 @@ HVStat.main2 = function () {
 
 	addUIStyle();
 	initUI();
+
+	// TODO: should be an option
+	document.onkeydown = hvStat.onkeydown;
 };
 
 //------------------------------------
