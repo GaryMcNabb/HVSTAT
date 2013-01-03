@@ -6045,13 +6045,7 @@ function loadCHARSSObject() {
 }
 
 HVStat.scrollTargetMouseoverEventHandler = function (event) {
-	var target = event.target;
-	while (target && HVStat.scrollTargets.indexOf(target.id) < 0) {
-		target = target.parentElement;
-	}
-	if (target) {
-		HVStat.scrollTarget = target;
-	}
+	HVStat.scrollTarget = this;
 };
 
 HVStat.scrollTargetMouseoutEventHandler = function (event) {
