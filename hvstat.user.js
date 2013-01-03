@@ -2950,18 +2950,24 @@ function showMonsterNumber() {
 }
 
 HVStat.highlightQuickcast = function () {
-	var hpHighlightLevel1 = Number(_settings.warnOrangeLevel);
-	var hpHighlightLevel2 = Number(_settings.warnRedLevel);
-	var mpHighlightLevel1 = Number(_settings.warnOrangeLevelMP);
-	var mpHighlightLevel2 = Number(_settings.warnRedLevelMP);
-	var spHighlightLevel1 = Number(_settings.warnOrangeLevelSP);
-	var spHighlightLevel2 = Number(_settings.warnRedLevelSP);
-	if (hv.character.healthPercent <= hpHighlightLevel1) {
-		hv.elementCache.quickcastBar.style.backgroundColor = (hv.character.healthPercent > hpHighlightLevel2) ? "orange" : "red";
-	} else if (hv.character.magicPercent <= mpHighlightLevel1) {
-		hv.elementCache.quickcastBar.style.backgroundColor = (hv.character.magicPercent > mpHighlightLevel2) ? "blue" : "darkblue";
-	} else if (hv.character.spiritPercent <= spHighlightLevel1) {
-		hv.elementCache.quickcastBar.style.backgroundColor = (hv.character.spiritPercent > spHighlightLevel2) ? "lime" : "green";
+	var healthYellowLevel = Number(_settings.warnOrangeLevel);
+	var healthRedLevel = Number(_settings.warnRedLevel);
+	var magicYellowLevel = Number(_settings.warnOrangeLevelMP);
+	var magicRedLevel = Number(_settings.warnRedLevelMP);
+	var spiritYellowLevel = Number(_settings.warnOrangeLevelSP);
+	var spiritRedLevel = Number(_settings.warnRedLevelSP);
+	if (hv.character.healthPercent <= healthRedLevel) {
+		hv.elementCache.quickcastBar.className += " hvstat-health-red-alert";
+	} else if (hv.character.healthPercent <= healthYellowLevel) {
+		hv.elementCache.quickcastBar.className += " hvstat-health-yellow-alert";
+	} else if (hv.character.magicPercent <= magicRedLevel) {
+		hv.elementCache.quickcastBar.className += " hvstat-magic-red-alert";
+	} else if (hv.character.magicPercent <= magicYellowLevel) {
+		hv.elementCache.quickcastBar.className += " hvstat-magic-yellow-alert";
+	} else if (hv.character.spiritPercent <= spiritRedLevel) {
+		hv.elementCache.quickcastBar.className += " hvstat-spirit-red-alert";
+	} else if (hv.character.spiritPercent <= spiritYellowLevel) {
+		hv.elementCache.quickcastBar.className += " hvstat-spirit-yellow-alert";
 	}
 }
 

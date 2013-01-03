@@ -58,12 +58,12 @@
 .hvstat-powerup-box-spirit { background-image: url(images/spiritpot.png); cursor: pointer; }
 
 /* quickcast highlight */
-.hvstat-quickcast-highlight-health-yellow-alert { color: orange; }
-.hvstat-quickcast-highlight-health-red-alert { color: red; }
-.hvstat-quickcast-highlight-magic-yellow-alert { color: blue; }
-.hvstat-quickcast-highlight-magic-red-alert { color: darkblue; }
-.hvstat-quickcast-highlight-spirit-yellow-alert { color: lime; }
-.hvstat-quickcast-highlight-spirit-red-alert { color: green; }
+.hvstat-health-yellow-alert { background-color: orange; }
+.hvstat-health-red-alert { background-color: red; }
+.hvstat-magic-yellow-alert { background-color: blue; }
+.hvstat-magic-red-alert { background-color: darkblue; }
+.hvstat-spirit-yellow-alert { background-color: lime; }
+.hvstat-spirit-red-alert { background-color: green; }
 
 /* battle log turn divider */
 .hvstat-turn-divider { border-bottom: 1px solid #5c0d11; padding-bottom: 3px; }
