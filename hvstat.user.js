@@ -3833,7 +3833,6 @@ function getReportOverviewHtml() {
 	var C = "";
 	var j = "";
 	var y = "";
-	var m = _settings.isColumnInventory ? a : w;
 	var b = _settings.isShowSidebarProfs ? a : w;
 	var o = _settings.isShowRoundReminder ? a : w;
 	var h = _settings.isShowHighlight ? a : w;
@@ -3975,7 +3974,7 @@ function getReportOverviewHtml() {
 			+ '<td style="padding-left:10px;width:34%">Round Reminder: ' + o + '</td>'
 			+ '<td></td>'
 		+ '</tr><tr>'
-			+ '<td style="padding-left:10px;width:33%">Column Inventory: ' + m + '</td>'
+			+ '<td></td>'
 			+ '<td style="padding-left:10px;width:34%">Powerup Alerts: ' + J + '</td>'
 			+ '<td></td>'
 		+ '</tr><tr>'
@@ -4460,7 +4459,6 @@ function initMonsterStatsPane() {
 function initSettingsPane() {
 	// General Options
 	if (_settings.isShowSidebarProfs) $("input[name=isShowSidebarProfs]").attr("checked", "checked");
-	if (_settings.isColumnInventory) $("input[name=isColumnInventory]").attr("checked", "checked");
 	if (_settings.isChangePageTitle) $("input[name=isChangePageTitle]").attr("checked", "checked");
 	$("input[name=customPageTitle]").attr("value", _settings.customPageTitle);
 	if (_settings.isStartAlert) $("input[name=isStartAlert]").attr("checked", "checked");
@@ -4647,7 +4645,6 @@ function initSettingsPane() {
 
 	// General Options
 	$("input[name=isShowSidebarProfs]").click(reminderAndSaveSettings);
-	$("input[name=isColumnInventory]").click(saveSettings);
 	$("input[name=isChangePageTitle]").click(saveSettings);
 	$("input[name=customPageTitle]").change(saveSettings);
 	$("input[name=isStartAlert]").click(saveSettings);
@@ -4777,7 +4774,6 @@ function initSettingsPane() {
 function saveSettings() {
 	// General Options
 	_settings.isShowSidebarProfs = $("input[name=isShowSidebarProfs]").get(0).checked;
-	_settings.isColumnInventory = $("input[name=isColumnInventory]").get(0).checked;
 	_settings.isChangePageTitle = $("input[name=isChangePageTitle]").get(0).checked;
 	_settings.customPageTitle = $("input[name=customPageTitle]").get(0).value;
 	_settings.isStartAlert = $("input[name=isStartAlert]").get(0).checked;
@@ -4964,54 +4960,6 @@ function reminderAndSaveSettings() {
 	if (!isProfTotalsRecorded() && $("input[name=isShowSidebarProfs]").get(0).checked)
 		alert('Please visit the Character Stats page at least once\nwith either the "Use Downloable Fonts" or "Custom\nLocal Font" setting enabled, to allow STAT to record\nyour current proficiencies. STAT cannot record this\ndata while HentaiVerse Font Engine is enabled.');
 	saveSettings();
-}
-function initItemsView() {
-	browser.extension.loadScript("scripts/", "jquery-1.8.3.min.js");
-	browser.extension.loadScript("scripts/", "jquery-ui-1.9.2.custom.min.js");
-	$("#leftpane").hide();
-	browser.extension.addStyle("#hv_item_grid * {font-family:arial,helvetica,sans-serif !important;font-size:9pt !important;font-weight:bold !important;line-height:72% !important;padding-top:2px;text-transform:capitalize;}#_health, #_mana, #_spirit, #_other, #_infusion, #_scroll, #_special div div div {cursor:pointer;}#_artifact, #_trophy, #_event, #_token, #_crystal div div div {cursor:default;}#_left {width:194px;height:660px;float:left;overflow:auto;}#_right {width:206px;height:660px;float:left;overflow:auto;}._spacer {padding:1px;float:right;width:194px;}");
-	var a = 11101;
-	var k = 11201;
-	var e = 11301;
-	var l = 11401;
-	var f = 12101;
-	var d = 13101;
-	var b = 19101;
-	var i = 20001;
-	var c = 30001;
-	var g = 32001;
-	var h = 40001;
-	var j = 50001;
-	$("#leftpane").before("<div id='hv_item_grid' style='width:404px;height:660px;text-align:left;float:left;position:relative;'><div id='_left'><div id='_health'><div class='_spacer'></div></div><div id='_mana'><div class='_spacer'></div></div><div id='_spirit'><div class='_spacer'></div></div><div id='_other'><div class='_spacer'></div></div><div id='_special'><div class='_spacer'></div></div><div id='_infusion'><div class='_spacer'></div></div><div id='_scroll'><div class='_spacer'></div></div><div id='_token'><div class='_spacer'></div></div><div id='_crystal'><div class='_spacer'></div></div><div id='_artifact'><div class='_spacer'></div></div><div id='_trophy'><div class='_spacer'></div></div><div id='_event'><div class='_spacer'></div></div></div><div id='_right'></div></div>");
-	$("#item_pane > table > tbody > tr").each(function () {
-		var o = $(this);
-		var n = o.children("td").eq(0).children("div").eq(0).attr("id").match(/\d+/)[0];
-		var m = o.children("td").eq(0).children("div").eq(0);
-		m.children().eq(0).children().eq(0).html(o.children("td").eq(0).text() + "(" + o.children("td").eq(1).text() + ")");
-		m.click(function () { select_item(this); })
-		if (n >= a && n < k) $("#_health ._spacer").before(m);
-		else if (n >= k && n < e) $("#_mana ._spacer").before(m);
-		else if (n >= e && n < l) $("#_spirit ._spacer").before(m);
-		else if (n >= l && n < f) $("#_other ._spacer").before(m);
-		else if (n >= f && n < d) $("#_infusion ._spacer").before(m);
-		else if (n >= d && n < b) $("#_scroll ._spacer").before(m);
-		else if (n >= b && n < i) $("#_special ._spacer").before(m);
-		else if (n >= i && n < c) $("#_artifact ._spacer").before(m);
-		else if (n >= c && n < g) $("#_trophy ._spacer").before(m);
-		else if (n >= g && n < h) $("#_event ._spacer").before(m);
-		else if (n >= h && n < j) $("#_token ._spacer").before(m);
-		else if (n >= j) $("#_crystal ._spacer").before(m);
-		m.children().eq(0).removeAttr("style").css("width", m.children().width());
-		m.removeAttr("style").css({
-			"float" : "right",
-			width : "200px",
-			padding : "2px 1px"
-		});
-	});
-	$("#_crystal").appendTo("#_right");
-	$("#_artifact").appendTo("#_right");
-	$("#_trophy").appendTo("#_right");
-	$("#_event").appendTo("#_right");
 }
 function captureShrine() {
 	var messageBoxElement = document.querySelector("#messagebox");
@@ -5399,7 +5347,6 @@ function HVSettings() {
 
 	// General Options
 	this.isShowSidebarProfs = false;
-	this.isColumnInventory = false;
 	this.isChangePageTitle = false;
 	this.customPageTitle = "HV";
 	this.isStartAlert = false;
@@ -6774,9 +6721,6 @@ HVStat.main2 = function () {
 			if (_settings.isDisableForgeHotKeys) {
 				document.onkeypress = null;
 			}
-		}
-		if (_settings.isColumnInventory && hv.location.isBattleItems) {
-			initItemsView();
 		}
 		if (hv.location.isCharacter) {
 			collectCurrentProfsData();
