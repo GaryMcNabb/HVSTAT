@@ -2748,7 +2748,6 @@ HOURLY = 0;
 ARENA = 1;
 GRINDFEST = 2;
 ITEM_WORLD = 3;
-CRYSFEST = 4;
 _overview = null;
 _stats = null;
 _profs = null;
@@ -3172,8 +3171,6 @@ function collectRoundInfo() {
 				_round.battleType = GRINDFEST;
 			} else if (logHTML.match(/Item World/)) {
 				_round.battleType = ITEM_WORLD;
-			} else if (logHTML.match(/CrysFest/)) {
-				_round.battleType = CRYSFEST;
 			}
 			RoundSave();
 		}
@@ -3882,8 +3879,6 @@ function getReportOverviewHtml() {
 	i += N;
 	i += _settings.warnMode[2] ? '<span style="color:green"><b>GF</b></span>' : I;
 	i += N;
-	i += _settings.warnMode[4] ? '<span style="color:green"><b>CF</b></span>' : I;
-	i += N;
 	i += _settings.warnMode[3] ? '<span style="color:green"><b>IW</b></span>' : I;
 	var x = '<table class="_UI" cellspacing="0" cellpadding="2" style="width:100%"><tr><td colspan="3">No data found. Complete a round to begin tracking.</td></tr></table>';
 	if (_overview.isLoaded && _overview.totalRounds > 0) {
@@ -3935,7 +3930,6 @@ function getReportOverviewHtml() {
 			+ '<tr><td colspan="2" style="padding-left:10px">Hourly encounters: ' + _overview.roundArray[0] + ' (' + (_overview.roundArray[0] / _overview.totalRounds * 100).toFixed(2) + '% of total; ' + (M === 0 ? 0 : (_overview.roundArray[0] / M).toFixed()) + ' rounds per day); Last Hourly: ' + c + '</td></tr>'
 			+ '<tr><td colspan="2" style="padding-left:10px">Arena: ' + _overview.roundArray[1] + ' (' + (_overview.roundArray[1] / _overview.totalRounds * 100).toFixed(2) + '% of total)</td></tr>'
 			+ '<tr><td colspan="2" style="padding-left:10px">Grindfest: ' + _overview.roundArray[2] + ' (' + (_overview.roundArray[2] / _overview.totalRounds * 100).toFixed(2) + '% of total; ' + (M === 0 ? 0 : (_overview.roundArray[2] / M).toFixed()) + ' rounds per day)</td></tr>'
-			+ '<tr><td colspan="2" style="padding-left:10px">Crysfest: ' + _overview.roundArray[4] + ' (' + (_overview.roundArray[4] / _overview.totalRounds * 100).toFixed(2) + '% of total; ' + (M === 0 ? 0 : (_overview.roundArray[4] / M).toFixed()) + ' rounds per day)</td></tr>'
 			+ '<tr><td colspan="2" style="padding-left:10px">Item World: ' + _overview.roundArray[3] + ' (' + (_overview.roundArray[3] / _overview.totalRounds * 100).toFixed(2) + '% of total; ' + (M === 0 ? 0 : (_overview.roundArray[3] / M).toFixed()) + ' rounds per day)</td></tr>'
 			+ '<tr><td><b>Total EXP gained:</b> ' + _overview.exp.toFixed() + '</td><td><b>Total Credits gained:</b> ' + (_overview.credits).toFixed() + '</td></tr>'
 			+ '<tr><td style="padding-left:10px">EXP per round: ' + (_overview.exp / _overview.totalRounds).toFixed(2) + '</td><td style="padding-left:10px">Credits per round: ' + (_overview.credits / _overview.totalRounds).toFixed(2) + '</td></tr>'
@@ -4109,10 +4103,6 @@ function getReportItemHtml() {
 			+ '<tr><td colspan="4" style="padding-left:30px">Crystals: ' + _drops.crysDropbyBT[2] + " (" + (b2 === 0 ? 0 : (_drops.crysDropbyBT[2]*100 / b2).toFixed(2)) + "% of drops, " + (_drops.crysDropbyBT[2]*100/_drops.dropChancesbyBT[2]).toFixed(2) + '% drop chance)</td></tr>'
 			+ '<tr><td colspan="4" style="padding-left:20px">Equipment: ' + _drops.eqDropbyBT[2] + " (" + (b2 === 0 ? 0 : (_drops.eqDropbyBT[2]*100 / b2).toFixed(2)) + "% of drops, " + (_drops.eqDropbyBT[2]*100/_drops.dropChancesbyBT[2]).toFixed(2) + '% drop chance)</td></tr>'
 			+ '<tr><td colspan="4" style="padding-left:20px">Artifacts: ' + _drops.artDropbyBT[2] + " (" + (b2 === 0 ? 0 : (_drops.artDropbyBT[2]*100 / b2).toFixed(2)) + "% of drops, " + (_drops.artDropbyBT[2]*100/_drops.dropChancesbyBT[2]).toFixed(2) + '% drop chance)</td></tr>'
-			+ '<tr><td colspan="4" style="padding-left:10px"><b>In CrysFests:</b> ' + b4 + " from " + _drops.dropChancesbyBT[4] + " monsters (" + (b4*100 / _drops.dropChancesbyBT[4]).toFixed(2) + '% total drop chance)</td></tr>'
-			+ '<tr><td colspan="4" style="padding-left:20px">Items: ' + _drops.itemDropbyBT[4] + " (" + (b4 === 0 ? 0 : (_drops.itemDropbyBT[4]*100 / b4).toFixed(2)) + "% of drops, " + (_drops.itemDropbyBT[4]*100/_drops.dropChancesbyBT[4]).toFixed(2) + '% drop chance)</td></tr>'
-			+ '<tr><td colspan="4" style="padding-left:30px">Crystals: ' + _drops.crysDropbyBT[4] + " (" + (b4 === 0 ? 0 : (_drops.crysDropbyBT[4]*100 / b4).toFixed(2)) + "% of drops, " + (_drops.crysDropbyBT[4]*100/_drops.dropChancesbyBT[4]).toFixed(2) + '% drop chance)</td></tr>'
-			+ '<tr><td colspan="4" style="padding-left:20px">Artifacts: ' + _drops.artDropbyBT[4] + " (" + (b4 === 0 ? 0 : (_drops.artDropbyBT[4]*100 / b4).toFixed(2)) + "% of drops, " + (_drops.artDropbyBT[4]*100/_drops.dropChancesbyBT[4]).toFixed(2) + '% drop chance)</td></tr>'
 			+ '<tr><td colspan="4" style="padding-left:10px"><b>In Item Worlds:</b> ' + b3 + " from " + _drops.dropChancesbyBT[3] + " monsters (" + (b3*100 / _drops.dropChancesbyBT[3]).toFixed(2) + '% total drop chance)</td></tr>'
 			+ '<tr><td colspan="4" style="padding-left:20px">Items: ' + _drops.itemDropbyBT[3] + " (" + (b3 === 0 ? 0 : (_drops.itemDropbyBT[3]*100 / b3).toFixed(2)) + "% of drops, " + (_drops.itemDropbyBT[3]*100/_drops.dropChancesbyBT[3]).toFixed(2) + '% drop chance)</td></tr>'
 			+ '<tr><td colspan="4" style="padding-left:30px">Crystals: ' + _drops.crysDropbyBT[3] + " (" + (b3 === 0 ? 0 : (_drops.crysDropbyBT[3]*100 / b3).toFixed(2)) + "% of drops, " + (_drops.crysDropbyBT[3]*100/_drops.dropChancesbyBT[3]).toFixed(2) + '% drop chance)</td></tr>'
@@ -4481,6 +4471,7 @@ function initSettingsPane() {
 	if (_settings.isShowTags[5]) $("input[name=isShowTags5]").attr("checked", "checked");
 
 	// Keyboard Options
+	if (_settings.adjustKeyEventHandling) $("input[name=adjustKeyEventHandling]").attr("checked", "checked");
 	if (_settings.isEnableScanHotkey) $("input[name=isEnableScanHotkey]").attr("checked", "checked");
 	if (_settings.isEnableSkillHotkey) $("input[name=isEnableSkillHotkey]").attr("checked", "checked");
 	if (_settings.enableOFCHotkey) $("input[name=enableOFCHotkey]").attr("checked", "checked");
@@ -4640,7 +4631,6 @@ function initSettingsPane() {
 	if (_settings.warnMode[1]) $("input[name=isWarnA]").attr("checked", "checked");
 	if (_settings.warnMode[2]) $("input[name=isWarnGF]").attr("checked", "checked");
 	if (_settings.warnMode[3]) $("input[name=isWarnIW]").attr("checked", "checked");
-	if (_settings.warnMode[4]) $("input[name=isWarnCF]").attr("checked", "checked");
 
 	// Database Options
 	if (_settings.isRememberScan) $("input[name=isRememberScan]").attr("checked", "checked");
@@ -4661,6 +4651,7 @@ function initSettingsPane() {
 	$("input[name^=isShowTags]").click(saveSettings);
 
 	// Keyboard Options
+	$("input[name=adjustKeyEventHandling]").click(saveSettings);
 	$("input[name=isEnableScanHotkey]").click(saveSettings);
 	$("input[name=isEnableSkillHotkey]").click(saveSettings);
 	$("input[name=enableOFCHotkey]").click(saveSettings);
@@ -4795,6 +4786,7 @@ function saveSettings() {
 	_settings.isShowTags[5] = $("input[name=isShowTags5]").get(0).checked;
 
 	// Keyboard Options
+	_settings.adjustKeyEventHandling = $("input[name=adjustKeyEventHandling]").get(0).checked;
 	_settings.isEnableScanHotkey = $("input[name=isEnableScanHotkey]").get(0).checked;
 	_settings.isEnableSkillHotkey = $("input[name=isEnableSkillHotkey]").get(0).checked;
 	_settings.enableOFCHotkey = $("input[name=enableOFCHotkey]").get(0).checked;
@@ -4950,7 +4942,6 @@ function saveSettings() {
 	_settings.warnMode[1] = $("input[name=isWarnA]").get(0).checked;
 	_settings.warnMode[2] = $("input[name=isWarnGF]").get(0).checked;
 	_settings.warnMode[3] = $("input[name=isWarnIW]").get(0).checked;
-	_settings.warnMode[4] = $("input[name=isWarnCF]").get(0).checked;
 
 	// Database Options
 	_settings.isRememberScan = $("input[name=isRememberScan]").get(0).checked;
@@ -5364,6 +5355,7 @@ function HVSettings() {
 	this.isShowTags = [false, false, false, false, false, false];
 
 	// Keyboard Options
+	this.adjustKeyEventHandling = false;
 	this.isEnableScanHotkey = false;
 	this.isEnableSkillHotkey = false;
 	this.enableOFCHotkey = false;
@@ -5453,7 +5445,7 @@ function HVSettings() {
 	this.isNagSP = false;
 
 	// Battle Type
-	this.warnMode = [true, true, false, false, false];
+	this.warnMode = [true, true, false, false];
 
 	// Database Options
 	this.isRememberScan = false;
@@ -6587,10 +6579,10 @@ HVStat.main1 = function () {
 
 // readyState: interactive
 HVStat.main2 = function () {
-	// TODO: should be an option
-	hvStat.onkeydown = document.onkeydown;
-	document.onkeydown = null;
-
+	if (_settings.adjustKeyEventHandling) {
+		hvStat.onkeydown = document.onkeydown;
+		document.onkeydown = null;
+	}
 	if (!hvStat.addedStyles) {
 		hvStat.addStyle();
 		if (_settings.isShowHighlight) {
@@ -6598,8 +6590,6 @@ HVStat.main2 = function () {
 		}
 	}
 	hv = new HV();
-	console.debug(hv);
-	
 	if (_settings.isChangePageTitle && document.title === "The HentaiVerse") {
 		document.title = _settings.customPageTitle;
 	}
@@ -6746,8 +6736,9 @@ HVStat.main2 = function () {
 	addUIStyle();
 	initUI();
 
-	// TODO: should be an option
-	document.onkeydown = hvStat.onkeydown;
+	if (_settings.adjustKeyEventHandling) {
+		document.onkeydown = hvStat.onkeydown;
+	}
 };
 
 //------------------------------------
