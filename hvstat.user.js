@@ -6040,21 +6040,17 @@ function loadCHARSSObject() {
 	_charss.load();
 }
 
-HVStat.scrollTargetMouseoverEventHandler = function (event) {
-	HVStat.scrollTarget = this;
-};
-
-HVStat.scrollTargetMouseoutEventHandler = function (event) {
-	HVStat.scrollTarget = null;
-};
-
 HVStat.registerScrollTargetMouseEventListeners = function () {
 	var i, element;
 	for (i = 0; i < HVStat.scrollTargets.length; i++) {
 		element = document.getElementById(HVStat.scrollTargets[i]);
 		if (element) {
-			element.addEventListener("mouseover", HVStat.scrollTargetMouseoverEventHandler);
-			element.addEventListener("mouseout", HVStat.scrollTargetMouseoutEventHandler);
+			element.addEventListener("mouseover", function (event) {
+				HVStat.scrollTarget = this;
+			});
+			element.addEventListener("mouseout", function (event) {
+				HVStat.scrollTarget = null;
+			});
 		}
 	}
 };
