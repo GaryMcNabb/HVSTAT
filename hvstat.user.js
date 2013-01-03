@@ -4197,15 +4197,22 @@ function getReportShrineHtml() {
 	return c;
 }
 function initUI() {
-	var d = 4;
-	var c = document.querySelector("div.stuffbox").scrollWidth - 60 - 4;
+	var top = 4;
+	var left = document.querySelector("div.stuffbox").scrollWidth - 60 - 4;
 	var div = document.createElement("div");
-	div.setAttribute("id", "HVStatMainButton");
-	div.setAttribute("class", "ui-state-default ui-corner-all");
-	div.style.cssText = "position:absolute; top:" + d + "px; left: " + c + "px; z-index:1074; cursor: pointer;";
-	div.innerHTML = '<span style="margin:3px" class="ui-icon ui-icon-wrench" title="Launch HV STAT UI"/>';
-	document.body.insertBefore(div, null);
+	div.id = "hvstat-open-button";
+	div.className = "ui-state-default ui-corner-all";
+	div.style.cssText = "position: absolute; top: " + top + "px; left: " + left + "px; cursor: pointer;";
+	div.innerHTML = '<span style="margin: 3px;" class="ui-icon ui-icon-wrench" title="Launch HV STAT UI"/>';
 	div.addEventListener("click", initMainMenu);
+	div.addEventListener("mouseover", function (event) {
+		this.className = this.className.replace(" ui-state-hover", "");
+		this.className += " ui-state-hover";
+	});
+	div.addEventListener("mouseout", function (event) {
+		this.className = this.className.replace(" ui-state-hover", "");
+	});
+	document.body.insertBefore(div, null);
 }
 
 function initMainMenu(event) {
@@ -4256,7 +4263,7 @@ function initMainMenu(event) {
 	initSettingsPane();
 	$("#pane7").html(browser.extension.getResourceText("resources/", "monster-database-pane.html"));
 	initMonsterStatsPane();
-	var mainButton = document.getElementById("HVStatMainButton");
+	var mainButton = document.getElementById("hvstat-open-button");
 	mainButton.addEventListener("click", function () {
 		if ($(c).dialog("isOpen"))
 			$(c).dialog("close");
