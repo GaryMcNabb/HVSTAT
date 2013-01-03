@@ -4236,7 +4236,7 @@ function initMainMenu(event) {
 		+ '<li><a href="#pane3"><span>Item Drops</span></a></li>'
 		+ '<li><a href="#pane4"><span>Arena Rewards</span></a></li>'
 		+ '<li><a href="#pane5"><span>Shrine</span></a></li>'
-		+ '<li><a href="#pane7"><span>Monster Stats</span></a></li>'
+		+ '<li><a href="#pane7"><span>Monster Database</span></a></li>'
 		+ '<li><a href="#pane6"><span>Settings</span></a></li>'
 		+ '</ul><div id="pane1">Tab 1 Error</div><div id="pane2">Tab 2 Error</div>'
 		+ '<div id="pane3">Tab 3 Error</div><div id="pane4">Tab 4 Error</div>'
