@@ -4498,7 +4498,7 @@ function initSettingsPane() {
 	if (_settings.isShowRoundReminder) $("input[name=isShowRoundReminder]").attr("checked", "checked");
 	$("input[name=reminderMinRounds]").attr("value", _settings.reminderMinRounds);
 	$("input[name=reminderBeforeEnd]").attr("value", _settings.reminderBeforeEnd);
-	$("input[name=isShowEndStats]").attr("value", _settings.isShowEndStats).attr("checked", "checked");
+	if (_settings.isShowEndStats) $("input[name=isShowEndStats]").attr("checked", "checked");
 	if (_settings.isShowEndProfs) {	//isShowEndProfs added by Ilirith
 		$("input[name=isShowEndProfs]").attr("checked", "checked");
 		if (_settings.isShowEndProfsMagic) $("input[name=isShowEndProfsMagic]").attr("checked", "checked");
