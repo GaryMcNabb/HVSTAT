@@ -25,6 +25,7 @@
 // @resource        healthpot.png                               images/healthpot.png
 // @resource        manapot.png                                 images/manapot.png
 // @resource        spiritpot.png                               images/spiritpot.png
+// @resource        main.html                                   resources/main.html
 // @resource        monster-database-pane.html                  resources/monster-database-pane.html
 // @resource        settings-pane.html                          resources/settings-pane.html
 // @run-at          document-start
@@ -4227,21 +4228,10 @@ function initMainMenu(event) {
 	browser.extension.loadScript("scripts/", "jquery-1.8.3.min.js");
 	browser.extension.loadScript("scripts/", "jquery-ui-1.9.2.custom.min.js");
 
-	var b = "[STAT] HentaiVerse Statistics, Tracking, and Analysis Tool v." + HVStat.VERSION + (browser.isChrome ? " (Chrome Edition)" : "");
+	var b = "[STAT] HentaiVerse Statistics, Tracking, and Analysis Tool v." + HVStat.VERSION;
 	var c = document.createElement("div");
 	$(c).addClass("_mainMenu").css("text-align", "left");
-	var a = '<div id="tabs"><ul>'
-		+ '<li><a href="#pane1"><span>Overview</span></a></li>'
-		+ '<li><a href="#pane2"><span>Battle Stats</span></a></li>'
-		+ '<li><a href="#pane3"><span>Item Drops</span></a></li>'
-		+ '<li><a href="#pane4"><span>Arena Rewards</span></a></li>'
-		+ '<li><a href="#pane5"><span>Shrine</span></a></li>'
-		+ '<li><a href="#pane7"><span>Monster Database</span></a></li>'
-		+ '<li><a href="#pane6"><span>Settings</span></a></li>'
-		+ '</ul><div id="pane1">Tab 1 Error</div><div id="pane2">Tab 2 Error</div>'
-		+ '<div id="pane3">Tab 3 Error</div><div id="pane4">Tab 4 Error</div>'
-		+ '<div id="pane5">Tab 5 Error</div><div id="pane7">Tab 7 Error</div><div id="pane6">Tab 6 Error</div></div>';
-	$(c).html(a);
+	$(c).html(browser.extension.getResourceText("resources/", "main.html"));
 	$("body").append(c);
 	$(c).dialog({
 		autoOpen: false,
@@ -4254,7 +4244,7 @@ function initMainMenu(event) {
 		position: ["center", "center"],
 		title: b
 	});
-	$("#tabs").tabs();
+	$("#hvstat-tabs").tabs();
 	loadOverviewObject();
 	loadStatsObject();
 	loadDropsObject();
@@ -4265,9 +4255,9 @@ function initMainMenu(event) {
 	initItemPane();
 	initRewardsPane();
 	initShrinePane();
-	$("#pane6").html(browser.extension.getResourceText("resources/", "settings-pane.html"));
+	$("#hvstat-settings-pane").html(browser.extension.getResourceText("resources/", "settings-pane.html"));
 	initSettingsPane();
-	$("#pane7").html(browser.extension.getResourceText("resources/", "monster-database-pane.html"));
+	$("#hvstat-monster-database-pane").html(browser.extension.getResourceText("resources/", "monster-database-pane.html"));
 	initMonsterStatsPane();
 	var mainButton = document.getElementById("hvstat-open-button");
 	mainButton.addEventListener("click", function () {
