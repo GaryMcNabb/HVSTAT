@@ -287,15 +287,37 @@ hvStat.util = {
 	},
 };
 
-hvStat.addStyle = function () {
-	var C = browser.extension.ImageResourceInfo;
-	var imageResouces = [
-		new C("images/", "channeling.png", "images/"),
-		new C("images/", "healthpot.png", "images/"),
-		new C("images/", "manapot.png", "images/"),
-		new C("images/", "spiritpot.png", "images/"),
-	];
-	browser.extension.addStyleFromResource("resources/", "hvstat.css", imageResouces);
+hvStat.setup = {
+	addBasicStyle: function () {
+		var C = browser.extension.ImageResourceInfo;
+		var imageResouces = [
+			new C("images/", "channeling.png", "images/"),
+			new C("images/", "healthpot.png", "images/"),
+			new C("images/", "manapot.png", "images/"),
+			new C("images/", "spiritpot.png", "images/"),
+		];
+		browser.extension.addStyleFromResource("resources/", "hvstat.css", imageResouces);
+	},
+};
+
+hvStat.setup.battle = {
+	addLogStyle: function () {
+		var styleName;
+		if (_settings.isAltHighlight) {
+			styleName = "battle-log-type1.css";
+		} else {
+			styleName = "battle-log-type0.css";
+		}
+		browser.extension.addStyleFromResource("resources/", styleName);
+	},
+	// Copies the text of each Battle Log entry into a title element.
+	// This is because CSS cannot currently select text nodes.
+	highlightLogText: function () {
+		var targets = hv.elementCache.battleLog.querySelectorAll('td:last-of-type');
+		Array.prototype.forEach.call(targets, function (e) {
+			e.title = e.textContent;
+		});
+	},
 };
 
 var HVStat = {
@@ -2766,35 +2788,6 @@ _artifacts = 0;
 _lastArtName = "";
 _tokenDrops = [0, 0, 0];
 
-/* =====
- setLogCSS
- Creates the CSS used to color the Battlelog.
-===== */
-function setLogCSS() {
-	var styleName;
-	if (_settings.isAltHighlight) {
-		styleName = "battle-log-type1.css";
-	} else {
-		styleName = "battle-log-type0.css";
-	}
-	var styleText = browser.extension.getResourceText("resources/", styleName);
-	browser.extension.addStyle(styleText);
-}
-/* =====
- highlightLogText
- Copies the text of each Battle Log entry into a title element.
- This is because CSS cannot currently select text nodes.
-===== */
-function highlightLogText() {
-	var logRows = document.getElementById('togpane_log').getElementsByTagName('tr'),
-		i = logRows.length,
-		currRow = null;
-
-	while (i--) {
-		currRow = logRows[i].lastChild;
-		currRow.title = currRow.textContent;
-	}
-}
 /* =====
  addBattleLogDividers
  Adds a divider between Battle Log rounds.
@@ -6561,15 +6554,6 @@ HVStat.main1 = function () {
 		HVStat.idbAccessQueue.execute();
 	});
 
-	if (document.documentElement) {
-		// workaround Scriptish issue #16
-		hvStat.addStyle();
-		if (_settings.isShowHighlight) {
-			setLogCSS();
-		}
-		hvStat.addedStyles = true;
-	}
-
 	if (document.readyState === "loading") {
 		document.addEventListener("readystatechange", HVStat.documentReadyStateChangeHandler);
 	} else {
@@ -6583,11 +6567,10 @@ HVStat.main2 = function () {
 		hvStat.onkeydown = document.onkeydown;
 		document.onkeydown = null;
 	}
-	if (!hvStat.addedStyles) {
-		hvStat.addStyle();
-		if (_settings.isShowHighlight) {
-			setLogCSS();
-		}
+
+	hvStat.setup.addBasicStyle();
+	if (_settings.isShowHighlight) {
+		hvStat.setup.battle.addLogStyle();
 	}
 	hv = new HV();
 	if (_settings.isChangePageTitle && document.title === "The HentaiVerse") {
@@ -6612,7 +6595,7 @@ HVStat.main2 = function () {
 			addBattleLogDividers();
 		}
 		if (_settings.isShowHighlight) {
-			highlightLogText();
+			hvStat.setup.battle.highlightLogText();
 		}
 		if (_settings.isShowScanButton || _settings.isShowSkillButton) {
 			HVStat.showScanAndSkillButtons();
