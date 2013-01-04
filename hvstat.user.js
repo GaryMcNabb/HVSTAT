@@ -6206,14 +6206,9 @@ function registerEventHandlersForMonsterPopup() {
 	var delay = _settings.monsterPopupDelay;
 	var popupLeftOffset = _settings.isMonsterPopupPlacement ? 955 : 300;
 	var showPopup = function (event) {
-		var target;
-		for (target = event.target; target && target.id.indexOf("mkey_") < 0; target = target.parentElement) {
-			;
-		}
-		if (!target) return;
 		var i, index = -1;
 		for (i = 0; i < HVStat.monsters.length; i++) {
-			if (HVStat.monsters[i].domElementId === target.id) {
+			if (HVStat.monsters[i].domElementId === this.id) {
 				index = i;
 				break;
 			}
@@ -6234,11 +6229,11 @@ function registerEventHandlersForMonsterPopup() {
 	};
 	var timerId;
 	var prepareForShowingPopup = function (event) {
-		(function (event) {
+		(function (event, that) {
 			timerId = setTimeout(function () {
-				showPopup(event);
+				showPopup.call(that, event);
 			}, delay);
-		})(event);
+		})(event, this);
 	};
 	var prepareForHidingPopup = function (event) {
 		setTimeout(hidePopup, delay);
