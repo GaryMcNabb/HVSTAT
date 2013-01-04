@@ -298,6 +298,21 @@ hvStat.setup = {
 		];
 		browser.extension.addStyleFromResource("resources/", "hvstat.css", imageResouces);
 	},
+	addUIStyle: function () {
+		var C = browser.extension.ImageResourceInfo;
+		var imageResouces = [
+			new C("images/", "ui-bg_flat_0_aaaaaa_40x100.png", "images/"),
+			new C("images/", "ui-bg_flat_55_fbf9ee_40x100.png", "images/"),
+			new C("images/", "ui-bg_flat_65_edebdf_40x100.png", "images/"),
+			new C("images/", "ui-bg_flat_75_e3e0d1_40x100.png", "images/"),
+			new C("images/", "ui-bg_flat_75_edebdf_40x100.png", "images/"),
+			new C("images/", "ui-bg_flat_95_fef1ec_40x100.png", "images/"),
+			new C("images/", "ui-icons_2e83ff_256x240.png", "images/"),
+			new C("images/", "ui-icons_5c0d11_256x240.png", "images/"),
+			new C("images/", "ui-icons_cd0a0a_256x240.png", "images/"),
+		];
+		browser.extension.addStyleFromResource("resources/", "jquery-ui-1.9.2.custom.min.css", imageResouces);
+	},
 };
 
 hvStat.setup.battle = {
@@ -3794,22 +3809,6 @@ function getBattleEndStatsHtml() {
 	return a;
 }
 
-function addUIStyle() {
-	var Obj = browser.extension.ImageResourceInfo;
-	var imageResouceInfoArray = [
-		new Obj("images/", "ui-bg_flat_0_aaaaaa_40x100.png", "images/"),
-		new Obj("images/", "ui-bg_flat_55_fbf9ee_40x100.png", "images/"),
-		new Obj("images/", "ui-bg_flat_65_edebdf_40x100.png", "images/"),
-		new Obj("images/", "ui-bg_flat_75_e3e0d1_40x100.png", "images/"),
-		new Obj("images/", "ui-bg_flat_75_edebdf_40x100.png", "images/"),
-		new Obj("images/", "ui-bg_flat_95_fef1ec_40x100.png", "images/"),
-		new Obj("images/", "ui-icons_2e83ff_256x240.png", "images/"),
-		new Obj("images/", "ui-icons_5c0d11_256x240.png", "images/"),
-		new Obj("images/", "ui-icons_cd0a0a_256x240.png", "images/"),
-	];
-	browser.extension.addStyleFromResource("resources/", "jquery-ui-1.9.2.custom.min.css", imageResouceInfoArray);
-}
-
 function getReportOverviewHtml() {
 	var a = '<span style="color:green"><b>ON</b></span>';
 	var w = '<span style="color:red"><b>OFF</b></span>';
@@ -6710,7 +6709,7 @@ HVStat.main2 = function () {
 
 	document.addEventListener("keydown", HVStat.documentKeydownEventHandler);
 
-	addUIStyle();
+	hvStat.setup.addUIStyle();
 	initUI();
 
 	if (_settings.adjustKeyEventHandling) {
