@@ -318,6 +318,23 @@ hvStat.setup.battle = {
 			e.title = e.textContent;
 		});
 	},
+	// Adds a divider between Battle Log rounds.
+	addBattleLogDividers: function () {
+		var logRows = hv.elementCache.battleLog.getElementsByTagName('tr');
+			i = logRows.length,
+			prevTurn = null,
+			currTurn = null;
+	
+		while (i--) {
+			currTurn = logRows[i].firstChild.textContent;
+			if (!isNaN(parseFloat(currTurn))) {
+				if (prevTurn && prevTurn !== currTurn) {
+					logRows[i].lastChild.className += " hvstat-turn-divider";
+				}
+				prevTurn = currTurn;
+			}
+		}
+	},
 };
 
 var HVStat = {
@@ -2788,29 +2805,6 @@ _artifacts = 0;
 _lastArtName = "";
 _tokenDrops = [0, 0, 0];
 
-/* =====
- addBattleLogDividers
- Adds a divider between Battle Log rounds.
-===== */
-function addBattleLogDividers() {
-	var doc = document,
-		logRows = doc.getElementById('togpane_log').getElementsByTagName('tr'),
-		i = logRows.length,
-		prevTurn = null,
-		currTurn = null,
-		parent = null,
-		divider = null;
-	
-	while (i--) {
-		currTurn = logRows[i].firstChild.innerHTML;
-		if (!isNaN(parseInt(currTurn))) {
-			if (prevTurn && prevTurn !== currTurn) {
-				logRows[i].children[2].className += " hvstat-turn-divider";
-			}
-			prevTurn = currTurn;
-		}
-	}
-}
 /* =====
  showRoundCounter
  Adds a Round counter to the Battle screen.
@@ -6592,7 +6586,7 @@ HVStat.main2 = function () {
 			HVStat.highlightQuickcast();
 		}
 		if (_settings.isShowDivider) {
-			addBattleLogDividers();
+			hvStat.setup.battle.addBattleLogDividers();
 		}
 		if (_settings.isShowHighlight) {
 			hvStat.setup.battle.highlightLogText();
