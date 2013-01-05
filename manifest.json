@@ -1,5 +1,5 @@
 {
-	"name": "HV Statistics, Tracking, and Analysis Tool (Chrome Edition)",
+	"name": "HV Statistics, Tracking, and Analysis Tool",
 	"version": "5.4.8",
 	"manifest_version": 2,
 	"description": "Collects data, analyzes statistics, and enhances the interface of the HentaiVerse",
@@ -22,6 +22,7 @@
 		"resources/battle-log-type0.css",
 		"resources/battle-log-type1.css",
 		"resources/main.html",
+		"resources/battle-stats-pane.html",
 		"resources/monster-database-pane.html",
 		"resources/settings-pane.html",
 		"images/channeling.png",

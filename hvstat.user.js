@@ -26,6 +26,7 @@
 // @resource        manapot.png                                 images/manapot.png
 // @resource        spiritpot.png                               images/spiritpot.png
 // @resource        main.html                                   resources/main.html
+// @resource        battle-stats-pane.html                      resources/battle-stats-pane.html
 // @resource        monster-database-pane.html                  resources/monster-database-pane.html
 // @resource        settings-pane.html                          resources/settings-pane.html
 // @run-at          document-start
@@ -4252,7 +4253,109 @@ function initOverviewPane() {
 	});
 }
 function initStatsPane() {
-	$("#pane2").html(getReportStatsHtml());
+	var innerHTML;
+	if (_stats.isLoaded && _stats.rounds > 0) {
+		innerHTML = browser.extension.getResourceText("resources/", "battle-stats-pane.html");
+	} else {
+		innerHTML = "No data found. Complete a round to begin tracking.";
+	}
+	$("#battle-stats-pane").html(innerHTML);
+
+	if (_stats.isLoaded && _stats.rounds > 0) {
+		if (!_settings.isTrackStats) {
+		}
+		var j = _stats.elemSpells[1] + _stats.divineSpells[1] + _stats.forbidSpells[1];
+		var i = _stats.supportSpells + _stats.curativeSpells + _stats.depSpells[1] + _stats.sHits[0] + _stats.sHits[1];
+		var h = _stats.sHits[0] + _stats.sHits[1] + _stats.depSpells[1] + _stats.sResists;
+		var g = _stats.sHits[0] + _stats.sHits[1] + _stats.depSpells[1];
+		var f = _stats.aHits[0] + _stats.aHits[1];
+		var e = _stats.sHits[0] + _stats.sHits[1];
+		var d = _stats.mHits[0] + _stats.mHits[1];
+		var b = _stats.dDealt[0] + _stats.dDealt[1] + _stats.dDealt[2];
+		var a = _stats.dDealt[0] + _stats.dDealt[1];
+		var bp = _stats.pParries + _stats.pBlocks;
+		var call = _stats.aCounters[0] - _stats.aCounters[2] - 2*_stats.aCounters[3];
+		var c1 = _stats.aCounters[0] - 2*_stats.aCounters[2] - 3*_stats.aCounters[3];
+		var dst = new Date();
+		dst.setTime(_stats.datestart);
+		var dst1 = dst.toLocaleString();
+		var dom = _stats.aDomino[0];
+		var elall = _stats.elemSpells[1] + _stats.elemSpells[3];
+		var divall = _stats.divineSpells[1] + _stats.divineSpells[3];
+		var forall = _stats.forbidSpells[1] + _stats.forbidSpells[3];
+		var offhand = _stats.aOffhands[0] + _stats.aOffhands[2];
+		var offhanddam = _stats.aOffhands[1] + _stats.aOffhands[3];
+		if (browser.isChrome) dst1 = dst.toLocaleDateString() + " " + dst.toLocaleTimeString();
+		$('#hvstat-battle-stats-rounds-tracked').text(_stats.rounds);
+		$('#hvstat-battle-stats-since').text(dst1);
+		$('#hvstat-battle-stats-monsters-killed').text(_stats.kills);
+
+		$('#hvstat-battle-stats-p-accuracy').text(_stats.aAttempts === 0 ? 0 : (f / _stats.aAttempts * 100).toFixed(2));
+		$('#hvstat-battle-stats-m-accuracy').text(h === 0 ? 0 : (g / h * 100).toFixed(2));
+		$('#hvstat-battle-stats-p-crit-chance').text(f === 0 ? 0 : (_stats.aHits[1] / f * 100).toFixed(2));
+		$('#hvstat-battle-stats-m-crit-chance').text(e === 0 ? 0 : (_stats.sHits[1] / e * 100).toFixed(2));
+
+		$('#hvstat-battle-stats-overwhelming-strikes-chance').text(f === 0 ? 0 : (_stats.overStrikes / f * 100).toFixed(2));
+		$('#hvstat-battle-stats-counter-chance').text(bp === 0 ? 0 : (_stats.aCounters[0]*100/bp).toFixed(2));
+		$('#hvstat-battle-stats-1-counter').text(c1 === 0 ? 0 : (c1*100/call).toFixed(2));
+		$('#hvstat-battle-stats-2-counter').text(_stats.aCounters[2] === 0 ? 0 : (_stats.aCounters[2]*100/call).toFixed(2));
+		$('#hvstat-battle-stats-3-counter').text(_stats.aCounters[3] === 0 ? 0 :(_stats.aCounters[3]*100/call).toFixed(2));
+		$('#hvstat-battle-stats-stun-chance-on-counter').text(call === 0 ? 0 : (_stats.weaponprocs[7]*100/call).toFixed(2));
+		$('#hvstat-battle-stats-average-counter-damage').text(_stats.aCounters[0] === 0 ? 0 : (_stats.aCounters[1] / _stats.aCounters[0]).toFixed(2));
+
+		$('#hvstat-battle-stats-offhand-strike-chance').text(f === 0 ? 0 : (offhand / f * 100).toFixed(2));
+		$('#hvstat-battle-stats-chenneling-chance').text(i === 0 ? 0 : (_stats.channel / i * 100).toFixed(2));
+		$('#hvstat-battle-stats-average-offhand-damage').text(offhand === 0 ? 0 : (offhanddam / offhand).toFixed(2));
+
+		$('#hvstat-battle-stats-domino-strike-chance').text(f === 0 ? 0 : (dom / f * 100).toFixed(2));
+		$('#hvstat-battle-stats-domino-2-hits').text(dom === 0 ? 0 : (_stats.aDomino[2]*100/dom).toFixed(2));
+		$('#hvstat-battle-stats-domino-3-hits').text(dom === 0 ? 0 : (_stats.aDomino[3]*100/dom).toFixed(2));
+		$('#hvstat-battle-stats-domino-4-hits').text(dom === 0 ? 0 : (_stats.aDomino[4]*100/dom).toFixed(2));
+		$('#hvstat-battle-stats-domino-5-hits').text(dom === 0 ? 0 : (_stats.aDomino[5]*100/dom).toFixed(2));
+		$('#hvstat-battle-stats-domino-6-hits').text(dom === 0 ? 0 : (_stats.aDomino[6]*100/dom).toFixed(2));
+		$('#hvstat-battle-stats-domino-7-hits').text(dom === 0 ? 0 : (_stats.aDomino[7]*100/dom).toFixed(2));
+		$('#hvstat-battle-stats-domino-8-hits').text(dom === 0 ? 0 : (_stats.aDomino[8]*100/dom).toFixed(2));
+		$('#hvstat-battle-stats-domino-9-hits').text(dom === 0 ? 0 : (_stats.aDomino[9]*100/dom).toFixed(2));
+		$('#hvstat-battle-stats-domino-average-number-of-hits').text(dom === 0 ? 0 : (_stats.aDomino[1] / dom).toFixed(2));
+
+		$('#hvstat-battle-stats-stun-chance').text(f === 0 ? 0 : (_stats.weaponprocs[0]*100 / f).toFixed(2));
+		$('#hvstat-battle-stats-penetrated-armor-chance').text(f === 0 ? 0 : (_stats.weaponprocs[1]*100 / f).toFixed(2));
+
+		$('#hvstat-battle-stats-bleeding-wound-chance').text(f === 0 ? 0 : (_stats.weaponprocs[2]*100 / f).toFixed(2));
+		$('#hvstat-battle-stats-average-damage-dealt-per-hit').text(_stats.aHits[0] === 0 ? 0 : (_stats.dDealt[0] / _stats.aHits[0]).toFixed(2));
+		$('#hvstat-battle-stats-average-damage-dealt-per-spell').text(_stats.sHits[0] === 0 ? 0 : (_stats.dDealtSp[0] / _stats.sHits[0]).toFixed(2));
+		$('#hvstat-battle-stats-average-damage-dealt-per-crit').text(_stats.aHits[1] === 0 ? 0 : (_stats.dDealt[1] / _stats.aHits[1]).toFixed(2));
+		$('#hvstat-battle-stats-average-damage-dealt-per-spell-crit').text(_stats.sHits[1] === 0 ? 0 : (_stats.dDealtSp[1] / _stats.sHits[1]).toFixed(2));
+		$('#hvstat-battle-stats-average-spell-damage-dealt').text(e === 0 ? 0 : ((_stats.dDealtSp[0] + _stats.dDealtSp[1]) / e).toFixed(2));
+		$('#hvstat-battle-stats-average-damage-dealt-without-bleeding-wound').text(f === 0 ? 0 : (a / f).toFixed(2));
+		$('#hvstat-battle-stats-average-damage-dealt-with-bleeding-wound').text(f === 0 ? 0 : (b / f).toFixed(2));
+		$('#hvstat-battle-stats-percent-total-damage-from-bleeding-wound').text(b === 0 ? 0 : (_stats.dDealt[2] / b * 100).toFixed(2));
+		$('#hvstat-battle-stats-percent-change-in-average-damage').text(a === 0 ? 0 : (Math.abs(((b / f) - (a / f))) / Math.abs(a / f) * 100).toFixed(2));
+
+		$('#hvstat-battle-stats-drain-hp-chance').text(f === 0 ? 0 : (_stats.weaponprocs[4]*100 / f).toFixed(2));
+		$('#hvstat-battle-stats-drain-mp-chance').text(f === 0 ? 0 : (_stats.weaponprocs[5]*100 / f).toFixed(2));
+		$('#hvstat-battle-stats-drain-sp-chance').text(f === 0 ? 0 : (_stats.weaponprocs[6]*100 / f).toFixed(2));
+
+		$('#hvstat-battle-stats-overall-chance-of-getting-hit').text(_stats.mAttempts === 0 ? 0 : (d / _stats.mAttempts * 100).toFixed(2));
+		$('#hvstat-battle-stats-miss-chance').text(_stats.mAttempts === 0 ? 0 : (_stats.pDodges / _stats.mAttempts * 100).toFixed(2));
+		$('#hvstat-battle-stats-average-hp-restored-by-cure').text(_stats.cureCounts[0] === 0 ? 0 : (_stats.cureTotals[0] / _stats.cureCounts[0]).toFixed(2));
+		$('#hvstat-battle-stats-evade-chance').text(_stats.mAttempts === 0 ? 0 : (_stats.pEvades / _stats.mAttempts * 100).toFixed(2));
+		$('#hvstat-battle-stats-average-hp-restored-by-cure2').text(_stats.cureCounts[1] === 0 ? 0 : (_stats.cureTotals[1] / _stats.cureCounts[1]).toFixed(2));
+		$('#hvstat-battle-stats-block-chance').text(_stats.mAttempts === 0 ? 0 : (_stats.pBlocks / _stats.mAttempts * 100).toFixed(2));
+		$('#hvstat-battle-stats-average-hp-restored-by-cure3').text(_stats.cureCounts[2] === 0 ? 0 : (_stats.cureTotals[2] / _stats.cureCounts[2]).toFixed(2));
+		$('#hvstat-battle-stats-parry-chance').text(_stats.mAttempts === 0 ? 0 : (_stats.pParries / _stats.mAttempts * 100).toFixed(2));
+		$('#hvstat-battle-stats-absorb-casting-efficiency').text(_stats.absArry[0] === 0 ? 0 : (_stats.absArry[1] / _stats.absArry[0] * 100).toFixed(2));
+		$('#hvstat-battle-stats-resist-chance').text(_stats.mSpells === 0 ? 0 : (_stats.pResists / _stats.mSpells * 100).toFixed(2));
+		$('#hvstat-battle-stats-average-mp-drained-by-absorb').text(_stats.absArry[1] === 0 ? 0 : (_stats.absArry[2] / _stats.absArry[1]).toFixed(2));
+		$('#hvstat-battle-stats-monster-crit-chance').text(_stats.mAttempts === 0 ? 0 : (_stats.mHits[1] / _stats.mAttempts * 100).toFixed(2));
+		$('#hvstat-battle-stats-average-mp-returns-of-absorb').text(_stats.absArry[0] === 0 ? 0 : (_stats.absArry[2] / _stats.absArry[0]).toFixed(2));
+		$('#hvstat-battle-stats-percent-of-monster-hits-that-are-crits').text(d === 0 ? 0 : (_stats.mHits[1] / d * 100).toFixed(2));
+		$('#hvstat-battle-stats-average-damage-taken-per-hit').text(_stats.mHits[0] === 0 ? 0 : (_stats.dTaken[0] / _stats.mHits[0]).toFixed(2));
+		$('#hvstat-battle-stats-average-damage-taken-per-crit').text(_stats.mHits[1] === 0 ? 0 : (_stats.dTaken[1] / _stats.mHits[1]).toFixed(2));
+		$('#hvstat-battle-stats-average-damage-taken').text(d === 0 ? 0 : ((_stats.dTaken[0] + _stats.dTaken[1]) / d).toFixed(2));
+		$('#hvstat-battle-stats-average-total-damage-taken-per-round').text(_stats.rounds === 0 ? 0 : ((_stats.dTaken[0] + _stats.dTaken[1]) / _stats.rounds).toFixed(2));
+	}
+
 	$("._resetStats").click(function () {
 		if (confirm("Reset Stats tab?")) _stats.reset();
 	});
