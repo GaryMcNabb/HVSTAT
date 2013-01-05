@@ -3114,7 +3114,7 @@ function collectRoundInfo() {
 
 	var a = 0;
 	var ac = 0;
-	var d;
+	var d = 0;
 	var b = false;
 	// create monster objects
 	for (var i = 0; i < HVStat.numberOfMonsters; i++) {
@@ -3386,6 +3386,9 @@ function collectRoundInfo() {
 					} else if (logHTML.match(/(cure|regen)/i)) {
 						_round.curativeSpells++
 						if (logHTML.match(/cure/i)) {
+							if (joinedLogStringOfCurrentTurn.match(/You are healed for (\d+) Health Points/)) {
+								d = parseFloat(RegExp.$1);
+							}
 							_round.cureTotals[logHTML.match(/cure\./i) ? 0 : logHTML.match(/cure ii\./i) ? 1 : 2] += d;
 							_round.cureCounts[logHTML.match(/cure\./i) ? 0 : logHTML.match(/cure ii\./i) ? 1 : 2]++
 						}
@@ -3394,8 +3397,6 @@ function collectRoundInfo() {
 			} else if (logHTML.match(/The spell is absorbed. You gain (\d+) Magic Points/)) {
 				_round.absArry[1]++;
 				_round.absArry[2] += parseInt(RegExp.$1);
-			} else if (logHTML.match(/You are healed for (\d+) Health Points/)) {
-				d = parseInt(RegExp.$1);
 			} else if (logHTML.match(/Your attack misses its mark/)) {
 				_round.aAttempts++;
 			} else if (logHTML.match(/Your spell misses its mark/)) {
