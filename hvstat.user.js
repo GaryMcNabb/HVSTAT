@@ -4153,9 +4153,7 @@ function initMainMenu(event) {
 	initItemPane();
 	initRewardsPane();
 	initShrinePane();
-	$("#hvstat-settings-pane").html(browser.extension.getResourceText("resources/", "settings-pane.html"));
 	initSettingsPane();
-	$("#hvstat-monster-database-pane").html(browser.extension.getResourceText("resources/", "monster-database-pane.html"));
 	initMonsterStatsPane();
 	var mainButton = document.getElementById("hvstat-open-button");
 	mainButton.addEventListener("click", function () {
@@ -4381,6 +4379,7 @@ function initShrinePane() {
 	});
 }
 function initMonsterStatsPane() {
+	$("#hvstat-monster-database-pane").html(browser.extension.getResourceText("resources/", "monster-database-pane.html"));
 	function showOldDatabaseSize() {
 		var oldDatabaseSize = ((localStorage.HVMonsterDatabase ? localStorage.HVMonsterDatabase.length : 0) / 1024 / 1024 * (browser.isChrome ? 2 : 1)).toFixed(2);
 		var e = document.getElementById("hvstat-monster-database-old-database-size");
@@ -4461,6 +4460,7 @@ function initMonsterStatsPane() {
 	});
 }
 function initSettingsPane() {
+	$("#hvstat-settings-pane").html(browser.extension.getResourceText("resources/", "settings-pane.html"));
 	// General Options
 	if (_settings.isShowSidebarProfs) $("input[name=isShowSidebarProfs]").attr("checked", "checked");
 	if (_settings.isChangePageTitle) $("input[name=isChangePageTitle]").attr("checked", "checked");
