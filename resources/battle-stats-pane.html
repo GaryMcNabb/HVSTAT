@@ -1,7 +1,5 @@
-<table class="_UI" cellspacing="0" cellpadding="2" style="width:100%">
-
-<tr><td align="center" colspan="2"><div align="center" class="ui-state-error ui-corner-all" style="padding:4px;margin:4px"><span class="ui-icon ui-icon-pause"></span><b>TRACKING PAUSED</b></div></td></tr>
-
+<table cellspacing="0" cellpadding="2" style="width:100%">
+<tr><td align="center" colspan="2"><div class="ui-state-error ui-corner-all hvstat-tracking-paused"><span class="ui-icon ui-icon-pause"></span>TRACKING PAUSED</div></td></tr>
 <tr><td colspan="2"><b>Rounds tracked:</b> <span id="hvstat-battle-stats-rounds-tracked"></span> <b>Since: </b><span id="hvstat-battle-stats-since"></span></td></tr>
 <tr><td colspan="2"><b>Monsters killed:</b> <span id="hvstat-battle-stats-monsters-killed"></span></td></tr>
 <tr><td colspan="2"><b>Offensive Statistics:</b></td></tr>
@@ -47,13 +45,22 @@
 <tr><td style="padding-left:10px">Average damage taken per crit: <span id="hvstat-battle-stats-average-damage-taken-per-crit"></span></td></tr>
 <tr><td style="padding-left:10px">Average damage taken: <span id="hvstat-battle-stats-average-damage-taken"></span></td></tr>
 <tr><td style="padding-left:10px">Average total damage taken per round: <span id="hvstat-battle-stats-average-total-damage-taken-per-round"></span></td></tr>
-<tr><td align="left" colspan="7"><form>SelectBackup:
-	<select id="BackupNumber"><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select>
+<tr><td align="left" colspan="7">
+	<form>SelectBackup:
+	<select id="BackupNumber">
+		<option>1</option>
+		<option>2</option>
+		<option>3</option>
+		<option>4</option>
+		<option>5</option>
+	</select>
 	<input type="button" class="_backupFunc" value="Save Backup" />
 	<input type="button" class="_backupFunc" value="Load Backup"/>
 	<input type="button" class="_backupFunc" value="AddTo Backup"/>
 	<input type="button" class="_backupFunc" value="AddFrom Backup"/>
-	<input type="button" class="_backupFunc" value="Remove Backup"/></form></td></tr>
+	<input type="button" class="_backupFunc" value="Remove Backup"/>
+	</form>
+</td></tr>
 <tr><td><input type="button" class="_checkBackups" value="Check Existing Backups"/></td></tr></td></tr>
 <tr><td align="right" colspan="2"><input type="button" class="_resetStats" value="Reset Stats" /></td></tr>
 </table>

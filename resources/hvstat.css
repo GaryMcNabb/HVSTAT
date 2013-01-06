@@ -212,3 +212,12 @@ input.hvstat-equipment-tag {
 input.hvstat-equipment-tag-new {
 	color: Red;
 }
+
+/*** Dialog UI ***/
+.hvstat-tracking-paused {
+	display: none;
+	padding: 4px;
+	margin: 4px;
+	font-weight: bold;
+}
+

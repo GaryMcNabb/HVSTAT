@@ -4260,10 +4260,11 @@ function initStatsPane() {
 	} else {
 		innerHTML = "No data found. Complete a round to begin tracking.";
 	}
-	$("#battle-stats-pane").html(innerHTML);
+	$("#hvstat-battle-stats-pane").html(innerHTML);
 
 	if (_stats.isLoaded && _stats.rounds > 0) {
 		if (!_settings.isTrackStats) {
+			$("#hvstat-battle-stats-pane .hvstat-tracking-paused").show();
 		}
 		var j = _stats.elemSpells[1] + _stats.divineSpells[1] + _stats.forbidSpells[1];
 		var i = _stats.supportSpells + _stats.curativeSpells + _stats.depSpells[1] + _stats.sHits[0] + _stats.sHits[1];
