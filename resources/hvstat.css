@@ -29,7 +29,7 @@
 	min-width: 15px;
 	font-weight: bold;
 }
-.hvstat-duration-badge-player { top: 2px; }
+.hvstat-duration-badge-character { top: 2px; }
 .hvstat-duration-badge-monster { top: -25px; }
 .hvstat-duration-badge-yellow-alert > div { background-color: orange; }
 .hvstat-duration-badge-red-alert > div { background-color: red; }

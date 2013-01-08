@@ -206,11 +206,6 @@ var HV = (function () {
 
 		var elementCache = {
 			popup: document.getElementById("popup_box"),
-			quickcastBar: document.getElementById("quickbar"),
-			battleLog: document.getElementById("togpane_log"),
-			monsterPane: document.getElementById("monsterpane"),
-			roundFinishedMessage: document.querySelector('#battleform div.btcp'),
-			characterEffectIcons: document.querySelectorAll('#battleform div.btps img[onmouseover^="battle.set_infopane_effect"]'),
 		};
 
 		var settings = {
@@ -242,15 +237,27 @@ var HV = (function () {
 		character.spiritPercent = util.percent(character.spiritRate);
 		character.overchargePercent = util.percent(character.overchargeRate);
 
-		var battle = {
-			active: !!elementCache.battleLog,
-			finished: false, // TODO
-			characterEffects: [],
-		};
-		battle.round = {
-			finished: !!elementCache.roundFinishedMessage,
-			monsters: [],
-		};
+		var battleLog = document.getElementById("togpane_log");
+		var battle = {};
+		battle.active = !!battleLog;
+		if (battle.active) {
+			battle.finished = false; // TODO
+
+			battle.elementCache = {
+				battleForm: document.getElementById("battleform"),
+				quickcastBar: document.getElementById("quickbar"),
+				battleLog: battleLog,
+				monsterPane: document.getElementById("monsterpane"),
+			};
+			battle.elementCache.characterEffectIcons = battle.elementCache.battleForm.querySelectorAll('div.btps img[onmouseover^="battle.set_infopane_effect"]');
+			battle.elementCache.monsters = battle.elementCache.monsterPane.querySelectorAll('div[id^="mkey_"]');
+			battle.elementCache.roundFinishedMessage = battle.elementCache.battleForm.querySelector('div.btcp');
+
+			battle.round = {
+				finished: !!elementCache.roundFinishedMessage,
+				monsters: [],
+			};
+		}
 
 		return {
 			location: location,
@@ -359,7 +366,7 @@ hvStat.battle.enhancement.effectDurationBadge = {
 		for (var i = 0; i < effectIcons.length; i++) {
 			var badge = hvStat.battle.enhancement.effectDurationBadge.create(effectIcons[i]);
 			if (badge) {
-				badge.className += " hvstat-duration-badge-player";
+				badge.className += " hvstat-duration-badge-character";
 			}
 		}
 	},
@@ -390,18 +397,15 @@ hvStat.battle.enhancement.log = {
 	highlight: function () {
 		// Copies the text of each Battle Log entry into a title element.
 		// This is because CSS cannot currently select text nodes.
-		var targets = hv.elementCache.battleLog.querySelectorAll('td:last-of-type');
+		var targets = hv.battle.elementCache.battleLog.querySelectorAll('td:last-of-type');
 		var i = targets.length;
 		while (i--) {
 			targets[i].title = targets[i].textContent;
 		}
-// 		Array.prototype.forEach.call(targets, function (e) {
-// 			e.title = e.textContent;
-// 		});
 	},
 	showDivider: function () {
 		// Adds a divider between Battle Log rounds.
-		var logRows = hv.elementCache.battleLog.getElementsByTagName('tr');
+		var logRows = hv.battle.elementCache.battleLog.getElementsByTagName('tr');
 			i = logRows.length,
 			prevTurn = null,
 			currTurn = null;
@@ -3024,17 +3028,17 @@ HVStat.highlightQuickcast = function () {
 	var spiritYellowLevel = Number(_settings.warnOrangeLevelSP);
 	var spiritRedLevel = Number(_settings.warnRedLevelSP);
 	if (hv.character.healthPercent <= healthRedLevel) {
-		hv.elementCache.quickcastBar.className += " hvstat-health-red-alert";
+		hv.battle.elementCache.quickcastBar.className += " hvstat-health-red-alert";
 	} else if (hv.character.healthPercent <= healthYellowLevel) {
-		hv.elementCache.quickcastBar.className += " hvstat-health-yellow-alert";
+		hv.battle.elementCache.quickcastBar.className += " hvstat-health-yellow-alert";
 	} else if (hv.character.magicPercent <= magicRedLevel) {
-		hv.elementCache.quickcastBar.className += " hvstat-magic-red-alert";
+		hv.battle.elementCache.quickcastBar.className += " hvstat-magic-red-alert";
 	} else if (hv.character.magicPercent <= magicYellowLevel) {
-		hv.elementCache.quickcastBar.className += " hvstat-magic-yellow-alert";
+		hv.battle.elementCache.quickcastBar.className += " hvstat-magic-yellow-alert";
 	} else if (hv.character.spiritPercent <= spiritRedLevel) {
-		hv.elementCache.quickcastBar.className += " hvstat-spirit-red-alert";
+		hv.battle.elementCache.quickcastBar.className += " hvstat-spirit-red-alert";
 	} else if (hv.character.spiritPercent <= spiritYellowLevel) {
-		hv.elementCache.quickcastBar.className += " hvstat-spirit-yellow-alert";
+		hv.battle.elementCache.quickcastBar.className += " hvstat-spirit-yellow-alert";
 	}
 }
 
@@ -6266,7 +6270,7 @@ HVStat.showScanAndSkillButtons = function () {
 			var rectObject = u.getBoundingClientRect();
 			var top = rectObject.top;
 			if (_settings.isShowScanButton) {
-				hv.elementCache.monsterPane.style.overflow = "visible";
+				hv.battle.elementCache.monsterPane.style.overflow = "visible";
 				div = document.createElement("div");
 				div.setAttribute("id", "HVStatScan_" + monsterElementId);
 				div.className = "hvstat-scan-button";
@@ -6275,7 +6279,7 @@ HVStat.showScanAndSkillButtons = function () {
 				div.addEventListener("click", HVStat.scanButtonClickHandler);
 			}
 			if (_settings.isShowSkillButton) {
-				hv.elementCache.monsterPane.style.overflow = "visible";
+				hv.battle.elementCache.monsterPane.style.overflow = "visible";
 				for (i = 0; i < skills.length; i++) {
 					div = document.createElement("div");
 					div.setAttribute("id", "HVStatSkill" + String(i + 1) + "_"+ monsterElementId);
@@ -6647,6 +6651,7 @@ HVStat.main2 = function () {
 
 	hvStat.setup.addBasicStyle();
 	hv = new HV();
+	console.debug(hv);
 	if (_settings.isChangePageTitle && document.title === "The HentaiVerse") {
 		document.title = _settings.customPageTitle;
 	}
