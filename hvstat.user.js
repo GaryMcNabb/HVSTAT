@@ -316,8 +316,69 @@ hvStat.setup = {
 	},
 };
 
-hvStat.setup.battle = {
-	addLogStyle: function () {
+hvStat.battle = {
+	setup: function () {
+		if (_settings.isShowHighlight) {
+			hvStat.battle.enhancement.log.setHighlightStyle();
+			hvStat.battle.enhancement.log.highlight();
+		}
+		if (_settings.isShowDivider) {
+			hvStat.battle.enhancement.log.showDivider();
+		}
+	},
+};
+
+hvStat.battle.enhancement = {};
+
+hvStat.battle.enhancement.effectDurationBadge = {
+	create: function (effectIcon) {
+		var result = HVStat.reSetInfoPaneParameters.exec(effectIcon.getAttribute("onmouseover"));
+		if (!result || result.length < 3) {
+			return;
+		}
+		var duration = parseFloat(result[2]);
+		if (isNaN(duration)) {
+			return;
+		}
+		var badgeBase = document.createElement("div");
+		badgeBase.className = "hvstat-duration-badge";
+		if (_settings.isSelfEffectsWarnColor) {
+			if (duration <= Number(_settings.SelfWarnRedRounds)) {
+				badgeBase.className += " hvstat-duration-badge-red-alert";
+			} else if (duration <= Number(_settings.SelfWarnOrangeRounds)) {
+				badgeBase.className += " hvstat-duration-badge-yellow-alert";
+			}
+		}
+		var badge = badgeBase.appendChild(document.createElement('div'));
+		badge.textContent = String(duration);
+		effectIcon.parentNode.insertBefore(badgeBase, effectIcon.nextSibling);
+		return badgeBase;
+	},
+	showForCharacter: function () {
+		var effectIcons = document.querySelectorAll('#battleform div.btps img[onmouseover^="battle.set_infopane_effect"]');
+		for (var i = 0; i < effectIcons.length; i++) {
+			var badge = hvStat.battle.enhancement.effectDurationBadge.create(effectIcons[i]);
+			if (badge) {
+				badge.className += " hvstat-duration-badge-player";
+			}
+		}
+	},
+	showForMonster: function () {
+		for (var i = 0; i < HVStat.numberOfMonsters; i++) {
+			var baseElement = document.getElementById(HVStat.Monster.getDomElementId(i));
+			var effectIcons = baseElement.querySelectorAll('img[onmouseover^="battle.set_infopane_effect"]');
+			for (var j = 0; j < effectIcons.length; j++) {
+				var badge = hvStat.battle.enhancement.effectDurationBadge.create(effectIcons[j]);
+				if (badge) {
+					badge.className += " hvstat-duration-badge-monster";
+				}
+			}
+		}
+	}
+};
+
+hvStat.battle.enhancement.log = {
+	setHighlightStyle: function () {
 		var styleName;
 		if (_settings.isAltHighlight) {
 			styleName = "battle-log-type1.css";
@@ -326,21 +387,24 @@ hvStat.setup.battle = {
 		}
 		browser.extension.addStyleFromResource("resources/", styleName);
 	},
-	// Copies the text of each Battle Log entry into a title element.
-	// This is because CSS cannot currently select text nodes.
-	highlightLogText: function () {
+	highlight: function () {
+		// Copies the text of each Battle Log entry into a title element.
+		// This is because CSS cannot currently select text nodes.
 		var targets = hv.elementCache.battleLog.querySelectorAll('td:last-of-type');
-		Array.prototype.forEach.call(targets, function (e) {
-			e.title = e.textContent;
-		});
+		var i = targets.length;
+		while (i--) {
+			targets[i].title = targets[i].textContent;
+		}
+// 		Array.prototype.forEach.call(targets, function (e) {
+// 			e.title = e.textContent;
+// 		});
 	},
-	// Adds a divider between Battle Log rounds.
-	addBattleLogDividers: function () {
+	showDivider: function () {
+		// Adds a divider between Battle Log rounds.
 		var logRows = hv.elementCache.battleLog.getElementsByTagName('tr');
 			i = logRows.length,
 			prevTurn = null,
 			currTurn = null;
-	
 		while (i--) {
 			currTurn = logRows[i].firstChild.textContent;
 			if (!isNaN(parseFloat(currTurn))) {
@@ -6582,14 +6646,12 @@ HVStat.main2 = function () {
 	}
 
 	hvStat.setup.addBasicStyle();
-	if (_settings.isShowHighlight) {
-		hvStat.setup.battle.addLogStyle();
-	}
 	hv = new HV();
 	if (_settings.isChangePageTitle && document.title === "The HentaiVerse") {
 		document.title = _settings.customPageTitle;
 	}
 	if (hv.battle.active) {
+		hvStat.battle.setup();
 		HVStat.numberOfMonsters = document.querySelectorAll("#monsterpane > div").length;
 
 		HVStat.buildBattleCommandMap();
@@ -6603,12 +6665,6 @@ HVStat.main2 = function () {
 		}
 		if (_settings.isHighlightQC) {
 			HVStat.highlightQuickcast();
-		}
-		if (_settings.isShowDivider) {
-			hvStat.setup.battle.addBattleLogDividers();
-		}
-		if (_settings.isShowHighlight) {
-			hvStat.setup.battle.highlightLogText();
 		}
 		if (_settings.isShowScanButton || _settings.isShowSkillButton) {
 			HVStat.showScanAndSkillButtons();
