@@ -316,6 +316,67 @@ hvStat.util = {
 	percentRatio: function (numerator, denominator, digits) {
 		return this.percent(this.ratio(numerator, denominator), digits);
 	},
+	forEachProperty: function (to, from, fn) {
+		var primitives = [ Boolean, Number, String, Date, RegExp ];
+		for (var key in from) {
+			var property = from[key];
+			if (property instanceof Function) {
+				continue;
+			}
+			var treated = false;
+			var i = primitives.length;
+			while (i--) {
+				if (property instanceof primitives[i]) {
+					fn(to, from, key);
+					treated = true;
+					break;
+				}
+			}
+			if (!treated) {
+				if (typeof property === "string" || typeof property === "number") {
+					fn(to, from, key);
+					treated = true;
+				}
+			}
+			if (!treated) {
+				if (property instanceof Array) {
+					if (!(to[key] instanceof Array)) {
+						delete to[key];
+						to[key] = [];
+					}
+					fn(to, from, key);
+				} else {
+					if (typeof to[key] !== "object") {
+						delete to[key];
+						to[key] = new (property.constructor);
+					}
+					arguments.callee(to[key], from[key], fn);
+				}
+			}
+		}
+	},
+	copyEachProperty: function (to, from) {
+		this.forEachProperty(to, from, function (to, from, key) {
+			if (from[key] instanceof Array) {
+				for (var i = 0; i < from[key].length; i++) {
+					to[key][i] = from[key][i];
+				}
+			} else {
+				to[key] = from[key];
+			}
+		});
+	},
+	addEachPropertyValue: function (to, from) {
+		this.forEachProperty(to, from, function (to, from, key) {
+			if (from[key] instanceof Array) {
+				for (var i = 0; i < from[key].length; i++) {
+					to[key][i] += from[key][i];
+				}
+			} else {
+				to[key] += from[key];
+			}
+		});
+	},
 };
 
 hvStat.storage = {
@@ -5556,113 +5617,7 @@ function saveStatsBackup(back) {
 	var ba = 0;
 	ba = _backup[back];
 	loadBackupObject(back);
-	ba.rounds = _stats.rounds;
-	ba.kills = _stats.kills;
-	ba.aAttempts = _stats.aAttempts;
-	ba.aHits[0] = _stats.aHits[0];
-	ba.aHits[1] = _stats.aHits[1];
-	ba.aOffhands[0] = _stats.aOffhands[0];
-	ba.aOffhands[1] = _stats.aOffhands[1];
-	ba.aOffhands[2] = _stats.aOffhands[2];
-	ba.aOffhands[3] = _stats.aOffhands[3];
-	ba.sAttempts = _stats.sAttempts;
-	ba.aDomino[0] = _stats.aDomino[0];
-	ba.aDomino[1] = _stats.aDomino[1];
-	ba.aDomino[2] = _stats.aDomino[2];
-	ba.aDomino[3] = _stats.aDomino[3];
-	ba.aDomino[4] = _stats.aDomino[4];
-	ba.aDomino[5] = _stats.aDomino[5];
-	ba.aDomino[6] = _stats.aDomino[6];
-	ba.aDomino[7] = _stats.aDomino[7];
-	ba.aDomino[8] = _stats.aDomino[8];
-	ba.aDomino[9] = _stats.aDomino[9];
-	ba.aCounters[0] = _stats.aCounters[0];
-	ba.aCounters[1] = _stats.aCounters[1];
-	ba.aCounters[2] = _stats.aCounters[2];
-	ba.aCounters[3] = _stats.aCounters[3];
-	ba.dDealt[0] = _stats.dDealt[0];
-	ba.dDealt[1] = _stats.dDealt[1];
-	ba.dDealt[2] = _stats.dDealt[2];
-	ba.sHits[0] = _stats.sHits[0];
-	ba.sHits[1] = _stats.sHits[1];
-	ba.sResists = _stats.sResists;
-	ba.dDealtSp[0] = _stats.dDealtSp[0];
-	ba.dDealtSp[1] = _stats.dDealtSp[1];
-	ba.absArry[0] = _stats.absArry[0];
-	ba.absArry[1] = _stats.absArry[1];
-	ba.absArry[2] = _stats.absArry[2];
-	ba.mAttempts = _stats.mAttempts;
-	ba.dTaken[0] = _stats.dTaken[0];
-	ba.dTaken[1] = _stats.dTaken[1];
-	ba.mHits[0] = _stats.mHits[0];
-	ba.mHits[1] = _stats.mHits[1];
-	ba.pDodges = _stats.pDodges;
-	ba.pEvades = _stats.pEvades;
-	ba.pParries = _stats.pParries;
-	ba.pBlocks = _stats.pBlocks;
-	ba.pResists = _stats.pResists;
-	ba.mSpells = _stats.mSpells;
-	ba.overStrikes = _stats.overStrikes;
-	ba.coalesce = _stats.coalesce;
-	ba.eTheft = _stats.eTheft;
-	ba.channel = _stats.channel;
-	ba.cureTotals[0] = _stats.cureTotals[0];
-	ba.cureTotals[1] = _stats.cureTotals[1];
-	ba.cureTotals[2] = _stats.cureTotals[2];
-	ba.cureCounts[0] = _stats.cureCounts[0];
-	ba.cureCounts[1] = _stats.cureCounts[1];
-	ba.cureCounts[2] = _stats.cureCounts[2];
-	ba.elemEffects[0] = _stats.elemEffects[0];
-	ba.elemEffects[1] = _stats.elemEffects[1];
-	ba.elemEffects[2] = _stats.elemEffects[2];
-	ba.effectPoison[0] = _stats.effectPoison[0];
-	ba.effectPoison[1] = _stats.effectPoison[1];
-	ba.elemSpells[0] = _stats.elemSpells[0];
-	ba.elemSpells[1] = _stats.elemSpells[1];
-	ba.elemSpells[2] = _stats.elemSpells[2];
-	ba.elemSpells[3] = _stats.elemSpells[3];
-	ba.divineSpells[0] = _stats.divineSpells[0];
-	ba.divineSpells[1] = _stats.divineSpells[1];
-	ba.divineSpells[2] = _stats.divineSpells[2];
-	ba.divineSpells[3] = _stats.divineSpells[3];
-	ba.forbidSpells[0] = _stats.forbidSpells[0];
-	ba.forbidSpells[1] = _stats.forbidSpells[1];
-	ba.forbidSpells[2] = _stats.forbidSpells[2];
-	ba.forbidSpells[3] = _stats.forbidSpells[3];
-	ba.depSpells[0] = _stats.depSpells[0];
-	ba.depSpells[1] = _stats.depSpells[1];
-	ba.supportSpells = _stats.supportSpells;
-	ba.curativeSpells = _stats.curativeSpells;
-	ba.elemGain = _stats.elemGain;
-	ba.divineGain = _stats.divineGain;
-	ba.forbidGain = _stats.forbidGain;
-	ba.depGain = _stats.depGain;
-	ba.supportGain = _stats.supportGain;
-	ba.curativeGain = _stats.curativeGain;
-	ba.weapProfGain[0] = _stats.weapProfGain[0];
-	ba.weapProfGain[1] = _stats.weapProfGain[1];
-	ba.weapProfGain[2] = _stats.weapProfGain[2];
-	ba.weapProfGain[3] = _stats.weapProfGain[3];
-	ba.armorProfGain[0] = _stats.armorProfGain[0];
-	ba.armorProfGain[1] = _stats.armorProfGain[1];
-	ba.armorProfGain[2] = _stats.armorProfGain[2];
-	ba.armorProfGain[3] = _stats.armorProfGain[3];
-	ba.weaponprocs[0] = _stats.weaponprocs[0];
-	ba.weaponprocs[1] = _stats.weaponprocs[1];
-	ba.weaponprocs[2] = _stats.weaponprocs[2];
-	ba.weaponprocs[3] = _stats.weaponprocs[3];
-	ba.weaponprocs[4] = _stats.weaponprocs[4];
-	ba.weaponprocs[5] = _stats.weaponprocs[5];
-	ba.weaponprocs[6] = _stats.weaponprocs[6];
-	ba.weaponprocs[7] = _stats.weaponprocs[7];
-	ba.pskills[0] = _stats.pskills[0];
-	ba.pskills[1] = _stats.pskills[1];
-	ba.pskills[2] = _stats.pskills[2];
-	ba.pskills[3] = _stats.pskills[3];
-	ba.pskills[4] = _stats.pskills[4];
-	ba.pskills[5] = _stats.pskills[5];
-	ba.pskills[6] = _stats.pskills[6];
-	ba.datestart = _stats.datestart;
+	hvStat.util.copyEachProperty(ba, _stats);
 	ba.save();
 }
 function addtoStatsBackup(back) {
@@ -5670,112 +5625,7 @@ function addtoStatsBackup(back) {
 	var ba = 0;
 	ba = _backup[back];
 	loadBackupObject(back);
-	ba.rounds += _stats.rounds;
-	ba.kills += _stats.kills;
-	ba.aAttempts += _stats.aAttempts;
-	ba.aHits[0] += _stats.aHits[0];
-	ba.aHits[1] += _stats.aHits[1];
-	ba.aOffhands[0] += _stats.aOffhands[0];
-	ba.aOffhands[1] += _stats.aOffhands[1];
-	ba.aOffhands[2] += _stats.aOffhands[2];
-	ba.aOffhands[3] += _stats.aOffhands[3];
-	ba.sAttempts += _stats.sAttempts;
-	ba.aDomino[0] += _stats.aDomino[0];
-	ba.aDomino[1] += _stats.aDomino[1];
-	ba.aDomino[2] += _stats.aDomino[2];
-	ba.aDomino[3] += _stats.aDomino[3];
-	ba.aDomino[4] += _stats.aDomino[4];
-	ba.aDomino[5] += _stats.aDomino[5];
-	ba.aDomino[6] += _stats.aDomino[6];
-	ba.aDomino[7] += _stats.aDomino[7];
-	ba.aDomino[8] += _stats.aDomino[8];
-	ba.aDomino[9] += _stats.aDomino[9];
-	ba.aCounters[0] += _stats.aCounters[0];
-	ba.aCounters[1] += _stats.aCounters[1];
-	ba.aCounters[2] += _stats.aCounters[2];
-	ba.aCounters[3] += _stats.aCounters[3];
-	ba.dDealt[0] += _stats.dDealt[0];
-	ba.dDealt[1] += _stats.dDealt[1];
-	ba.dDealt[2] += _stats.dDealt[2];
-	ba.sHits[0] += _stats.sHits[0];
-	ba.sHits[1] += _stats.sHits[1];
-	ba.sResists += _stats.sResists;
-	ba.dDealtSp[0] += _stats.dDealtSp[0];
-	ba.dDealtSp[1] += _stats.dDealtSp[1];
-	ba.absArry[0] += _stats.absArry[0];
-	ba.absArry[1] += _stats.absArry[1];
-	ba.absArry[2] += _stats.absArry[2];
-	ba.mAttempts += _stats.mAttempts;
-	ba.dTaken[0] += _stats.dTaken[0];
-	ba.dTaken[1] += _stats.dTaken[1];
-	ba.mHits[0] += _stats.mHits[0];
-	ba.mHits[1] += _stats.mHits[1];
-	ba.pDodges += _stats.pDodges;
-	ba.pEvades += _stats.pEvades;
-	ba.pParries += _stats.pParries;
-	ba.pBlocks += _stats.pBlocks;
-	ba.pResists += _stats.pResists;
-	ba.mSpells += _stats.mSpells;
-	ba.overStrikes += _stats.overStrikes;
-	ba.coalesce += _stats.coalesce;
-	ba.eTheft += _stats.eTheft;
-	ba.channel += _stats.channel;
-	ba.cureTotals[0] += _stats.cureTotals[0];
-	ba.cureTotals[1] += _stats.cureTotals[1];
-	ba.cureTotals[2] += _stats.cureTotals[2];
-	ba.cureCounts[0] += _stats.cureCounts[0];
-	ba.cureCounts[1] += _stats.cureCounts[1];
-	ba.cureCounts[2] += _stats.cureCounts[2];
-	ba.elemEffects[0] += _stats.elemEffects[0];
-	ba.elemEffects[1] += _stats.elemEffects[1];
-	ba.elemEffects[2] += _stats.elemEffects[2];
-	ba.effectPoison[0] += _stats.effectPoison[0];
-	ba.effectPoison[1] += _stats.effectPoison[1];
-	ba.elemSpells[0] += _stats.elemSpells[0];
-	ba.elemSpells[1] += _stats.elemSpells[1];
-	ba.elemSpells[2] += _stats.elemSpells[2];
-	ba.elemSpells[3] += _stats.elemSpells[3];
-	ba.divineSpells[0] += _stats.divineSpells[0];
-	ba.divineSpells[1] += _stats.divineSpells[1];
-	ba.divineSpells[2] += _stats.divineSpells[2];
-	ba.divineSpells[3] += _stats.divineSpells[3];
-	ba.forbidSpells[0] += _stats.forbidSpells[0];
-	ba.forbidSpells[1] += _stats.forbidSpells[1];
-	ba.forbidSpells[2] += _stats.forbidSpells[2];
-	ba.forbidSpells[3] += _stats.forbidSpells[3];
-	ba.depSpells[0] += _stats.depSpells[0];
-	ba.depSpells[1] += _stats.depSpells[1];
-	ba.supportSpells += _stats.supportSpells;
-	ba.curativeSpells += _stats.curativeSpells;
-	ba.elemGain += _stats.elemGain;
-	ba.divineGain += _stats.divineGain;
-	ba.forbidGain += _stats.forbidGain;
-	ba.depGain += _stats.depGain;
-	ba.supportGain += _stats.supportGain;
-	ba.curativeGain += _stats.curativeGain;
-	ba.weapProfGain[0] += _stats.weapProfGain[0];
-	ba.weapProfGain[1] += _stats.weapProfGain[1];
-	ba.weapProfGain[2] += _stats.weapProfGain[2];
-	ba.weapProfGain[3] += _stats.weapProfGain[3];
-	ba.armorProfGain[0] += _stats.armorProfGain[0];
-	ba.armorProfGain[1] += _stats.armorProfGain[1];
-	ba.armorProfGain[2] += _stats.armorProfGain[2];
-	ba.armorProfGain[3] += _stats.armorProfGain[3];
-	ba.weaponprocs[0] += _stats.weaponprocs[0];
-	ba.weaponprocs[1] += _stats.weaponprocs[1];
-	ba.weaponprocs[2] += _stats.weaponprocs[2];
-	ba.weaponprocs[3] += _stats.weaponprocs[3];
-	ba.weaponprocs[4] += _stats.weaponprocs[4];
-	ba.weaponprocs[5] += _stats.weaponprocs[5];
-	ba.weaponprocs[6] += _stats.weaponprocs[6];
-	ba.weaponprocs[7] += _stats.weaponprocs[7];
-	ba.pskills[0] += _stats.pskills[0];
-	ba.pskills[1] += _stats.pskills[1];
-	ba.pskills[2] += _stats.pskills[2];
-	ba.pskills[3] += _stats.pskills[3];
-	ba.pskills[4] += _stats.pskills[4];
-	ba.pskills[5] += _stats.pskills[5];
-	ba.pskills[6] += _stats.pskills[6];
+	hvStat.util.addEachPropertyValue(ba, _stats);
 	ba.save();
 }
 function loadStatsBackup(back) {
@@ -5783,113 +5633,7 @@ function loadStatsBackup(back) {
 	var ba = 0;
 	ba = _backup[back];
 	loadBackupObject(back);
-	_stats.rounds = ba.rounds;
-	_stats.kills = ba.kills;
-	_stats.aAttempts = ba.aAttempts;
-	_stats.aHits[0] = ba.aHits[0];
-	_stats.aHits[1] = ba.aHits[1];
-	_stats.aOffhands[0] = ba.aOffhands[0];
-	_stats.aOffhands[1] = ba.aOffhands[1];
-	_stats.aOffhands[2] = ba.aOffhands[2];
-	_stats.aOffhands[3] = ba.aOffhands[3];
-	_stats.sAttempts = ba.sAttempts;
-	_stats.aDomino[0] = ba.aDomino[0];
-	_stats.aDomino[1] = ba.aDomino[1];
-	_stats.aDomino[2] = ba.aDomino[2];
-	_stats.aDomino[3] = ba.aDomino[3];
-	_stats.aDomino[4] = ba.aDomino[4];
-	_stats.aDomino[5] = ba.aDomino[5];
-	_stats.aDomino[6] = ba.aDomino[6];
-	_stats.aDomino[7] = ba.aDomino[7];
-	_stats.aDomino[8] = ba.aDomino[8];
-	_stats.aDomino[9] = ba.aDomino[9];
-	_stats.aCounters[0] = ba.aCounters[0];
-	_stats.aCounters[1] = ba.aCounters[1];
-	_stats.aCounters[2] = ba.aCounters[2];
-	_stats.aCounters[3] = ba.aCounters[3];
-	_stats.dDealt[0] = ba.dDealt[0];
-	_stats.dDealt[1] = ba.dDealt[1];
-	_stats.dDealt[2] = ba.dDealt[2];
-	_stats.sHits[0] = ba.sHits[0];
-	_stats.sHits[1] = ba.sHits[1];
-	_stats.sResists = ba.sResists;
-	_stats.dDealtSp[0] = ba.dDealtSp[0];
-	_stats.dDealtSp[1] = ba.dDealtSp[1];
-	_stats.absArry[0] = ba.absArry[0];
-	_stats.absArry[1] = ba.absArry[1];
-	_stats.absArry[2] = ba.absArry[2];
-	_stats.mAttempts = ba.mAttempts;
-	_stats.dTaken[0] = ba.dTaken[0];
-	_stats.dTaken[1] = ba.dTaken[1];
-	_stats.mHits[0] = ba.mHits[0];
-	_stats.mHits[1] = ba.mHits[1];
-	_stats.pDodges = ba.pDodges;
-	_stats.pEvades = ba.pEvades;
-	_stats.pParries = ba.pParries;
-	_stats.pBlocks = ba.pBlocks;
-	_stats.pResists = ba.pResists;
-	_stats.mSpells = ba.mSpells;
-	_stats.overStrikes = ba.overStrikes;
-	_stats.coalesce = ba.coalesce;
-	_stats.eTheft = ba.eTheft;
-	_stats.channel = ba.channel;
-	_stats.cureTotals[0] = ba.cureTotals[0];
-	_stats.cureTotals[1] = ba.cureTotals[1];
-	_stats.cureTotals[2] = ba.cureTotals[2];
-	_stats.cureCounts[0] = ba.cureCounts[0];
-	_stats.cureCounts[1] = ba.cureCounts[1];
-	_stats.cureCounts[2] = ba.cureCounts[2];
-	_stats.elemEffects[0] = ba.elemEffects[0];
-	_stats.elemEffects[1] = ba.elemEffects[1];
-	_stats.elemEffects[2] = ba.elemEffects[2];
-	_stats.effectPoison[0] = ba.effectPoison[0];
-	_stats.effectPoison[1] = ba.effectPoison[1];
-	_stats.elemSpells[0] = ba.elemSpells[0];
-	_stats.elemSpells[1] = ba.elemSpells[1];
-	_stats.elemSpells[2] = ba.elemSpells[2];
-	_stats.elemSpells[3] = ba.elemSpells[3];
-	_stats.divineSpells[0] = ba.divineSpells[0];
-	_stats.divineSpells[1] = ba.divineSpells[1];
-	_stats.divineSpells[2] = ba.divineSpells[2];
-	_stats.divineSpells[3] = ba.divineSpells[3];
-	_stats.forbidSpells[0] = ba.forbidSpells[0];
-	_stats.forbidSpells[1] = ba.forbidSpells[1];
-	_stats.forbidSpells[2] = ba.forbidSpells[2];
-	_stats.forbidSpells[3] = ba.forbidSpells[3];
-	_stats.depSpells[0] = ba.depSpells[0];
-	_stats.depSpells[1] = ba.depSpells[1];
-	_stats.supportSpells = ba.supportSpells;
-	_stats.curativeSpells = ba.curativeSpells;
-	_stats.elemGain = ba.elemGain;
-	_stats.divineGain = ba.divineGain;
-	_stats.forbidGain = ba.forbidGain;
-	_stats.depGain = ba.depGain;
-	_stats.supportGain = ba.supportGain;
-	_stats.curativeGain = ba.curativeGain;
-	_stats.weapProfGain[0] = ba.weapProfGain[0];
-	_stats.weapProfGain[1] = ba.weapProfGain[1];
-	_stats.weapProfGain[2] = ba.weapProfGain[2];
-	_stats.weapProfGain[3] = ba.weapProfGain[3];
-	_stats.armorProfGain[0] = ba.armorProfGain[0];
-	_stats.armorProfGain[1] = ba.armorProfGain[1];
-	_stats.armorProfGain[2] = ba.armorProfGain[2];
-	_stats.armorProfGain[3] = ba.armorProfGain[3];
-	_stats.weaponprocs[0] = ba.weaponprocs[0];
-	_stats.weaponprocs[1] = ba.weaponprocs[1];
-	_stats.weaponprocs[2] = ba.weaponprocs[2];
-	_stats.weaponprocs[3] = ba.weaponprocs[3];
-	_stats.weaponprocs[4] = ba.weaponprocs[4];
-	_stats.weaponprocs[5] = ba.weaponprocs[5];
-	_stats.weaponprocs[6] = ba.weaponprocs[6];
-	_stats.weaponprocs[7] = ba.weaponprocs[7];
-	_stats.pskills[0] = ba.pskills[0];
-	_stats.pskills[1] = ba.pskills[1];
-	_stats.pskills[2] = ba.pskills[2];
-	_stats.pskills[3] = ba.pskills[3];
-	_stats.pskills[4] = ba.pskills[4];
-	_stats.pskills[5] = ba.pskills[5];
-	_stats.pskills[6] = ba.pskills[6];
-	_stats.datestart = ba.datestart;
+	hvStat.util.copyEachProperty(_stats, ba);
 	_stats.save();
 }
 function addfromStatsBackup(back) {
@@ -5897,112 +5641,7 @@ function addfromStatsBackup(back) {
 	var ba = 0;
 	ba = _backup[back];
 	loadBackupObject(back);
-	_stats.rounds += ba.rounds;
-	_stats.kills += ba.kills;
-	_stats.aAttempts += ba.aAttempts;
-	_stats.aHits[0] += ba.aHits[0];
-	_stats.aHits[1] += ba.aHits[1];
-	_stats.aOffhands[0] += ba.aOffhands[0];
-	_stats.aOffhands[1] += ba.aOffhands[1];
-	_stats.aOffhands[2] += ba.aOffhands[2];
-	_stats.aOffhands[3] += ba.aOffhands[3];
-	_stats.sAttempts += ba.sAttempts;
-	_stats.aDomino[0] += ba.aDomino[0];
-	_stats.aDomino[1] += ba.aDomino[1];
-	_stats.aDomino[2] += ba.aDomino[2];
-	_stats.aDomino[3] += ba.aDomino[3];
-	_stats.aDomino[4] += ba.aDomino[4];
-	_stats.aDomino[5] += ba.aDomino[5];
-	_stats.aDomino[6] += ba.aDomino[6];
-	_stats.aDomino[7] += ba.aDomino[7];
-	_stats.aDomino[8] += ba.aDomino[8];
-	_stats.aDomino[9] += ba.aDomino[9];
-	_stats.aCounters[0] += ba.aCounters[0];
-	_stats.aCounters[1] += ba.aCounters[1];
-	_stats.aCounters[2] += ba.aCounters[2];
-	_stats.aCounters[3] += ba.aCounters[3];
-	_stats.dDealt[0] += ba.dDealt[0];
-	_stats.dDealt[1] += ba.dDealt[1];
-	_stats.dDealt[2] += ba.dDealt[2];
-	_stats.sHits[0] += ba.sHits[0];
-	_stats.sHits[1] += ba.sHits[1];
-	_stats.sResists += ba.sResists;
-	_stats.dDealtSp[0] += ba.dDealtSp[0];
-	_stats.dDealtSp[1] += ba.dDealtSp[1];
-	_stats.absArry[0] += ba.absArry[0];
-	_stats.absArry[1] += ba.absArry[1];
-	_stats.absArry[2] += ba.absArry[2];
-	_stats.mAttempts += ba.mAttempts;
-	_stats.dTaken[0] += ba.dTaken[0];
-	_stats.dTaken[1] += ba.dTaken[1];
-	_stats.mHits[0] += ba.mHits[0];
-	_stats.mHits[1] += ba.mHits[1];
-	_stats.pDodges += ba.pDodges;
-	_stats.pEvades += ba.pEvades;
-	_stats.pParries += ba.pParries;
-	_stats.pBlocks += ba.pBlocks;
-	_stats.pResists += ba.pResists;
-	_stats.mSpells += ba.mSpells;
-	_stats.overStrikes += ba.overStrikes;
-	_stats.coalesce += ba.coalesce;
-	_stats.eTheft += ba.eTheft;
-	_stats.channel += ba.channel;
-	_stats.cureTotals[0] += ba.cureTotals[0];
-	_stats.cureTotals[1] += ba.cureTotals[1];
-	_stats.cureTotals[2] += ba.cureTotals[2];
-	_stats.cureCounts[0] += ba.cureCounts[0];
-	_stats.cureCounts[1] += ba.cureCounts[1];
-	_stats.cureCounts[2] += ba.cureCounts[2];
-	_stats.elemEffects[0] += ba.elemEffects[0];
-	_stats.elemEffects[1] += ba.elemEffects[1];
-	_stats.elemEffects[2] += ba.elemEffects[2];
-	_stats.effectPoison[0] += ba.effectPoison[0];
-	_stats.effectPoison[1] += ba.effectPoison[1];
-	_stats.elemSpells[0] += ba.elemSpells[0];
-	_stats.elemSpells[1] += ba.elemSpells[1];
-	_stats.elemSpells[2] += ba.elemSpells[2];
-	_stats.elemSpells[3] += ba.elemSpells[3];
-	_stats.divineSpells[0] += ba.divineSpells[0];
-	_stats.divineSpells[1] += ba.divineSpells[1];
-	_stats.divineSpells[2] += ba.divineSpells[2];
-	_stats.divineSpells[3] += ba.divineSpells[3];
-	_stats.forbidSpells[0] += ba.forbidSpells[0];
-	_stats.forbidSpells[1] += ba.forbidSpells[1];
-	_stats.forbidSpells[2] += ba.forbidSpells[2];
-	_stats.forbidSpells[3] += ba.forbidSpells[3];
-	_stats.depSpells[0] += ba.depSpells[0];
-	_stats.depSpells[1] += ba.depSpells[1];
-	_stats.supportSpells += ba.supportSpells;
-	_stats.curativeSpells += ba.curativeSpells;
-	_stats.elemGain += ba.elemGain;
-	_stats.divineGain += ba.divineGain;
-	_stats.forbidGain += ba.forbidGain;
-	_stats.depGain += ba.depGain;
-	_stats.supportGain += ba.supportGain;
-	_stats.curativeGain += ba.curativeGain;
-	_stats.weapProfGain[0] += ba.weapProfGain[0];
-	_stats.weapProfGain[1] += ba.weapProfGain[1];
-	_stats.weapProfGain[2] += ba.weapProfGain[2];
-	_stats.weapProfGain[3] += ba.weapProfGain[3];
-	_stats.armorProfGain[0] += ba.armorProfGain[0];
-	_stats.armorProfGain[1] += ba.armorProfGain[1];
-	_stats.armorProfGain[2] += ba.armorProfGain[2];
-	_stats.armorProfGain[3] += ba.armorProfGain[3];
-	_stats.weaponprocs[0] += ba.weaponprocs[0];
-	_stats.weaponprocs[1] += ba.weaponprocs[1];
-	_stats.weaponprocs[2] += ba.weaponprocs[2];
-	_stats.weaponprocs[3] += ba.weaponprocs[3];
-	_stats.weaponprocs[4] += ba.weaponprocs[4];
-	_stats.weaponprocs[5] += ba.weaponprocs[5];
-	_stats.weaponprocs[6] += ba.weaponprocs[6];
-	_stats.weaponprocs[7] += ba.weaponprocs[7];
-	_stats.pskills[0] += ba.pskills[0];
-	_stats.pskills[1] += ba.pskills[1];
-	_stats.pskills[2] += ba.pskills[2];
-	_stats.pskills[3] += ba.pskills[3];
-	_stats.pskills[4] += ba.pskills[4];
-	_stats.pskills[5] += ba.pskills[5];
-	_stats.pskills[6] += ba.pskills[6];
+	hvStat.util.addEachPropertyValue(_stats, ba);
 	_stats.save();
 }
 function HVTags() {
@@ -6080,7 +5719,7 @@ function HVCacheBackup(ID) {
 	this.supportGain = 0;
 	this.curativeGain = 0;
 	this.weapProfGain = [0, 0, 0, 0];
-	this.armorProfGain = [0, 0, 0, 0];
+	this.armorProfGain = [0, 0, 0];
 	this.weaponprocs = [0, 0, 0, 0, 0, 0, 0, 0];
 	this.pskills = [0, 0, 0, 0, 0, 0, 0];
 	this.datestart = 0;
