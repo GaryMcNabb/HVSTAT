@@ -241,22 +241,26 @@ var HV = (function () {
 		var battle = {};
 		battle.active = !!battleLog;
 		if (battle.active) {
-			battle.finished = false; // TODO
-
 			battle.elementCache = {
 				battleForm: document.getElementById("battleform"),
 				quickcastBar: document.getElementById("quickbar"),
 				battleLog: battleLog,
 				monsterPane: document.getElementById("monsterpane"),
+				dialogButton: document.getElementById("ckey_continue"),
 			};
 			battle.elementCache.characterEffectIcons = battle.elementCache.battleForm.querySelectorAll('div.btps img[onmouseover^="battle.set_infopane_effect"]');
 			battle.elementCache.monsters = battle.elementCache.monsterPane.querySelectorAll('div[id^="mkey_"]');
-			battle.elementCache.roundFinishedMessage = battle.elementCache.battleForm.querySelector('div.btcp');
 
 			battle.round = {
-				finished: !!battle.elementCache.roundFinishedMessage,
-				monsters: [],
+				finished: !!battle.elementCache.dialogButton,
 			};
+			battle.finished = false;
+			if (battle.elementCache.dialogButton) {
+				var dialogButton_onclick = battle.elementCache.dialogButton.getAttribute("onclick");
+				if (dialogButton_onclick.indexOf("battle.battle_continue") === -1) {
+					battle.finished = true;
+				}
+			}
 		}
 
 		return {
@@ -519,6 +523,16 @@ hvStat.battle = {
  		}
 		if (hvStat.settings.isShowMonsterDuration) {
 			hvStat.battle.enhancement.effectDurationBadge.showForMonster();
+		}
+	},
+	advanceRound: function () {
+		if (!hv.battle.finished && hv.battle.round.finished) {
+			(function (dialogButton) {
+				setTimeout(function () {
+					dialogButton.click();
+					return 0;
+				}, hvStat.settings.autoAdvanceBattleRoundDelay);
+			})(hv.battle.elementCache.dialogButton);
 		}
 	},
 };
@@ -6610,21 +6624,6 @@ function TaggingItems(clean) {
 	}
 }
 
-HVStat.autoAdvanceBattleRound = function () {
-	var dialogButton = document.getElementById("ckey_continue");
-	if (dialogButton) {
-		var onclick = dialogButton.getAttribute("onclick");
-		if (onclick === "battle.battle_continue()") {
-			(function (dialogButton) {
-				setTimeout(function () {
-					dialogButton.click();
-					return 0;
-				}, hvStat.settings.autoAdvanceBattleRoundDelay);
-			})(dialogButton);
-		}
-	}
-};
-
 //------------------------------------
 // main routine
 //------------------------------------
@@ -6657,10 +6656,10 @@ HVStat.main2 = function () {
 	}
 
 	hv = new HV();
-//	console.debug(hv);
+	console.debug(hv);
 	hvStat.setup();
-//	console.debug(hvStat);
-//	console.debug(hvStat.settings);
+	console.debug(hvStat);
+	console.debug(hvStat.settings);
 	if (hvStat.settings.isChangePageTitle && document.title === "The HentaiVerse") {
 		document.title = hvStat.settings.customPageTitle;
 	}
@@ -6713,7 +6712,7 @@ HVStat.main2 = function () {
 			saveStats();
 			_round.reset();
 			if (hvStat.settings.autoAdvanceBattleRound) {
-				HVStat.autoAdvanceBattleRound();
+				hvStat.battle.advanceRound();
 			}
 		}
 	} else {
