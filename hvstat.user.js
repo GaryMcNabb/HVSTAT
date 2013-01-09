@@ -254,7 +254,7 @@ var HV = (function () {
 			battle.elementCache.roundFinishedMessage = battle.elementCache.battleForm.querySelector('div.btcp');
 
 			battle.round = {
-				finished: !!elementCache.roundFinishedMessage,
+				finished: !!battle.elementCache.roundFinishedMessage,
 				monsters: [],
 			};
 		}
@@ -6657,10 +6657,10 @@ HVStat.main2 = function () {
 	}
 
 	hv = new HV();
-	console.debug(hv);
+//	console.debug(hv);
 	hvStat.setup();
-	console.debug(hvStat);
-	console.debug(hvStat.settings);
+//	console.debug(hvStat);
+//	console.debug(hvStat.settings);
 	if (hvStat.settings.isChangePageTitle && document.title === "The HentaiVerse") {
 		document.title = hvStat.settings.customPageTitle;
 	}
