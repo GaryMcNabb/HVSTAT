@@ -1,3 +1,14 @@
+/* icon */
+#hvstat-icon {
+	position: absolute;
+	top: 4px;
+	left: 916px;
+	cursor: pointer;
+}
+#hvstat-icon span {
+	margin: 3px;
+}
+
 /* proficiency sidebar */
 .hvstat-proficiency-sidebar {
 	width: 100%;
@@ -214,6 +225,10 @@ input.hvstat-equipment-tag-new {
 }
 
 /*** Dialog UI ***/
+#hvstat-panel {
+	text-align: left;
+}
+
 .hvstat-tracking-paused {
 	display: none;
 	padding: 4px;

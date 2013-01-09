@@ -775,22 +775,65 @@ hvStat.ui = {
 		browser.extension.addStyleFromResource("resources/", "jquery-ui-1.9.2.custom.min.css", imageResouces);
 	},
 	createIcon: function () {
-//		var top = 4;
-		var left = document.querySelector("div.stuffbox").scrollWidth - 60 - 4;
-		var div = document.createElement("div");
-		div.id = "hvstat-open-button";
-		div.className = "ui-state-default ui-corner-all";
-//		div.style.cssText = "position: absolute; top: " + top + "px; left: " + left + "px; cursor: pointer;";
-		div.innerHTML = '<span style="margin: 3px;" class="ui-icon ui-icon-wrench" title="Launch HV STAT UI"/>';
-		div.addEventListener("click", initMainMenu);
-		div.addEventListener("mouseover", function (event) {
+		var stuffBox = document.querySelector("div.stuffbox");
+		var icon = document.createElement("div");
+		icon.id = "hvstat-icon";
+		icon.className = "ui-state-default ui-corner-all";
+		icon.innerHTML = '<span class="ui-icon ui-icon-wrench" title="Launch HV STAT UI"/>';
+		icon.addEventListener("click", function (event) {
+			this.removeEventListener("click", arguments.callee);
+			hvStat.ui.createDialog();
+		});
+		icon.addEventListener("mouseover", function (event) {
 			this.className = this.className.replace(" ui-state-hover", "");
 			this.className += " ui-state-hover";
 		});
-		div.addEventListener("mouseout", function (event) {
+		icon.addEventListener("mouseout", function (event) {
 			this.className = this.className.replace(" ui-state-hover", "");
 		});
-		document.body.insertBefore(div, null);
+		stuffBox.insertBefore(icon, null);
+	},
+	createDialog: function () {
+		// load jQuery and jQuery UI
+		browser.extension.loadScript("scripts/", "jquery-1.8.3.min.js");
+		browser.extension.loadScript("scripts/", "jquery-ui-1.9.2.custom.min.js");
+
+		var panel = document.createElement("div");
+		panel.id = "hvstat-panel";
+		$(panel).html(browser.extension.getResourceText("resources/", "main.html"));
+		$("body").append(panel);
+		$(panel).dialog({
+			autoOpen: false,
+			closeOnEscape: true,
+			draggable: false,
+			resizable: false,
+			height: 620,
+			width: 850,
+			modal: true,
+			position: ["center", "center"],
+			title: "[STAT] HentaiVerse Statistics, Tracking, and Analysis Tool v." + hvStat.version,
+		});
+		$("#hvstat-tabs").tabs();
+		loadOverviewObject();
+		loadStatsObject();
+		loadDropsObject();
+		loadRewardsObject();
+		loadShrineObject();
+		initOverviewPane();
+		initStatsPane();
+		initItemPane();
+		initRewardsPane();
+		initShrinePane();
+		initSettingsPane();
+		initMonsterStatsPane();
+		$("#hvstat-icon").click(function () {
+			if ($(panel).dialog("isOpen")) {
+				$(panel).dialog("close");
+			} else {
+				$(panel).dialog("open");
+			}
+		});
+		$(panel).dialog("open");
 	},
 };
 
@@ -798,10 +841,8 @@ var HVStat = {
 	//------------------------------------
 	// package scope global constants
 	//------------------------------------
-	VERSION: "5.4.8",
 	reMonsterScanResultsTSV: /^(\d+?)\t(.*?)\t(.*?)\t(.*?)\t(\d*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)$/gm,
 	reMonsterSkillsTSV: /^(\d+?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)$/gm,
-//	reSetInfoPaneParameters: /battle\.set_infopane_(?:spell|skill|item|effect)\('((?:[^'\\]|\\.)*)'\s*,\s*'(?:[^'\\]|\\.)*'\s*,\s*(.+)\)/,
 	monsterGaugeMaxWidth: 120,
 
 	// temporary localStorage keys (attach the prefix "HVStat" to avoid conflicts with other scripts)
@@ -4203,70 +4244,6 @@ function getReportShrineHtml() {
 	c += "</table>";
 	return c;
 }
-function initUI() {
-	var top = 4;
-	var left = document.querySelector("div.stuffbox").scrollWidth - 60 - 4;
-	var div = document.createElement("div");
-	div.id = "hvstat-open-button";
-	div.className = "ui-state-default ui-corner-all";
-	div.style.cssText = "position: absolute; top: " + top + "px; left: " + left + "px; cursor: pointer;";
-	div.innerHTML = '<span style="margin: 3px;" class="ui-icon ui-icon-wrench" title="Launch HV STAT UI"/>';
-	div.addEventListener("click", initMainMenu);
-	div.addEventListener("mouseover", function (event) {
-		this.className = this.className.replace(" ui-state-hover", "");
-		this.className += " ui-state-hover";
-	});
-	div.addEventListener("mouseout", function (event) {
-		this.className = this.className.replace(" ui-state-hover", "");
-	});
-	document.body.insertBefore(div, null);
-}
-
-function initMainMenu(event) {
-	event.currentTarget.removeEventListener("click", initMainMenu);
-	// load jQuery and jQuery UI
-	browser.extension.loadScript("scripts/", "jquery-1.8.3.min.js");
-	browser.extension.loadScript("scripts/", "jquery-ui-1.9.2.custom.min.js");
-
-	var b = "[STAT] HentaiVerse Statistics, Tracking, and Analysis Tool v." + hvStat.version;
-	var c = document.createElement("div");
-	$(c).addClass("_mainMenu").css("text-align", "left");
-	$(c).html(browser.extension.getResourceText("resources/", "main.html"));
-	$("body").append(c);
-	$(c).dialog({
-		autoOpen: false,
-		closeOnEscape: true,
-		draggable: false,
-		resizable: false,
-		height: 560,
-		width: 850,
-		modal: true,
-		position: ["center", "center"],
-		title: b
-	});
-	$("#hvstat-tabs").tabs();
-	loadOverviewObject();
-	loadStatsObject();
-	loadDropsObject();
-	loadRewardsObject();
-	loadShrineObject();
-	initOverviewPane();
-	initStatsPane();
-	initItemPane();
-	initRewardsPane();
-	initShrinePane();
-	initSettingsPane();
-	initMonsterStatsPane();
-	var mainButton = document.getElementById("hvstat-open-button");
-	mainButton.addEventListener("click", function () {
-		if ($(c).dialog("isOpen"))
-			$(c).dialog("close");
-		else
-			$(c).dialog("open");
-	});
-	_isMenuInitComplete = true;
-	$(c).dialog("open");
-}
 function initOverviewPane() {
 	$("#pane1").html(getReportOverviewHtml());
 	$("._resetOverview").click(function () {
@@ -6812,8 +6789,7 @@ HVStat.main2 = function () {
 
 	document.addEventListener("keydown", HVStat.documentKeydownEventHandler);
 
-	hvStat.setup.addUIStyle();
-	initUI();
+	hvStat.ui.setup();
 
 	if (_settings.adjustKeyEventHandling) {
 		document.onkeydown = hvStat.onkeydown;
