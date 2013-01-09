@@ -323,8 +323,47 @@ hvStat.setup = {
 	},
 };
 
+hvStat.keyboard = {};
+
+hvStat.keyboard.KeyCombination = function (spec) {
+	this.altKey = spec && spec.altKey || false;
+	this.ctrlKey = spec && spec.ctrlKey || false;
+	this.shiftKey = spec && spec.shiftKey || false;
+	this.keyCode = spec && spec.keyCode || 0;
+}
+hvStat.keyboard.KeyCombination.prototype = {
+	matches: function (obj) {
+		if (!obj) {
+			return false;
+		}
+		return this.altKey === obj.altKey
+			&& this.ctrlKey === obj.ctrlKey
+			&& this.shiftKey === obj.shiftKey
+			&& this.keyCode === obj.keyCode;
+	},
+	toString: function () {
+		var s = "";
+		if (this.altKey) {
+			s += "Alt+";
+		}
+		if (this.ctrlKey) {
+			s += "Ctrl+";
+		}
+		if (this.shiftKey) {
+			s += "Shift+";
+		}
+		s += String(this.keyCode);
+	},
+};
+
 hvStat.battle = {
 	setup: function () {
+		if (_settings.isShowSelfDuration) {
+			hvStat.battle.enhancement.effectDurationBadge.showForCharacter();
+		}
+		if (_settings.isShowPowerupBox) {
+			hvStat.battle.enhancement.powerupBox.show();
+		}
 		if (_settings.isShowHighlight) {
 			hvStat.battle.enhancement.log.setHighlightStyle();
 			hvStat.battle.enhancement.log.highlight();
@@ -332,7 +371,243 @@ hvStat.battle = {
 		if (_settings.isShowDivider) {
 			hvStat.battle.enhancement.log.showDivider();
 		}
+		if (_settings.isShowMonsterDuration) {
+			hvStat.battle.enhancement.effectDurationBadge.showForMonster();
+		}
 	},
+};
+
+hvStat.battle.command = {
+	commandMap: {
+		_value: null,
+		get value() {
+			if (!this._value) {
+				this._value = {
+					"Attack": new hvStat.battle.command.Command({ elementId: "ckey_attack", name: "Attack" }),
+					"Magic":  new hvStat.battle.command.Command({ elementId: "ckey_magic",  name: "Magic",  menuElementIds: ["togpane_magico", "togpane_magict"] }),
+					"Spirit": new hvStat.battle.command.Command({ elementId: "ckey_spirit", name: "Spirit" }),
+					"Skills": new hvStat.battle.command.Command({ elementId: "ckey_skills", name: "Skills", menuElementIds: ["togpane_skill"] }),
+					"Items":  new hvStat.battle.command.Command({ elementId: "ckey_items",  name: "Items",  menuElementIds: ["togpane_item"] }),
+					"Defend": new hvStat.battle.command.Command({ elementId: "ckey_defend", name: "Defend" }),
+					"Focus":  new hvStat.battle.command.Command({ elementId: "ckey_focus",  name: "Focus" })
+				};
+			}
+			return this._value;
+		},
+	},
+	subMenuItemMap: {
+		_value: null,
+		get value() {
+			if (!this._value) {
+				this._value = {
+					"PowerupGem": hvStat.battle.command.getSubMenuItemById("ikey_p"),
+					"Scan": hvStat.battle.command.getSubMenuItemByName("Scan"),
+					"Skill1": hvStat.battle.command.getSubMenuItemById("110001")
+						|| hvStat.battle.command.getSubMenuItemById("120001")
+						|| hvStat.battle.command.getSubMenuItemById("130001")
+						|| hvStat.battle.command.getSubMenuItemById("140001")
+						|| hvStat.battle.command.getSubMenuItemById("150001"),
+					"Skill2": hvStat.battle.command.getSubMenuItemById("110002")
+						|| hvStat.battle.command.getSubMenuItemById("120002")
+						|| hvStat.battle.command.getSubMenuItemById("130002")
+						|| hvStat.battle.command.getSubMenuItemById("140002")
+						|| hvStat.battle.command.getSubMenuItemById("150002"),
+					"Skill3": hvStat.battle.command.getSubMenuItemById("110003")
+						|| hvStat.battle.command.getSubMenuItemById("120003")
+						|| hvStat.battle.command.getSubMenuItemById("130003")
+						|| hvStat.battle.command.getSubMenuItemById("140003")
+						|| hvStat.battle.command.getSubMenuItemById("150003"),
+					"OFC": hvStat.battle.command.getSubMenuItemByName("Orbital Friendship Cannon")
+				};
+			}
+			if (this._value["Scan"]) {
+				this._value["Scan"].bindKeys([
+					new hvStat.keyboard.KeyCombination({ keyCode: 46 }),	// Delete
+					new hvStat.keyboard.KeyCombination({ keyCode: 110 })	// Numpad . Del
+				]);
+			}
+			if (this._value["Skill1"]) {
+				this._value["Skill1"].bindKeys([
+					new hvStat.keyboard.KeyCombination({ keyCode: 107 }),	// Numpad +
+					new hvStat.keyboard.KeyCombination({ keyCode: 187 })	// = +
+				]);
+			}
+			if (this._value["OFC"]) {
+				this._value["OFC"].bindKeys([
+					new hvStat.keyboard.KeyCombination({ keyCode: 109 }),	// Numpad -
+					new hvStat.keyboard.KeyCombination({ keyCode: 189 })	// - _
+				]);
+			}
+			return this._value;
+		},
+	},
+	getSubMenuItemById: function (subMenuItemId) {
+		var key, menus, i, items, j;
+		var commandMap = hvStat.battle.command.commandMap.value;
+		for (key in commandMap) {
+			menus = commandMap[key].menus;
+			for (i = 0; i < menus.length; i++) {
+				items = menus[i].items;
+				for (j = 0; j < items.length; j++) {
+					if (items[j].id === subMenuItemId) {
+						return items[j];
+					}
+				}
+			}
+		}
+		return null;
+	},
+	getSubMenuItemByName: function (subMenuItemName) {
+		var key, menus, i, items, j;
+		var commandMap = hvStat.battle.command.commandMap.value;
+		for (key in commandMap) {
+			menus = commandMap[key].menus;
+			for (i = 0; i < menus.length; i++) {
+				items = menus[i].items;
+				for (j = 0; j < items.length; j++) {
+					if (items[j].name === subMenuItemName) {
+						return items[j];
+					}
+				}
+			}
+		}
+		return null;
+	},
+	getSubMenuItemsByBoundKey: function (keyCombination) {
+		var foundItems = [];
+		var key, menus, i, items, j, boundKeys, k;
+		var commandMap = hvStat.battle.command.commandMap.value;
+		for (key in commandMap) {
+			menus = commandMap[key].menus;
+			for (i = 0; i < menus.length; i++) {
+				items = menus[i].items;
+				for (j = 0; j < items.length; j++) {
+					boundKeys = items[j].boundKeys;
+					for (k = 0; k < boundKeys.length; k++) {
+						if (boundKeys[k].matches(keyCombination)) {
+							foundItems.push(items[j]);
+						}
+					}
+				}
+			}
+		}
+		return foundItems;
+	},
+};
+
+hvStat.battle.command.SubMenuItem = function (spec) {
+	this.parent = spec && spec.parent || null;
+	this.element = spec && spec.element || null;
+	var onmouseover = String(this.element.getAttribute("onmouseover"));
+	var result = HVStat.reSetInfoPaneParameters.exec(onmouseover);
+	if (!result || result.length < 3) {
+		return null;
+	}
+	this.name = result[1];
+	this.id = this.element && this.element.id || "";
+	this.boundKeys = [];
+	this.commandTarget = null;
+
+	var onclick = String(this.element.getAttribute("onclick"));
+	if (onclick.indexOf("friendly") >= 0) {
+		this.commandTarget = "self";
+	} else if (onclick.indexOf("hostile") >= 0) {
+		this.commandTarget = "enemy";
+	}
+};
+hvStat.battle.command.SubMenuItem.prototype = {
+	get available() {
+		return !this.element.style.cssText.match(/opacity\s*:\s*0/);
+	},
+	select: function () {
+		if (this.available) {
+			if (!this.parent.opened) {
+				this.parent.open();
+			}
+			this.element.onclick();	// select
+			if (this.commandTarget === "self") {
+				this.element.onclick();	// commit
+			}
+		}
+	},
+	bindKeys: function (keyConbinations) {
+		this.boundKeys = keyConbinations;
+	},
+	unbindKeys: function () {
+		this.boundKeys = [];
+	}
+}
+
+hvStat.battle.command.SubMenu = function (spec) {
+	this.parent = spec && spec.parent || null;
+	this.elementId = spec && spec.elementId || null;
+	this.element = this.elementId && document.getElementById(this.elementId) || null;
+
+	this.items = [];
+	var itemElements = this.element.querySelectorAll("div.btsd, #ikey_p, img.btii");
+	var i;
+	for (i = 0; i < itemElements.length; i++) {
+		this.items[i] = new hvStat.battle.command.SubMenuItem({ parent: this, element: itemElements[i] });
+	}
+};
+hvStat.battle.command.SubMenu.prototype = {
+	get opened() {
+		return !this.element.style.cssText.match(/display\s*:\s*none/);
+	},
+	open: function () {
+		while (!this.opened) {
+			this.parent.element.onclick();
+		}
+	},
+	close: function () {
+		if (this.opened) {
+			this.parent.element.onclick();
+		}
+	}
+};
+
+hvStat.battle.command.Command = function (spec) {
+	this.elementId = spec && spec.elementId || null;
+	this.name = spec && spec.name || "";
+	this.menuElementIds = spec && spec.menuElementIds || [];
+	this.element = this.elementId && document.getElementById(this.elementId) || null;
+	this.menus = [];
+
+	// build menus
+	var i;
+	for (i = 0; i < this.menuElementIds.length; i++) {
+		this.menus[i] = new hvStat.battle.command.SubMenu({ parent: this, elementId: this.menuElementIds[i] });
+	}
+};
+hvStat.battle.command.Command.prototype = {
+	get hasMenu() {
+		return this.menus.length > 0;
+	},
+	get menuOpened() {
+		for (var i = 0; i < this.menus.length; i++) {
+			if (this.menus[i].opened) {
+				return true;
+			}
+		}
+		return false;
+	},
+	get selectedMenu() {
+		for (var i = 0; i < this.menus.length; i++) {
+			if (this.menus[i].opened) {
+				return this.menus[i];
+			}
+		}
+		return null;
+	},
+	select: function (menuElementId) {
+		this.element.onclick();
+	},
+	close: function () {
+		if (this.menuOpened) {
+			this.select();
+		}
+	},
+	toString: function () { return this.name; }
 };
 
 hvStat.battle.enhancement = {};
@@ -362,7 +637,7 @@ hvStat.battle.enhancement.effectDurationBadge = {
 		return badgeBase;
 	},
 	showForCharacter: function () {
-		var effectIcons = document.querySelectorAll('#battleform div.btps img[onmouseover^="battle.set_infopane_effect"]');
+		var effectIcons = hv.battle.elementCache.characterEffectIcons;
 		for (var i = 0; i < effectIcons.length; i++) {
 			var badge = hvStat.battle.enhancement.effectDurationBadge.create(effectIcons[i]);
 			if (badge) {
@@ -371,7 +646,7 @@ hvStat.battle.enhancement.effectDurationBadge = {
 		}
 	},
 	showForMonster: function () {
-		for (var i = 0; i < HVStat.numberOfMonsters; i++) {
+		for (var i = 0; i < hvStat.battle.work.monstersLength; i++) {
 			var baseElement = document.getElementById(HVStat.Monster.getDomElementId(i));
 			var effectIcons = baseElement.querySelectorAll('img[onmouseover^="battle.set_infopane_effect"]');
 			for (var j = 0; j < effectIcons.length; j++) {
@@ -382,6 +657,39 @@ hvStat.battle.enhancement.effectDurationBadge = {
 			}
 		}
 	}
+};
+
+hvStat.battle.enhancement.powerupBox = {
+	// Adds a Powerup box to the Battle screen.
+	// Creates a shortcut to the powerup if one is available.
+	show: function () {
+		var battleMenu = document.getElementsByClassName("btp"),
+			powerBox = document.createElement("div");
+			powerup = document.getElementById("ikey_p");
+
+		powerBox.className = "hvstat-powerup-box";
+		if (!powerup) {
+			powerBox.className += " hvstat-powerup-box-none";
+			powerBox.textContent = "P";
+		} else {
+			var powerInfo = powerup.getAttribute("onmouseover");
+			powerBox.setAttribute("onmouseover", powerInfo);
+			powerBox.setAttribute("onmouseout", powerup.getAttribute("onmouseout"));
+			powerBox.addEventListener("click", function (event) {
+				hvStat.battle.command.subMenuItemMap.value["PowerupGem"].select();
+			});
+			if (powerInfo.indexOf('Health') > -1) {
+				powerBox.className += " hvstat-powerup-box-health";
+			} else if (powerInfo.indexOf('Mana') > -1) {
+				powerBox.className += " hvstat-powerup-box-mana";
+			} else if (powerInfo.indexOf('Spirit') > -1) {
+				powerBox.className += " hvstat-powerup-box-spirit";
+			} else if (powerInfo.indexOf('Mystic') > -1) {
+				powerBox.className += " hvstat-powerup-box-channeling";
+			}
+		}
+		battleMenu[0].appendChild(powerBox);
+	},
 };
 
 hvStat.battle.enhancement.log = {
@@ -420,6 +728,8 @@ hvStat.battle.enhancement.log = {
 		}
 	},
 };
+
+hvStat.battle.work = {};
 
 var HVStat = {
 	//------------------------------------
@@ -470,12 +780,10 @@ var HVStat = {
 	nRowsMonsterSkillsTSV: 0,
 
 	// battle states
-	numberOfMonsters: 0,
 	monsters: [],	// instances of HVStat.Monster
 	alertQueue: [],
 
 	// keyboard enhancement
-	battleCommandMap: null,
 	selectedSkillIndex: -1	// -1: not selected, 0-2: selected
 };
 
@@ -2593,264 +2901,6 @@ HVStat.migration.deleteOldDatabase = function () {
 };
 
 //------------------------------------
-// battle command wrapper
-//------------------------------------
-
-HVStat.KeyCombination = function (spec) {
-	this.altKey = spec && spec.altKey || false;
-	this.ctrlKey = spec && spec.ctrlKey || false;
-	this.shiftKey = spec && spec.shiftKey || false;
-	this.keyCode = spec && spec.keyCode || 0;
-}
-
-HVStat.KeyCombination.prototype.equals = function (obj) {
-	if (!obj) {
-		return false;
-	}
-	return this.altKey === obj.altKey
-		&& this.ctrlKey === obj.ctrlKey
-		&& this.shiftKey === obj.shiftKey
-		&& this.keyCode === obj.keyCode;
-};
-
-HVStat.KeyCombination.prototype.toString = function () {
-	var s = "";
-	if (this.altKey) {
-		s += "ALT+";
-	}
-	if (this.ctrlKey) {
-		s += "CTRL+";
-	}
-	if (this.shiftKey) {
-		s += "SHIFT+";
-	}
-	s += String(this.keyCode);
-};
-
-HVStat.BattleCommandMenuItem = function (spec) {
-	this.parent = spec && spec.parent || null;
-	this.element = spec && spec.element || null;
-	var onmouseover = this.element.getAttribute("onmouseover").toString();
-	var result = HVStat.reSetInfoPaneParameters.exec(onmouseover);
-	if (!result || result.length < 3) {
-		return null;
-	}
-	this.name = result[1];
-	this.id = this.element && this.element.id || "";
-	this.boundKeys = [];
-	this.commandTarget = null;
-
-	var onclick = this.element.getAttribute("onclick").toString();
-	if (onclick.indexOf("friendly") >= 0) {
-		this.commandTarget = "self";
-	} else if (onclick.indexOf("hostile") >= 0) {
-		this.commandTarget = "enemy";
-	}
-};
-
-HVStat.BattleCommandMenuItem.prototype = {
-	get available() {
-		return !this.element.style.cssText.match(/opacity\s*:\s*0/);
-	},
-	select: function () {
-		if (this.available) {
-			if (!this.parent.opened) {
-				this.parent.open();
-			}
-			this.element.onclick();	// select
-			if (this.commandTarget === "self") {
-				this.element.onclick();	// commit
-			}
-		}
-	},
-	bindKeys: function (keyConbinations) {
-		this.boundKeys = keyConbinations;
-	},
-	unbindKeys: function () {
-		this.boundKeys = [];
-	}
-}
-
-HVStat.BattleCommandMenu = function (spec) {
-	this.parent = spec && spec.parent || null;
-	this.elementId = spec && spec.elementId || null;
-	this.element = this.elementId && document.getElementById(this.elementId) || null;
-
-	this.items = [];
-	var itemElements = this.element.querySelectorAll("div.btsd, #ikey_p, img.btii");
-	var i;
-	for (i = 0; i < itemElements.length; i++) {
-		this.items[i] = new HVStat.BattleCommandMenuItem({ parent: this, element: itemElements[i] });
-	}
-};
-
-HVStat.BattleCommandMenu.prototype = {
-	get opened() {
-		return !this.element.style.cssText.match(/display\s*:\s*none/);
-	},
-	open: function () {
-		while (!this.opened) {
-			this.parent.element.onclick();
-		}
-	},
-	close: function () {
-		if (this.opened) {
-			this.parent.element.onclick();
-		}
-	}
-};
-
-HVStat.BattleCommand = function (spec) {
-	this.elementId = spec && spec.elementId || null;
-	this.name = spec && spec.name || "";
-	this.menuElementIds = spec && spec.menuElementIds || [];
-	this.element = this.elementId && document.getElementById(this.elementId) || null;
-	this.menus = [];
-
-	// build menus
-	var i;
-	for (i = 0; i < this.menuElementIds.length; i++) {
-		this.menus[i] = new HVStat.BattleCommandMenu({ parent: this, elementId: this.menuElementIds[i] });
-	}
-};
-
-HVStat.BattleCommand.prototype = {
-	get hasMenu() { return this.menus.length > 0; },
-	get menuOpened() {
-		var i;
-		for (i = 0; i < this.menus.length; i++) {
-			if (this.menus[i].opened) {
-				return true;
-			}
-		}
-		return false;
-	},
-	get selectedMenu() {
-		var i;
-		for (i = 0; i < this.menus.length; i++) {
-			if (this.menus[i].opened) {
-				return this.menus[i];
-			}
-		}
-		return null;
-	},
-	select: function (menuElementId) {
-		this.element.onclick();
-	},
-	close: function () {
-		if (this.menuOpened) {
-			this.select();
-		}
-	},
-	toString: function () { return this.name; }
-};
-
-HVStat.buildBattleCommandMap = function () {
-	HVStat.battleCommandMap = {
-		"Attack": new HVStat.BattleCommand({ elementId: "ckey_attack", name: "Attack" }),
-		"Magic": new HVStat.BattleCommand({ elementId: "ckey_magic", name: "Magic", menuElementIds: ["togpane_magico", "togpane_magict"] }),
-		"Spirit": new HVStat.BattleCommand({ elementId: "ckey_spirit", name: "Spirit" }),
-		"Skills": new HVStat.BattleCommand({ elementId: "ckey_skills", name: "Skills", menuElementIds: ["togpane_skill"] }),
-		"Items": new HVStat.BattleCommand({ elementId: "ckey_items", name: "Items", menuElementIds: ["togpane_item"] }),
-		"Defend": new HVStat.BattleCommand({ elementId: "ckey_defend", name: "Defend" }),
-		"Focus": new HVStat.BattleCommand({ elementId: "ckey_focus", name: "Focus" })
-	};
-};
-
-HVStat.getBattleCommandMenuItemById = function (commandMenuItemId) {
-	var key, menus, i, items, j;
-	for (key in HVStat.battleCommandMap) {
-		menus = HVStat.battleCommandMap[key].menus;
-		for (i = 0; i < menus.length; i++) {
-			items = menus[i].items;
-			for (j = 0; j < items.length; j++) {
-				if (items[j].id === commandMenuItemId) {
-					return items[j];
-				}
-			}
-		}
-	}
-	return null;
-};
-
-HVStat.getBattleCommandMenuItemByName = function (commandMenuItemName) {
-	var key, menus, i, items, j;
-	for (key in HVStat.battleCommandMap) {
-		menus = HVStat.battleCommandMap[key].menus;
-		for (i = 0; i < menus.length; i++) {
-			items = menus[i].items;
-			for (j = 0; j < items.length; j++) {
-				if (items[j].name === commandMenuItemName) {
-					return items[j];
-				}
-			}
-		}
-	}
-	return null;
-};
-
-HVStat.getBattleCommandMenuItemsByBoundKey = function (keyCombination) {
-	var foundItems = [];
-	var key, menus, i, items, j, boundKeys, k;
-	for (key in HVStat.battleCommandMap) {
-		menus = HVStat.battleCommandMap[key].menus;
-		for (i = 0; i < menus.length; i++) {
-			items = menus[i].items;
-			for (j = 0; j < items.length; j++) {
-				boundKeys = items[j].boundKeys;
-				for (k = 0; k < boundKeys.length; k++) {
-					if (boundKeys[k].equals(keyCombination)) {
-						foundItems.push(items[j]);
-					}
-				}
-			}
-		}
-	}
-	return foundItems;
-};
-
-HVStat.buildBattleCommandMenuItemMap = function () {
-	HVStat.battleCommandMenuItemMap = {
-		"PowerupGem": HVStat.getBattleCommandMenuItemById("ikey_p"),
-		"Scan": HVStat.getBattleCommandMenuItemByName("Scan"),
-		"Skill1": HVStat.getBattleCommandMenuItemById("110001")
-			|| HVStat.getBattleCommandMenuItemById("120001")
-			|| HVStat.getBattleCommandMenuItemById("130001")
-			|| HVStat.getBattleCommandMenuItemById("140001")
-			|| HVStat.getBattleCommandMenuItemById("150001"),
-		"Skill2": HVStat.getBattleCommandMenuItemById("110002")
-			|| HVStat.getBattleCommandMenuItemById("120002")
-			|| HVStat.getBattleCommandMenuItemById("130002")
-			|| HVStat.getBattleCommandMenuItemById("140002")
-			|| HVStat.getBattleCommandMenuItemById("150002"),
-		"Skill3": HVStat.getBattleCommandMenuItemById("110003")
-			|| HVStat.getBattleCommandMenuItemById("120003")
-			|| HVStat.getBattleCommandMenuItemById("130003")
-			|| HVStat.getBattleCommandMenuItemById("140003")
-			|| HVStat.getBattleCommandMenuItemById("150003"),
-		"OFC": HVStat.getBattleCommandMenuItemByName("Orbital Friendship Cannon")
-	};
-	if (HVStat.battleCommandMenuItemMap["Scan"]) {
-		HVStat.battleCommandMenuItemMap["Scan"].bindKeys([
-			new HVStat.KeyCombination({ keyCode: 46 }),		// Delete
-			new HVStat.KeyCombination({ keyCode: 110 })		// Numpad . Del
-		]);
-	}
-	if (HVStat.battleCommandMenuItemMap["Skill1"]) {
-		HVStat.battleCommandMenuItemMap["Skill1"].bindKeys([
-			new HVStat.KeyCombination({ keyCode: 107 }),	// Numpad +
-			new HVStat.KeyCombination({ keyCode: 187 })		// = +
-		]);
-	}
-	if (HVStat.battleCommandMenuItemMap["OFC"]) {
-		HVStat.battleCommandMenuItemMap["OFC"].bindKeys([
-			new HVStat.KeyCombination({ keyCode: 109 }),	// Numpad -
-			new HVStat.KeyCombination({ keyCode: 189 })		// - _
-		]);
-	}
-};
-
-//------------------------------------
 // legacy codes
 //------------------------------------
 
@@ -2928,7 +2978,7 @@ function displayPowerupBox() {
 		powerBox.setAttribute("onmouseover", powerInfo);
 		powerBox.setAttribute("onmouseout", powerup.getAttribute("onmouseout"));
 		powerBox.addEventListener("click", function (event) {
-			HVStat.battleCommandMenuItemMap["PowerupGem"].select();
+			hvStat.battle.command.subMenuItemMap.value["PowerupGem"].select();
 		});
 		if (powerInfo.indexOf('Health') > -1) {
 			powerBox.className += " hvstat-powerup-box-health";
@@ -2943,18 +2993,18 @@ function displayPowerupBox() {
 	battleMenu[0].appendChild(powerBox);
 }
 function showMonsterHealth() {
-	for (var i = 0; i < HVStat.numberOfMonsters; i++) {
+	for (var i = 0; i < hvStat.battle.work.monstersLength; i++) {
 		HVStat.monsters[i].renderHealth();
 	}
 }
 function showMonsterStats() {
-	for (var i = 0; i < HVStat.numberOfMonsters; i++) {
+	for (var i = 0; i < hvStat.battle.work.monstersLength; i++) {
 		HVStat.monsters[i].renderStats();
 	}
 }
 
 function showMonsterEffectsDuration() {
-	for (var i = 0; i < HVStat.numberOfMonsters; i++) {
+	for (var i = 0; i < hvStat.battle.work.monstersLength; i++) {
 		var baseElement = document.getElementById(HVStat.Monster.getDomElementId(i));
 		var effectIcons = baseElement.querySelectorAll('img[onmouseover^="battle.set_infopane_effect"]');
 		for (var j = 0; j < effectIcons.length; j++) {
@@ -3185,7 +3235,7 @@ function collectRoundInfo() {
 	var d = 0;
 	var b = false;
 	// create monster objects
-	for (var i = 0; i < HVStat.numberOfMonsters; i++) {
+	for (var i = 0; i < hvStat.battle.work.monstersLength; i++) {
 		HVStat.monsters.push(new HVStat.Monster(i));
 	}
 	loadRoundObject();
@@ -6143,19 +6193,19 @@ HVStat.documentKeydownEventHandler = function (event) {
 	}
 	var boundKeys, i, j;
 	if (hv.battle.active) {
-		var miScan = HVStat.battleCommandMenuItemMap["Scan"];
-		var miSkill1 = HVStat.battleCommandMenuItemMap["Skill1"];
-		var miSkill2 = HVStat.battleCommandMenuItemMap["Skill2"];
-		var miSkill3 = HVStat.battleCommandMenuItemMap["Skill3"];
-		var miOFC = HVStat.battleCommandMenuItemMap["OFC"];
+		var miScan = hvStat.battle.command.subMenuItemMap.value["Scan"];
+		var miSkill1 = hvStat.battle.command.subMenuItemMap.value["Skill1"];
+		var miSkill2 = hvStat.battle.command.subMenuItemMap.value["Skill2"];
+		var miSkill3 = hvStat.battle.command.subMenuItemMap.value["Skill3"];
+		var miOFC = hvStat.battle.command.subMenuItemMap.value["OFC"];
 		var miSkills = [miSkill1, miSkill2, miSkill3];
 
 		if (_settings.isEnableScanHotkey && miScan) {
 			boundKeys = miScan.boundKeys;
 			for (i = 0; i < boundKeys.length; i++) {
-				if (boundKeys[i].equals(event)) {
-					if (HVStat.battleCommandMap["Skills"].menuOpened) {
-						HVStat.battleCommandMap["Skills"].close();
+				if (boundKeys[i].matches(event)) {
+					if (hvStat.battle.command.commandMap.value["Skills"].menuOpened) {
+						hvStat.battle.command.commandMap.value["Skills"].close();
 					} else {
 						miScan.select();
 					}
@@ -6171,9 +6221,9 @@ HVStat.documentKeydownEventHandler = function (event) {
 			}
 			boundKeys = miSkill1.boundKeys;
 			for (i = 0; i < boundKeys.length; i++) {
-				if (boundKeys[i].equals(event)) {
+				if (boundKeys[i].matches(event)) {
 					if (HVStat.selectedSkillIndex >= avilableSkillMaxIndex) {
-						HVStat.battleCommandMap["Skills"].close();
+						hvStat.battle.command.commandMap.value["Skills"].close();
 						HVStat.selectedSkillIndex = -1;
 					} else {
 						for (j = HVStat.selectedSkillIndex + 1; j <= avilableSkillMaxIndex; j++) {
@@ -6190,9 +6240,9 @@ HVStat.documentKeydownEventHandler = function (event) {
 		if (_settings.enableOFCHotkey && miOFC) {
 			boundKeys = miOFC.boundKeys;
 			for (i = 0; i < boundKeys.length; i++) {
-				if (boundKeys[i].equals(event)) {
-					if (HVStat.battleCommandMap["Skills"].menuOpened) {
-						HVStat.battleCommandMap["Skills"].close();
+				if (boundKeys[i].matches(event)) {
+					if (hvStat.battle.command.commandMap.value["Skills"].menuOpened) {
+						hvStat.battle.command.commandMap.value["Skills"].close();
 					} else {
 						miOFC.select();
 					}
@@ -6205,7 +6255,7 @@ HVStat.documentKeydownEventHandler = function (event) {
 HVStat.scanButtonClickHandler = function (event) {
 	var monsterId = this.id.slice(11);
 	var monsterElement = document.getElementById(monsterId);
-	HVStat.battleCommandMenuItemMap["Scan"].select();
+	hvStat.battle.command.subMenuItemMap.value["Scan"].select();
 	monsterElement.onclick();
 }
 
@@ -6217,14 +6267,14 @@ HVStat.skillButtonClickHandler = function (event) {
 	var skillNumber = result[1];
 	var monsterId = result[2];
 	var monsterElement = document.getElementById(monsterId);
-	HVStat.battleCommandMenuItemMap["Skill" + skillNumber].select();
+	hvStat.battle.command.subMenuItemMap.value["Skill" + skillNumber].select();
 	monsterElement.onclick();
 }
 
 HVStat.showScanAndSkillButtons = function () {
-	var skill1 = HVStat.battleCommandMenuItemMap["Skill1"];
-	var skill2 = HVStat.battleCommandMenuItemMap["Skill2"];
-	var skill3 = HVStat.battleCommandMenuItemMap["Skill3"];
+	var skill1 = hvStat.battle.command.subMenuItemMap.value["Skill1"];
+	var skill2 = hvStat.battle.command.subMenuItemMap.value["Skill2"];
+	var skill3 = hvStat.battle.command.subMenuItemMap.value["Skill3"];
 	var skills = [];
 	if (skill1) {
 		skills.push(skill1);
@@ -6260,7 +6310,7 @@ HVStat.showScanAndSkillButtons = function () {
 
 	var mainPane = document.getElementById("mainpane");
 	var i, j;
-	for (j = 0; j < HVStat.numberOfMonsters; j++) {
+	for (j = 0; j < hvStat.battle.work.monstersLength; j++) {
 		var monsterElementId = HVStat.Monster.getDomElementId(j);
 		var u = document.getElementById(monsterElementId);
 		var e = u.children[2].children[0];
@@ -6652,22 +6702,17 @@ HVStat.main2 = function () {
 	hvStat.setup.addBasicStyle();
 	hv = new HV();
 	console.debug(hv);
+	console.debug(hvStat);
 	if (_settings.isChangePageTitle && document.title === "The HentaiVerse") {
 		document.title = _settings.customPageTitle;
 	}
 	if (hv.battle.active) {
 		hvStat.battle.setup();
-		HVStat.numberOfMonsters = document.querySelectorAll("#monsterpane > div").length;
+		hvStat.battle.work.monstersLength = hv.battle.elementCache.monsters.length;
 
-		HVStat.buildBattleCommandMap();
-		HVStat.buildBattleCommandMenuItemMap();
-
-		if (_settings.isShowSelfDuration) {
-			showSelfEffectsDuration();
-		}
-		if (_settings.isShowPowerupBox) {
-			displayPowerupBox();
-		}
+// 		if (_settings.isShowPowerupBox) {
+// 			displayPowerupBox();
+// 		}
 		if (_settings.isHighlightQC) {
 			HVStat.highlightQuickcast();
 		}
@@ -6676,9 +6721,6 @@ HVStat.main2 = function () {
 		}
 		if (_settings.isShowMonsterNumber) {
 			showMonsterNumber();
-		}
-		if (_settings.isShowMonsterDuration) {
-			showMonsterEffectsDuration();
 		}
 
 		collectRoundInfo();
