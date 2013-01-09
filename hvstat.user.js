@@ -273,7 +273,9 @@ var HV = (function () {
 //------------------------------------
 // HV STAT features
 //------------------------------------
-var hvStat = {};
+var hvStat = {
+	version: "5.4.8",
+};
 
 hvStat.util = {
 	percent: function (value, digits) {
@@ -357,6 +359,9 @@ hvStat.keyboard.KeyCombination.prototype = {
 };
 
 hvStat.battle = {
+	constant: {
+		rInfoPaneParameters: /battle\.set_infopane_(?:spell|skill|item|effect)\('((?:[^'\\]|\\.)*)'\s*,\s*'(?:[^'\\]|\\.)*'\s*,\s*(.+)\)/,
+	},
 	setup: function () {
 		if (_settings.isShowSelfDuration) {
 			hvStat.battle.enhancement.effectDurationBadge.showForCharacter();
@@ -499,7 +504,7 @@ hvStat.battle.command.SubMenuItem = function (spec) {
 	this.parent = spec && spec.parent || null;
 	this.element = spec && spec.element || null;
 	var onmouseover = String(this.element.getAttribute("onmouseover"));
-	var result = HVStat.reSetInfoPaneParameters.exec(onmouseover);
+	var result = hv.battle.constant.rInfoPaneParameters.exec(onmouseover);
 	if (!result || result.length < 3) {
 		return null;
 	}
@@ -614,7 +619,7 @@ hvStat.battle.enhancement = {};
 
 hvStat.battle.enhancement.effectDurationBadge = {
 	create: function (effectIcon) {
-		var result = HVStat.reSetInfoPaneParameters.exec(effectIcon.getAttribute("onmouseover"));
+		var result = hv.battle.constant.rInfoPaneParameters.exec(effectIcon.getAttribute("onmouseover"));
 		if (!result || result.length < 3) {
 			return;
 		}
@@ -646,7 +651,7 @@ hvStat.battle.enhancement.effectDurationBadge = {
 		}
 	},
 	showForMonster: function () {
-		for (var i = 0; i < hvStat.battle.work.monstersLength; i++) {
+		for (var i = 0; i < hv.battle.elementCache.monsters.length; i++) {
 			var baseElement = document.getElementById(HVStat.Monster.getDomElementId(i));
 			var effectIcons = baseElement.querySelectorAll('img[onmouseover^="battle.set_infopane_effect"]');
 			for (var j = 0; j < effectIcons.length; j++) {
@@ -728,8 +733,6 @@ hvStat.battle.enhancement.log = {
 		}
 	},
 };
-
-hvStat.battle.work = {};
 
 var HVStat = {
 	//------------------------------------
@@ -2959,95 +2962,16 @@ function showRoundCounter() {
 	}
 	doc.getElementById('battleform').children[0].appendChild(div);
 }
-/* =====
- displayPowerupBox
- Adds a Powerup box to the Battle screen.
- Creates a shortcut to the powerup if one is available.
-===== */
-function displayPowerupBox() {
-	var battleMenu = document.getElementsByClassName("btp"),
-		powerBox = document.createElement("div");
-		powerup = document.getElementById("ikey_p");
 
-	powerBox.className = "hvstat-powerup-box";
-	if (!powerup) {
-		powerBox.className += " hvstat-powerup-box-none";
-		powerBox.textContent = "P";
-	} else {
-		var powerInfo = powerup.getAttribute("onmouseover");
-		powerBox.setAttribute("onmouseover", powerInfo);
-		powerBox.setAttribute("onmouseout", powerup.getAttribute("onmouseout"));
-		powerBox.addEventListener("click", function (event) {
-			hvStat.battle.command.subMenuItemMap.value["PowerupGem"].select();
-		});
-		if (powerInfo.indexOf('Health') > -1) {
-			powerBox.className += " hvstat-powerup-box-health";
-		} else if (powerInfo.indexOf('Mana') > -1) {
-			powerBox.className += " hvstat-powerup-box-mana";
-		} else if (powerInfo.indexOf('Spirit') > -1) {
-			powerBox.className += " hvstat-powerup-box-spirit";
-		} else if (powerInfo.indexOf('Mystic') > -1) {
-			powerBox.className += " hvstat-powerup-box-channeling";
-		}
-	}
-	battleMenu[0].appendChild(powerBox);
-}
 function showMonsterHealth() {
-	for (var i = 0; i < hvStat.battle.work.monstersLength; i++) {
+	for (var i = 0; i < hv.battle.elementCache.monsters.length; i++) {
 		HVStat.monsters[i].renderHealth();
 	}
 }
 function showMonsterStats() {
-	for (var i = 0; i < hvStat.battle.work.monstersLength; i++) {
+	for (var i = 0; i < hv.battle.elementCache.monsters.length; i++) {
 		HVStat.monsters[i].renderStats();
 	}
-}
-
-function showMonsterEffectsDuration() {
-	for (var i = 0; i < hvStat.battle.work.monstersLength; i++) {
-		var baseElement = document.getElementById(HVStat.Monster.getDomElementId(i));
-		var effectIcons = baseElement.querySelectorAll('img[onmouseover^="battle.set_infopane_effect"]');
-		for (var j = 0; j < effectIcons.length; j++) {
-			var badge = createDurationBadge(effectIcons[j]);
-			if (badge) {
-				badge.className += " hvstat-duration-badge-monster";
-			}
-		}
-	}
-}
-
-function showSelfEffectsDuration() {
-	var effectIcons = document.querySelectorAll('#battleform div.btps img[onmouseover^="battle.set_infopane_effect"]');
-	for (var i = 0; i < effectIcons.length; i++) {
-		var badge = createDurationBadge(effectIcons[i]);
-		if (badge) {
-			badge.className += " hvstat-duration-badge-player";
-		}
-	}
-}
-
-function createDurationBadge(effectIcon) {
-	var result = HVStat.reSetInfoPaneParameters.exec(effectIcon.getAttribute("onmouseover"));
-	if (!result || result.length < 3) {
-		return;
-	}
-	var duration = parseFloat(result[2]);
-	if (isNaN(duration)) {
-		return;
-	}
-	var badgeBase = document.createElement("div");
-	badgeBase.className = "hvstat-duration-badge";
-	if (_settings.isSelfEffectsWarnColor) {
-		if (duration <= Number(_settings.SelfWarnRedRounds)) {
-			badgeBase.className += " hvstat-duration-badge-red-alert";
-		} else if (duration <= Number(_settings.SelfWarnOrangeRounds)) {
-			badgeBase.className += " hvstat-duration-badge-yellow-alert";
-		}
-	}
-	var badge = badgeBase.appendChild(document.createElement('div'));
-	badge.textContent = String(duration);
-	effectIcon.parentNode.insertBefore(badgeBase, effectIcon.nextSibling);
-	return badgeBase;
 }
 
 function showBattleEndStats() {
@@ -3235,7 +3159,7 @@ function collectRoundInfo() {
 	var d = 0;
 	var b = false;
 	// create monster objects
-	for (var i = 0; i < hvStat.battle.work.monstersLength; i++) {
+	for (var i = 0; i < hv.battle.elementCache.monsters.length; i++) {
 		HVStat.monsters.push(new HVStat.Monster(i));
 	}
 	loadRoundObject();
@@ -6310,7 +6234,7 @@ HVStat.showScanAndSkillButtons = function () {
 
 	var mainPane = document.getElementById("mainpane");
 	var i, j;
-	for (j = 0; j < hvStat.battle.work.monstersLength; j++) {
+	for (j = 0; j < hv.battle.elementCache.monsters.length; j++) {
 		var monsterElementId = HVStat.Monster.getDomElementId(j);
 		var u = document.getElementById(monsterElementId);
 		var e = u.children[2].children[0];
@@ -6361,8 +6285,8 @@ function registerEventHandlersForMonsterPopup() {
 		hv.elementCache.popup.style.width = "270px";
 		hv.elementCache.popup.style.height = "auto";
 		hv.elementCache.popup.innerHTML = html;
-		var popupTopOffset = hv.elementCache.monsterPane.offsetTop
-			+ index * ((hv.elementCache.monsterPane.scrollHeight - hv.elementCache.popup.scrollHeight) / 9);
+		var popupTopOffset = hv.battle.elementCache.monsterPane.offsetTop
+			+ index * ((hv.battle.elementCache.monsterPane.scrollHeight - hv.elementCache.popup.scrollHeight) / 9);
 		hv.elementCache.popup.style.top = popupTopOffset + "px";
 		hv.elementCache.popup.style.left = popupLeftOffset + "px";
 		hv.elementCache.popup.style.visibility = "visible";
@@ -6486,7 +6410,7 @@ function AlertEffectsSelf() {
 	var elements = document.querySelectorAll("#battleform div.btps > img");
 	Array.prototype.forEach.call(elements, function (element) {
 		var onmouseover = element.getAttribute("onmouseover").toString();
-		var result = HVStat.reSetInfoPaneParameters.exec(onmouseover);
+		var result = hv.battle.constant.rInfoPaneParameters.exec(onmouseover);
 		if (!result || result.length < 3) return;
 		var effectName = result[1];
 		var duration = result[2];
@@ -6509,7 +6433,7 @@ function AlertEffectsMonsters() {
 	var elements = document.querySelectorAll("#monsterpane div.btm6 > img");
 	Array.prototype.forEach.call(elements, function (element) {
 		var onmouseover = element.getAttribute("onmouseover").toString();
-		var result = HVStat.reSetInfoPaneParameters.exec(onmouseover);
+		var result = hv.battle.constant.rInfoPaneParameters.exec(onmouseover);
 		if (!result || result.length < 3) return;
 		var effectName = result[1];
 		var duration = result[2];
@@ -6708,11 +6632,7 @@ HVStat.main2 = function () {
 	}
 	if (hv.battle.active) {
 		hvStat.battle.setup();
-		hvStat.battle.work.monstersLength = hv.battle.elementCache.monsters.length;
 
-// 		if (_settings.isShowPowerupBox) {
-// 			displayPowerupBox();
-// 		}
 		if (_settings.isHighlightQC) {
 			HVStat.highlightQuickcast();
 		}
