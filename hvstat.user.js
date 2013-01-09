@@ -376,6 +376,9 @@ hvStat.battle = {
 		if (_settings.isShowDivider) {
 			hvStat.battle.enhancement.log.showDivider();
 		}
+ 		if (_settings.isShowMonsterNumber) {
+ 			hvStat.battle.enhancement.monsterLabel.replaceWithNumber();
+ 		}
 		if (_settings.isShowMonsterDuration) {
 			hvStat.battle.enhancement.effectDurationBadge.showForMonster();
 		}
@@ -504,7 +507,7 @@ hvStat.battle.command.SubMenuItem = function (spec) {
 	this.parent = spec && spec.parent || null;
 	this.element = spec && spec.element || null;
 	var onmouseover = String(this.element.getAttribute("onmouseover"));
-	var result = hv.battle.constant.rInfoPaneParameters.exec(onmouseover);
+	var result = hvStat.battle.constant.rInfoPaneParameters.exec(onmouseover);
 	if (!result || result.length < 3) {
 		return null;
 	}
@@ -619,7 +622,7 @@ hvStat.battle.enhancement = {};
 
 hvStat.battle.enhancement.effectDurationBadge = {
 	create: function (effectIcon) {
-		var result = hv.battle.constant.rInfoPaneParameters.exec(effectIcon.getAttribute("onmouseover"));
+		var result = hvStat.battle.constant.rInfoPaneParameters.exec(effectIcon.getAttribute("onmouseover"));
 		if (!result || result.length < 3) {
 			return;
 		}
@@ -734,6 +737,63 @@ hvStat.battle.enhancement.log = {
 	},
 };
 
+hvStat.battle.enhancement.monsterLabel = {
+	replaceWithNumber: function () {
+		var targets = document.querySelectorAll("img.btmi");
+		for (var i = 0; i < targets.length; i++) {
+			var target = targets[i];
+			target.className += " hvstat-monster-number";
+			var parentNode = target.parentNode;
+			var div = document.createElement("div");
+			div.textContent = "MON";
+			parentNode.appendChild(div);
+			var div = document.createElement("div");
+			div.textContent = String((i + 1) % 10);
+			parentNode.appendChild(div);
+		}
+	},
+};
+
+hvStat.ui = {
+	setup: function () {
+		this.addStyle();
+		this.createIcon();
+	},
+	addStyle: function () {
+		var C = browser.extension.ImageResourceInfo;
+		var imageResouces = [
+			new C("images/", "ui-bg_flat_0_aaaaaa_40x100.png", "images/"),
+			new C("images/", "ui-bg_flat_55_fbf9ee_40x100.png", "images/"),
+			new C("images/", "ui-bg_flat_65_edebdf_40x100.png", "images/"),
+			new C("images/", "ui-bg_flat_75_e3e0d1_40x100.png", "images/"),
+			new C("images/", "ui-bg_flat_75_edebdf_40x100.png", "images/"),
+			new C("images/", "ui-bg_flat_95_fef1ec_40x100.png", "images/"),
+			new C("images/", "ui-icons_2e83ff_256x240.png", "images/"),
+			new C("images/", "ui-icons_5c0d11_256x240.png", "images/"),
+			new C("images/", "ui-icons_cd0a0a_256x240.png", "images/"),
+		];
+		browser.extension.addStyleFromResource("resources/", "jquery-ui-1.9.2.custom.min.css", imageResouces);
+	},
+	createIcon: function () {
+//		var top = 4;
+		var left = document.querySelector("div.stuffbox").scrollWidth - 60 - 4;
+		var div = document.createElement("div");
+		div.id = "hvstat-open-button";
+		div.className = "ui-state-default ui-corner-all";
+//		div.style.cssText = "position: absolute; top: " + top + "px; left: " + left + "px; cursor: pointer;";
+		div.innerHTML = '<span style="margin: 3px;" class="ui-icon ui-icon-wrench" title="Launch HV STAT UI"/>';
+		div.addEventListener("click", initMainMenu);
+		div.addEventListener("mouseover", function (event) {
+			this.className = this.className.replace(" ui-state-hover", "");
+			this.className += " ui-state-hover";
+		});
+		div.addEventListener("mouseout", function (event) {
+			this.className = this.className.replace(" ui-state-hover", "");
+		});
+		document.body.insertBefore(div, null);
+	},
+};
+
 var HVStat = {
 	//------------------------------------
 	// package scope global constants
@@ -741,7 +801,7 @@ var HVStat = {
 	VERSION: "5.4.8",
 	reMonsterScanResultsTSV: /^(\d+?)\t(.*?)\t(.*?)\t(.*?)\t(\d*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)$/gm,
 	reMonsterSkillsTSV: /^(\d+?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)$/gm,
-	reSetInfoPaneParameters: /battle\.set_infopane_(?:spell|skill|item|effect)\('((?:[^'\\]|\\.)*)'\s*,\s*'(?:[^'\\]|\\.)*'\s*,\s*(.+)\)/,
+//	reSetInfoPaneParameters: /battle\.set_infopane_(?:spell|skill|item|effect)\('((?:[^'\\]|\\.)*)'\s*,\s*'(?:[^'\\]|\\.)*'\s*,\s*(.+)\)/,
 	monsterGaugeMaxWidth: 120,
 
 	// temporary localStorage keys (attach the prefix "HVStat" to avoid conflicts with other scripts)
@@ -2979,20 +3039,20 @@ function showBattleEndStats() {
 	battleLog.innerHTML = "<div class='ui-state-default ui-corner-bottom' style='padding:10px;margin-bottom:10px;text-align:left'>" + getBattleEndStatsHtml() + "</div>" + battleLog.innerHTML;
 }
 
-function showMonsterNumber() {
-	var targets = document.querySelectorAll("img.btmi");
-	for (var i = 0; i < targets.length; i++) {
-		var target = targets[i];
-		target.className += " hvstat-monster-number";
-		var parentNode = target.parentNode;
-		var div = document.createElement("div");
-		div.textContent = "MON";
-		parentNode.appendChild(div);
-		var div = document.createElement("div");
-		div.textContent = String((i + 1) % 10);
-		parentNode.appendChild(div);
-	}
-}
+// function showMonsterNumber() {
+// 	var targets = document.querySelectorAll("img.btmi");
+// 	for (var i = 0; i < targets.length; i++) {
+// 		var target = targets[i];
+// 		target.className += " hvstat-monster-number";
+// 		var parentNode = target.parentNode;
+// 		var div = document.createElement("div");
+// 		div.textContent = "MON";
+// 		parentNode.appendChild(div);
+// 		var div = document.createElement("div");
+// 		div.textContent = String((i + 1) % 10);
+// 		parentNode.appendChild(div);
+// 	}
+// }
 
 HVStat.highlightQuickcast = function () {
 	var healthYellowLevel = Number(_settings.warnOrangeLevel);
@@ -4168,7 +4228,7 @@ function initMainMenu(event) {
 	browser.extension.loadScript("scripts/", "jquery-1.8.3.min.js");
 	browser.extension.loadScript("scripts/", "jquery-ui-1.9.2.custom.min.js");
 
-	var b = "[STAT] HentaiVerse Statistics, Tracking, and Analysis Tool v." + HVStat.VERSION;
+	var b = "[STAT] HentaiVerse Statistics, Tracking, and Analysis Tool v." + hvStat.version;
 	var c = document.createElement("div");
 	$(c).addClass("_mainMenu").css("text-align", "left");
 	$(c).html(browser.extension.getResourceText("resources/", "main.html"));
@@ -6410,7 +6470,7 @@ function AlertEffectsSelf() {
 	var elements = document.querySelectorAll("#battleform div.btps > img");
 	Array.prototype.forEach.call(elements, function (element) {
 		var onmouseover = element.getAttribute("onmouseover").toString();
-		var result = hv.battle.constant.rInfoPaneParameters.exec(onmouseover);
+		var result = hvStat.battle.constant.rInfoPaneParameters.exec(onmouseover);
 		if (!result || result.length < 3) return;
 		var effectName = result[1];
 		var duration = result[2];
@@ -6433,7 +6493,7 @@ function AlertEffectsMonsters() {
 	var elements = document.querySelectorAll("#monsterpane div.btm6 > img");
 	Array.prototype.forEach.call(elements, function (element) {
 		var onmouseover = element.getAttribute("onmouseover").toString();
-		var result = hv.battle.constant.rInfoPaneParameters.exec(onmouseover);
+		var result = hvStat.battle.constant.rInfoPaneParameters.exec(onmouseover);
 		if (!result || result.length < 3) return;
 		var effectName = result[1];
 		var duration = result[2];
@@ -6639,9 +6699,9 @@ HVStat.main2 = function () {
 		if (_settings.isShowScanButton || _settings.isShowSkillButton) {
 			HVStat.showScanAndSkillButtons();
 		}
-		if (_settings.isShowMonsterNumber) {
-			showMonsterNumber();
-		}
+// 		if (_settings.isShowMonsterNumber) {
+// 			showMonsterNumber();
+// 		}
 
 		collectRoundInfo();
 		if ((_round !== null) && (_round.currRound > 0) && _settings.isShowRoundCounter) {
