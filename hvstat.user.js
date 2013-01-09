@@ -275,6 +275,19 @@ var HV = (function () {
 //------------------------------------
 var hvStat = {
 	version: "5.4.8",
+	setup: function () {
+		this.addStyle();
+	},
+	addStyle: function () {
+		var C = browser.extension.ImageResourceInfo;
+		var imageResouces = [
+			new C("images/", "channeling.png", "images/"),
+			new C("images/", "healthpot.png", "images/"),
+			new C("images/", "manapot.png", "images/"),
+			new C("images/", "spiritpot.png", "images/"),
+		];
+		browser.extension.addStyleFromResource("resources/", "hvstat.css", imageResouces);
+	},
 };
 
 hvStat.util = {
@@ -297,31 +310,152 @@ hvStat.util = {
 	},
 };
 
-hvStat.setup = {
-	addBasicStyle: function () {
-		var C = browser.extension.ImageResourceInfo;
-		var imageResouces = [
-			new C("images/", "channeling.png", "images/"),
-			new C("images/", "healthpot.png", "images/"),
-			new C("images/", "manapot.png", "images/"),
-			new C("images/", "spiritpot.png", "images/"),
-		];
-		browser.extension.addStyleFromResource("resources/", "hvstat.css", imageResouces);
+hvStat.storage = {
+	getItem: function (key) {
+		var item = localStorage.getItem(key);
+		if (item) {
+			return JSON.parse(item);
+		} else {
+			return null;
+		}
 	},
-	addUIStyle: function () {
-		var C = browser.extension.ImageResourceInfo;
-		var imageResouces = [
-			new C("images/", "ui-bg_flat_0_aaaaaa_40x100.png", "images/"),
-			new C("images/", "ui-bg_flat_55_fbf9ee_40x100.png", "images/"),
-			new C("images/", "ui-bg_flat_65_edebdf_40x100.png", "images/"),
-			new C("images/", "ui-bg_flat_75_e3e0d1_40x100.png", "images/"),
-			new C("images/", "ui-bg_flat_75_edebdf_40x100.png", "images/"),
-			new C("images/", "ui-bg_flat_95_fef1ec_40x100.png", "images/"),
-			new C("images/", "ui-icons_2e83ff_256x240.png", "images/"),
-			new C("images/", "ui-icons_5c0d11_256x240.png", "images/"),
-			new C("images/", "ui-icons_cd0a0a_256x240.png", "images/"),
-		];
-		browser.extension.addStyleFromResource("resources/", "jquery-ui-1.9.2.custom.min.css", imageResouces);
+	setItem: function (key, value) {
+		localStorage.setItem(key, JSON.stringify(value));
+	},
+	removeItem: function (key) {
+		localStorage.removeItem(key);
+	},
+};
+
+hvStat.storage.settings = {
+	_key: "HVSettings",
+	_value: null,
+	get value() {
+		if (!this._value) {
+			this._value = hvStat.storage.getItem(this._key);
+			if (!this._value) {
+				this.initialize();
+			}
+		}
+		return this._value;
+	},
+	save: function () {
+		hvStat.storage.setItem(this._key, this._value);
+	},
+	initialize: function () {
+		this._value = {
+			// General Options
+			isShowSidebarProfs: false,
+			isChangePageTitle: false,
+			customPageTitle: "HV",
+			isStartAlert: false,
+			StartAlertHP: 95,
+			StartAlertMP: 95,
+			StartAlertSP: 95,
+			StartAlertDifficulty: 2,
+			isShowScanButton: false,
+			isShowSkillButton: false,
+			isShowEquippedSet: false,
+			//0-equipment page, 1-shop, 2-itemworld, 3-moogle, 4-forge
+			isShowTags: [false, false, false, false, false, false],
+
+			// Keyboard Options
+			adjustKeyEventHandling: false,
+			isEnableScanHotkey: false,
+			isEnableSkillHotkey: false,
+			enableOFCHotkey: false,
+			enableScrollHotkey: false,
+			isDisableForgeHotKeys: false,
+			enableShrineKeyPatch: false,
+
+			// Battle Enhancement
+			isShowHighlight: true,
+			isAltHighlight: false,
+			isShowDivider: true,
+			isShowSelfDuration: true,
+			isSelfEffectsWarnColor: false,
+			SelfWarnOrangeRounds: 5,
+			SelfWarnRedRounds: 1,
+			isShowRoundReminder: false,
+			reminderMinRounds: 3,
+			reminderBeforeEnd: 1,
+			isShowEndStats: true,
+			isShowEndProfs: true,
+			isShowEndProfsMagic: true,
+			isShowEndProfsArmor: true,
+			isShowEndProfsWeapon: true,
+			isAlertGem: true,
+			isAlertOverchargeFull: false,
+			isShowMonsterNumber: false,
+			isShowRoundCounter: false,
+			isShowPowerupBox: false,
+			autoAdvanceBattleRound: false,
+			autoAdvanceBattleRoundDelay: 500,
+
+			// Display Monster Stats
+			showMonsterHP: true,
+			showMonsterHPPercent: false,
+			showMonsterMP: true,
+			showMonsterSP: true,
+			showMonsterInfoFromDB: false,
+			showMonsterClassFromDB: false,
+			showMonsterPowerLevelFromDB: false,
+			showMonsterAttackTypeFromDB: false,
+			showMonsterWeaknessesFromDB: false,
+			showMonsterResistancesFromDB: false,
+			hideSpecificDamageType: [false, false, false, false, false, false, false, false, false, false, false],
+			ResizeMonsterInfo: false,
+			isShowStatsPopup: false,
+			isMonsterPopupPlacement: false,
+			monsterPopupDelay: 0,
+			isShowMonsterDuration: true,
+			isMonstersEffectsWarnColor: false,
+			MonstersWarnOrangeRounds: 5,
+			MonstersWarnRedRounds: 1,
+
+			// Tracking Functions
+			isTrackStats: true,
+			isTrackRewards: false,
+			isTrackShrine: false,
+			isTrackItems: false,
+
+			// Warning System
+			// Effects Expiring Warnings
+			isMainEffectsAlertSelf: false,
+			isEffectsAlertSelf: [false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false],
+			EffectsAlertSelfRounds: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+			isMainEffectsAlertMonsters: false,
+			isEffectsAlertMonsters: [false, false, false, false, false, false, false, false, false, false, false, false],
+			EffectsAlertMonstersRounds: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+
+			// Specific Spell Warnings
+			isWarnAbsorbTrigger: false,
+			isWarnSparkTrigger: true,
+			isWarnSparkExpire: true,
+
+			// Alert Mode
+			isHighlightQC: true,
+			warnOrangeLevel: 40,
+			warnRedLevel: 35,
+			warnAlertLevel: 25,
+			warnOrangeLevelMP: 15,
+			warnRedLevelMP: 5,
+			warnAlertLevelMP: -1,
+			warnOrangeLevelSP: -1,
+			warnRedLevelSP: -1,
+			warnAlertLevelSP: -1,
+			isShowPopup: true,
+			isNagHP: false,
+			isNagMP: false,
+			isNagSP: false,
+
+			// Battle Type
+			warnMode: [true, true, false, false],
+
+			// Database Options
+			isRememberScan: false,
+			isRememberSkillsTypes: false,
+		};
 	},
 };
 
@@ -6660,10 +6794,11 @@ HVStat.main2 = function () {
 		document.onkeydown = null;
 	}
 
-	hvStat.setup.addBasicStyle();
 	hv = new HV();
 	console.debug(hv);
+	hvStat.setup();
 	console.debug(hvStat);
+	console.debug(hvStat.storage.settings.value);
 	if (_settings.isChangePageTitle && document.title === "The HentaiVerse") {
 		document.title = _settings.customPageTitle;
 	}
@@ -6676,9 +6811,6 @@ HVStat.main2 = function () {
 		if (_settings.isShowScanButton || _settings.isShowSkillButton) {
 			HVStat.showScanAndSkillButtons();
 		}
-// 		if (_settings.isShowMonsterNumber) {
-// 			showMonsterNumber();
-// 		}
 
 		collectRoundInfo();
 		if ((_round !== null) && (_round.currRound > 0) && _settings.isShowRoundCounter) {
