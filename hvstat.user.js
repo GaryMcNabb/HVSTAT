@@ -58,7 +58,7 @@ var util = {
 			}
 		} else if (node.nodeType === document.ELEMENT_NODE) {
 			for (i = 0; i < node.childNodes.length; i++) {
-				t = util.innerText(node.childNodes[i]);
+				t = arguments.callee(node.childNodes[i]);
 				if (t) {
 					if (s !== "") {
 						s += " ";
@@ -155,7 +155,6 @@ browser.extension = {
 				styleText = styleText.replace(regex, imageResourceURL);
 			}
 		}
-		// add style
 		browser.extension.addStyle(styleText);
 	},
 	loadScript: function (scriptPath, scriptName) {
@@ -6029,12 +6028,12 @@ HVStat.showEquippedSet = function () {
 	var leftBar = document.querySelector("div.clb");
 	var cssText = leftBar.querySelector("table.cit td > div > div").style.cssText;
 	var table = document.createElement("table");
-	table.setAttribute("class", "cit");
-	table.innerHTML ='<tbody><tr><td><div class="fd12"><div id="HVStatEquippedSet"></div></div></td></tr></tbody>';
+	table.className = "cit";
+	table.innerHTML ='<tbody><tr><td><div class="fd12"><div id="hvstat-equipped-set"></div></div></td></tr></tbody>';
 	leftBar.insertBefore(table, null);
-	var equippedSet = document.getElementById("HVStatEquippedSet");
+	var equippedSet = document.getElementById("hvstat-equipped-set");
 	equippedSet.style.cssText = cssText;
-	equippedSet.innerHTML = "Equipped set: " + String(_charss.set);
+	equippedSet.textContent = "Equipped set: " + String(_charss.set);
 };
 
 function FindSettingsStats() {
