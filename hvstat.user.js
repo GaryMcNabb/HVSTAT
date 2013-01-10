@@ -5756,9 +5756,6 @@ function HVCharacterStatsSettings() {
 	this.save = function () { saveToStorage(this, HV_CHSS); };
 	this.reset = function () { deleteFromStorage(HV_CHSS); };
 	this.cloneFrom = clone;
-	this.currHP = 0;
-	this.currMP = 0;
-	this.currSP = 0;
 	//1-easy, 2-normal, 3-hard, 4-heroic, 5-
 	this.difficulty = [0, 0];
 	this.set = 0;
@@ -6038,41 +6035,11 @@ HVStat.showEquippedSet = function () {
 
 function FindSettingsStats() {
 	loadCHARSSObject();
-	_charss.currHP = hv.character.healthRate;
-	_charss.currMP = hv.character.magicRate;
-	_charss.currSP = hv.character.spiritRate;
-	var difficulty;
-	var elements = document.querySelectorAll("div.clb table.cit");
-	var i, element, text;
-	for (i = 0; i < elements.length; i++) {
-		element = elements[i];
-		text = util.innerText(element);
-		if (text.match(/Difficulty/ig)) {
-			difficulty = text.match(/Easy|Normal|Hard|Heroic|Nightmare|Hell|Nintendo|Battletoads|IWBTH/ig);
-		}
-	}
+	var difficulties = ["", "Easy", "Normal", "Hard", "Heroic", "Nightmare", "Hell", "Nintendo", "Battletoads", "IWBTH"];
+	var difficulty = hv.settings.difficulty;
 	if (difficulty) {
+		_charss.difficulty[0] = difficulties.indexOf(difficulty);
 		_charss.difficulty[1] = difficulty;
-		switch (String(difficulty)) {
-			case "Easy":
-				_charss.difficulty[0] = 1; break;
-			case "Normal":
-				_charss.difficulty[0] = 2; break;
-			case "Hard":
-				_charss.difficulty[0] = 3; break;
-			case "Heroic":
-				_charss.difficulty[0] = 4; break;
-			case "Nightmare":
-				_charss.difficulty[0] = 5; break;
-			case "Hell":
-				_charss.difficulty[0] = 6; break;
-			case "Nintendo":
-				_charss.difficulty[0] = 7; break;
-			case "Battletoads":
-				_charss.difficulty[0] = 8; break;
-			case "IWBTH":
-				_charss.difficulty[0] = 9;
-		}
 	}
 	elements = document.querySelectorAll("#setform img");
 	var result;
@@ -6357,6 +6324,7 @@ HVStat.main2 = function () {
 		localStorage.removeItem(HV_ROUND);
 		if ((hvStat.settings.isStartAlert || hvStat.settings.isShowEquippedSet) && !hv.settings.useHVFontEngine) {
 			FindSettingsStats();
+			console.debug(_charss);
 		}
 		if (!hv.location.isRiddle) {
 			HVStat.resetHealthWarningStates();
