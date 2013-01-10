@@ -236,3 +236,13 @@ input.hvstat-equipment-tag-new {
 	font-weight: bold;
 }
 
+#hvstat-settings-pane .hvstat-vertical-top {
+	vertical-align: top;
+	padding-top: 3px;
+}
+
+#hvstat-settings-effect-expiring-warnings {
+	display: box;
+	display: -moz-box;
+	display: -webkit-box;
+}

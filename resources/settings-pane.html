@@ -29,7 +29,7 @@
 
 <table>
 <tr>
-	<td rowspan="5">Show equipment tags in:</td>
+	<td class="hvstat-vertical-top" rowspan="5">Show equipment tags in:</td>
 	<td>
 		<table>
 		<tr><td><input type="checkbox" name="isShowTags0" /></td><td>Equipment page </td></tr>
@@ -173,6 +173,7 @@
 </div>
 
 <h3>Effect Expiring Warnings</h3>
+<div id="hvstat-settings-effect-expiring-warnings">
 <div>
 <table>
 <tr><td><input type="checkbox" name="isMainEffectsAlertSelf" /></td>	<td>Alert when effects on yourself are expiring</td></tr>
@@ -195,6 +196,10 @@
 	<tr><td><input type="checkbox" name="isEffectsAlertSelf15" /></td>	<td>Chain 2</td>		<td>- alert on <input type="text" name="EffectsAlertSelfRounds15" size="1" maxLength="1" style="text-align:right;" />rounds remaining</td></tr>
 	</table>
 </td></tr>
+</table>
+</div>
+<div>
+<table>
 <tr><td><input type="checkbox" name="isMainEffectsAlertMonsters" /></td><td>Alert when effects on monsters are expiring</td></tr>
 <tr><td></td><td>
 	<table>
@@ -213,6 +218,7 @@
 	</table>
 </td></tr>
 </table>
+</div>
 </div>
 
 <h2>Monster Information</h2>
@@ -244,7 +250,7 @@
 	<tr><td><input type="checkbox" name="showMonsterResistancesFromDB" /></td>	<td>Show monster resistances</td></tr>
 	<tr><td></td><td>
 		<table>
-		<tr><td>Hide specific weaknesses/resitances: </td>
+		<tr><td class="hvstat-vertical-top">Hide specific weaknesses/resitances: </td>
 		<td>
 			<table>
 			<tr>
