@@ -1017,8 +1017,8 @@ hvStat.ui = {
 		$(panel).dialog({
 			autoOpen: false,
 			closeOnEscape: true,
-			draggable: false,
-			resizable: false,
+			draggable: true,
+			resizable: true,
 			height: 620,
 			width: 850,
 			modal: true,
@@ -1057,11 +1057,11 @@ var HVStat = {
 	reMonsterSkillsTSV: /^(\d+?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)$/gm,
 	monsterGaugeMaxWidth: 120,
 
-	// temporary localStorage keys (attach the prefix "HVStat" to avoid conflicts with other scripts)
-	key_hpAlertAlreadyShown: "HVStatHpAlertAlreadyShown",
-	key_mpAlertAlreadyShown: "HVStatMpAlertAlreadyShown",
-	key_spAlertAlreadyShown: "HVStatSpAlertAlreadyShown",
-	key_ocAlertAlreadyShown: "HVStatOcAlertAlreadyShown",
+	// temporary localStorage keys (attach the prefix "hvStat" to avoid conflicts with other scripts)
+	key_hpAlertAlreadyShown: "hvStat.healthAlertShown",
+	key_mpAlertAlreadyShown: "hvStat.magicAlertShown",
+	key_spAlertAlreadyShown: "hvStat.spiritAlertShown",
+	key_ocAlertAlreadyShown: "hvStat.overchargeAlertShown",
 
 	// scroll targets
 	scrollTargets: [
@@ -5326,25 +5326,34 @@ function HVResetTracking() {
 	_drops.reset();
 }
 function HVMasterReset() {
-	deleteFromStorage(HV_OVERVIEW);
-	deleteFromStorage(HV_STATS);
-	deleteFromStorage(HV_PROF);
-	deleteFromStorage(HV_REWARDS);
-	deleteFromStorage(HV_SHRINE);
-	deleteFromStorage(HV_DROPS);
-	deleteFromStorage(HV_SETTINGS);
-	deleteFromStorage(HV_ROUND);
-	deleteFromStorage(HV_EQUIP);
-	deleteFromStorage(HV_DATA);
-	deleteFromStorage("HVBackup1");
-	deleteFromStorage("HVBackup2");
-	deleteFromStorage("HVBackup3");
-	deleteFromStorage("HVBackup4");
-	deleteFromStorage("HVBackup5")
-	deleteFromStorage(key_hpAlertAlreadyShown);
-	deleteFromStorage(key_mpAlertAlreadyShown);
-	deleteFromStorage(key_spAlertAlreadyShown);
-	deleteFromStorage(key_ocAlertAlreadyShown);
+	var keys = [
+		"HVBackup1",
+		"HVBackup2",
+		"HVBackup3",
+		"HVBackup4",
+		"HVBackup5",
+		"HVCollectData",		// old monster skill data
+		"HVDrops",
+		"HVLoadTimeCounters",	// obsolete
+		"HVMonsterDatabase",	// old monster scan data
+		"HVOverview",
+		"HVProf",
+		"HVRewards",
+		"HVRound",
+		"HVSettings",
+		"HVShrine",
+		"HVStats",
+		"HVTags",
+		"inventoryAlert",
+		key_hpAlertAlreadyShown,
+		key_mpAlertAlreadyShown,
+		key_spAlertAlreadyShown,
+		key_ocAlertAlreadyShown,
+	];
+	var i = keys.length;
+	while (i--) {
+		localStorage.removeItem(keys[i]);
+	}
 }
 function clone(a) {
 	if (a === null || typeof(a) !== "object") return a;
