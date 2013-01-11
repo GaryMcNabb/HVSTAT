@@ -229,6 +229,11 @@ input.hvstat-equipment-tag-new {
 	text-align: left;
 }
 
+#hvstat-tabs > div {
+	height: 512px;
+	overflow: auto;
+}
+
 .hvstat-tracking-paused {
 	display: none;
 	padding: 4px;
