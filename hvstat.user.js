@@ -245,13 +245,14 @@ var HV = (function () {
 				quickcastBar: document.getElementById("quickbar"),
 				battleLog: battleLog,
 				monsterPane: document.getElementById("monsterpane"),
+				dialog: document.querySelector('div.btcp'),
 				dialogButton: document.getElementById("ckey_continue"),
 			};
 			battle.elementCache.characterEffectIcons = battle.elementCache.battleForm.querySelectorAll('div.btps img[onmouseover^="battle.set_infopane_effect"]');
 			battle.elementCache.monsters = battle.elementCache.monsterPane.querySelectorAll('div[id^="mkey_"]');
 
 			battle.round = {
-				finished: !!battle.elementCache.dialogButton,
+				finished: !!battle.elementCache.dialog,
 			};
 			battle.finished = false;
 			if (battle.elementCache.dialogButton) {
@@ -1013,19 +1014,19 @@ hvStat.ui = {
 		var panel = document.createElement("div");
 		panel.id = "hvstat-panel";
 		$(panel).html(browser.extension.getResourceText("resources/", "main.html"));
-		$("body").append(panel);
+		$('body').append(panel);
 		$(panel).dialog({
 			autoOpen: false,
 			closeOnEscape: true,
-			draggable: true,
-			resizable: true,
+			draggable: false,
+			resizable: false,
 			height: 620,
 			width: 850,
 			modal: true,
 			position: ["center", "center"],
 			title: "[STAT] HentaiVerse Statistics, Tracking, and Analysis Tool v." + hvStat.version,
 		});
-		$("#hvstat-tabs").tabs();
+		$('#hvstat-tabs').tabs();
 		loadOverviewObject();
 		loadStatsObject();
 		loadDropsObject();
@@ -1038,7 +1039,7 @@ hvStat.ui = {
 		initShrinePane();
 		initSettingsPane();
 		initMonsterStatsPane();
-		$("#hvstat-icon").click(function () {
+		$('#hvstat-icon').click(function () {
 			if ($(panel).dialog("isOpen")) {
 				$(panel).dialog("close");
 			} else {
