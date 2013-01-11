@@ -638,7 +638,7 @@ hvStat.battle.command = {
 						|| hvStat.battle.command.getSubMenuItemById("130003")
 						|| hvStat.battle.command.getSubMenuItemById("140003")
 						|| hvStat.battle.command.getSubMenuItemById("150003"),
-					"OFC": hvStat.battle.command.getSubMenuItemByName("Orbital Friendship Cannon")
+					"OFC": hvStat.battle.command.getSubMenuItemByName("Orbital Friendship Cannon"),
 				};
 			}
 			if (this._value["Scan"]) {
@@ -766,8 +766,7 @@ hvStat.battle.command.SubMenu = function (spec) {
 
 	this.items = [];
 	var itemElements = this.element.querySelectorAll("div.btsd, #ikey_p, img.btii");
-	var i;
-	for (i = 0; i < itemElements.length; i++) {
+	for (var i = 0; i < itemElements.length; i++) {
 		this.items[i] = new hvStat.battle.command.SubMenuItem({ parent: this, element: itemElements[i] });
 	}
 };
@@ -795,8 +794,7 @@ hvStat.battle.command.Command = function (spec) {
 	this.menus = [];
 
 	// build menus
-	var i;
-	for (i = 0; i < this.menuElementIds.length; i++) {
+	for (var i = 0; i < this.menuElementIds.length; i++) {
 		this.menus[i] = new hvStat.battle.command.SubMenu({ parent: this, elementId: this.menuElementIds[i] });
 	}
 };
@@ -1038,7 +1036,7 @@ hvStat.ui = {
 		initRewardsPane();
 		initShrinePane();
 		initSettingsPane();
-		initMonsterStatsPane();
+		initMonsterDatabasePane();
 		$('#hvstat-icon').click(function () {
 			if ($(panel).dialog("isOpen")) {
 				$(panel).dialog("close");
@@ -4651,7 +4649,7 @@ function initShrinePane() {
 		}
 	});
 }
-function initMonsterStatsPane() {
+function initMonsterDatabasePane() {
 	$("#hvstat-monster-database-pane").html(browser.extension.getResourceText("resources/", "monster-database-pane.html"));
 	function showOldDatabaseSize() {
 		var oldDatabaseSize = ((localStorage.HVMonsterDatabase ? localStorage.HVMonsterDatabase.length : 0) / 1024 / 1024 * (browser.isChrome ? 2 : 1)).toFixed(2);
@@ -4743,7 +4741,7 @@ function initSettingsPane() {
 	$("input[name=StartAlertMP]").attr("value", hvStat.settings.StartAlertMP);
 	$("input[name=StartAlertSP]").attr("value", hvStat.settings.StartAlertSP);
 	var diffsel = "diff" + String(hvStat.settings.StartAlertDifficulty);
-	$("#"+diffsel+"").attr("selected", true);
+	$("#" + diffsel).attr("selected", true);
 	if (hvStat.settings.isShowScanButton) $("input[name=isShowScanButton]").attr("checked", "checked");
 	if (hvStat.settings.isShowSkillButton) $("input[name=isShowSkillButton]").attr("checked", "checked");
 	if (hvStat.settings.isShowEquippedSet) $("input[name=isShowEquippedSet]").attr("checked", "checked");
@@ -5045,9 +5043,18 @@ function initSettingsPane() {
 	$("input[name=isRememberScan]").click(reminderAndSaveSettings);
 	$("input[name=isRememberSkillsTypes]").click(reminderAndSaveSettings);
 
-	$("._resetSettings").click(function (){ if (confirm("Reset Settings to default?")) hvStat.settings.reset(); })
-	$("._resetAll").click(function (){ if (confirm("Reset All Tracking data?")) HVResetTracking(); })
-	$("._masterReset").click(function (){ if (confirm("This will delete ALL HV data saved in localStorage.\nAre you sure you want to do this?")) HVMasterReset(); })
+	$("._resetSettings").click(function () {
+		if (confirm("Reset Settings to default?"))
+			hvStat.settings.reset();
+	});
+	$("._resetAll").click(function () {
+		if (confirm("Reset All Tracking data?"))
+			HVResetTracking();
+	});
+	$("._masterReset").click(function () {
+		if (confirm("This will delete ALL HV data saved in localStorage.\nAre you sure you want to do this?"))
+			HVMasterReset();
+	});
 }
 function saveSettings() {
 	// General Options
