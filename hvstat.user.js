@@ -394,137 +394,145 @@ hvStat.storage = {
 	removeItem: function (key) {
 		localStorage.removeItem(key);
 	},
+	_settings: null,
+	_settingsDefault: {
+		// General Options
+		isShowSidebarProfs: false,
+		isChangePageTitle: false,
+		customPageTitle: "HV",
+		isStartAlert: false,
+		StartAlertHP: 95,
+		StartAlertMP: 95,
+		StartAlertSP: 95,
+		StartAlertDifficulty: 2,
+		isShowScanButton: false,
+		isShowSkillButton: false,
+		isShowEquippedSet: false,
+		//0-equipment page, 1-shop, 2-itemworld, 3-moogle, 4-forge
+		isShowTags: [false, false, false, false, false, false],
+
+		// Keyboard Options
+		adjustKeyEventHandling: false,
+		isEnableScanHotkey: false,
+		isEnableSkillHotkey: false,
+		enableOFCHotkey: false,
+		enableScrollHotkey: false,
+		isDisableForgeHotKeys: false,
+		enableShrineKeyPatch: false,
+
+		// Battle Enhancement
+		isShowHighlight: true,
+		isAltHighlight: false,
+		isShowDivider: true,
+		isShowSelfDuration: true,
+		isSelfEffectsWarnColor: false,
+		SelfWarnOrangeRounds: 5,
+		SelfWarnRedRounds: 1,
+		isShowRoundReminder: false,
+		reminderMinRounds: 3,
+		reminderBeforeEnd: 1,
+		isShowEndStats: true,
+		isShowEndProfs: true,
+		isShowEndProfsMagic: true,
+		isShowEndProfsArmor: true,
+		isShowEndProfsWeapon: true,
+		isAlertGem: true,
+		isAlertOverchargeFull: false,
+		isShowMonsterNumber: false,
+		isShowRoundCounter: false,
+		isShowPowerupBox: false,
+		autoAdvanceBattleRound: false,
+		autoAdvanceBattleRoundDelay: 500,
+
+		// Display Monster Stats
+		showMonsterHP: true,
+		showMonsterHPPercent: false,
+		showMonsterMP: true,
+		showMonsterSP: true,
+		showMonsterInfoFromDB: false,
+		showMonsterClassFromDB: false,
+		showMonsterPowerLevelFromDB: false,
+		showMonsterAttackTypeFromDB: false,
+		showMonsterWeaknessesFromDB: false,
+		showMonsterResistancesFromDB: false,
+		hideSpecificDamageType: [false, false, false, false, false, false, false, false, false, false, false],
+		ResizeMonsterInfo: false,
+		isShowStatsPopup: false,
+		isMonsterPopupPlacement: false,
+		monsterPopupDelay: 0,
+		isShowMonsterDuration: true,
+		isMonstersEffectsWarnColor: false,
+		MonstersWarnOrangeRounds: 5,
+		MonstersWarnRedRounds: 1,
+
+		// Tracking Functions
+		isTrackStats: true,
+		isTrackRewards: false,
+		isTrackShrine: false,
+		isTrackItems: false,
+
+		// Warning System
+		// Effects Expiring Warnings
+		isMainEffectsAlertSelf: false,
+		isEffectsAlertSelf: [false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false],
+		EffectsAlertSelfRounds: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+		isMainEffectsAlertMonsters: false,
+		isEffectsAlertMonsters: [false, false, false, false, false, false, false, false, false, false, false, false],
+		EffectsAlertMonstersRounds: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+
+		// Specific Spell Warnings
+		isWarnAbsorbTrigger: false,
+		isWarnSparkTrigger: true,
+		isWarnSparkExpire: true,
+
+		// Alert Mode
+		isHighlightQC: true,
+		warnOrangeLevel: 40,
+		warnRedLevel: 35,
+		warnAlertLevel: 25,
+		warnOrangeLevelMP: 15,
+		warnRedLevelMP: 5,
+		warnAlertLevelMP: -1,
+		warnOrangeLevelSP: -1,
+		warnRedLevelSP: -1,
+		warnAlertLevelSP: -1,
+		isShowPopup: true,
+		isNagHP: false,
+		isNagMP: false,
+		isNagSP: false,
+
+		// Battle Type
+		warnMode: [true, true, false, false],
+
+		// Database Options
+		isRememberScan: false,
+		isRememberSkillsTypes: false,
+	},
+	get settings() {
+		if (!this._settings) {
+			this._settings = new hvStat.storage.Item("HVSettings", this._settingsDefault);
+		}
+		return this._settings;
+	},
 };
 
-hvStat.storage.settings = {
-	_key: "HVSettings",
-	_value: null,
+hvStat.storage.Item = function (key, defaultValue) {
+	this._key = key;
+	this._defaultValue = defaultValue;
+	this._value = null;
+};
+hvStat.storage.Item.prototype = {
 	get value() {
 		if (!this._value) {
 			this._value = hvStat.storage.getItem(this._key);
-			if (!this._value) {
-				this.initialize();
-			}
 		}
-		return this._value;
+		if (!this._value && this._defaultValue) {
+			this._value = this._defaultValue;
+		}
+		return this._value
 	},
 	save: function () {
 		hvStat.storage.setItem(this._key, this._value);
-	},
-	initialize: function () {
-		this._value = {
-			// General Options
-			isShowSidebarProfs: false,
-			isChangePageTitle: false,
-			customPageTitle: "HV",
-			isStartAlert: false,
-			StartAlertHP: 95,
-			StartAlertMP: 95,
-			StartAlertSP: 95,
-			StartAlertDifficulty: 2,
-			isShowScanButton: false,
-			isShowSkillButton: false,
-			isShowEquippedSet: false,
-			//0-equipment page, 1-shop, 2-itemworld, 3-moogle, 4-forge
-			isShowTags: [false, false, false, false, false, false],
-
-			// Keyboard Options
-			adjustKeyEventHandling: false,
-			isEnableScanHotkey: false,
-			isEnableSkillHotkey: false,
-			enableOFCHotkey: false,
-			enableScrollHotkey: false,
-			isDisableForgeHotKeys: false,
-			enableShrineKeyPatch: false,
-
-			// Battle Enhancement
-			isShowHighlight: true,
-			isAltHighlight: false,
-			isShowDivider: true,
-			isShowSelfDuration: true,
-			isSelfEffectsWarnColor: false,
-			SelfWarnOrangeRounds: 5,
-			SelfWarnRedRounds: 1,
-			isShowRoundReminder: false,
-			reminderMinRounds: 3,
-			reminderBeforeEnd: 1,
-			isShowEndStats: true,
-			isShowEndProfs: true,
-			isShowEndProfsMagic: true,
-			isShowEndProfsArmor: true,
-			isShowEndProfsWeapon: true,
-			isAlertGem: true,
-			isAlertOverchargeFull: false,
-			isShowMonsterNumber: false,
-			isShowRoundCounter: false,
-			isShowPowerupBox: false,
-			autoAdvanceBattleRound: false,
-			autoAdvanceBattleRoundDelay: 500,
-
-			// Display Monster Stats
-			showMonsterHP: true,
-			showMonsterHPPercent: false,
-			showMonsterMP: true,
-			showMonsterSP: true,
-			showMonsterInfoFromDB: false,
-			showMonsterClassFromDB: false,
-			showMonsterPowerLevelFromDB: false,
-			showMonsterAttackTypeFromDB: false,
-			showMonsterWeaknessesFromDB: false,
-			showMonsterResistancesFromDB: false,
-			hideSpecificDamageType: [false, false, false, false, false, false, false, false, false, false, false],
-			ResizeMonsterInfo: false,
-			isShowStatsPopup: false,
-			isMonsterPopupPlacement: false,
-			monsterPopupDelay: 0,
-			isShowMonsterDuration: true,
-			isMonstersEffectsWarnColor: false,
-			MonstersWarnOrangeRounds: 5,
-			MonstersWarnRedRounds: 1,
-
-			// Tracking Functions
-			isTrackStats: true,
-			isTrackRewards: false,
-			isTrackShrine: false,
-			isTrackItems: false,
-
-			// Warning System
-			// Effects Expiring Warnings
-			isMainEffectsAlertSelf: false,
-			isEffectsAlertSelf: [false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false],
-			EffectsAlertSelfRounds: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-			isMainEffectsAlertMonsters: false,
-			isEffectsAlertMonsters: [false, false, false, false, false, false, false, false, false, false, false, false],
-			EffectsAlertMonstersRounds: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-
-			// Specific Spell Warnings
-			isWarnAbsorbTrigger: false,
-			isWarnSparkTrigger: true,
-			isWarnSparkExpire: true,
-
-			// Alert Mode
-			isHighlightQC: true,
-			warnOrangeLevel: 40,
-			warnRedLevel: 35,
-			warnAlertLevel: 25,
-			warnOrangeLevelMP: 15,
-			warnRedLevelMP: 5,
-			warnAlertLevelMP: -1,
-			warnOrangeLevelSP: -1,
-			warnRedLevelSP: -1,
-			warnAlertLevelSP: -1,
-			isShowPopup: true,
-			isNagHP: false,
-			isNagMP: false,
-			isNagSP: false,
-
-			// Battle Type
-			warnMode: [true, true, false, false],
-
-			// Database Options
-			isRememberScan: false,
-			isRememberSkillsTypes: false,
-		};
 	},
 };
 
@@ -599,72 +607,68 @@ hvStat.battle = {
 };
 
 hvStat.battle.command = {
-	commandMap: {
-		_value: null,
-		get value() {
-			if (!this._value) {
-				this._value = {
-					"Attack": new hvStat.battle.command.Command({ elementId: "ckey_attack", name: "Attack" }),
-					"Magic":  new hvStat.battle.command.Command({ elementId: "ckey_magic",  name: "Magic",  menuElementIds: ["togpane_magico", "togpane_magict"] }),
-					"Spirit": new hvStat.battle.command.Command({ elementId: "ckey_spirit", name: "Spirit" }),
-					"Skills": new hvStat.battle.command.Command({ elementId: "ckey_skills", name: "Skills", menuElementIds: ["togpane_skill"] }),
-					"Items":  new hvStat.battle.command.Command({ elementId: "ckey_items",  name: "Items",  menuElementIds: ["togpane_item"] }),
-					"Defend": new hvStat.battle.command.Command({ elementId: "ckey_defend", name: "Defend" }),
-					"Focus":  new hvStat.battle.command.Command({ elementId: "ckey_focus",  name: "Focus" })
-				};
-			}
-			return this._value;
-		},
+	_commandMap: null,
+	get commandMap() {
+		if (!this._commandMap) {
+			this._commandMap = {
+				"Attack": new hvStat.battle.command.Command({ elementId: "ckey_attack", name: "Attack" }),
+				"Magic":  new hvStat.battle.command.Command({ elementId: "ckey_magic",  name: "Magic",  menuElementIds: ["togpane_magico", "togpane_magict"] }),
+				"Spirit": new hvStat.battle.command.Command({ elementId: "ckey_spirit", name: "Spirit" }),
+				"Skills": new hvStat.battle.command.Command({ elementId: "ckey_skills", name: "Skills", menuElementIds: ["togpane_skill"] }),
+				"Items":  new hvStat.battle.command.Command({ elementId: "ckey_items",  name: "Items",  menuElementIds: ["togpane_item"] }),
+				"Defend": new hvStat.battle.command.Command({ elementId: "ckey_defend", name: "Defend" }),
+				"Focus":  new hvStat.battle.command.Command({ elementId: "ckey_focus",  name: "Focus" })
+			};
+		}
+		return this._commandMap;
 	},
-	subMenuItemMap: {
-		_value: null,
-		get value() {
-			if (!this._value) {
-				this._value = {
-					"PowerupGem": hvStat.battle.command.getSubMenuItemById("ikey_p"),
-					"Scan": hvStat.battle.command.getSubMenuItemByName("Scan"),
-					"Skill1": hvStat.battle.command.getSubMenuItemById("110001")
-						|| hvStat.battle.command.getSubMenuItemById("120001")
-						|| hvStat.battle.command.getSubMenuItemById("130001")
-						|| hvStat.battle.command.getSubMenuItemById("140001")
-						|| hvStat.battle.command.getSubMenuItemById("150001"),
-					"Skill2": hvStat.battle.command.getSubMenuItemById("110002")
-						|| hvStat.battle.command.getSubMenuItemById("120002")
-						|| hvStat.battle.command.getSubMenuItemById("130002")
-						|| hvStat.battle.command.getSubMenuItemById("140002")
-						|| hvStat.battle.command.getSubMenuItemById("150002"),
-					"Skill3": hvStat.battle.command.getSubMenuItemById("110003")
-						|| hvStat.battle.command.getSubMenuItemById("120003")
-						|| hvStat.battle.command.getSubMenuItemById("130003")
-						|| hvStat.battle.command.getSubMenuItemById("140003")
-						|| hvStat.battle.command.getSubMenuItemById("150003"),
-					"OFC": hvStat.battle.command.getSubMenuItemByName("Orbital Friendship Cannon"),
-				};
-			}
-			if (this._value["Scan"]) {
-				this._value["Scan"].bindKeys([
-					new hvStat.keyboard.KeyCombination({ keyCode: 46 }),	// Delete
+	_subMenuItemMap: null,
+	get subMenuItemMap() {
+		if (!this._subMenuItemMap) {
+			this._subMenuItemMap = {
+				"PowerupGem": hvStat.battle.command.getSubMenuItemById("ikey_p"),
+				"Scan": hvStat.battle.command.getSubMenuItemByName("Scan"),
+				"Skill1": hvStat.battle.command.getSubMenuItemById("110001")
+					|| hvStat.battle.command.getSubMenuItemById("120001")
+					|| hvStat.battle.command.getSubMenuItemById("130001")
+					|| hvStat.battle.command.getSubMenuItemById("140001")
+					|| hvStat.battle.command.getSubMenuItemById("150001"),
+				"Skill2": hvStat.battle.command.getSubMenuItemById("110002")
+					|| hvStat.battle.command.getSubMenuItemById("120002")
+					|| hvStat.battle.command.getSubMenuItemById("130002")
+					|| hvStat.battle.command.getSubMenuItemById("140002")
+					|| hvStat.battle.command.getSubMenuItemById("150002"),
+				"Skill3": hvStat.battle.command.getSubMenuItemById("110003")
+					|| hvStat.battle.command.getSubMenuItemById("120003")
+					|| hvStat.battle.command.getSubMenuItemById("130003")
+					|| hvStat.battle.command.getSubMenuItemById("140003")
+					|| hvStat.battle.command.getSubMenuItemById("150003"),
+				"OFC": hvStat.battle.command.getSubMenuItemByName("Orbital Friendship Cannon"),
+			};
+			if (this._subMenuItemMap["Scan"]) {
+				this._subMenuItemMap["Scan"].bindKeys([
+				new hvStat.keyboard.KeyCombination({ keyCode: 46 }),	// Delete
 					new hvStat.keyboard.KeyCombination({ keyCode: 110 })	// Numpad . Del
 				]);
 			}
-			if (this._value["Skill1"]) {
-				this._value["Skill1"].bindKeys([
+			if (this._subMenuItemMap["Skill1"]) {
+				this._subMenuItemMap["Skill1"].bindKeys([
 					new hvStat.keyboard.KeyCombination({ keyCode: 107 }),	// Numpad +
 					new hvStat.keyboard.KeyCombination({ keyCode: 187 })	// = +
 				]);
 			}
-			if (this._value["OFC"]) {
-				this._value["OFC"].bindKeys([
+			if (this._subMenuItemMap["OFC"]) {
+				this._subMenuItemMap["OFC"].bindKeys([
 					new hvStat.keyboard.KeyCombination({ keyCode: 109 }),	// Numpad -
 					new hvStat.keyboard.KeyCombination({ keyCode: 189 })	// - _
 				]);
 			}
-			return this._value;
-		},
+		}
+		return this._subMenuItemMap;
 	},
 	getSubMenuItemById: function (subMenuItemId) {
 		var key, menus, i, items, j;
-		var commandMap = hvStat.battle.command.commandMap.value;
+		var commandMap = hvStat.battle.command.commandMap;
 		for (key in commandMap) {
 			menus = commandMap[key].menus;
 			for (i = 0; i < menus.length; i++) {
@@ -680,7 +684,7 @@ hvStat.battle.command = {
 	},
 	getSubMenuItemByName: function (subMenuItemName) {
 		var key, menus, i, items, j;
-		var commandMap = hvStat.battle.command.commandMap.value;
+		var commandMap = hvStat.battle.command.commandMap;
 		for (key in commandMap) {
 			menus = commandMap[key].menus;
 			for (i = 0; i < menus.length; i++) {
@@ -697,7 +701,7 @@ hvStat.battle.command = {
 	getSubMenuItemsByBoundKey: function (keyCombination) {
 		var foundItems = [];
 		var key, menus, i, items, j, boundKeys, k;
-		var commandMap = hvStat.battle.command.commandMap.value;
+		var commandMap = hvStat.battle.command.commandMap;
 		for (key in commandMap) {
 			menus = commandMap[key].menus;
 			for (i = 0; i < menus.length; i++) {
@@ -895,7 +899,7 @@ hvStat.battle.enhancement.powerupBox = {
 			powerBox.setAttribute("onmouseover", powerInfo);
 			powerBox.setAttribute("onmouseout", powerup.getAttribute("onmouseout"));
 			powerBox.addEventListener("click", function (event) {
-				hvStat.battle.command.subMenuItemMap.value["PowerupGem"].select();
+				hvStat.battle.command.subMenuItemMap["PowerupGem"].select();
 			});
 			if (powerInfo.indexOf('Health') > -1) {
 				powerBox.className += " hvstat-powerup-box-health";
@@ -5816,19 +5820,19 @@ HVStat.documentKeydownEventHandler = function (event) {
 	}
 	var boundKeys, i, j;
 	if (hv.battle.active) {
-		var miScan = hvStat.battle.command.subMenuItemMap.value["Scan"];
-		var miSkill1 = hvStat.battle.command.subMenuItemMap.value["Skill1"];
-		var miSkill2 = hvStat.battle.command.subMenuItemMap.value["Skill2"];
-		var miSkill3 = hvStat.battle.command.subMenuItemMap.value["Skill3"];
-		var miOFC = hvStat.battle.command.subMenuItemMap.value["OFC"];
+		var miScan = hvStat.battle.command.subMenuItemMap["Scan"];
+		var miSkill1 = hvStat.battle.command.subMenuItemMap["Skill1"];
+		var miSkill2 = hvStat.battle.command.subMenuItemMap["Skill2"];
+		var miSkill3 = hvStat.battle.command.subMenuItemMap["Skill3"];
+		var miOFC = hvStat.battle.command.subMenuItemMap["OFC"];
 		var miSkills = [miSkill1, miSkill2, miSkill3];
 
 		if (hvStat.settings.isEnableScanHotkey && miScan) {
 			boundKeys = miScan.boundKeys;
 			for (i = 0; i < boundKeys.length; i++) {
 				if (boundKeys[i].matches(event)) {
-					if (hvStat.battle.command.commandMap.value["Skills"].menuOpened) {
-						hvStat.battle.command.commandMap.value["Skills"].close();
+					if (hvStat.battle.command.commandMap["Skills"].menuOpened) {
+						hvStat.battle.command.commandMap["Skills"].close();
 					} else {
 						miScan.select();
 					}
@@ -5846,7 +5850,7 @@ HVStat.documentKeydownEventHandler = function (event) {
 			for (i = 0; i < boundKeys.length; i++) {
 				if (boundKeys[i].matches(event)) {
 					if (HVStat.selectedSkillIndex >= avilableSkillMaxIndex) {
-						hvStat.battle.command.commandMap.value["Skills"].close();
+						hvStat.battle.command.commandMap["Skills"].close();
 						HVStat.selectedSkillIndex = -1;
 					} else {
 						for (j = HVStat.selectedSkillIndex + 1; j <= avilableSkillMaxIndex; j++) {
@@ -5864,8 +5868,8 @@ HVStat.documentKeydownEventHandler = function (event) {
 			boundKeys = miOFC.boundKeys;
 			for (i = 0; i < boundKeys.length; i++) {
 				if (boundKeys[i].matches(event)) {
-					if (hvStat.battle.command.commandMap.value["Skills"].menuOpened) {
-						hvStat.battle.command.commandMap.value["Skills"].close();
+					if (hvStat.battle.command.commandMap["Skills"].menuOpened) {
+						hvStat.battle.command.commandMap["Skills"].close();
 					} else {
 						miOFC.select();
 					}
@@ -5878,7 +5882,7 @@ HVStat.documentKeydownEventHandler = function (event) {
 HVStat.scanButtonClickHandler = function (event) {
 	var monsterId = this.id.slice(11);
 	var monsterElement = document.getElementById(monsterId);
-	hvStat.battle.command.subMenuItemMap.value["Scan"].select();
+	hvStat.battle.command.subMenuItemMap["Scan"].select();
 	monsterElement.onclick();
 }
 
@@ -5890,14 +5894,14 @@ HVStat.skillButtonClickHandler = function (event) {
 	var skillNumber = result[1];
 	var monsterId = result[2];
 	var monsterElement = document.getElementById(monsterId);
-	hvStat.battle.command.subMenuItemMap.value["Skill" + skillNumber].select();
+	hvStat.battle.command.subMenuItemMap["Skill" + skillNumber].select();
 	monsterElement.onclick();
 }
 
 HVStat.showScanAndSkillButtons = function () {
-	var skill1 = hvStat.battle.command.subMenuItemMap.value["Skill1"];
-	var skill2 = hvStat.battle.command.subMenuItemMap.value["Skill2"];
-	var skill3 = hvStat.battle.command.subMenuItemMap.value["Skill3"];
+	var skill1 = hvStat.battle.command.subMenuItemMap["Skill1"];
+	var skill2 = hvStat.battle.command.subMenuItemMap["Skill2"];
+	var skill3 = hvStat.battle.command.subMenuItemMap["Skill3"];
 	var skills = [];
 	if (skill1) {
 		skills.push(skill1);
@@ -5970,7 +5974,7 @@ HVStat.showScanAndSkillButtons = function () {
 }
 function registerEventHandlersForMonsterPopup() {
 	var delay = hvStat.settings.monsterPopupDelay;
-	var popupLeftOffset = hvStat.settings.isMonsterPopupPlacement ? 955 : 300;
+	var popupLeftOffset = hvStat.settings.isMonsterPopupPlacement ? 955 : 275;
 	var showPopup = function (event) {
 		var i, index = -1;
 		for (i = 0; i < HVStat.monsters.length; i++) {
