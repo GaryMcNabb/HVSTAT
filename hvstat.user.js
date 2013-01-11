@@ -296,6 +296,9 @@ var hvStat = {
 	get settings() {
 		return hvStat.storage.settings.value;
 	},
+	get roundSession() {
+		return hvStat.storage.roundSession.value;
+	},
 };
 
 hvStat.util = {
@@ -394,6 +397,9 @@ hvStat.storage = {
 	removeItem: function (key) {
 		localStorage.removeItem(key);
 	},
+	//------------------------------------
+	// Settings
+	//------------------------------------
 	_settings: null,
 	_settingsDefault: {
 		// General Options
@@ -514,6 +520,70 @@ hvStat.storage = {
 		}
 		return this._settings;
 	},
+	//------------------------------------
+	// Round Session
+	//------------------------------------
+	_roundSession: null,
+	_roundSessionDefault: {
+		monsters: [],
+		currRound: 0,
+		maxRound: 0,
+		arenaNum: 0,
+		dropChances: 0,
+		battleType: 0,
+		lastTurn: -1,
+		kills: 0,
+		aAttempts: 0,
+		aHits: [0, 0],
+		aOffhands: [0, 0, 0, 0],
+		aDomino: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+		aCounters: [0, 0, 0, 0],
+		dDealt: [0, 0, 0],
+		sHits: [0, 0],
+		sResists: 0,
+		dDealtSp: [0, 0],
+		sAttempts: 0,
+		absArry: [0, 0, 0],
+		mAttempts: 0,
+		mHits: [0, 0],
+		mSpells: 0,
+		pDodges: 0,
+		pEvades: 0,
+		pParries: 0,
+		pBlocks: 0,
+		pResists: 0,
+		dTaken: [0, 0],
+		coalesce: 0,
+		eTheft: 0,
+		channel: 0,
+		overStrikes: 0,
+		cureTotals: [0, 0, 0],
+		cureCounts: [0, 0, 0],
+		elemEffects: [0, 0, 0],
+		effectPoison: [0, 0],
+		elemSpells: [0, 0, 0, 0],
+		divineSpells: [0, 0, 0, 0],
+		forbidSpells: [0, 0, 0, 0],
+		depSpells: [0, 0],
+		supportSpells: 0,
+		curativeSpells: 0,
+		elemGain: 0,
+		divineGain: 0,
+		forbidGain: 0,
+		depGain: 0,
+		supportGain: 0,
+		curativeGain: 0,
+		weapProfGain: [0, 0, 0, 0],
+		armorProfGain: [0, 0, 0],
+		weaponprocs: [0, 0, 0, 0, 0, 0, 0, 0],
+		pskills: [0, 0, 0, 0, 0, 0, 0],
+	},
+	get roundSession() {
+		if (!this._roundSession) {
+			this._roundSession = new hvStat.storage.Item("hvStat.roundSession", this._roundSessionDefault);
+		}
+		return this._roundSession;
+	}
 };
 
 hvStat.storage.Item = function (key, defaultValue) {
@@ -533,6 +603,12 @@ hvStat.storage.Item.prototype = {
 	},
 	save: function () {
 		hvStat.storage.setItem(this._key, this._value);
+	},
+	reset: function () {
+		this._value = this._defaultValue;
+	},
+	remove: function () {
+		hvStat.storage.removeItem(this._key);
 	},
 };
 
@@ -1538,6 +1614,7 @@ HVStat.TurnLog = function (specifiedTurn) {
 HVStat.MonsterSkill = (function () {
 	// constructor
 	function MonsterSkill(vo) {
+		var _id = vo.id || null;
 		var _name = vo.name || null;
 		var _lastUsedDate = vo.lastUsedDate ? new Date(vo.lastUsedDate) : null;
 		var _skillType = HVStat.SkillType[vo.skillType] || null;
@@ -1553,6 +1630,7 @@ HVStat.MonsterSkill = (function () {
 			get damageType() { return _damageType; },
 			get valueObject() {
 				var vo = new HVStat.MonsterSkillVO();
+				vo.id = _id;
 				vo.name = _name;
 				vo.lastUsedDate = _lastUsedDate ? _lastUsedDate.toISOString() : null;
 				vo.skillType = _skillType ? _skillType.id : null;
@@ -1646,7 +1724,9 @@ HVStat.MonsterScanResults = (function () {
 
 	// constructor
 	function MonsterScanResults(vo) {
+		var _id;
 		var _lastScanDate;
+		var _name;
 		var _monsterClass;
 		var _powerLevel;
 		var _trainer;
@@ -1658,10 +1738,12 @@ HVStat.MonsterScanResults = (function () {
 		var _defImpervious = [];
 		var damageTypeId, debuffId;
 
+		_id = vo.id || null;
+		_lastScanDate = vo.lastScanDate ? new Date(vo.lastScanDate) : null;
+		_name = vo.name || null;
+		_monsterClass = HVStat.MonsterClass[vo.monsterClass] || null;
 		_powerLevel = vo.powerLevel || null;
 		_trainer = vo.trainer || null;
-		_lastScanDate = vo.lastScanDate ? new Date(vo.lastScanDate) : null;
-		_monsterClass = HVStat.MonsterClass[vo.monsterClass] || null;
 		_meleeAttack = HVStat.DamageType[vo.meleeAttack] || null;
 
 		for (damageTypeId in HVStat.DamageType) {
@@ -1765,7 +1847,9 @@ HVStat.MonsterScanResults = (function () {
 			get valueObject() {
 				var i, len;
 				var vo = new HVStat.MonsterScanResultsVO();
+				vo.id = _id;
 				vo.lastScanDate = _lastScanDate ? _lastScanDate.toISOString() : null;
+				vo.name = _name;
 				vo.monsterClass = _monsterClass ? _monsterClass.id : null;
 				vo.powerLevel = _powerLevel;
 				vo.trainer = _trainer;
@@ -2307,11 +2391,13 @@ HVStat.Monster = (function () {
 				_waitingForGetResponseOfMonsterScanResults = true;
 				reqGet.onsuccess = function (event) {
 					_waitingForGetResponseOfMonsterScanResults = false;
+					//console.debug(event.target.result);
 					if (event.target.result === undefined) {
 						//console.log("get from MonsterScanResults: not found: id = " + _id);
 					} else {
 						//console.log("get from MonsterScanResults: success: id = " + _id);
 						_scanResult = new HVStat.MonsterScanResults(event.target.result);
+						//console.debug(_scanResult.valueObject);
 					}
 					if (!_waitingForDBResponse()) {
 						callback();
@@ -2330,7 +2416,10 @@ HVStat.Monster = (function () {
 				reqOpen.onsuccess = function(){
 					var cursor = this.result;
 					if (cursor) {
-						_skills.push(new HVStat.MonsterSkill(cursor.value));
+						//console.debug(cursor.value);
+						var skill = new HVStat.MonsterSkill(cursor.value);
+						//console.debug(skill.valueObject);
+						_skills.push(skill);
 						//console.log("get from MonsterSkills: id = " + _id);
 						cursor.continue();
 					} else {
@@ -3260,8 +3349,8 @@ _tokenDrops = [0, 0, 0];
 ===== */
 function showRoundCounter() {
 	var doc = document,
-		curRound = _round.currRound,
-		maxRound = _round.maxRound,
+		curRound = hvStat.roundSession.currRound,
+		maxRound = hvStat.roundSession.maxRound,
 		dispRound = maxRound > 0 ? curRound + "/" + maxRound : "#" + curRound,
 		div = doc.createElement('div');
 	
@@ -3457,9 +3546,11 @@ function collectRoundInfo() {
 	var b = false;
 	// create monster objects
 	for (var i = 0; i < hv.battle.elementCache.monsters.length; i++) {
-		HVStat.monsters.push(new HVStat.Monster(i));
+		HVStat.monsters[i] = new HVStat.Monster(i);
+		if (hvStat.roundSession.monsters[i]) {
+ 			HVStat.monsters[i].setFromValueObject(hvStat.roundSession.monsters[i]);
+ 		}
 	}
-	loadRoundObject();
 	if (hvStat.settings.isTrackItems)
 		loadDropsObject();
 	if (hvStat.settings.isTrackRewards)
@@ -3485,18 +3576,18 @@ function collectRoundInfo() {
 					})(monsterIndex);
 				}
 				if (hvStat.settings.isTrackItems) {
-					_round.dropChances++;
+					hvStat.roundSession.dropChances++;
 				}
 				monsterIndex++;
 			} else if (logHTML.match(/\(Round/)) {
 				var f = logHTML.match(/\(round.*?\)/i)[0].replace("(", "").replace(")", "");
 				var m = f.split(" ");
-				_round.currRound = parseInt(m[1]);
+				hvStat.roundSession.currRound = parseInt(m[1]);
 				if (m.length > 2) {
-					_round.maxRound = parseInt(m[3]);
+					hvStat.roundSession.maxRound = parseInt(m[3]);
 				}
 			}
-			if (hvStat.settings.isShowRoundReminder && (_round.maxRound >= hvStat.settings.reminderMinRounds) && (_round.currRound === _round.maxRound - hvStat.settings.reminderBeforeEnd) && !b) {
+			if (hvStat.settings.isShowRoundReminder && (hvStat.roundSession.maxRound >= hvStat.settings.reminderMinRounds) && (hvStat.roundSession.currRound === hvStat.roundSession.maxRound - hvStat.settings.reminderBeforeEnd) && !b) {
 				if (hvStat.settings.reminderBeforeEnd === 0) {
 					alert("This is final round");
 				} else {
@@ -3505,14 +3596,14 @@ function collectRoundInfo() {
 				b = true;
 			}
 			if (logHTML.match(/random encounter/)) {
-				_round.battleType = HOURLY;
+				hvStat.roundSession.battleType = HOURLY;
 			} else if (logHTML.match(/arena challenge/)) {
-				_round.battleType = ARENA;
-				_round.arenaNum = parseInt(logHTML.match(/challenge #\d+?\s/i)[0].replace("challenge #", ""));
+				hvStat.roundSession.battleType = ARENA;
+				hvStat.roundSession.arenaNum = parseInt(logHTML.match(/challenge #\d+?\s/i)[0].replace("challenge #", ""));
 			} else if (logHTML.match(/GrindFest/)) {
-				_round.battleType = GRINDFEST;
+				hvStat.roundSession.battleType = GRINDFEST;
 			} else if (logHTML.match(/Item World/)) {
-				_round.battleType = ITEM_WORLD;
+				hvStat.roundSession.battleType = ITEM_WORLD;
 			}
 			RoundSave();
 		}
@@ -3534,45 +3625,45 @@ function collectRoundInfo() {
 			loadProfsObject();
 			if (r.match(/one-handed weapon/)) {
 				_profs.weapProfTotals[0] += p;
-				_round.weapProfGain[0] += p;
+				hvStat.roundSession.weapProfGain[0] += p;
 			} else if (r.match(/two-handed weapon/)) {
 				_profs.weapProfTotals[1] += p;
-				_round.weapProfGain[1] += p;
+				hvStat.roundSession.weapProfGain[1] += p;
 			} else if (r.match(/dual wielding/)) {
 				_profs.weapProfTotals[2] += p;
-				_round.weapProfGain[2] += p;
+				hvStat.roundSession.weapProfGain[2] += p;
 			} else if (r.match(/staff/)) {
 				_profs.weapProfTotals[3] += p;
-				_round.weapProfGain[3] += p;
+				hvStat.roundSession.weapProfGain[3] += p;
 			} else if (r.match(/cloth armor/)) {
 				_profs.armorProfTotals[0] += p;
-				_round.armorProfGain[0] += p;
+				hvStat.roundSession.armorProfGain[0] += p;
 			} else if (r.match(/light armor/)) {
 				_profs.armorProfTotals[1] += p;
-				_round.armorProfGain[1] += p;
+				hvStat.roundSession.armorProfGain[1] += p;
 			} else if (r.match(/heavy armor/)) {
 				_profs.armorProfTotals[2] += p;
-				_round.armorProfGain[2] += p;
+				hvStat.roundSession.armorProfGain[2] += p;
 			} else if (r.match(/elemental magic/)) {
 				_profs.elemTotal += p;
-				_round.elemGain += p;
+				hvStat.roundSession.elemGain += p;
 			} else if (r.match(/divine magic/)) {
 				_profs.divineTotal += p;
 				_profs.spiritTotal = (_profs.divineTotal+_profs.forbidTotal) / 2;
-				_round.divineGain += p;
+				hvStat.roundSession.divineGain += p;
 			} else if (r.match(/forbidden magic/)) {
 				_profs.forbidTotal += p;
 				_profs.spiritTotal = (_profs.divineTotal+_profs.forbidTotal) / 2;
-				_round.forbidGain += p;
+				hvStat.roundSession.forbidGain += p;
 			} else if (r.match(/deprecating magic/)) {
 				_profs.depTotal += p;
-				_round.depGain += p;
+				hvStat.roundSession.depGain += p;
 			} else if (r.match(/supportive magic/)) {
 				_profs.supportTotal += p;
-				_round.supportGain += p;
+				hvStat.roundSession.supportGain += p;
 			} else if (r.match(/curative magic/)) {
 				_profs.curativeTotal += p;
-				_round.curativeGain += p;
+				hvStat.roundSession.curativeGain += p;
 			}
 			_profs.save();
 		}
@@ -3608,60 +3699,60 @@ function collectRoundInfo() {
 				o = parseInt(RegExp.$1);
 			}
 			if (logHTML.match(/has been defeated/i)) {
-				_round.kills++;
+				hvStat.roundSession.kills++;
 			} else if (logHTML.match(/bleeding wound hits/i)) {
-				_round.dDealt[2] += o;
+				hvStat.roundSession.dDealt[2] += o;
 			} else if (logHTML.match(/(you hit)|(you crit)/i)) {
-				_round.aAttempts++;
+				hvStat.roundSession.aAttempts++;
 				a++;
-				_round.aHits[logHTML.match(/you crit/i) ? 1 : 0]++;
-				_round.dDealt[logHTML.match(/you crit/i) ? 1 : 0] += o;
+				hvStat.roundSession.aHits[logHTML.match(/you crit/i) ? 1 : 0]++;
+				hvStat.roundSession.dDealt[logHTML.match(/you crit/i) ? 1 : 0] += o;
 			} else if (logHTML.match(/your offhand (hits|crits)/i)) {
-				_round.aOffhands[logHTML.match(/offhand crit/i) ? 2 : 0]++;
-				_round.aOffhands[logHTML.match(/offhand crit/i) ? 3 : 1] += o;
+				hvStat.roundSession.aOffhands[logHTML.match(/offhand crit/i) ? 2 : 0]++;
+				hvStat.roundSession.aOffhands[logHTML.match(/offhand crit/i) ? 3 : 1] += o;
 			} else if (logHTML.match(/you counter/i)) {
-				_round.aCounters[0]++;
-				_round.aCounters[1] += o;
+				hvStat.roundSession.aCounters[0]++;
+				hvStat.roundSession.aCounters[1] += o;
 				ac++;
-				_round.dDealt[0] += o;
+				hvStat.roundSession.dDealt[0] += o;
 			} else if (logHTML.match(/hits|blasts|explodes/i) && !logHTML.match(/hits you /i)) {
 				if (logHTML.match(/spreading poison hits /i) && !logHTML.match(/(hits you |crits you )/i)) {
-					_round.effectPoison[1] += o;
-					_round.effectPoison[0]++;
+					hvStat.roundSession.effectPoison[1] += o;
+					hvStat.roundSession.effectPoison[0]++;
 				} else {
 					if (logHTML.match(/(searing skin|freezing limbs|deep burns|turbulent air|burning soul|breached defence|blunted attack) (hits|blasts|explodes)/i) && !logHTML.match(/(hits you |crits you )/i)) {
-						_round.elemEffects[1]++;
-						_round.elemEffects[2] += o;
+						hvStat.roundSession.elemEffects[1]++;
+						hvStat.roundSession.elemEffects[2] += o;
 					} else if (logHTML.match(/(fireball|inferno|flare|meteor|nova|flames of loki|icestrike|snowstorm|freeze|blizzard|cryostasis|fimbulvetr|lighting|thunderstorm|ball lighting|chain lighting|shockblast|wrath of thor|windblast|cyclone|gale|hurricane|downburst|storms of njord) (hits|blasts|explodes)/i) && !logHTML.match(/(hits you |crits you )/i)) {
-						_round.dDealtSp[logHTML.match(/blasts/i) ? 1 : 0] += o;
-						_round.sHits[logHTML.match(/blasts/i) ? 1 : 0]++;
-						_round.elemSpells[1]++;
-						_round.elemSpells[2] += o;
+						hvStat.roundSession.dDealtSp[logHTML.match(/blasts/i) ? 1 : 0] += o;
+						hvStat.roundSession.sHits[logHTML.match(/blasts/i) ? 1 : 0]++;
+						hvStat.roundSession.elemSpells[1]++;
+						hvStat.roundSession.elemSpells[2] += o;
 					} else if (logHTML.match(/(condemn|purge|smite|banish) (hits|blasts|explodes)/i) && !logHTML.match(/(hits you |crits you )/i)) {
-						_round.dDealtSp[logHTML.match(/blasts/i) ? 1 : 0] += o;
-						_round.sHits[logHTML.match(/blasts/i) ? 1 : 0]++;
-						_round.divineSpells[1]++;
-						_round.divineSpells[2] += o
+						hvStat.roundSession.dDealtSp[logHTML.match(/blasts/i) ? 1 : 0] += o;
+						hvStat.roundSession.sHits[logHTML.match(/blasts/i) ? 1 : 0]++;
+						hvStat.roundSession.divineSpells[1]++;
+						hvStat.roundSession.divineSpells[2] += o
 					} else if (logHTML.match(/(soul reaper|soul harvest|soul fire|soul burst|corruption|pestilence|disintegrate|ragnarok) (hits|blasts|explodes)/i) && !logHTML.match(/(hits you |crits you )/i)) {
-						_round.dDealtSp[logHTML.match(/blasts/i) ? 1 : 0] += o;
-						_round.sHits[logHTML.match(/blasts/i) ? 1 : 0]++;
-						_round.forbidSpells[1]++;
-						_round.forbidSpells[2] += o
+						hvStat.roundSession.dDealtSp[logHTML.match(/blasts/i) ? 1 : 0] += o;
+						hvStat.roundSession.sHits[logHTML.match(/blasts/i) ? 1 : 0]++;
+						hvStat.roundSession.forbidSpells[1]++;
+						hvStat.roundSession.forbidSpells[2] += o
 					}
 				}
 			} else if (logHTML.match(/(hits you )|(crits you )/i)) {
-				_round.mAttempts++;
-				_round.mHits[logHTML.match(/crits/i) ? 1 : 0]++;
-				_round.dTaken[logHTML.match(/crits/i) ? 1 : 0] += o;
+				hvStat.roundSession.mAttempts++;
+				hvStat.roundSession.mHits[logHTML.match(/crits/i) ? 1 : 0]++;
+				hvStat.roundSession.dTaken[logHTML.match(/crits/i) ? 1 : 0] += o;
 				if (logHTMLOfPreviousRow.match(/ uses | casts /i)) {
-					_round.pskills[1]++;
-					_round.pskills[2] += o;
+					hvStat.roundSession.pskills[1]++;
+					hvStat.roundSession.pskills[2] += o;
 					if (logHTMLOfPreviousRow.match(/ casts /i)) {
-						_round.pskills[5]++;
-						_round.pskills[6] += o;
+						hvStat.roundSession.pskills[5]++;
+						hvStat.roundSession.pskills[6] += o;
 					} else {
-						_round.pskills[3]++;
-						_round.pskills[4] += o;
+						hvStat.roundSession.pskills[3]++;
+						hvStat.roundSession.pskills[4] += o;
 					}
 					if (hvStat.settings.isRememberSkillsTypes) {
 						var j = HVStat.monsters.length;
@@ -3679,108 +3770,108 @@ function collectRoundInfo() {
 					}
 				}
 			} else if (logHTML.match(/you (dodge|evade|block|parry|resist)|(misses.*?against you)/i)) {
-				_round.mAttempts++;
+				hvStat.roundSession.mAttempts++;
 				if (logHTML.match(/dodge|(misses.*?against you)/)) {
-					_round.pDodges++;
+					hvStat.roundSession.pDodges++;
 				} else if (logHTML.match(/evade/)) {
-					_round.pEvades++;
+					hvStat.roundSession.pEvades++;
 				} else if (logHTML.match(/block/)) {
-					_round.pBlocks++;
+					hvStat.roundSession.pBlocks++;
 				} else if (logHTML.match(/parry/)) {
-					_round.pParries++;
+					hvStat.roundSession.pParries++;
 				} else if (logHTML.match(/resist/)) {
-					_round.pResists++;
+					hvStat.roundSession.pResists++;
 				}
 			} else if (logHTML.match(/casts?/)) {
 				if (logHTML.match(/casts/)) {
-					_round.mAttempts++;
-					_round.mSpells++;
+					hvStat.roundSession.mAttempts++;
+					hvStat.roundSession.mSpells++;
 				} else if (logHTML.match(/you cast/i)) {
 					if (logHTML.match(/(poison|slow|weaken|sleep|confuse|imperil|blind|silence|nerf|x.nerf|magnet|lifestream)/i)) {
-						_round.depSpells[0]++;
-						_round.sAttempts++
+						hvStat.roundSession.depSpells[0]++;
+						hvStat.roundSession.sAttempts++
 					} else if (logHTML.match(/(condemn|purge|smite|banish)/i)) {
-						_round.divineSpells[0]++;
-						_round.sAttempts++;
+						hvStat.roundSession.divineSpells[0]++;
+						hvStat.roundSession.sAttempts++;
 						if (joinedLogStringOfCurrentTurn.match(/Your spell misses its mark/i)) {
-							_round.divineSpells[3] += joinedLogStringOfCurrentTurn.match(/Your spell misses its mark/ig).length;
+							hvStat.roundSession.divineSpells[3] += joinedLogStringOfCurrentTurn.match(/Your spell misses its mark/ig).length;
 						}
 					} else if (logHTML.match(/(soul reaper|soul harvest|soul fire|soul burst|corruption|pestilence|disintegrate|ragnarok)/i)) {
-						_round.forbidSpells[0]++;
-						_round.sAttempts++
+						hvStat.roundSession.forbidSpells[0]++;
+						hvStat.roundSession.sAttempts++
 						if (joinedLogStringOfCurrentTurn.match(/Your spell misses its mark/i)) {
-							_round.forbidSpells[3] += joinedLogStringOfCurrentTurn.match(/Your spell misses its mark/ig).length;
+							hvStat.roundSession.forbidSpells[3] += joinedLogStringOfCurrentTurn.match(/Your spell misses its mark/ig).length;
 						}
 					} else if (logHTML.match(/(fireball|inferno|flare|meteor|nova|flames of loki|icestrike|snowstorm|freeze|blizzard|cryostasis|fimbulvetr|lighting|thunderstorm|ball lighting|chain lighting|shockblast|wrath of thor|windblast|cyclone|gale|hurricane|downburst|storms of njord)/i)) {
-						_round.elemSpells[0]++;
-						_round.sAttempts++;
+						hvStat.roundSession.elemSpells[0]++;
+						hvStat.roundSession.sAttempts++;
 						if (joinedLogStringOfCurrentTurn.match(/Your spell misses its mark/i)) {
-							_round.elemSpells[3] += joinedLogStringOfCurrentTurn.match(/Your spell misses its mark/ig).length;
+							hvStat.roundSession.elemSpells[3] += joinedLogStringOfCurrentTurn.match(/Your spell misses its mark/ig).length;
 						}
 					} else if (logHTML.match(/(spark of life|absorb|protection|shadow veil|haste|flame spikes|frost spikes|lightning spikes|storm spikes|arcane focus|heartseeker)/i)) {
-						_round.supportSpells++
+						hvStat.roundSession.supportSpells++
 						if (logHTML.match(/absorb/i)) {
-							_round.absArry[0]++
+							hvStat.roundSession.absArry[0]++
 						}
 					} else if (logHTML.match(/(cure|regen)/i)) {
-						_round.curativeSpells++
+						hvStat.roundSession.curativeSpells++
 						if (logHTML.match(/cure/i)) {
 							if (joinedLogStringOfCurrentTurn.match(/You are healed for (\d+) Health Points/)) {
 								d = parseFloat(RegExp.$1);
 							}
-							_round.cureTotals[logHTML.match(/cure\./i) ? 0 : logHTML.match(/cure ii\./i) ? 1 : 2] += d;
-							_round.cureCounts[logHTML.match(/cure\./i) ? 0 : logHTML.match(/cure ii\./i) ? 1 : 2]++
+							hvStat.roundSession.cureTotals[logHTML.match(/cure\./i) ? 0 : logHTML.match(/cure ii\./i) ? 1 : 2] += d;
+							hvStat.roundSession.cureCounts[logHTML.match(/cure\./i) ? 0 : logHTML.match(/cure ii\./i) ? 1 : 2]++
 						}
 					}
 				}
 			} else if (logHTML.match(/The spell is absorbed. You gain (\d+) Magic Points/)) {
-				_round.absArry[1]++;
-				_round.absArry[2] += parseInt(RegExp.$1);
+				hvStat.roundSession.absArry[1]++;
+				hvStat.roundSession.absArry[2] += parseInt(RegExp.$1);
 			} else if (logHTML.match(/Your attack misses its mark/)) {
-				_round.aAttempts++;
+				hvStat.roundSession.aAttempts++;
 			} else if (logHTML.match(/Your spell misses its mark/)) {
-				_round.sResists++;
+				hvStat.roundSession.sResists++;
 			} else if (logHTML.match(/gains? the effect/i)) {
 				if (logHTML.match(/gain the effect Overwhelming Strikes/i)) {
-					_round.overStrikes++;
+					hvStat.roundSession.overStrikes++;
 				} else if (logHTML.match(/gains the effect Coalesced Mana/i)) {
-					_round.coalesce++;
+					hvStat.roundSession.coalesce++;
 				} else if (logHTML.match(/gains the effect Ether Theft/i)) {
-					_round.eTheft++;
+					hvStat.roundSession.eTheft++;
 				} else if (logHTML.match(/gain the effect Channeling/i)) {
-					_round.channel++;
+					hvStat.roundSession.channel++;
 				} else {
 					if (logHTML.match(/gains the effect (searing skin|freezing limbs|deep burns|turbulent air|breached defence|blunted attack|burning soul|rippened soul)/i)) {
-						_round.elemEffects[0]++;
+						hvStat.roundSession.elemEffects[0]++;
 					} else if (logHTML.match(/gains the effect (spreading poison|slowed|weakened|sleep|confused|imperiled|blinded|silenced|nerfed|magically snared|lifestream)/i)) {
-						_round.depSpells[1]++;
+						hvStat.roundSession.depSpells[1]++;
 					} else if (logHTML.match(/gains the effect stunned/i)) {
-						_round.weaponprocs[0]++;
+						hvStat.roundSession.weaponprocs[0]++;
 						if (logHTMLOfPreviousRow.match(/You counter/i)) {
-							_round.weaponprocs[0]--;
-							_round.weaponprocs[7]++
+							hvStat.roundSession.weaponprocs[0]--;
+							hvStat.roundSession.weaponprocs[7]++
 						}
 					} else if (logHTML.match(/gains the effect penetrated armor/i)) {
-						_round.weaponprocs[1]++;
+						hvStat.roundSession.weaponprocs[1]++;
 					} else if (logHTML.match(/gains the effect bleeding wound/i)) {
-						_round.weaponprocs[2]++;
+						hvStat.roundSession.weaponprocs[2]++;
 					} else if (logHTML.match(/gains the effect ether theft/i)) {
-						_round.weaponprocs[3]++;
+						hvStat.roundSession.weaponprocs[3]++;
 					}
 				}
 			} else if (logHTML.match(/uses?/i)) {
 				if (logHTML.match(/uses/i)) {
-					_round.pskills[0]++;
+					hvStat.roundSession.pskills[0]++;
 				} else if (logHTML.match(/use Mystic Gem/i)) {
-					_round.channel--;
+					hvStat.roundSession.channel--;
 				}
 			} else if (logHTML.match(/you drain/i)) {
 				if (logHTML.match(/you drain \d+(\.)?\d? hp from/i)) {
-					_round.weaponprocs[4]++;
+					hvStat.roundSession.weaponprocs[4]++;
 				} else if (logHTML.match(/you drain \d+(\.)?\d? mp from/i)) {
-					_round.weaponprocs[5]++;
+					hvStat.roundSession.weaponprocs[5]++;
 				} else if (logHTML.match(/you drain \d+(\.)?\d? sp from/i)) {
-					_round.weaponprocs[6]++;
+					hvStat.roundSession.weaponprocs[6]++;
 				}
 			}
 		}
@@ -3794,7 +3885,7 @@ function collectRoundInfo() {
 			if (hvStat.settings.isTrackItems) {
 				_drops.eqDrop++;
 				_drops.eqArray.push(q);
-				_drops.eqDropbyBT[_round.battleType]++;
+				_drops.eqDropbyBT[hvStat.roundSession.battleType]++;
 			}
 		} else if (logHTML.match(/dropped.*?color:.*?blue.*?\[.*?\]/ig)) {
 			_artifacts++;
@@ -3802,7 +3893,7 @@ function collectRoundInfo() {
 			_lastArtName = itemToAdd;
 			if (hvStat.settings.isTrackItems) {
 				_drops.artDrop++;
-				_drops.artDropbyBT[_round.battleType]++;
+				_drops.artDropbyBT[hvStat.roundSession.battleType]++;
 				n = true;
 				var j = _drops.artArry.length;
 				while (j--) {
@@ -3825,20 +3916,20 @@ function collectRoundInfo() {
 					t = 1;
 				}
 				itemToAdd = itemToAdd.replace(/(\d){1,2}.?x?.?/, "");
-				_drops.crysDropbyBT[_round.battleType]++;
+				_drops.crysDropbyBT[hvStat.roundSession.battleType]++;
 			}
 			var j = _drops.itemArry.length;
 			while (j--) {
 				if (itemToAdd === _drops.itemArry[j]) {
 					_drops.itemQtyArry[j] += t;
 					_drops.itemDrop++;
-					_drops.itemDropbyBT[_round.battleType]++;
+					_drops.itemDropbyBT[hvStat.roundSession.battleType]++;
 					break;
 				}
 			}
 		} else if (hvStat.settings.isTrackItems && logHTML.match(/dropped.*?color:.*?\#461B7E.*?\[.*?\]/ig)) {
 			_drops.dropChances--;
-			_drops.dropChancesbyBT[_round.battleType]--;
+			_drops.dropChancesbyBT[hvStat.roundSession.battleType]--;
 		}
 		if (logHTML.match(/(clear bonus).*?color:.*?red.*?\[.*?\]/ig)) {
 			_equips++;
@@ -3902,25 +3993,25 @@ function collectRoundInfo() {
 		}
 	}
 	if (a > 1) {
-		_round.aDomino[0]++;
-		_round.aDomino[1] += a;
-		_round.aDomino[a]++
+		hvStat.roundSession.aDomino[0]++;
+		hvStat.roundSession.aDomino[1] += a;
+		hvStat.roundSession.aDomino[a]++
 	}
 	if (ac > 1) {
-		_round.aCounters[ac]++;
+		hvStat.roundSession.aCounters[ac]++;
 	}
-	if (_round.lastTurn < turnLog.lastTurn) {
-		_round.lastTurn = turnLog.lastTurn;
+	if (hvStat.roundSession.lastTurn < turnLog.lastTurn) {
+		hvStat.roundSession.lastTurn = turnLog.lastTurn;
 	}
 	RoundSave();
 }
 
 function RoundSave() {
-	_round.monsters = [];
-	HVStat.monsters.forEach(function (element, index, array) {
-		_round.monsters[index] = element.valueObject;
-	});
-	_round.save();
+	hvStat.roundSession.monsters = [];
+	for (var i = 0; i < HVStat.monsters.length; i++) {
+		hvStat.roundSession.monsters[i] = HVStat.monsters[i].valueObject;
+	}
+	hvStat.storage.roundSession.save();
 }
 
 function saveStats() {
@@ -3945,13 +4036,13 @@ function saveStats() {
 	if (_overview.startTime === 0) {
 		_overview.startTime = a;
 	}
-	if (_round.battleType === HOURLY) {
+	if (hvStat.roundSession.battleType === HOURLY) {
 		_overview.lastHourlyTime = a;
 	}
 	_overview.exp += d;
 	_overview.credits += c;
-	_overview.expbyBT[_round.battleType] += d;
-	_overview.creditsbyBT[_round.battleType] += c;
+	_overview.expbyBT[hvStat.roundSession.battleType] += d;
+	_overview.creditsbyBT[hvStat.roundSession.battleType] += c;
 	if (_equips > 0) {
 		_overview.lastEquipTime = a;
 		_overview.lastEquipName = _lastEquipName;
@@ -3963,116 +4054,116 @@ function saveStats() {
 		_overview.artifacts += _artifacts;
 	}
 	if (d > 0) {
-		_overview.roundArray[_round.battleType]++;
-		_drops.dropChancesbyBT[_round.battleType] += _round.dropChances;
-		_drops.dropChances += _round.dropChances;
+		_overview.roundArray[hvStat.roundSession.battleType]++;
+		_drops.dropChancesbyBT[hvStat.roundSession.battleType] += hvStat.roundSession.dropChances;
+		_drops.dropChances += hvStat.roundSession.dropChances;
 	}
 	if (hvStat.settings.isTrackStats) {
-		_stats.kills += _round.kills;
-		_stats.aAttempts += _round.aAttempts;
-		_stats.aHits[0] += _round.aHits[0];
-		_stats.aHits[1] += _round.aHits[1];
-		_stats.aOffhands[0] += _round.aOffhands[0];
-		_stats.aOffhands[1] += _round.aOffhands[1];
-		_stats.aOffhands[2] += _round.aOffhands[2];
-		_stats.aOffhands[3] += _round.aOffhands[3];
-		_stats.sAttempts += _round.sAttempts;
-		_stats.sHits[0] += _round.sHits[0];
-		_stats.sHits[1] += _round.sHits[1];
-		_stats.mAttempts += _round.mAttempts;
-		_stats.mHits[0] += _round.mHits[0];
-		_stats.mHits[1] += _round.mHits[1];
-		_stats.pDodges += _round.pDodges;
-		_stats.pEvades += _round.pEvades;
-		_stats.pParries += _round.pParries;
-		_stats.pBlocks += _round.pBlocks;
-		_stats.dDealt[0] += _round.dDealt[0];
-		_stats.dDealt[1] += _round.dDealt[1];
-		_stats.dDealt[2] += _round.dDealt[2];
-		_stats.dTaken[0] += _round.dTaken[0];
-		_stats.dTaken[1] += _round.dTaken[1];
-		_stats.dDealtSp[0] += _round.dDealtSp[0];
-		_stats.dDealtSp[1] += _round.dDealtSp[1];
+		_stats.kills += hvStat.roundSession.kills;
+		_stats.aAttempts += hvStat.roundSession.aAttempts;
+		_stats.aHits[0] += hvStat.roundSession.aHits[0];
+		_stats.aHits[1] += hvStat.roundSession.aHits[1];
+		_stats.aOffhands[0] += hvStat.roundSession.aOffhands[0];
+		_stats.aOffhands[1] += hvStat.roundSession.aOffhands[1];
+		_stats.aOffhands[2] += hvStat.roundSession.aOffhands[2];
+		_stats.aOffhands[3] += hvStat.roundSession.aOffhands[3];
+		_stats.sAttempts += hvStat.roundSession.sAttempts;
+		_stats.sHits[0] += hvStat.roundSession.sHits[0];
+		_stats.sHits[1] += hvStat.roundSession.sHits[1];
+		_stats.mAttempts += hvStat.roundSession.mAttempts;
+		_stats.mHits[0] += hvStat.roundSession.mHits[0];
+		_stats.mHits[1] += hvStat.roundSession.mHits[1];
+		_stats.pDodges += hvStat.roundSession.pDodges;
+		_stats.pEvades += hvStat.roundSession.pEvades;
+		_stats.pParries += hvStat.roundSession.pParries;
+		_stats.pBlocks += hvStat.roundSession.pBlocks;
+		_stats.dDealt[0] += hvStat.roundSession.dDealt[0];
+		_stats.dDealt[1] += hvStat.roundSession.dDealt[1];
+		_stats.dDealt[2] += hvStat.roundSession.dDealt[2];
+		_stats.dTaken[0] += hvStat.roundSession.dTaken[0];
+		_stats.dTaken[1] += hvStat.roundSession.dTaken[1];
+		_stats.dDealtSp[0] += hvStat.roundSession.dDealtSp[0];
+		_stats.dDealtSp[1] += hvStat.roundSession.dDealtSp[1];
 		_stats.rounds += 1;
-		_stats.absArry[0] += _round.absArry[0];
-		_stats.absArry[1] += _round.absArry[1];
-		_stats.absArry[2] += _round.absArry[2];
-		_stats.coalesce += _round.coalesce;
-		_stats.eTheft += _round.eTheft;
-		_stats.channel += _round.channel;
-		_stats.aDomino[0] += _round.aDomino[0];
-		_stats.aDomino[1] += _round.aDomino[1];
-		_stats.aDomino[2] += _round.aDomino[2];
-		_stats.aDomino[3] += _round.aDomino[3];
-		_stats.aDomino[4] += _round.aDomino[4];
-		_stats.aDomino[5] += _round.aDomino[5];
-		_stats.aDomino[6] += _round.aDomino[6];
-		_stats.aDomino[7] += _round.aDomino[7];
-		_stats.aDomino[8] += _round.aDomino[8];
-		_stats.aDomino[9] += _round.aDomino[9];
-		_stats.overStrikes += _round.overStrikes;
-		_stats.aCounters[0] += _round.aCounters[0];
-		_stats.aCounters[1] += _round.aCounters[1];
-		_stats.aCounters[2] += _round.aCounters[2];
-		_stats.aCounters[3] += _round.aCounters[3];
-		_stats.pResists += _round.pResists;
-		_stats.mSpells += _round.mSpells;
-		_stats.sResists += _round.sResists;
-		_stats.cureTotals[0] += _round.cureTotals[0];
-		_stats.cureTotals[1] += _round.cureTotals[1];
-		_stats.cureTotals[2] += _round.cureTotals[2];
-		_stats.cureCounts[0] += _round.cureCounts[0];
-		_stats.cureCounts[1] += _round.cureCounts[1];
-		_stats.cureCounts[2] += _round.cureCounts[2];
-		_stats.elemEffects[0] += _round.elemEffects[0];
-		_stats.elemEffects[1] += _round.elemEffects[1];
-		_stats.elemEffects[2] += _round.elemEffects[2];
-		_stats.effectPoison[0] += _round.effectPoison[0];
-		_stats.effectPoison[1] += _round.effectPoison[1];
-		_stats.elemSpells[0] += _round.elemSpells[0];
-		_stats.elemSpells[1] += _round.elemSpells[1];
-		_stats.elemSpells[2] += _round.elemSpells[2];
-		_stats.elemSpells[3] += _round.elemSpells[3];
-		_stats.divineSpells[0] += _round.divineSpells[0];
-		_stats.divineSpells[1] += _round.divineSpells[1];
-		_stats.divineSpells[2] += _round.divineSpells[2];
-		_stats.divineSpells[3] += _round.divineSpells[3];
-		_stats.forbidSpells[0] += _round.forbidSpells[0];
-		_stats.forbidSpells[1] += _round.forbidSpells[1];
-		_stats.forbidSpells[2] += _round.forbidSpells[2];
-		_stats.forbidSpells[3] += _round.forbidSpells[3];
-		_stats.depSpells[0] += _round.depSpells[0];
-		_stats.depSpells[1] += _round.depSpells[1];
-		_stats.supportSpells += _round.supportSpells;
-		_stats.curativeSpells += _round.curativeSpells;
-		_stats.elemGain += _round.elemGain;
-		_stats.divineGain += _round.divineGain;
-		_stats.forbidGain += _round.forbidGain;
-		_stats.depGain += _round.depGain;
-		_stats.supportGain += _round.supportGain;
-		_stats.curativeGain += _round.curativeGain;
-		_stats.weapProfGain[0] += _round.weapProfGain[0];
-		_stats.weapProfGain[1] += _round.weapProfGain[1];
-		_stats.weapProfGain[2] += _round.weapProfGain[2];
-		_stats.weapProfGain[3] += _round.weapProfGain[3];
-		_stats.armorProfGain[0] += _round.armorProfGain[0];
-		_stats.armorProfGain[1] += _round.armorProfGain[1];
-		_stats.armorProfGain[2] += _round.armorProfGain[2];
-		_stats.weaponprocs[0] += _round.weaponprocs[0];
-		_stats.weaponprocs[1] += _round.weaponprocs[1];
-		_stats.weaponprocs[2] += _round.weaponprocs[2];
-		_stats.weaponprocs[3] += _round.weaponprocs[3];
-		_stats.weaponprocs[4] += _round.weaponprocs[4];
-		_stats.weaponprocs[5] += _round.weaponprocs[5];
-		_stats.weaponprocs[6] += _round.weaponprocs[6];
-		_stats.weaponprocs[7] += _round.weaponprocs[7];
-		_stats.pskills[0] += _round.pskills[0];
-		_stats.pskills[1] += _round.pskills[1];
-		_stats.pskills[2] += _round.pskills[2];
-		_stats.pskills[3] += _round.pskills[3];
-		_stats.pskills[4] += _round.pskills[4];
-		_stats.pskills[5] += _round.pskills[5];
-		_stats.pskills[6] += _round.pskills[6];
+		_stats.absArry[0] += hvStat.roundSession.absArry[0];
+		_stats.absArry[1] += hvStat.roundSession.absArry[1];
+		_stats.absArry[2] += hvStat.roundSession.absArry[2];
+		_stats.coalesce += hvStat.roundSession.coalesce;
+		_stats.eTheft += hvStat.roundSession.eTheft;
+		_stats.channel += hvStat.roundSession.channel;
+		_stats.aDomino[0] += hvStat.roundSession.aDomino[0];
+		_stats.aDomino[1] += hvStat.roundSession.aDomino[1];
+		_stats.aDomino[2] += hvStat.roundSession.aDomino[2];
+		_stats.aDomino[3] += hvStat.roundSession.aDomino[3];
+		_stats.aDomino[4] += hvStat.roundSession.aDomino[4];
+		_stats.aDomino[5] += hvStat.roundSession.aDomino[5];
+		_stats.aDomino[6] += hvStat.roundSession.aDomino[6];
+		_stats.aDomino[7] += hvStat.roundSession.aDomino[7];
+		_stats.aDomino[8] += hvStat.roundSession.aDomino[8];
+		_stats.aDomino[9] += hvStat.roundSession.aDomino[9];
+		_stats.overStrikes += hvStat.roundSession.overStrikes;
+		_stats.aCounters[0] += hvStat.roundSession.aCounters[0];
+		_stats.aCounters[1] += hvStat.roundSession.aCounters[1];
+		_stats.aCounters[2] += hvStat.roundSession.aCounters[2];
+		_stats.aCounters[3] += hvStat.roundSession.aCounters[3];
+		_stats.pResists += hvStat.roundSession.pResists;
+		_stats.mSpells += hvStat.roundSession.mSpells;
+		_stats.sResists += hvStat.roundSession.sResists;
+		_stats.cureTotals[0] += hvStat.roundSession.cureTotals[0];
+		_stats.cureTotals[1] += hvStat.roundSession.cureTotals[1];
+		_stats.cureTotals[2] += hvStat.roundSession.cureTotals[2];
+		_stats.cureCounts[0] += hvStat.roundSession.cureCounts[0];
+		_stats.cureCounts[1] += hvStat.roundSession.cureCounts[1];
+		_stats.cureCounts[2] += hvStat.roundSession.cureCounts[2];
+		_stats.elemEffects[0] += hvStat.roundSession.elemEffects[0];
+		_stats.elemEffects[1] += hvStat.roundSession.elemEffects[1];
+		_stats.elemEffects[2] += hvStat.roundSession.elemEffects[2];
+		_stats.effectPoison[0] += hvStat.roundSession.effectPoison[0];
+		_stats.effectPoison[1] += hvStat.roundSession.effectPoison[1];
+		_stats.elemSpells[0] += hvStat.roundSession.elemSpells[0];
+		_stats.elemSpells[1] += hvStat.roundSession.elemSpells[1];
+		_stats.elemSpells[2] += hvStat.roundSession.elemSpells[2];
+		_stats.elemSpells[3] += hvStat.roundSession.elemSpells[3];
+		_stats.divineSpells[0] += hvStat.roundSession.divineSpells[0];
+		_stats.divineSpells[1] += hvStat.roundSession.divineSpells[1];
+		_stats.divineSpells[2] += hvStat.roundSession.divineSpells[2];
+		_stats.divineSpells[3] += hvStat.roundSession.divineSpells[3];
+		_stats.forbidSpells[0] += hvStat.roundSession.forbidSpells[0];
+		_stats.forbidSpells[1] += hvStat.roundSession.forbidSpells[1];
+		_stats.forbidSpells[2] += hvStat.roundSession.forbidSpells[2];
+		_stats.forbidSpells[3] += hvStat.roundSession.forbidSpells[3];
+		_stats.depSpells[0] += hvStat.roundSession.depSpells[0];
+		_stats.depSpells[1] += hvStat.roundSession.depSpells[1];
+		_stats.supportSpells += hvStat.roundSession.supportSpells;
+		_stats.curativeSpells += hvStat.roundSession.curativeSpells;
+		_stats.elemGain += hvStat.roundSession.elemGain;
+		_stats.divineGain += hvStat.roundSession.divineGain;
+		_stats.forbidGain += hvStat.roundSession.forbidGain;
+		_stats.depGain += hvStat.roundSession.depGain;
+		_stats.supportGain += hvStat.roundSession.supportGain;
+		_stats.curativeGain += hvStat.roundSession.curativeGain;
+		_stats.weapProfGain[0] += hvStat.roundSession.weapProfGain[0];
+		_stats.weapProfGain[1] += hvStat.roundSession.weapProfGain[1];
+		_stats.weapProfGain[2] += hvStat.roundSession.weapProfGain[2];
+		_stats.weapProfGain[3] += hvStat.roundSession.weapProfGain[3];
+		_stats.armorProfGain[0] += hvStat.roundSession.armorProfGain[0];
+		_stats.armorProfGain[1] += hvStat.roundSession.armorProfGain[1];
+		_stats.armorProfGain[2] += hvStat.roundSession.armorProfGain[2];
+		_stats.weaponprocs[0] += hvStat.roundSession.weaponprocs[0];
+		_stats.weaponprocs[1] += hvStat.roundSession.weaponprocs[1];
+		_stats.weaponprocs[2] += hvStat.roundSession.weaponprocs[2];
+		_stats.weaponprocs[3] += hvStat.roundSession.weaponprocs[3];
+		_stats.weaponprocs[4] += hvStat.roundSession.weaponprocs[4];
+		_stats.weaponprocs[5] += hvStat.roundSession.weaponprocs[5];
+		_stats.weaponprocs[6] += hvStat.roundSession.weaponprocs[6];
+		_stats.weaponprocs[7] += hvStat.roundSession.weaponprocs[7];
+		_stats.pskills[0] += hvStat.roundSession.pskills[0];
+		_stats.pskills[1] += hvStat.roundSession.pskills[1];
+		_stats.pskills[2] += hvStat.roundSession.pskills[2];
+		_stats.pskills[3] += hvStat.roundSession.pskills[3];
+		_stats.pskills[4] += hvStat.roundSession.pskills[4];
+		_stats.pskills[5] += hvStat.roundSession.pskills[5];
+		_stats.pskills[6] += hvStat.roundSession.pskills[6];
 		if (_stats.datestart === 0) _stats.datestart = (new Date()).getTime();
 	}
 	_rewards.tokenDrops[0] += _tokenDrops[0];
@@ -4089,62 +4180,62 @@ function getBattleEndStatsHtml() {
 			+ " (" + String(hvStat.util.percentRatio(numerator, denominator, digits)) + "%)";
 	}
 
-	var f = _round.sHits[0] + _round.sHits[1] + _round.depSpells[1] + _round.sResists;
-	var e = _round.sHits[0] + _round.sHits[1] + _round.depSpells[1];
-	var d = _round.aHits[0] + _round.aHits[1];
-	var c = _round.sHits[0] + _round.sHits[1];
-	var b = _round.mHits[0] + _round.mHits[1];
-	var ab = _round.aOffhands[0] + _round.aOffhands[2];
-	var a = "<b>Accuracy</b>: " + formatProbability(d, _round.aAttempts, 2) + ", "
-		+ "<b>Crits</b>: " + formatProbability(_round.aHits[1], d, 2) + ", "
+	var f = hvStat.roundSession.sHits[0] + hvStat.roundSession.sHits[1] + hvStat.roundSession.depSpells[1] + hvStat.roundSession.sResists;
+	var e = hvStat.roundSession.sHits[0] + hvStat.roundSession.sHits[1] + hvStat.roundSession.depSpells[1];
+	var d = hvStat.roundSession.aHits[0] + hvStat.roundSession.aHits[1];
+	var c = hvStat.roundSession.sHits[0] + hvStat.roundSession.sHits[1];
+	var b = hvStat.roundSession.mHits[0] + hvStat.roundSession.mHits[1];
+	var ab = hvStat.roundSession.aOffhands[0] + hvStat.roundSession.aOffhands[2];
+	var a = "<b>Accuracy</b>: " + formatProbability(d, hvStat.roundSession.aAttempts, 2) + ", "
+		+ "<b>Crits</b>: " + formatProbability(hvStat.roundSession.aHits[1], d, 2) + ", "
 		+ "<b>Offhand</b>: " + formatProbability(ab, d, 2) + ", "
-		+ "<b>Domino</b>: " + formatProbability(_round.aDomino[0], d, 2) + ", "
-		+ "<b>OverStrikes</b>: " + formatProbability(_round.overStrikes, d, 2) + ", "
-		+ "<b>Coalesce</b>: " + formatProbability(_round.coalesce, e, 2) + ", "
+		+ "<b>Domino</b>: " + formatProbability(hvStat.roundSession.aDomino[0], d, 2) + ", "
+		+ "<b>OverStrikes</b>: " + formatProbability(hvStat.roundSession.overStrikes, d, 2) + ", "
+		+ "<b>Coalesce</b>: " + formatProbability(hvStat.roundSession.coalesce, e, 2) + ", "
 		+ "<b>M. Accuracy</b>: " + formatProbability(e, f, 2) + ", "
-		+ "<b>Spell Crits</b>: " + formatProbability(_round.sHits[1], c, 2) + ", "
-		+ "<b>Avg hit dmg</b>: " + hvStat.util.ratio(_round.dDealt[0], _round.aHits[0]).toFixed(2) + "|" + hvStat.util.ratio(_round.dDealtSp[0], _round.sHits[0]).toFixed(2) + ", "
-		+ "<b>Avg crit dmg</b>: " + hvStat.util.ratio(_round.dDealt[1], _round.aHits[1]).toFixed(2) + "|" + hvStat.util.ratio(_round.dDealtSp[1], _round.sHits[1]).toFixed(2) + ", "
-		+ "<b>Avg dmg</b>: " + hvStat.util.ratio(_round.dDealt[0] + _round.dDealt[1], d).toFixed(2) + "|" + hvStat.util.ratio(_round.dDealtSp[0] + _round.dDealtSp[1], c).toFixed(2)
+		+ "<b>Spell Crits</b>: " + formatProbability(hvStat.roundSession.sHits[1], c, 2) + ", "
+		+ "<b>Avg hit dmg</b>: " + hvStat.util.ratio(hvStat.roundSession.dDealt[0], hvStat.roundSession.aHits[0]).toFixed(2) + "|" + hvStat.util.ratio(hvStat.roundSession.dDealtSp[0], hvStat.roundSession.sHits[0]).toFixed(2) + ", "
+		+ "<b>Avg crit dmg</b>: " + hvStat.util.ratio(hvStat.roundSession.dDealt[1], hvStat.roundSession.aHits[1]).toFixed(2) + "|" + hvStat.util.ratio(hvStat.roundSession.dDealtSp[1], hvStat.roundSession.sHits[1]).toFixed(2) + ", "
+		+ "<b>Avg dmg</b>: " + hvStat.util.ratio(hvStat.roundSession.dDealt[0] + hvStat.roundSession.dDealt[1], d).toFixed(2) + "|" + hvStat.util.ratio(hvStat.roundSession.dDealtSp[0] + hvStat.roundSession.dDealtSp[1], c).toFixed(2)
 		+ "<hr style='height:1px;border:0;background-color:#333333;color:#333333' />"
-		+ "<b>Hits taken</b>: " + formatProbability(b, _round.mAttempts, 2) + ", "
-		+ "<b>Missed</b>: " + formatProbability(_round.pDodges, _round.mAttempts, 2) + ", "
-		+ "<b>Evaded</b>: " + formatProbability(_round.pEvades, _round.mAttempts, 2) + ", "
-		+ "<b>Blocked</b>: " + formatProbability(_round.pBlocks, _round.mAttempts, 2) + ", "
-		+ "<b>Parried</b>: " + formatProbability(_round.pParries, _round.mAttempts, 2) + ", "
-		+ "<b>Resisted</b>: " + formatProbability(_round.pResists, _round.mAttempts, 2) + ", "
-		+ "<b>Crits taken</b>: " + formatProbability(_round.mHits[1], b, 2) + ", "
-		+ "<b>Total dmg taken</b>: " + (_round.dTaken[0] + _round.dTaken[1]) + ", "
-		+ "<b>Avg dmg taken</b>: " + hvStat.util.ratio(_round.dTaken[0] + _round.dTaken[1], b).toFixed(2);
+		+ "<b>Hits taken</b>: " + formatProbability(b, hvStat.roundSession.mAttempts, 2) + ", "
+		+ "<b>Missed</b>: " + formatProbability(hvStat.roundSession.pDodges, hvStat.roundSession.mAttempts, 2) + ", "
+		+ "<b>Evaded</b>: " + formatProbability(hvStat.roundSession.pEvades, hvStat.roundSession.mAttempts, 2) + ", "
+		+ "<b>Blocked</b>: " + formatProbability(hvStat.roundSession.pBlocks, hvStat.roundSession.mAttempts, 2) + ", "
+		+ "<b>Parried</b>: " + formatProbability(hvStat.roundSession.pParries, hvStat.roundSession.mAttempts, 2) + ", "
+		+ "<b>Resisted</b>: " + formatProbability(hvStat.roundSession.pResists, hvStat.roundSession.mAttempts, 2) + ", "
+		+ "<b>Crits taken</b>: " + formatProbability(hvStat.roundSession.mHits[1], b, 2) + ", "
+		+ "<b>Total dmg taken</b>: " + (hvStat.roundSession.dTaken[0] + hvStat.roundSession.dTaken[1]) + ", "
+		+ "<b>Avg dmg taken</b>: " + hvStat.util.ratio(hvStat.roundSession.dTaken[0] + hvStat.roundSession.dTaken[1], b).toFixed(2);
 	if (hvStat.settings.isShowEndProfs && (hvStat.settings.isShowEndProfsMagic || hvStat.settings.isShowEndProfsArmor || hvStat.settings.isShowEndProfsWeapon)) { //isShowEndProfs added by Ilirith
 		if (hvStat.settings.isShowEndProfsMagic) {
 			a += "<hr style='height:1px;border:0;background-color:#333333;color:#333333' />"
-				+ "<b>Curative Spells</b>: " + _round.curativeSpells
-				+ ", <b>Support Spells</b>: " + _round.supportSpells
-				+ ", <b>Deprecating Spells</b>: " + _round.depSpells[1]
-				+ ", <b>Divine Spells</b>: " + _round.divineSpells[1]
-				+ ", <b>Forbidden Spells</b>: " + _round.forbidSpells[1]
-				+ ", <b>Elemental Spells</b>: " + _round.elemSpells[1]
+				+ "<b>Curative Spells</b>: " + hvStat.roundSession.curativeSpells
+				+ ", <b>Support Spells</b>: " + hvStat.roundSession.supportSpells
+				+ ", <b>Deprecating Spells</b>: " + hvStat.roundSession.depSpells[1]
+				+ ", <b>Divine Spells</b>: " + hvStat.roundSession.divineSpells[1]
+				+ ", <b>Forbidden Spells</b>: " + hvStat.roundSession.forbidSpells[1]
+				+ ", <b>Elemental Spells</b>: " + hvStat.roundSession.elemSpells[1]
 				+ "<hr style='height:1px;border:0;background-color:#333333;color:#333333' />"
-				+ "<b>Curative Gain</b>: " + _round.curativeGain.toFixed(2)
-				+ ", <b>SupportGain</b>: " + _round.supportGain.toFixed(2)
-				+ ", <b>Deprecating Gain</b>: " + _round.depGain.toFixed(2)
-				+ ", <b>Divine Gain</b>: " + _round.divineGain.toFixed(2)
-				+ ", <b>Forbidden Gain</b>: " + _round.forbidGain.toFixed(2)
-				+ ", <b>Elemental Gain</b>: " + _round.elemGain.toFixed(2);
+				+ "<b>Curative Gain</b>: " + hvStat.roundSession.curativeGain.toFixed(2)
+				+ ", <b>SupportGain</b>: " + hvStat.roundSession.supportGain.toFixed(2)
+				+ ", <b>Deprecating Gain</b>: " + hvStat.roundSession.depGain.toFixed(2)
+				+ ", <b>Divine Gain</b>: " + hvStat.roundSession.divineGain.toFixed(2)
+				+ ", <b>Forbidden Gain</b>: " + hvStat.roundSession.forbidGain.toFixed(2)
+				+ ", <b>Elemental Gain</b>: " + hvStat.roundSession.elemGain.toFixed(2);
 		}
 		if (hvStat.settings.isShowEndProfsArmor) {
 			a += "<hr style='height:1px;border:0;background-color:#333333;color:#333333' />"
-				+ "<b>Cloth Gain</b>: " + _round.armorProfGain[0].toFixed(2)
-				+ ", <b>Light Armor Gain</b>: " + _round.armorProfGain[1].toFixed(2)
-				+ ", <b>Heavy Armor Gain</b>: " + _round.armorProfGain[2].toFixed(2);
+				+ "<b>Cloth Gain</b>: " + hvStat.roundSession.armorProfGain[0].toFixed(2)
+				+ ", <b>Light Armor Gain</b>: " + hvStat.roundSession.armorProfGain[1].toFixed(2)
+				+ ", <b>Heavy Armor Gain</b>: " + hvStat.roundSession.armorProfGain[2].toFixed(2);
 		}
 		if (hvStat.settings.isShowEndProfsWeapon) {
 			a += "<hr style='height:1px;border:0;background-color:#333333;color:#333333' />"
-				+ "<b>One-Handed Gain</b>: " + _round.weapProfGain[0].toFixed(2)
-				+ ", <b>Two-Handed Gain</b>: " + _round.weapProfGain[1].toFixed(2)
-				+ ", <b>Dual Wielding Gain</b>: " + _round.weapProfGain[2].toFixed(2)
-				+ ", <b>Staff Gain</b>: " + _round.weapProfGain[3].toFixed(2);
+				+ "<b>One-Handed Gain</b>: " + hvStat.roundSession.weapProfGain[0].toFixed(2)
+				+ ", <b>Two-Handed Gain</b>: " + hvStat.roundSession.weapProfGain[1].toFixed(2)
+				+ ", <b>Dual Wielding Gain</b>: " + hvStat.roundSession.weapProfGain[2].toFixed(2)
+				+ ", <b>Staff Gain</b>: " + hvStat.roundSession.weapProfGain[3].toFixed(2);
 		}
 	}
 	return a;
@@ -5309,16 +5400,6 @@ function loadDropsObject() {
 	_drops = new HVCacheDrops();
 	_drops.load();
 }
-function loadRoundObject() {
-	if (_round !== null) return;
-	_round = new HVRound();
-	_round.load();
-	for (var i = 0; i < HVStat.monsters.length; i++) {
-		if (_round.monsters[i]) {
-			HVStat.monsters[i].setFromValueObject(_round.monsters[i]);
-		}
-	}
-}
 function getRelativeTime(b) {
 	var a = (arguments.length > 1) ? arguments[1] : new Date();
 	var c = parseInt((a.getTime() - b) / 1000);
@@ -5384,65 +5465,6 @@ function loadFromStorage(c, b) {
 }
 function saveToStorage(b, a) { localStorage.setItem(a, JSON.stringify(b)); }
 function deleteFromStorage(a) { localStorage.removeItem(a); }
-function HVRound() {
-	this.load = function () { loadFromStorage(this, HV_ROUND); };
-	this.save = function () { saveToStorage(this, HV_ROUND); };
-	this.reset = function () { deleteFromStorage(HV_ROUND); };
-	this.cloneFrom = clone;
-	this.monsters = [];
-	this.currRound = 0;
-	this.maxRound = 0;
-	this.arenaNum = 0;
-	this.dropChances = 0;
-	this.battleType = 0;
-	this.lastTurn = -1;
-	this.kills = 0;
-	this.aAttempts = 0;
-	this.aHits = [0, 0];
-	this.aOffhands = [0, 0, 0, 0];
-	this.aDomino = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-	this.aCounters = [0, 0, 0, 0];
-	this.dDealt = [0, 0, 0];
-	this.sHits = [0, 0];
-	this.sResists = 0;
-	this.dDealtSp = [0, 0];
-	this.sAttempts = 0;
-	this.absArry = [0, 0, 0];
-	this.mAttempts = 0;
-	this.mHits = [0, 0];
-	this.mSpells = 0;
-	this.pDodges = 0;
-	this.pEvades = 0;
-	this.pParries = 0;
-	this.pBlocks = 0;
-	this.pResists = 0;
-	this.dTaken = [0, 0];
-	this.coalesce = 0;
-	this.eTheft = 0;
-	this.channel = 0;
-	this.overStrikes = 0;
-	this.cureTotals = [0, 0, 0];
-	this.cureCounts = [0, 0, 0];
-	this.elemEffects = [0, 0, 0];
-	this.effectPoison = [0, 0];
-	this.elemSpells = [0, 0, 0, 0];
-	this.divineSpells = [0, 0, 0, 0];
-	this.forbidSpells = [0, 0, 0, 0];
-	this.depSpells = [0, 0];
-	this.supportSpells = 0;
-	this.curativeSpells = 0;
-	this.elemGain = 0;
-	this.divineGain = 0;
-	this.forbidGain = 0;
-	this.depGain = 0;
-	this.supportGain = 0;
-	this.curativeGain = 0;
-	this.weapProfGain = [0, 0, 0, 0];
-	this.armorProfGain = [0, 0, 0];
-	this.weaponprocs = [0, 0, 0, 0, 0, 0, 0, 0];
-	this.pskills = [0, 0, 0, 0, 0, 0, 0];
-	this.isLoaded = false;
-}
 function HVCacheOverview() {
 	this.load = function () { loadFromStorage(this, HV_OVERVIEW); };
 	this.save = function () {
@@ -6300,10 +6322,10 @@ HVStat.main2 = function () {
 		}
 
 		collectRoundInfo();
-		if ((_round !== null) && (_round.currRound > 0) && hvStat.settings.isShowRoundCounter) {
+		if ((hvStat.roundSession !== null) && (hvStat.roundSession.currRound > 0) && hvStat.settings.isShowRoundCounter) {
 			showRoundCounter();
 		}
-		if ((_round !== null) && (HVStat.monsters.length > 0)){
+		if ((hvStat.roundSession !== null) && (HVStat.monsters.length > 0)){
 			showMonsterHealth();
 			if (!HVStat.loadingMonsterInfoFromDB) {
 				showMonsterStats();
@@ -6320,7 +6342,7 @@ HVStat.main2 = function () {
 		// show warnings
 		HVStat.AlertAllFromQueue();
 		if (!hv.battle.round.finished) {
-			if (hvStat.settings.warnMode[_round.battleType]) {
+			if (hvStat.settings.warnMode[hvStat.roundSession.battleType]) {
 				HVStat.warnHealthStatus();
 			}
 			if (hvStat.settings.isMainEffectsAlertSelf) {
@@ -6336,16 +6358,16 @@ HVStat.main2 = function () {
 				showBattleEndStats();
 			}
 			saveStats();
-			_round.reset();
+			hvStat.storage.roundSession.remove();
 			if (hvStat.settings.autoAdvanceBattleRound) {
 				hvStat.battle.advanceRound();
 			}
 		}
 	} else {
-		localStorage.removeItem(HV_ROUND);
+		hvStat.storage.roundSession.remove();
 		if ((hvStat.settings.isStartAlert || hvStat.settings.isShowEquippedSet) && !hv.settings.useHVFontEngine) {
 			FindSettingsStats();
-			console.debug(_charss);
+			//console.debug(_charss);
 		}
 		if (!hv.location.isRiddle) {
 			HVStat.resetHealthWarningStates();
