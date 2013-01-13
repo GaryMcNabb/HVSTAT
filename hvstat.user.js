@@ -1234,7 +1234,7 @@ hvStat.ui = {
 		loadRewardsObject();
 		loadShrineObject();
 		initOverviewPane();
-		initStatsPane();
+		initBattleStatsPane();
 		initItemPane();
 		initRewardsPane();
 		initShrinePane();
@@ -4638,7 +4638,7 @@ function initOverviewPane() {
 		if (confirm("Reset Overview tab?")) _overview.reset();
 	});
 }
-function initStatsPane() {
+function initBattleStatsPane() {
 	var innerHTML;
 	if (_stats.isLoaded && _stats.rounds > 0) {
 		innerHTML = browser.extension.getResourceText("html/", "battle-stats-pane.html");
@@ -4695,14 +4695,14 @@ function initStatsPane() {
 		$('#hvstat-battle-stats-average-offhand-damage').text(offhand === 0 ? 0 : (offhanddam / offhand).toFixed(2));
 
 		$('#hvstat-battle-stats-domino-strike-chance').text(f === 0 ? 0 : (dom / f * 100).toFixed(2));
-		$('#hvstat-battle-stats-domino-2-hits').text(dom === 0 ? 0 : (_stats.aDomino[2]*100/dom).toFixed(2));
-		$('#hvstat-battle-stats-domino-3-hits').text(dom === 0 ? 0 : (_stats.aDomino[3]*100/dom).toFixed(2));
-		$('#hvstat-battle-stats-domino-4-hits').text(dom === 0 ? 0 : (_stats.aDomino[4]*100/dom).toFixed(2));
-		$('#hvstat-battle-stats-domino-5-hits').text(dom === 0 ? 0 : (_stats.aDomino[5]*100/dom).toFixed(2));
-		$('#hvstat-battle-stats-domino-6-hits').text(dom === 0 ? 0 : (_stats.aDomino[6]*100/dom).toFixed(2));
-		$('#hvstat-battle-stats-domino-7-hits').text(dom === 0 ? 0 : (_stats.aDomino[7]*100/dom).toFixed(2));
-		$('#hvstat-battle-stats-domino-8-hits').text(dom === 0 ? 0 : (_stats.aDomino[8]*100/dom).toFixed(2));
-		$('#hvstat-battle-stats-domino-9-hits').text(dom === 0 ? 0 : (_stats.aDomino[9]*100/dom).toFixed(2));
+		$('#hvstat-battle-stats-domino-2-hits').text(dom === 0 ? 0 : (_stats.aDomino[2]*100 / dom).toFixed(2));
+		$('#hvstat-battle-stats-domino-3-hits').text(dom === 0 ? 0 : (_stats.aDomino[3]*100 / dom).toFixed(2));
+		$('#hvstat-battle-stats-domino-4-hits').text(dom === 0 ? 0 : (_stats.aDomino[4]*100 / dom).toFixed(2));
+		$('#hvstat-battle-stats-domino-5-hits').text(dom === 0 ? 0 : (_stats.aDomino[5]*100 / dom).toFixed(2));
+		$('#hvstat-battle-stats-domino-6-hits').text(dom === 0 ? 0 : (_stats.aDomino[6]*100 / dom).toFixed(2));
+		$('#hvstat-battle-stats-domino-7-hits').text(dom === 0 ? 0 : (_stats.aDomino[7]*100 / dom).toFixed(2));
+		$('#hvstat-battle-stats-domino-8-hits').text(dom === 0 ? 0 : (_stats.aDomino[8]*100 / dom).toFixed(2));
+		$('#hvstat-battle-stats-domino-9-hits').text(dom === 0 ? 0 : (_stats.aDomino[9]*100 / dom).toFixed(2));
 		$('#hvstat-battle-stats-domino-average-number-of-hits').text(dom === 0 ? 0 : (_stats.aDomino[1] / dom).toFixed(2));
 
 		$('#hvstat-battle-stats-stun-chance').text(f === 0 ? 0 : (_stats.weaponprocs[0]*100 / f).toFixed(2));
