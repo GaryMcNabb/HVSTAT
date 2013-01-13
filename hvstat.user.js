@@ -6,29 +6,29 @@
 // @exclude         http://hentaiverse.org/pages/showequip*
 // @author          Various (http://forums.e-hentai.org/index.php?showtopic=79552)
 // @version         5.4.8
+// @resource        battle-log-type0.css                        css/battle-log-type0.css
+// @resource        battle-log-type1.css                        css/battle-log-type1.css
+// @resource        hvstat.css                                  css/hvstat.css
+// @resource        jquery-ui-1.9.2.custom.min.css              css/jquery-ui-1.9.2.custom.min.css
+// @resource        channeling.png                              css/images/channeling.png
+// @resource        healthpot.png                               css/images/healthpot.png
+// @resource        manapot.png                                 css/images/manapot.png
+// @resource        spiritpot.png                               css/images/spiritpot.png
+// @resource        ui-bg_flat_0_aaaaaa_40x100.png              css/images/ui-bg_flat_0_aaaaaa_40x100.png
+// @resource        ui-bg_flat_55_fbf9ee_40x100.png             css/images/ui-bg_flat_55_fbf9ee_40x100.png
+// @resource        ui-bg_flat_65_edebdf_40x100.png             css/images/ui-bg_flat_65_edebdf_40x100.png
+// @resource        ui-bg_flat_75_e3e0d1_40x100.png             css/images/ui-bg_flat_75_e3e0d1_40x100.png
+// @resource        ui-bg_flat_75_edebdf_40x100.png             css/images/ui-bg_flat_75_edebdf_40x100.png
+// @resource        ui-bg_flat_95_fef1ec_40x100.png             css/images/ui-bg_flat_95_fef1ec_40x100.png
+// @resource        ui-icons_2e83ff_256x240.png                 css/images/ui-icons_2e83ff_256x240.png
+// @resource        ui-icons_5c0d11_256x240.png                 css/images/ui-icons_5c0d11_256x240.png
+// @resource        ui-icons_cd0a0a_256x240.png                 css/images/ui-icons_cd0a0a_256x240.png
+// @resource        battle-stats-pane.html                      html/battle-stats-pane.html
+// @resource        main.html                                   html/main.html
+// @resource        monster-database-pane.html                  html/monster-database-pane.html
+// @resource        settings-pane.html                          html/settings-pane.html
 // @resource        jquery-1.8.3.min.js                         scripts/jquery-1.8.3.min.js
 // @resource        jquery-ui-1.9.2.custom.min.js               scripts/jquery-ui-1.9.2.custom.min.js
-// @resource        jquery-ui-1.9.2.custom.min.css              resources/jquery-ui-1.9.2.custom.min.css
-// @resource        ui-bg_flat_0_aaaaaa_40x100.png              images/ui-bg_flat_0_aaaaaa_40x100.png
-// @resource        ui-bg_flat_55_fbf9ee_40x100.png             images/ui-bg_flat_55_fbf9ee_40x100.png
-// @resource        ui-bg_flat_65_edebdf_40x100.png             images/ui-bg_flat_65_edebdf_40x100.png
-// @resource        ui-bg_flat_75_e3e0d1_40x100.png             images/ui-bg_flat_75_e3e0d1_40x100.png
-// @resource        ui-bg_flat_75_edebdf_40x100.png             images/ui-bg_flat_75_edebdf_40x100.png
-// @resource        ui-bg_flat_95_fef1ec_40x100.png             images/ui-bg_flat_95_fef1ec_40x100.png
-// @resource        ui-icons_2e83ff_256x240.png                 images/ui-icons_2e83ff_256x240.png
-// @resource        ui-icons_5c0d11_256x240.png                 images/ui-icons_5c0d11_256x240.png
-// @resource        ui-icons_cd0a0a_256x240.png                 images/ui-icons_cd0a0a_256x240.png
-// @resource        hvstat.css                                  resources/hvstat.css
-// @resource        battle-log-type0.css                        resources/battle-log-type0.css
-// @resource        battle-log-type1.css                        resources/battle-log-type1.css
-// @resource        channeling.png                              images/channeling.png
-// @resource        healthpot.png                               images/healthpot.png
-// @resource        manapot.png                                 images/manapot.png
-// @resource        spiritpot.png                               images/spiritpot.png
-// @resource        main.html                                   resources/main.html
-// @resource        battle-stats-pane.html                      resources/battle-stats-pane.html
-// @resource        monster-database-pane.html                  resources/monster-database-pane.html
-// @resource        settings-pane.html                          resources/settings-pane.html
 // @run-at          document-start
 // ==/UserScript==
 
@@ -285,12 +285,12 @@ var hvStat = {
 	addStyle: function () {
 		var C = browser.extension.ImageResourceInfo;
 		var imageResouces = [
-			new C("images/", "channeling.png", "images/"),
-			new C("images/", "healthpot.png", "images/"),
-			new C("images/", "manapot.png", "images/"),
-			new C("images/", "spiritpot.png", "images/"),
+			new C("images/", "channeling.png", "css/images/"),
+			new C("images/", "healthpot.png", "css/images/"),
+			new C("images/", "manapot.png", "css/images/"),
+			new C("images/", "spiritpot.png", "css/images/"),
 		];
-		browser.extension.addStyleFromResource("resources/", "hvstat.css", imageResouces);
+		browser.extension.addStyleFromResource("css/", "hvstat.css", imageResouces);
 	},
 	// shortcut
 	get settings() {
@@ -1033,7 +1033,7 @@ hvStat.battle.enhancement.log = {
 		} else {
 			styleName = "battle-log-type0.css";
 		}
-		browser.extension.addStyleFromResource("resources/", styleName);
+		browser.extension.addStyleFromResource("css/", styleName);
 	},
 	highlight: function () {
 		// Copies the text of each Battle Log entry into a title element.
@@ -1178,17 +1178,17 @@ hvStat.ui = {
 	addStyle: function () {
 		var C = browser.extension.ImageResourceInfo;
 		var imageResouces = [
-			new C("images/", "ui-bg_flat_0_aaaaaa_40x100.png", "images/"),
-			new C("images/", "ui-bg_flat_55_fbf9ee_40x100.png", "images/"),
-			new C("images/", "ui-bg_flat_65_edebdf_40x100.png", "images/"),
-			new C("images/", "ui-bg_flat_75_e3e0d1_40x100.png", "images/"),
-			new C("images/", "ui-bg_flat_75_edebdf_40x100.png", "images/"),
-			new C("images/", "ui-bg_flat_95_fef1ec_40x100.png", "images/"),
-			new C("images/", "ui-icons_2e83ff_256x240.png", "images/"),
-			new C("images/", "ui-icons_5c0d11_256x240.png", "images/"),
-			new C("images/", "ui-icons_cd0a0a_256x240.png", "images/"),
+			new C("images/", "ui-bg_flat_0_aaaaaa_40x100.png", "css/images/"),
+			new C("images/", "ui-bg_flat_55_fbf9ee_40x100.png", "css/images/"),
+			new C("images/", "ui-bg_flat_65_edebdf_40x100.png", "css/images/"),
+			new C("images/", "ui-bg_flat_75_e3e0d1_40x100.png", "css/images/"),
+			new C("images/", "ui-bg_flat_75_edebdf_40x100.png", "css/images/"),
+			new C("images/", "ui-bg_flat_95_fef1ec_40x100.png", "css/images/"),
+			new C("images/", "ui-icons_2e83ff_256x240.png", "css/images/"),
+			new C("images/", "ui-icons_5c0d11_256x240.png", "css/images/"),
+			new C("images/", "ui-icons_cd0a0a_256x240.png", "css/images/"),
 		];
-		browser.extension.addStyleFromResource("resources/", "jquery-ui-1.9.2.custom.min.css", imageResouces);
+		browser.extension.addStyleFromResource("css/", "jquery-ui-1.9.2.custom.min.css", imageResouces);
 	},
 	createIcon: function () {
 		var stuffBox = document.querySelector("div.stuffbox");
@@ -1216,7 +1216,7 @@ hvStat.ui = {
 
 		var panel = document.createElement("div");
 		panel.id = "hvstat-panel";
-		$(panel).html(browser.extension.getResourceText("resources/", "main.html"));
+		$(panel).html(browser.extension.getResourceText("html/", "main.html"));
 		$('body').append(panel);
 		$(panel).dialog({
 			autoOpen: false,
@@ -4643,7 +4643,7 @@ function initOverviewPane() {
 function initStatsPane() {
 	var innerHTML;
 	if (_stats.isLoaded && _stats.rounds > 0) {
-		innerHTML = browser.extension.getResourceText("resources/", "battle-stats-pane.html");
+		innerHTML = browser.extension.getResourceText("html/", "battle-stats-pane.html");
 	} else {
 		innerHTML = "No data found. Complete a round to begin tracking.";
 	}
@@ -4848,7 +4848,7 @@ function initShrinePane() {
 	});
 }
 function initMonsterDatabasePane() {
-	$("#hvstat-monster-database-pane").html(browser.extension.getResourceText("resources/", "monster-database-pane.html"));
+	$("#hvstat-monster-database-pane").html(browser.extension.getResourceText("html/", "monster-database-pane.html"));
 	function showOldDatabaseSize() {
 		var oldDatabaseSize = ((localStorage.HVMonsterDatabase ? localStorage.HVMonsterDatabase.length : 0) / 1024 / 1024 * (browser.isChrome ? 2 : 1)).toFixed(2);
 		var e = document.getElementById("hvstat-monster-database-old-database-size");
@@ -4929,7 +4929,7 @@ function initMonsterDatabasePane() {
 	});
 }
 function initSettingsPane() {
-	$("#hvstat-settings-pane").html(browser.extension.getResourceText("resources/", "settings-pane.html"));
+	$("#hvstat-settings-pane").html(browser.extension.getResourceText("html/", "settings-pane.html"));
 	// General Options
 	if (hvStat.settings.isShowSidebarProfs) $("input[name=isShowSidebarProfs]").attr("checked", "checked");
 	if (hvStat.settings.isChangePageTitle) $("input[name=isChangePageTitle]").attr("checked", "checked");
