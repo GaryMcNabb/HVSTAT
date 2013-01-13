@@ -184,8 +184,6 @@ var HV = (function () {
 	var getCharacterGaugeRate = function (gauge) {
 		return getGaugeRate(gauge, 120);
 	};
-	var Effect = function (effectIconElement) {
-	};
 
 	// constructor
 	function HV() {
@@ -532,51 +530,51 @@ hvStat.storage = {
 		dropChances: 0,
 		battleType: 0,
 		lastTurn: -1,
-		kills: 0,
-		aAttempts: 0,
-		aHits: [0, 0],
-		aOffhands: [0, 0, 0, 0],
-		aDomino: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-		aCounters: [0, 0, 0, 0],
-		dDealt: [0, 0, 0],
-		sHits: [0, 0],
-		sResists: 0,
-		dDealtSp: [0, 0],
-		sAttempts: 0,
-		absArry: [0, 0, 0],
-		mAttempts: 0,
-		mHits: [0, 0],
-		mSpells: 0,
-		pDodges: 0,
-		pEvades: 0,
-		pParries: 0,
-		pBlocks: 0,
-		pResists: 0,
-		dTaken: [0, 0],
-		coalesce: 0,
-		eTheft: 0,
-		channel: 0,
-		overStrikes: 0,
-		cureTotals: [0, 0, 0],
-		cureCounts: [0, 0, 0],
-		elemEffects: [0, 0, 0],
-		effectPoison: [0, 0],
-		elemSpells: [0, 0, 0, 0],
-		divineSpells: [0, 0, 0, 0],
-		forbidSpells: [0, 0, 0, 0],
-		depSpells: [0, 0],
-		supportSpells: 0,
-		curativeSpells: 0,
-		elemGain: 0,
-		divineGain: 0,
-		forbidGain: 0,
-		depGain: 0,
-		supportGain: 0,
-		curativeGain: 0,
-		weapProfGain: [0, 0, 0, 0],
-		armorProfGain: [0, 0, 0],
-		weaponprocs: [0, 0, 0, 0, 0, 0, 0, 0],
-		pskills: [0, 0, 0, 0, 0, 0, 0],
+		kills: 0,	// stats
+		aAttempts: 0,	// stats
+		aHits: [0, 0],	// stats
+		aOffhands: [0, 0, 0, 0],	// stats
+		aDomino: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],	// stats
+		aCounters: [0, 0, 0, 0],	// stats
+		dDealt: [0, 0, 0],	// stats
+		sHits: [0, 0],	// stats
+		sResists: 0,	// stats
+		dDealtSp: [0, 0],	// stats
+		sAttempts: 0,	// stats
+		absArry: [0, 0, 0],	// stats
+		mAttempts: 0,	// stats
+		mHits: [0, 0],	// stats
+		mSpells: 0,	// stats
+		pDodges: 0,	// stats
+		pEvades: 0,	// stats
+		pParries: 0,	// stats
+		pBlocks: 0,	// stats
+		pResists: 0,	// stats
+		dTaken: [0, 0],	// stats
+		coalesce: 0,	// stats
+		eTheft: 0,	// stats
+		channel: 0,	// stats
+		overStrikes: 0,	// stats
+		cureTotals: [0, 0, 0],	// stats
+		cureCounts: [0, 0, 0],	// stats
+		elemEffects: [0, 0, 0],	// stats
+		effectPoison: [0, 0],	// stats
+		elemSpells: [0, 0, 0, 0],	// stats
+		divineSpells: [0, 0, 0, 0],	// stats
+		forbidSpells: [0, 0, 0, 0],	// stats
+		depSpells: [0, 0],	// stats
+		supportSpells: 0,	// stats
+		curativeSpells: 0,	// stats
+		elemGain: 0,	// stats
+		divineGain: 0,	// stats
+		forbidGain: 0,	// stats
+		depGain: 0,	// stats
+		supportGain: 0,	// stats
+		curativeGain: 0,	// stats
+		weapProfGain: [0, 0, 0, 0],	// stats
+		armorProfGain: [0, 0, 0],	// stats
+		weaponprocs: [0, 0, 0, 0, 0, 0, 0, 0],	// stats
+		pskills: [0, 0, 0, 0, 0, 0, 0],	// stats
 	},
 	get roundSession() {
 		if (!this._roundSession) {
@@ -6324,18 +6322,16 @@ HVStat.main2 = function () {
 		hvStat.battle.setup();
 
 		collectRoundInfo();
-		if ((hvStat.roundSession !== null) && (hvStat.roundSession.currRound > 0) && hvStat.settings.isShowRoundCounter) {
+		if (hvStat.roundSession.currRound > 0 && hvStat.settings.isShowRoundCounter) {
 			showRoundCounter();
 		}
-		if ((hvStat.roundSession !== null) && (HVStat.monsters.length > 0)){
-			showMonsterHealth();
-			if (!HVStat.loadingMonsterInfoFromDB) {
+		showMonsterHealth();
+		if (!HVStat.loadingMonsterInfoFromDB) {
+			showMonsterStats();
+		} else {
+			HVStat.idbAccessQueue.add(function () {
 				showMonsterStats();
-			} else {
-				HVStat.idbAccessQueue.add(function () {
-					showMonsterStats();
-				});
-			}
+			});
 		}
 		if (hvStat.settings.isShowStatsPopup) {
 			registerEventHandlersForMonsterPopup();
