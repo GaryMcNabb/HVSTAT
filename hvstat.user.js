@@ -666,6 +666,12 @@ hvStat.battle = {
 		if (hvStat.settings.isShowDivider) {
 			hvStat.battle.enhancement.log.showDivider();
 		}
+		if (hvStat.settings.isShowScanButton) {
+			hvStat.battle.enhancement.scanButton.createAll();
+		}
+		if (hvStat.settings.isShowSkillButton) {
+			hvStat.battle.enhancement.skillButton.createAll();
+		}
  		if (hvStat.settings.isShowMonsterNumber) {
  			hvStat.battle.enhancement.monsterLabel.replaceWithNumber();
  		}
@@ -1053,6 +1059,97 @@ hvStat.battle.enhancement.log = {
 				prevTurn = currTurn;
 			}
 		}
+	},
+};
+
+hvStat.battle.enhancement.scanButton = {
+	createAll: function () {
+		hv.battle.elementCache.monsterPane.style.overflow = "visible";
+		var monsters = hv.battle.elementCache.monsters;
+		for (var i = 0; i < monsters.length; i++) {
+			var button = new this.ScanButton(monsters[i]);
+			if (button) {
+				monsters[i].insertBefore(button, null);
+			}
+		}
+	},
+	ScanButton: function (monster) {
+		if (util.innerText(monster).indexOf("bardead") >= 0) {
+			return null;
+		}
+		var button = document.createElement("div");
+		button.className = "hvstat-scan-button";
+		button.textContent = "Scan";
+		button.addEventListener("click", function (event) {
+			hvStat.battle.command.subMenuItemMap["Scan"].select();
+			monster.onclick();
+		});
+		return button;
+	},
+};
+
+hvStat.battle.enhancement.skillButton = {
+	getLabelById: function (id) {
+		var labelTable = [
+			{ id: "110001", label: "SkyS" },
+			{ id: "120001", label: "ShiB" },
+			{ id: "120002", label: "VitS" },
+			{ id: "120003", label: "MerB" },
+			{ id: "130001", label: "GreC" },
+			{ id: "130002", label: "RenB" },
+			{ id: "130003", label: "ShaS" },
+			{ id: "140001", label: "IrisS" },
+			{ id: "140002", label: "Stab" },
+			{ id: "140003", label: "FreB" },
+			{ id: "150001", label: "ConS" },
+		];
+		for (var i = 0; i < labelTable.length; i++) {
+			if (labelTable[i].id === id) {
+				return labelTable[i].label;
+			}
+		}
+		return "";
+	},
+	createAll: function () {
+		var skill1 = hvStat.battle.command.subMenuItemMap["Skill1"];
+		var skill2 = hvStat.battle.command.subMenuItemMap["Skill2"];
+		var skill3 = hvStat.battle.command.subMenuItemMap["Skill3"];
+		var skills = [];
+		if (skill1) {
+			skills.push(skill1);
+		}
+		if (skill2) {
+			skills.push(skill2);
+		}
+		if (skill3) {
+			skills.push(skill3);
+		}
+		hv.battle.elementCache.monsterPane.style.overflow = "visible";
+		var monsters = hv.battle.elementCache.monsters;
+		for (var i = 0; i < monsters.length; i++) {
+			for (j = 0; j < skills.length; j++) {
+				var button = new this.SkillButton(monsters[i], skills[j], j + 1);
+				if (button) {
+					monsters[i].insertBefore(button, null);
+				}
+			}
+		}
+	},
+	SkillButton: function (monster, skill, skillNumber) {
+		if (util.innerText(monster).indexOf("bardead") >= 0) {
+			return null;
+		}
+		var button = document.createElement("div");
+		button.className = "hvstat-skill-button hvstat-skill" + skillNumber + "-button";
+		button.textContent = hvStat.battle.enhancement.skillButton.getLabelById(skill.id);
+		if (!skill.available) {
+			button.style.cssText += "opacity: 0.3;";
+		}
+		button.addEventListener("click", function (event) {
+			hvStat.battle.command.subMenuItemMap["Skill" + skillNumber].select();
+			monster.onclick();
+		});
+		return button;
 	},
 };
 
@@ -5906,100 +6003,6 @@ HVStat.documentKeydownEventHandler = function (event) {
 		}
 	}
 };
-
-HVStat.scanButtonClickHandler = function (event) {
-	var monsterId = this.id.slice(11);
-	var monsterElement = document.getElementById(monsterId);
-	hvStat.battle.command.subMenuItemMap["Scan"].select();
-	monsterElement.onclick();
-}
-
-HVStat.skillButtonClickHandler = function (event) {
-	var result = /HVStatSkill(\d)_(.+)/.exec(this.id)
-	if (!result || result.length < 3) {
-		return;
-	}
-	var skillNumber = result[1];
-	var monsterId = result[2];
-	var monsterElement = document.getElementById(monsterId);
-	hvStat.battle.command.subMenuItemMap["Skill" + skillNumber].select();
-	monsterElement.onclick();
-}
-
-HVStat.showScanAndSkillButtons = function () {
-	var skill1 = hvStat.battle.command.subMenuItemMap["Skill1"];
-	var skill2 = hvStat.battle.command.subMenuItemMap["Skill2"];
-	var skill3 = hvStat.battle.command.subMenuItemMap["Skill3"];
-	var skills = [];
-	if (skill1) {
-		skills.push(skill1);
-	}
-	if (skill2) {
-		skills.push(skill2);
-	}
-	if (skill3) {
-		skills.push(skill3);
-	}
-	var getButtonLabelFromSkillId = function (skillId) {
-		var skillButtonLabelTable = [
-			{ id: "110001", label: "SkyS" },
-			{ id: "120001", label: "ShiB" },
-			{ id: "120002", label: "VitS" },
-			{ id: "120003", label: "MerB" },
-			{ id: "130001", label: "GreC" },
-			{ id: "130002", label: "RenB" },
-			{ id: "130003", label: "ShaS" },
-			{ id: "140001", label: "IrisS" },
-			{ id: "140002", label: "Stab" },
-			{ id: "140003", label: "FreB" },
-			{ id: "150001", label: "ConS" },
-		];
-		var i;
-		for (i = 0; i < skillButtonLabelTable.length; i++) {
-			if (skillButtonLabelTable[i].id === skillId) {
-				return skillButtonLabelTable[i].label;
-			}
-		}
-		return "";
-	}
-
-	var mainPane = document.getElementById("mainpane");
-	var i, j;
-	for (j = 0; j < hv.battle.elementCache.monsters.length; j++) {
-		var monsterElementId = HVStat.Monster.getDomElementId(j);
-		var u = document.getElementById(monsterElementId);
-		var e = u.children[2].children[0];
-		var dead = e.innerHTML.indexOf("bardead") >= 0;
-		var div, style;
-		if (!dead) {
-			var rectObject = u.getBoundingClientRect();
-			var top = rectObject.top;
-			if (hvStat.settings.isShowScanButton) {
-				hv.battle.elementCache.monsterPane.style.overflow = "visible";
-				div = document.createElement("div");
-				div.setAttribute("id", "HVStatScan_" + monsterElementId);
-				div.className = "hvstat-scan-button";
-				div.textContent = "Scan";
-				u.insertBefore(div, null);
-				div.addEventListener("click", HVStat.scanButtonClickHandler);
-			}
-			if (hvStat.settings.isShowSkillButton) {
-				hv.battle.elementCache.monsterPane.style.overflow = "visible";
-				for (i = 0; i < skills.length; i++) {
-					div = document.createElement("div");
-					div.setAttribute("id", "HVStatSkill" + String(i + 1) + "_"+ monsterElementId);
-					div.className = "hvstat-skill-button hvstat-skill-button" + String(i + 1);
-					if (!skills[i].available) {
-						div.style.cssText += "opacity: 0.3;";
-					}
-					div.textContent = getButtonLabelFromSkillId(skills[i].id);
-					u.insertBefore(div, null);
-					div.addEventListener("click", HVStat.skillButtonClickHandler);
-				}
-			}
-		}
-	}
-}
 function registerEventHandlersForMonsterPopup() {
 	var delay = hvStat.settings.monsterPopupDelay;
 	var popupLeftOffset = hvStat.settings.isMonsterPopupPlacement ? 955 : 275;
@@ -6319,10 +6322,6 @@ HVStat.main2 = function () {
 	}
 	if (hv.battle.active) {
 		hvStat.battle.setup();
-
-		if (hvStat.settings.isShowScanButton || hvStat.settings.isShowSkillButton) {
-			HVStat.showScanAndSkillButtons();
-		}
 
 		collectRoundInfo();
 		if ((hvStat.roundSession !== null) && (hvStat.roundSession.currRound > 0) && hvStat.settings.isShowRoundCounter) {

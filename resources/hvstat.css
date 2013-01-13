@@ -117,9 +117,9 @@
 	text-align: center;
 	cursor: pointer;
 }
-.hvstat-skill-button1 { top: 12px; }
-.hvstat-skill-button2 { top: 26px; }
-.hvstat-skill-button3 { top: 40px; }
+.hvstat-skill1-button { top: 12px; }
+.hvstat-skill2-button { top: 26px; }
+.hvstat-skill3-button { top: 40px; }
 
 /* monster */
 .hvstat-monster-number { display: none; }
