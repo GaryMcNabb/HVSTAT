@@ -656,6 +656,9 @@ hvStat.battle = {
 		if (hvStat.settings.isShowPowerupBox) {
 			hvStat.battle.enhancement.powerupBox.show();
 		}
+		if (hvStat.settings.isHighlightQC) {
+			hvStat.battle.enhancement.quickcast.highlight();
+		}
 		if (hvStat.settings.isShowHighlight) {
 			hvStat.battle.enhancement.log.setHighlightStyle();
 			hvStat.battle.enhancement.log.highlight();
@@ -988,6 +991,31 @@ hvStat.battle.enhancement.powerupBox = {
 			}
 		}
 		battleMenu[0].appendChild(powerBox);
+	},
+};
+
+hvStat.battle.enhancement.quickcast = {
+	highlight: function () {
+		var healthYellowLevel = Number(hvStat.settings.warnOrangeLevel);
+		var healthRedLevel = Number(hvStat.settings.warnRedLevel);
+		var magicYellowLevel = Number(hvStat.settings.warnOrangeLevelMP);
+		var magicRedLevel = Number(hvStat.settings.warnRedLevelMP);
+		var spiritYellowLevel = Number(hvStat.settings.warnOrangeLevelSP);
+		var spiritRedLevel = Number(hvStat.settings.warnRedLevelSP);
+		var quickcastBar = hv.battle.elementCache.quickcastBar;
+		if (hv.character.healthPercent <= healthRedLevel) {
+			quickcastBar.className += " hvstat-health-red-alert";
+		} else if (hv.character.healthPercent <= healthYellowLevel) {
+			quickcastBar.className += " hvstat-health-yellow-alert";
+		} else if (hv.character.magicPercent <= magicRedLevel) {
+			quickcastBar.className += " hvstat-magic-red-alert";
+		} else if (hv.character.magicPercent <= magicYellowLevel) {
+			quickcastBar.className += " hvstat-magic-yellow-alert";
+		} else if (hv.character.spiritPercent <= spiritRedLevel) {
+			quickcastBar.className += " hvstat-spirit-red-alert";
+		} else if (hv.character.spiritPercent <= spiritYellowLevel) {
+			quickcastBar.className += " hvstat-spirit-yellow-alert";
+		}
 	},
 };
 
@@ -3378,28 +3406,6 @@ function showMonsterStats() {
 function showBattleEndStats() {
 	var battleLog = document.getElementById("togpane_log");
 	battleLog.innerHTML = "<div class='ui-state-default ui-corner-bottom' style='padding:10px;margin-bottom:10px;text-align:left'>" + getBattleEndStatsHtml() + "</div>" + battleLog.innerHTML;
-}
-
-HVStat.highlightQuickcast = function () {
-	var healthYellowLevel = Number(hvStat.settings.warnOrangeLevel);
-	var healthRedLevel = Number(hvStat.settings.warnRedLevel);
-	var magicYellowLevel = Number(hvStat.settings.warnOrangeLevelMP);
-	var magicRedLevel = Number(hvStat.settings.warnRedLevelMP);
-	var spiritYellowLevel = Number(hvStat.settings.warnOrangeLevelSP);
-	var spiritRedLevel = Number(hvStat.settings.warnRedLevelSP);
-	if (hv.character.healthPercent <= healthRedLevel) {
-		hv.battle.elementCache.quickcastBar.className += " hvstat-health-red-alert";
-	} else if (hv.character.healthPercent <= healthYellowLevel) {
-		hv.battle.elementCache.quickcastBar.className += " hvstat-health-yellow-alert";
-	} else if (hv.character.magicPercent <= magicRedLevel) {
-		hv.battle.elementCache.quickcastBar.className += " hvstat-magic-red-alert";
-	} else if (hv.character.magicPercent <= magicYellowLevel) {
-		hv.battle.elementCache.quickcastBar.className += " hvstat-magic-yellow-alert";
-	} else if (hv.character.spiritPercent <= spiritRedLevel) {
-		hv.battle.elementCache.quickcastBar.className += " hvstat-spirit-red-alert";
-	} else if (hv.character.spiritPercent <= spiritYellowLevel) {
-		hv.battle.elementCache.quickcastBar.className += " hvstat-spirit-yellow-alert";
-	}
 }
 
 HVStat.warnHealthStatus = function () {
@@ -6314,9 +6320,6 @@ HVStat.main2 = function () {
 	if (hv.battle.active) {
 		hvStat.battle.setup();
 
-		if (hvStat.settings.isHighlightQC) {
-			HVStat.highlightQuickcast();
-		}
 		if (hvStat.settings.isShowScanButton || hvStat.settings.isShowSkillButton) {
 			HVStat.showScanAndSkillButtons();
 		}
