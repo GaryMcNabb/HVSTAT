@@ -337,7 +337,7 @@ hvStat.util = {
 				}
 			}
 			if (!treated) {
-				if (typeof property === "string" || typeof property === "number") {
+				if (typeof property === "string" || typeof property === "number" || typeof property === "boolean") {
 					fn(target, base, key);
 					treated = true;
 				}
