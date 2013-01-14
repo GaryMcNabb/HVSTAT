@@ -6280,163 +6280,149 @@ function TaggingItems(clean) {
 }
 
 //------------------------------------
-// main routine
+// start-up
 //------------------------------------
-HVStat.documentReadyStateChangeHandler = function (event) {
-	document.removeEventListener("readystatechange", HVStat.documentReadyStateChangeHandler);
-	HVStat.main2();
-};
-
-// readyState: loading
-HVStat.main1 = function () {
-	document.onkeydown = null;
-	HVStat.idbAccessQueue = new util.CallbackQueue();
-	// open database
-	HVStat.openIndexedDB(function (event) {
-		HVStat.idbAccessQueue.execute();
-	});
-
-	if (document.readyState === "loading") {
-		document.addEventListener("readystatechange", HVStat.documentReadyStateChangeHandler);
-	} else {
-		HVStat.main2();
-	}
-};
-
-// readyState: interactive
-HVStat.main2 = function () {
-	if (hvStat.settings.adjustKeyEventHandling) {
-		hvStat.onkeydown = document.onkeydown;
-		document.onkeydown = null;
-	}
-
-	hv = new HV();
-	console.debug(hv);
-	hvStat.setup();
-	console.debug(hvStat);
-	console.debug(hvStat.settings);
-	if (hvStat.settings.isChangePageTitle && document.title === "The HentaiVerse") {
-		document.title = hvStat.settings.customPageTitle;
-	}
-	if (hv.battle.active) {
-		hvStat.battle.setup();
-
-		collectRoundInfo();
-		if (hvStat.roundSession.currRound > 0 && hvStat.settings.isShowRoundCounter) {
-			showRoundCounter();
-		}
-		showMonsterHealth();
-		if (!HVStat.loadingMonsterInfoFromDB) {
-			showMonsterStats();
+hvStat.startup = {
+	phase1: function () {
+		HVStat.idbAccessQueue = new util.CallbackQueue();
+		HVStat.openIndexedDB(function (event) {
+			HVStat.idbAccessQueue.execute();
+		});
+		if (document.readyState !== "loading") {
+			hvStat.startup.phase2();
 		} else {
-			HVStat.idbAccessQueue.add(function () {
-				showMonsterStats();
+			document.addEventListener("readystatechange", function (event) {
+				console.debug(event);
+				this.removeEventListener(event.type, arguments.callee);
+				hvStat.startup.phase2();
 			});
 		}
-		if (hvStat.settings.isShowStatsPopup) {
-			registerEventHandlersForMonsterPopup();
+	},
+	phase2: function () {
+		if (hvStat.settings.adjustKeyEventHandling) {
+			hvStat.onkeydown = document.onkeydown;
+			document.onkeydown = null;
 		}
-
-		// show warnings
-		HVStat.AlertAllFromQueue();
-		if (!hv.battle.round.finished) {
-			if (hvStat.settings.warnMode[hvStat.roundSession.battleType]) {
-				HVStat.warnHealthStatus();
+		hv = new HV();
+		console.debug(hv);
+		hvStat.setup();
+		console.debug(hvStat);
+		console.debug(hvStat.settings);
+		if (hvStat.settings.isChangePageTitle) {
+			document.title = hvStat.settings.customPageTitle;
+		}
+		if (hv.battle.active) {
+			hvStat.battle.setup();
+			collectRoundInfo();
+			if (hvStat.roundSession.currRound > 0 && hvStat.settings.isShowRoundCounter) {
+				showRoundCounter();
 			}
-			if (hvStat.settings.isMainEffectsAlertSelf) {
-				AlertEffectsSelf();
-			}
-			if (hvStat.settings.isMainEffectsAlertMonsters) {
-				AlertEffectsMonsters();
-			}
-		}
-
-		if (hv.battle.round.finished) {
-			if (hvStat.settings.isShowEndStats) {
-				showBattleEndStats();
-			}
-			saveStats();
-			hvStat.storage.roundSession.remove();
-			if (hvStat.settings.autoAdvanceBattleRound) {
-				hvStat.battle.advanceRound();
-			}
-		}
-	} else {
-		hvStat.storage.roundSession.remove();
-		if ((hvStat.settings.isStartAlert || hvStat.settings.isShowEquippedSet) && !hv.settings.useHVFontEngine) {
-			FindSettingsStats();
-			//console.debug(_charss);
-		}
-		if (!hv.location.isRiddle) {
-			HVStat.resetHealthWarningStates();
-		}
-		if (hvStat.settings.enableScrollHotkey) {
-			HVStat.registerScrollTargetMouseEventListeners();
-		}
-		// equipment tag
-		if (hv.location.isEquipment && hvStat.settings.isShowTags[0]) {
-			TaggingItems(false);
-		}
-		if (hv.location.isInventory && hvStat.settings.isShowTags[5]) {
-			TaggingItems(true);
-		}
-		if (hv.location.isEquipmentShop && hvStat.settings.isShowTags[1]) {
-			TaggingItems(false);
-		}
-		if (hv.location.isItemWorld && hvStat.settings.isShowTags[2]) {
-			TaggingItems(false);
-		}
-		if (hv.location.isMoogleWrite && hvStat.settings.isShowTags[3]) {
-			var mailForm = document.querySelector("#mailform #leftpane");
-			if (mailForm) {
-				var attachEquipButton = mailForm.children[3].children[1];
-				attachEquipButton.addEventListener("click", function (event) {
-					TaggingItems(false);
+			showMonsterHealth();
+			if (!HVStat.loadingMonsterInfoFromDB) {
+				showMonsterStats();
+			} else {
+				HVStat.idbAccessQueue.add(function () {
+					showMonsterStats();
 				});
 			}
-		}
-		if (hv.location.isForge && hvStat.settings.isShowTags[4]) {
-			TaggingItems(false);
-			if (hvStat.settings.isDisableForgeHotKeys) {
-				document.onkeypress = null;
+			if (hvStat.settings.isShowStatsPopup) {
+				registerEventHandlersForMonsterPopup();
+			}
+			// show warnings
+			HVStat.AlertAllFromQueue();
+			if (!hv.battle.round.finished) {
+				if (hvStat.settings.warnMode[hvStat.roundSession.battleType]) {
+					HVStat.warnHealthStatus();
+				}
+				if (hvStat.settings.isMainEffectsAlertSelf) {
+					AlertEffectsSelf();
+				}
+				if (hvStat.settings.isMainEffectsAlertMonsters) {
+					AlertEffectsMonsters();
+				}
+			}
+			if (hv.battle.round.finished) {
+				if (hvStat.settings.isShowEndStats) {
+					showBattleEndStats();
+				}
+				saveStats();
+				hvStat.storage.roundSession.remove();
+				if (hvStat.settings.autoAdvanceBattleRound) {
+					hvStat.battle.advanceRound();
+				}
+			}
+		} else {
+			hvStat.storage.roundSession.remove();
+			if ((hvStat.settings.isStartAlert || hvStat.settings.isShowEquippedSet) && !hv.settings.useHVFontEngine) {
+				FindSettingsStats();
+				//console.debug(_charss);
+			}
+			if (!hv.location.isRiddle) {
+				HVStat.resetHealthWarningStates();
+			}
+			if (hvStat.settings.enableScrollHotkey) {
+				HVStat.registerScrollTargetMouseEventListeners();
+			}
+			// equipment tag
+			if (hv.location.isEquipment && hvStat.settings.isShowTags[0]) {
+				TaggingItems(false);
+			}
+			if (hv.location.isInventory && hvStat.settings.isShowTags[5]) {
+				TaggingItems(true);
+			}
+			if (hv.location.isEquipmentShop && hvStat.settings.isShowTags[1]) {
+				TaggingItems(false);
+			}
+			if (hv.location.isItemWorld && hvStat.settings.isShowTags[2]) {
+				TaggingItems(false);
+			}
+			if (hv.location.isMoogleWrite && hvStat.settings.isShowTags[3]) {
+				var mailForm = document.querySelector("#mailform #leftpane");
+				if (mailForm) {
+					var attachEquipButton = mailForm.children[3].children[1];
+					attachEquipButton.addEventListener("click", function (event) {
+						TaggingItems(false);
+					});
+				}
+			}
+			if (hv.location.isForge && hvStat.settings.isShowTags[4]) {
+				TaggingItems(false);
+				if (hvStat.settings.isDisableForgeHotKeys) {
+					document.onkeypress = null;
+				}
+			}
+			if (hv.location.isCharacter) {
+				collectCurrentProfsData();
+			}
+			if (hv.location.isShrine) {
+				if (hvStat.settings.isTrackShrine) {
+					captureShrine();
+				}
+				if (browser.isChrome && hvStat.settings.enableShrineKeyPatch) {
+					document.onkeydown = null;	// workaround to make enable SPACE key
+				}
+			}
+			if (hvStat.settings.isStartAlert && !hv.settings.useHVFontEngine) {
+				StartBattleAlerts();
 			}
 		}
-		if (hv.location.isCharacter) {
-			collectCurrentProfsData();
+		if (!hv.settings.useHVFontEngine && hvStat.settings.isShowEquippedSet) {
+			HVStat.showEquippedSet();
 		}
-		if (hv.location.isShrine) {
-			if (hvStat.settings.isTrackShrine) {
-				captureShrine();
-			}
-			if (browser.isChrome && hvStat.settings.enableShrineKeyPatch) {
-				document.onkeydown = null;	// workaround to make enable SPACE key
-			}
+		if (hvStat.settings.isShowSidebarProfs) {
+			showSidebarProfs();
 		}
-		if (hvStat.settings.isStartAlert && !hv.settings.useHVFontEngine) {
-			StartBattleAlerts();
+		var invAlert = localStorage.getItem(HV_EQUIP);
+		var invFull = (invAlert === null) ? false : JSON.parse(invAlert);
+		if (invFull) {
+			inventoryWarning();
 		}
-	}
-	if (!hv.settings.useHVFontEngine && hvStat.settings.isShowEquippedSet) {
-		HVStat.showEquippedSet();
-	}
-	if (hvStat.settings.isShowSidebarProfs) {
-		showSidebarProfs();
-	}
-
-	var invAlert = localStorage.getItem(HV_EQUIP);
-	var invFull = (invAlert === null) ? false : JSON.parse(invAlert);
-	if (invFull) inventoryWarning();
-
-	document.addEventListener("keydown", HVStat.documentKeydownEventHandler);
-
-	hvStat.ui.setup();
-
-	if (hvStat.settings.adjustKeyEventHandling) {
-		document.onkeydown = hvStat.onkeydown;
-	}
+		document.addEventListener("keydown", HVStat.documentKeydownEventHandler);
+		hvStat.ui.setup();
+		if (hvStat.settings.adjustKeyEventHandling) {
+			document.onkeydown = hvStat.onkeydown;
+		}
+	},
 };
 
-//------------------------------------
-// execute
-//------------------------------------
-HVStat.main1();
+hvStat.startup.phase1();
