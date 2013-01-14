@@ -3498,7 +3498,6 @@ _drops = null;
 _round = null;
 _backup = [null, null, null, null, null, null];
 _database = null;
-_charss = null;
 _tags = null;
 _isMenuInitComplete = false;
 _equips = 0;
@@ -5936,21 +5935,6 @@ function HVMonsterDatabase() {
 	this.datescan = [];
 	this.isLoaded = false;
 }
-function HVCharacterStatsSettings() {
-	this.load = function () { loadFromStorage(this, HV_CHSS); };
-	this.save = function () { saveToStorage(this, HV_CHSS); };
-	this.reset = function () { deleteFromStorage(HV_CHSS); };
-	this.cloneFrom = clone;
-	//1-easy, 2-normal, 3-hard, 4-heroic, 5-
-	this.difficulty = [0, 0];
-	this.set = 0;
-	this.isLoaded = false;
-}
-function loadCHARSSObject() {
-	if (_charss !== null) return;
-	_charss = new HVCharacterStatsSettings();
-	_charss.load();
-}
 
 HVStat.registerScrollTargetMouseEventListeners = function () {
 	var i, element;
@@ -6087,13 +6071,15 @@ function registerEventHandlersForMonsterPopup() {
 	}
 }
 function StartBattleAlerts () {
-	var diff = _charss.difficulty[1];
 	var elements = document.querySelectorAll('#arenaform img[onclick*="arenaform"]');
 	var i, element;
 	for (i = 0; i < elements.length; i++) {
 		element = elements[i];
 		var oldOnClick = element.getAttribute("onclick");
-		var newOnClick = 'if(confirm("Are you sure you want to start this challenge on ' + diff + ' difficulty, with set number: ' + _charss.set + '?\\n';
+		var newOnClick = 'if(confirm("Are you sure you want to start this challenge on '
+			+ hvStat.characterStatus.difficulty.name
+			+ ' difficulty, with set number: '
+			+ hvStat.characterStatus.equippedSet + '?\\n';
 		if (hvStat.settings.StartAlertHP > hv.character.healthPercent) {
 			newOnClick += '\\n - HP is only '+ hv.character.healthPercent + '%';
 		}
@@ -6103,8 +6089,8 @@ function StartBattleAlerts () {
 		if (hvStat.settings.StartAlertSP > hv.character.spiritPercent) {
 			newOnClick += '\\n - SP is only '+ hv.character.spiritPercent + '%';
 		}
-		if (hvStat.settings.StartAlertDifficulty < _charss.difficulty[0]) {
-			newOnClick += '\\n - Difficulty is '+ diff;
+		if (hvStat.settings.StartAlertDifficulty < hvStat.characterStatus.difficulty.index) {
+			newOnClick += '\\n - Difficulty is '+ hvStat.characterStatus.difficulty.name;
 		}
 		newOnClick += '")) {'+ oldOnClick+ '}';
 		element.setAttribute("onclick", newOnClick);
@@ -6112,7 +6098,6 @@ function StartBattleAlerts () {
 }
 
 HVStat.showEquippedSet = function () {
-	loadCHARSSObject();
 	var leftBar = document.querySelector("div.clb");
 	var cssText = leftBar.querySelector("table.cit td > div > div").style.cssText;
 	var table = document.createElement("table");
@@ -6121,30 +6106,25 @@ HVStat.showEquippedSet = function () {
 	leftBar.insertBefore(table, null);
 	var equippedSet = document.getElementById("hvstat-equipped-set");
 	equippedSet.style.cssText = cssText;
-	equippedSet.textContent = "Equipped set: " + String(_charss.set);
+	equippedSet.textContent = "Equipped set: " + hvStat.characterStatus.equippedSet;
 };
 
 function FindSettingsStats() {
-	loadCHARSSObject();
 	var difficulties = ["", "Easy", "Normal", "Hard", "Heroic", "Nightmare", "Hell", "Nintendo", "Battletoads", "IWBTH"];
 	var difficulty = hv.settings.difficulty;
 	if (difficulty) {
-		_charss.difficulty[0] = difficulties.indexOf(difficulty);
-		_charss.difficulty[1] = difficulty;
+		hvStat.characterStatus.difficulty.name = hv.settings.difficulty;
+		hvStat.characterStatus.difficulty.index = difficulties.indexOf(difficulty);
 	}
 	elements = document.querySelectorAll("#setform img");
 	var result;
 	for (i = 0; i < elements.length; i++) {
 		result = /set(\d)_on/.exec(elements[i].getAttribute("src"));
 		if (result && result.length >= 2) {
-			_charss.set = Number(result[1]);
 			hvStat.characterStatus.equippedSet = Number(result[1]);
 			break;
 		}
 	}
-	_charss.save();
-	hvStat.characterStatus.difficulty.name = hv.settings.difficulty;
-	hvStat.characterStatus.difficulty.index = difficulties.indexOf(difficulty);
 	hvStat.storage.characterStatus.save();
 }
 function AlertEffectsSelf() {
@@ -6402,7 +6382,6 @@ hvStat.startup = {
 			hvStat.storage.roundSession.remove();
 			if ((hvStat.settings.isStartAlert || hvStat.settings.isShowEquippedSet) && !hv.settings.useHVFontEngine) {
 				FindSettingsStats();
-				//console.debug(_charss);
 			}
 			if (!hv.location.isRiddle) {
 				HVStat.resetHealthWarningStates();
