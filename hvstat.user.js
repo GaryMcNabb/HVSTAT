@@ -69,12 +69,12 @@ var util = {
 		}
 		return s;
 	},
-	CallbackQueue: function () {
-		this.closures = [];
-		this.executed = false;
-		this.context = null;
-	},
 }
+util.CallbackQueue = function () {
+	this.closures = [];
+	this.executed = false;
+	this.context = null;
+};
 util.CallbackQueue.prototype = {
 	add: function (fn) {
 		if (!(fn instanceof Function)) {
@@ -294,6 +294,9 @@ var hvStat = {
 	get settings() {
 		return hvStat.storage.settings.value;
 	},
+	get characterStatus() {
+		return hvStat.storage.characterStatus.value;
+	},
 	get roundSession() {
 		return hvStat.storage.roundSession.value;
 	},
@@ -317,10 +320,10 @@ hvStat.util = {
 	percentRatio: function (numerator, denominator, digits) {
 		return this.percent(this.ratio(numerator, denominator), digits);
 	},
-	forEachProperty: function (to, from, fn) {
+	forEachProperty: function (target, base, fn) {
 		var primitives = [ Boolean, Number, String, Date, RegExp ];
-		for (var key in from) {
-			var property = from[key];
+		for (var key in base) {
+			var property = base[key];
 			if (property instanceof Function) {
 				continue;
 			}
@@ -328,30 +331,30 @@ hvStat.util = {
 			var i = primitives.length;
 			while (i--) {
 				if (property instanceof primitives[i]) {
-					fn(to, from, key);
+					fn(target, base, key);
 					treated = true;
 					break;
 				}
 			}
 			if (!treated) {
 				if (typeof property === "string" || typeof property === "number") {
-					fn(to, from, key);
+					fn(target, base, key);
 					treated = true;
 				}
 			}
 			if (!treated) {
 				if (property instanceof Array) {
-					if (!(to[key] instanceof Array)) {
-						delete to[key];
-						to[key] = [];
+					if (!(target[key] instanceof Array)) {
+						delete target[key];
+						target[key] = [];
 					}
-					fn(to, from, key);
+					fn(target, base, key);
 				} else {
-					if (typeof to[key] !== "object") {
-						delete to[key];
-						to[key] = new (property.constructor);
+					if (typeof target[key] !== "object") {
+						delete target[key];
+						target[key] = new (property.constructor);
 					}
-					arguments.callee(to[key], from[key], fn);
+					arguments.callee(target[key], base[key], fn);
 				}
 			}
 		}
@@ -519,6 +522,24 @@ hvStat.storage = {
 		return this._settings;
 	},
 	//------------------------------------
+	// Character Status
+	//------------------------------------
+	_characterStatus: null,
+	_characterStatusDefault: {
+		difficulty: {
+			name: "",
+			index: 0,
+		},
+		equippedSet: 0,
+		overcharge: 100,
+	},
+	get characterStatus() {
+		if (!this._characterStatus) {
+			this._characterStatus = new hvStat.storage.Item("hvStat.characterStatus", this._characterStatusDefault);
+		}
+		return this._characterStatus;
+	},
+	//------------------------------------
 	// Round Session
 	//------------------------------------
 	_roundSession: null,
@@ -593,11 +614,31 @@ hvStat.storage.Item.prototype = {
 	get value() {
 		if (!this._value) {
 			this._value = hvStat.storage.getItem(this._key);
+			if (!this._value) {
+				this._value = this._defaultValue;
+			} else {
+				// copy newly added properties from default
+				hvStat.util.forEachProperty(this._value, this._defaultValue, function (storedValue, defaultValue, key) {
+					if (defaultValue[key] instanceof Array) {
+						storedValue[key].length = defaultValue[key].length;
+						for (var i = 0; i < defaultValue[key].length; i++) {
+							if (storedValue[key][i] === undefined) {
+								storedValue[key][i] = defaultValue[key][i];
+							}
+						}
+					} else if (storedValue[key] === undefined) {
+						storedValue[key] = defaultValue[key];
+					}
+				});
+				// remove disused properties
+				hvStat.util.forEachProperty(this._defaultValue, this._value, function (defaultValue, storedValue, key) {
+					if (defaultValue[key] === undefined) {
+						delete storedValue[key];
+					}
+				});
+			}
 		}
-		if (!this._value && this._defaultValue) {
-			this._value = this._defaultValue;
-		}
-		return this._value
+		return this._value;
 	},
 	save: function () {
 		hvStat.storage.setItem(this._key, this._value);
@@ -1195,7 +1236,7 @@ hvStat.ui = {
 		icon.className = "ui-state-default ui-corner-all";
 		icon.innerHTML = '<span class="ui-icon ui-icon-wrench" title="Launch HV STAT UI"/>';
 		icon.addEventListener("click", function (event) {
-			this.removeEventListener("click", arguments.callee);
+			this.removeEventListener(event.type, arguments.callee);
 			hvStat.ui.createDialog();
 		});
 		icon.addEventListener("mouseover", function (event) {
@@ -6097,10 +6138,14 @@ function FindSettingsStats() {
 		result = /set(\d)_on/.exec(elements[i].getAttribute("src"));
 		if (result && result.length >= 2) {
 			_charss.set = Number(result[1]);
+			hvStat.characterStatus.equippedSet = Number(result[1]);
 			break;
 		}
 	}
 	_charss.save();
+	hvStat.characterStatus.difficulty.name = hv.settings.difficulty;
+	hvStat.characterStatus.difficulty.index = difficulties.indexOf(difficulty);
+	hvStat.storage.characterStatus.save();
 }
 function AlertEffectsSelf() {
 	var effectNames = [
@@ -6192,8 +6237,10 @@ function TaggingItems(clean) {
 		} else if (/Heavy/i.test(equipType)) {
 			equipTypeIdx = 6;
 		}
-		if (equipTypeIdx < 0)
-			throw new Exception("unexpected equipment type");
+		if (equipTypeIdx < 0) {
+			alert("unexpected equipment type");
+			return;
+		}
 		var idArray = equipTagArrayTable[equipTypeIdx].id;
 		var valueArray = equipTagArrayTable[equipTypeIdx].value;
 		var idCleanArray = equipTagArrayTable[equipTypeIdx].idClean;
