@@ -44,6 +44,35 @@ window.IDBCursor = window.IDBCursor || window.webkitIDBCursor;
 // generic utilities
 //------------------------------------
 var util = {
+	clone: function (item) {
+		//console.debug(item);
+		if (item === null) return null;
+		var primitives = [ "boolean", "number", "string", "undefined" ];
+		var i = primitives.length;
+		while (i--) {
+			if (typeof item === primitives[i]) {
+				return item;
+			}
+		}
+		var clone;
+		if (item instanceof Array) {
+			clone = [];
+			i = item.length;
+			for (i = 0; i < item.length; i++) {
+				//console.debug(i);
+				clone[i] = arguments.callee(item[i]);
+			}
+		} else {
+			clone = {};
+			for (i in item) {
+				if (Object.prototype.hasOwnProperty.call(item, i)) {
+					//console.debug(i);
+					clone[i] = arguments.callee(item[i]);
+				}
+			}
+		}
+		return clone;
+	},
 	percent: function (value) { // refactor -> hvStat
 		return Math.floor(value * 100);
 	},
@@ -352,7 +381,7 @@ hvStat.util = {
 				} else {
 					if (typeof target[key] !== "object") {
 						delete target[key];
-						target[key] = new (property.constructor);
+						target[key] = new property.constructor();
 					}
 					arguments.callee(target[key], base[key], fn);
 				}
@@ -615,24 +644,21 @@ hvStat.storage.Item.prototype = {
 		if (!this._value) {
 			this._value = hvStat.storage.getItem(this._key);
 			if (!this._value) {
-				this._value = this._defaultValue;
+				this._value = util.clone(this._defaultValue);
 			} else {
 				// copy newly added properties from default
 				hvStat.util.forEachProperty(this._value, this._defaultValue, function (storedValue, defaultValue, key) {
-					if (defaultValue[key] instanceof Array) {
-						storedValue[key].length = defaultValue[key].length;
-						for (var i = 0; i < defaultValue[key].length; i++) {
-							if (storedValue[key][i] === undefined) {
-								storedValue[key][i] = defaultValue[key][i];
-							}
-						}
-					} else if (storedValue[key] === undefined) {
-						storedValue[key] = defaultValue[key];
+					if (storedValue[key] === undefined) {
+						console.debug(storedValue);
+						console.debug(defaultValue);
+						console.debug(key);
+						storedValue[key] = util.clone(defaultValue[key]);
 					}
 				});
 				// remove disused properties
 				hvStat.util.forEachProperty(this._defaultValue, this._value, function (defaultValue, storedValue, key) {
 					if (defaultValue[key] === undefined) {
+						console.debug(String(key));
 						delete storedValue[key];
 					}
 				});
@@ -6319,7 +6345,6 @@ hvStat.startup = {
 			hvStat.startup.phase2();
 		} else {
 			document.addEventListener("readystatechange", function (event) {
-				console.debug(event);
 				this.removeEventListener(event.type, arguments.callee);
 				hvStat.startup.phase2();
 			});
