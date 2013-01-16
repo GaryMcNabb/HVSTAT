@@ -657,6 +657,11 @@ hvStat.storage = {
 		if (!this._overview) {
 			this._overview = new hvStat.storage.Item("HVOverview", this._overviewDefault);
 		}
+		this._overview.value.totalRounds =
+			this._overview.value.roundArray[0] +
+			this._overview.value.roundArray[1] +
+			this._overview.value.roundArray[2] +
+			this._overview.value.roundArray[3];
 		return this._overview;
 	},
 };
@@ -1322,7 +1327,6 @@ hvStat.ui = {
 			title: "[STAT] HentaiVerse Statistics, Tracking, and Analysis Tool v." + hvStat.version,
 		});
 		$('#hvstat-tabs').tabs();
-		loadOverviewObject();
 		loadStatsObject();
 		loadDropsObject();
 		loadRewardsObject();
@@ -4213,7 +4217,6 @@ function RoundSave() {
 }
 
 function saveStats() {
-	loadOverviewObject();
 	loadStatsObject();
 	loadRewardsObject();
 	loadDropsObject();
@@ -4231,28 +4234,28 @@ function saveStats() {
 	}
 	var b = new Date();
 	var a = b.getTime();
-	if (_overview.startTime === 0) {
-		_overview.startTime = a;
+	if (hvStat.overview.startTime === 0) {
+		hvStat.overview.startTime = a;
 	}
 	if (hvStat.roundSession.battleType === HOURLY) {
-		_overview.lastHourlyTime = a;
+		hvStat.overview.lastHourlyTime = a;
 	}
-	_overview.exp += d;
-	_overview.credits += c;
-	_overview.expbyBT[hvStat.roundSession.battleType] += d;
-	_overview.creditsbyBT[hvStat.roundSession.battleType] += c;
+	hvStat.overview.exp += d;
+	hvStat.overview.credits += c;
+	hvStat.overview.expbyBT[hvStat.roundSession.battleType] += d;
+	hvStat.overview.creditsbyBT[hvStat.roundSession.battleType] += c;
 	if (_equips > 0) {
-		_overview.lastEquipTime = a;
-		_overview.lastEquipName = _lastEquipName;
-		_overview.equips += _equips;
+		hvStat.overview.lastEquipTime = a;
+		hvStat.overview.lastEquipName = _lastEquipName;
+		hvStat.overview.equips += _equips;
 	}
 	if (_artifacts > 0) {
-		_overview.lastArtTime = a;
-		_overview.lastArtName = _lastArtName;
-		_overview.artifacts += _artifacts;
+		hvStat.overview.lastArtTime = a;
+		hvStat.overview.lastArtName = _lastArtName;
+		hvStat.overview.artifacts += _artifacts;
 	}
 	if (d > 0) {
-		_overview.roundArray[hvStat.roundSession.battleType]++;
+		hvStat.overview.roundArray[hvStat.roundSession.battleType]++;
 		_drops.dropChancesbyBT[hvStat.roundSession.battleType] += hvStat.roundSession.dropChances;
 		_drops.dropChances += hvStat.roundSession.dropChances;
 	}
@@ -4367,7 +4370,7 @@ function saveStats() {
 	_rewards.tokenDrops[0] += _tokenDrops[0];
 	_rewards.tokenDrops[1] += _tokenDrops[1];
 	_rewards.tokenDrops[2] += _tokenDrops[2];
-	_overview.save();
+	hvStat.storage.overview.save();
 	_stats.save();
 	_rewards.save();
 	_drops.save();
@@ -4497,12 +4500,12 @@ function getReportOverviewHtml() {
 	i += N;
 	i += hvStat.settings.warnMode[3] ? '<span style="color:green"><b>IW</b></span>' : I;
 	var x = '<table class="_UI" cellspacing="0" cellpadding="2" style="width:100%"><tr><td colspan="3">No data found. Complete a round to begin tracking.</td></tr></table>';
-	if (_overview.isLoaded && _overview.totalRounds > 0) {
+	if (hvStat.overview.totalRounds > 0) {
 		var f = new Date();
-		f.setTime(_overview.startTime);
+		f.setTime(hvStat.overview.startTime);
 		var r = new Date();
 		var k = r.getTime();
-		var d = ((k - _overview.startTime) / (60 * 60 * 1000));
+		var d = ((k - hvStat.overview.startTime) / (60 * 60 * 1000));
 		var E = "";
 		var v = (60 * d).toFixed();
 		var K = Math.floor(v / (60 * 24));
@@ -4517,44 +4520,44 @@ function getReportOverviewHtml() {
 			z = r.toLocaleDateString() + " " + r.toLocaleTimeString();
 		}
 		var c;
-		if (_overview.lastHourlyTime === 0) c = "Never";
+		if (hvStat.overview.lastHourlyTime === 0) c = "Never";
 		else {
 			c = new Date();
-			c.setTime(_overview.lastHourlyTime);
+			c.setTime(hvStat.overview.lastHourlyTime);
 			c = c.toLocaleTimeString();
 		}
 		var F = 0;
 		var g = "none yet!";
 		var L = "N/A";
-		if (_overview.equips > 0) {
-			F = (_overview.totalRounds / _overview.equips).toFixed();
-			g = _overview.lastEquipName;
-			L = getRelativeTime(_overview.lastEquipTime);
+		if (hvStat.overview.equips > 0) {
+			F = (hvStat.overview.totalRounds / hvStat.overview.equips).toFixed();
+			g = hvStat.overview.lastEquipName;
+			L = getRelativeTime(hvStat.overview.lastEquipTime);
 		}
 		var t = 0;
 		var s = "none yet!";
 		var H = "N/A";
-		if (_overview.artifacts > 0) {
-			t = (_overview.totalRounds / _overview.artifacts).toFixed(1);
-			s = _overview.lastArtName;
-			H = getRelativeTime(_overview.lastArtTime);
+		if (hvStat.overview.artifacts > 0) {
+			t = (hvStat.overview.totalRounds / hvStat.overview.artifacts).toFixed(1);
+			s = hvStat.overview.lastArtName;
+			H = getRelativeTime(hvStat.overview.lastArtTime);
 		}
 		x = '<table class="_UI" cellspacing="0" cellpadding="2" style="width:100%">'
 			+ '<tr><td colspan="2"><b>Reporting period:</b> ' + e + " to " + z + '</td></tr>'
 			+ '<tr><td colspan="2" style="padding-left:10px">Total time: ' + E + '</td></tr>'
-			+ '<tr><td colspan="2"><b>Rounds completed:</b> ' + _overview.totalRounds + " (" + (M === 0 ? 0 : (_overview.totalRounds / M).toFixed()) + ' rounds per day)</td></tr>'
-			+ '<tr><td colspan="2" style="padding-left:10px">Hourly encounters: ' + _overview.roundArray[0] + ' (' + (_overview.roundArray[0] / _overview.totalRounds * 100).toFixed(2) + '% of total; ' + (M === 0 ? 0 : (_overview.roundArray[0] / M).toFixed()) + ' rounds per day); Last Hourly: ' + c + '</td></tr>'
-			+ '<tr><td colspan="2" style="padding-left:10px">Arena: ' + _overview.roundArray[1] + ' (' + (_overview.roundArray[1] / _overview.totalRounds * 100).toFixed(2) + '% of total)</td></tr>'
-			+ '<tr><td colspan="2" style="padding-left:10px">Grindfest: ' + _overview.roundArray[2] + ' (' + (_overview.roundArray[2] / _overview.totalRounds * 100).toFixed(2) + '% of total; ' + (M === 0 ? 0 : (_overview.roundArray[2] / M).toFixed()) + ' rounds per day)</td></tr>'
-			+ '<tr><td colspan="2" style="padding-left:10px">Item World: ' + _overview.roundArray[3] + ' (' + (_overview.roundArray[3] / _overview.totalRounds * 100).toFixed(2) + '% of total; ' + (M === 0 ? 0 : (_overview.roundArray[3] / M).toFixed()) + ' rounds per day)</td></tr>'
-			+ '<tr><td><b>Total EXP gained:</b> ' + _overview.exp.toFixed() + '</td><td><b>Total Credits gained:</b> ' + (_overview.credits).toFixed() + '</td></tr>'
-			+ '<tr><td style="padding-left:10px">EXP per round: ' + (_overview.exp / _overview.totalRounds).toFixed(2) + '</td><td style="padding-left:10px">Credits per round: ' + (_overview.credits / _overview.totalRounds).toFixed(2) + '</td></tr>'
-			+ '<tr><td style="padding-left:10px">Ho: ' + (_overview.expbyBT[0] / _overview.roundArray[0]).toFixed(2) + '| Ar: ' + (_overview.expbyBT[1] / _overview.roundArray[1]).toFixed(2) + '| GF: ' + (_overview.expbyBT[2] / _overview.roundArray[2]).toFixed(2) + '| CF: ' + (_overview.expbyBT[4] / _overview.roundArray[4]).toFixed(2) + '| IW: ' + (_overview.expbyBT[3] / _overview.roundArray[3]).toFixed(2) + '</td><td style="padding-left:10px">Ho: ' + (_overview.creditsbyBT[0] / _overview.roundArray[0]).toFixed(2) + '| Ar: ' + (_overview.creditsbyBT[1] / _overview.roundArray[1]).toFixed(2) + '| GF: ' + (_overview.creditsbyBT[2] / _overview.roundArray[2]).toFixed(2) + '</td></tr>'
-			+ '<tr><td style="padding-left:10px">EXP per hour: ' + (_overview.exp / d).toFixed(2) + '</td><td style="padding-left:10px">Credits per hour: ' + (_overview.credits / d).toFixed(2) + '</td></tr>'
-			+ '<tr><td style="padding-left:10px">EXP per day: ' + (M === 0 ? 0 : (_overview.exp / M).toFixed(2)) + '</td><td style="padding-left:10px">Credits per day: ' + (M === 0 ? 0 : (_overview.credits / M).toFixed(2)) + '</td></tr>'
-			+ '<tr><td colspan="2"><b>Total Equipment found:</b> ' + _overview.equips + ' pieces (' + F + ' rounds per equip)</td></tr>'
+			+ '<tr><td colspan="2"><b>Rounds completed:</b> ' + hvStat.overview.totalRounds + " (" + (M === 0 ? 0 : (hvStat.overview.totalRounds / M).toFixed()) + ' rounds per day)</td></tr>'
+			+ '<tr><td colspan="2" style="padding-left:10px">Hourly encounters: ' + hvStat.overview.roundArray[0] + ' (' + (hvStat.overview.roundArray[0] / hvStat.overview.totalRounds * 100).toFixed(2) + '% of total; ' + (M === 0 ? 0 : (hvStat.overview.roundArray[0] / M).toFixed()) + ' rounds per day); Last Hourly: ' + c + '</td></tr>'
+			+ '<tr><td colspan="2" style="padding-left:10px">Arena: ' + hvStat.overview.roundArray[1] + ' (' + (hvStat.overview.roundArray[1] / hvStat.overview.totalRounds * 100).toFixed(2) + '% of total)</td></tr>'
+			+ '<tr><td colspan="2" style="padding-left:10px">Grindfest: ' + hvStat.overview.roundArray[2] + ' (' + (hvStat.overview.roundArray[2] / hvStat.overview.totalRounds * 100).toFixed(2) + '% of total; ' + (M === 0 ? 0 : (hvStat.overview.roundArray[2] / M).toFixed()) + ' rounds per day)</td></tr>'
+			+ '<tr><td colspan="2" style="padding-left:10px">Item World: ' + hvStat.overview.roundArray[3] + ' (' + (hvStat.overview.roundArray[3] / hvStat.overview.totalRounds * 100).toFixed(2) + '% of total; ' + (M === 0 ? 0 : (hvStat.overview.roundArray[3] / M).toFixed()) + ' rounds per day)</td></tr>'
+			+ '<tr><td><b>Total EXP gained:</b> ' + hvStat.overview.exp.toFixed() + '</td><td><b>Total Credits gained:</b> ' + (hvStat.overview.credits).toFixed() + '</td></tr>'
+			+ '<tr><td style="padding-left:10px">EXP per round: ' + (hvStat.overview.exp / hvStat.overview.totalRounds).toFixed(2) + '</td><td style="padding-left:10px">Credits per round: ' + (hvStat.overview.credits / hvStat.overview.totalRounds).toFixed(2) + '</td></tr>'
+			+ '<tr><td style="padding-left:10px">Ho: ' + (hvStat.overview.expbyBT[0] / hvStat.overview.roundArray[0]).toFixed(2) + '| Ar: ' + (hvStat.overview.expbyBT[1] / hvStat.overview.roundArray[1]).toFixed(2) + '| GF: ' + (hvStat.overview.expbyBT[2] / hvStat.overview.roundArray[2]).toFixed(2) + '| CF: ' + (hvStat.overview.expbyBT[4] / hvStat.overview.roundArray[4]).toFixed(2) + '| IW: ' + (hvStat.overview.expbyBT[3] / hvStat.overview.roundArray[3]).toFixed(2) + '</td><td style="padding-left:10px">Ho: ' + (hvStat.overview.creditsbyBT[0] / hvStat.overview.roundArray[0]).toFixed(2) + '| Ar: ' + (hvStat.overview.creditsbyBT[1] / hvStat.overview.roundArray[1]).toFixed(2) + '| GF: ' + (hvStat.overview.creditsbyBT[2] / hvStat.overview.roundArray[2]).toFixed(2) + '</td></tr>'
+			+ '<tr><td style="padding-left:10px">EXP per hour: ' + (hvStat.overview.exp / d).toFixed(2) + '</td><td style="padding-left:10px">Credits per hour: ' + (hvStat.overview.credits / d).toFixed(2) + '</td></tr>'
+			+ '<tr><td style="padding-left:10px">EXP per day: ' + (M === 0 ? 0 : (hvStat.overview.exp / M).toFixed(2)) + '</td><td style="padding-left:10px">Credits per day: ' + (M === 0 ? 0 : (hvStat.overview.credits / M).toFixed(2)) + '</td></tr>'
+			+ '<tr><td colspan="2"><b>Total Equipment found:</b> ' + hvStat.overview.equips + ' pieces (' + F + ' rounds per equip)</td></tr>'
 			+ '<tr><td colspan="2" style="padding-left:10px">Last found: <span style="color:red">' + g + '</span> (' + L + ')</td></tr>'
-			+ '<tr><td colspan="2"><b>Total Artifacts found:</b> ' + _overview.artifacts + ' pieces (' + t + ' rounds per artifact)</td></tr>'
+			+ '<tr><td colspan="2"><b>Total Artifacts found:</b> ' + hvStat.overview.artifacts + ' pieces (' + t + ' rounds per artifact)</td></tr>'
 			+ '<tr><td colspan="2" style="padding-left:10px">Last found: <span style="color:blue">' + s + '</span> (' + H + ')</td></tr></table>'
 	}
 	x += '<table class="_UI" cellspacing="0" cellpadding="2" style="width:100%"><tr><td>&nbsp;</td></tr>'
@@ -4599,7 +4602,7 @@ function getReportOverviewHtml() {
 			+ '<td style="padding-left:10px;width:34%">Overcharge Alert: ' + (hvStat.settings.isAlertOverchargeFull ? a : w) + '</td>'
 			+ '<td></td>'
 		+ '</tr></table>';
-	if (_overview.isLoaded && _overview.totalRounds > 0)
+	if (hvStat.overview.isLoaded && hvStat.overview.totalRounds > 0)
 		x += '<table class="_UI" cellspacing="0" cellpadding="2" style="width:100%"><tr><td align="right" colspan="3"><input type="button" class="_resetOverview" value="Reset Overview" /></td></tr></table>'
 	return x;
 }
@@ -4732,7 +4735,7 @@ function getReportShrineHtml() {
 function initOverviewPane() {
 	$("#pane1").html(getReportOverviewHtml());
 	$("._resetOverview").click(function () {
-		if (confirm("Reset Overview tab?")) _overview.reset();
+		if (confirm("Reset Overview tab?")) hvStat.storage.overview.reset();
 	});
 }
 function initBattleStatsPane() {
@@ -5568,11 +5571,6 @@ function captureShrine() {
 	}
 	_shrine.save();
 }
-function loadOverviewObject() {
-	if (_overview !== null) return;
-	_overview = new HVCacheOverview();
-	_overview.load();
-}
 function loadStatsObject() {
 	if (_stats !== null) return;
 	_stats = new HVCacheStats();
@@ -5610,7 +5608,7 @@ function getRelativeTime(b) {
 	return (parseInt(c / 86400)).toString() + " days ago";
 }
 function HVResetTracking() {
-	_overview.reset();
+	hvStat.storage.overview.reset();
 	_stats.reset();
 	_rewards.reset();
 	_shrine.reset();
@@ -5669,30 +5667,6 @@ function loadFromStorage(c, b) {
 }
 function saveToStorage(b, a) { localStorage.setItem(a, JSON.stringify(b)); }
 function deleteFromStorage(a) { localStorage.removeItem(a); }
-function HVCacheOverview() {
-	this.load = function () { loadFromStorage(this, HV_OVERVIEW); };
-	this.save = function () {
-		this.totalRounds = this.roundArray[0] + this.roundArray[1] + this.roundArray[2] + this.roundArray[3] + this.roundArray[4];
-		saveToStorage(this, HV_OVERVIEW);
-	};
-	this.reset = function () { deleteFromStorage(HV_OVERVIEW); };
-	this.cloneFrom = clone;
-	this.startTime = 0;
-	this.lastHourlyTime = 0;
-	this.exp = 0;
-	this.credits = 0;
-	this.lastEquipTime = 0;
-	this.lastEquipName = "";
-	this.equips = 0;
-	this.lastArtTime = 0;
-	this.lastArtName = "";
-	this.artifacts = 0;
-	this.roundArray = [0, 0, 0, 0, 0];
-	this.totalRounds = 0;
-	this.expbyBT = [0, 0, 0, 0, 0];
-	this.creditsbyBT = [0, 0, 0, 0, 0];
-	this.isLoaded = false;
-}
 function HVCacheStats() {
 	this.load = function () { loadFromStorage(this, HV_STATS); };
 	this.save = function () { saveToStorage(this, HV_STATS); };
