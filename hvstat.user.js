@@ -323,6 +323,9 @@ var hvStat = {
 	get roundSession() {
 		return hvStat.storage.roundSession.value;
 	},
+	get overview() {
+		return hvStat.storage.overview.value;
+	},
 };
 
 hvStat.util = {
@@ -629,7 +632,33 @@ hvStat.storage = {
 			this._roundSession = new hvStat.storage.Item("hvStat.roundSession", this._roundSessionDefault);
 		}
 		return this._roundSession;
-	}
+	},
+	//------------------------------------
+	// Overview
+	//------------------------------------
+	_overview: null,
+	_overviewDefault: {
+		startTime: 0,
+		lastHourlyTime: 0,
+		exp: 0,
+		credits: 0,
+		lastEquipTime: 0,
+		lastEquipName: "",
+		equips: 0,
+		lastArtTime: 0,
+		lastArtName: "",
+		artifacts: 0,
+		roundArray: [0, 0, 0, 0],
+		totalRounds: 0,
+		expbyBT: [0, 0, 0, 0],
+		creditsbyBT: [0, 0, 0, 0],
+	},
+	get overview() {
+		if (!this._overview) {
+			this._overview = new hvStat.storage.Item("HVOverview", this._overviewDefault);
+		}
+		return this._overview;
+	},
 };
 
 hvStat.storage.Item = function (key, defaultValue) {
@@ -2258,7 +2287,9 @@ HVStat.Monster = (function () {
 				for (abbrLevel = 0; abbrLevel < maxAbbrLevel; abbrLevel++) {
 					statsHtml = '';
 					if (!_scanResult || !_scanResult.monsterClass) {
-						statsHtml = '[<span class="hvstat-monster-status-unknown">NEW</span>]';
+//						if (hvStat.settings.showNewIfMonsterNotScanned) {
+							statsHtml = '[<span class="hvstat-monster-status-unknown">NEW</span>]';
+//						}
 					} else {
 						// class and power level
 						if (hvStat.settings.showMonsterClassFromDB || hvStat.settings.showMonsterPowerLevelFromDB) {
@@ -2305,16 +2336,25 @@ HVStat.Monster = (function () {
 						if (hvStat.settings.showMonsterWeaknessesFromDB || hvStat.settings.showMonsterResistancesFromDB) {
 							statsHtml += "]";
 						}
-						// melee attack and skills
-						if (hvStat.settings.showMonsterAttackTypeFromDB) {
-							statsHtml += '(<span class="hvstat-monster-status-melee-attack-type">';
+					}
+					// melee attack and skills
+					if (hvStat.settings.showMonsterAttackTypeFromDB) {
+						statsHtml += '(';
+						// melee attack
+						var meleeAttackExists = _scanResult && _scanResult.meleeAttack;
+						if (meleeAttackExists) {
+							statsHtml += '<span class="hvstat-monster-status-melee-attack-type">';
 							statsHtml += _scanResult.meleeAttack.toString(abbrLevel > 0 ? abbrLevel : 1);
 							statsHtml += '</span>';
-							var manaSkills = _getManaSkills();
-							var manaSkillsExist = manaSkills.length > 0;
-							if (manaSkillsExist) {
-								statsHtml += ';<span class="hvstat-monster-status-magic-skill-attack-type">';
+						}
+						// mana skills
+						var manaSkills = _getManaSkills();
+						var manaSkillsExist = manaSkills.length > 0;
+						if (manaSkillsExist) {
+							if (meleeAttackExists) {
+								statsHtml += ';';
 							}
+							statsHtml += '<span class="hvstat-monster-status-magic-skill-attack-type">';
 							var skillTable = _getManaSkillTable();
 							var attackTypeCount, damageTypeCount
 							attackTypeCount = 0;
@@ -2338,22 +2378,21 @@ HVStat.Monster = (function () {
 									attackTypeCount++;
 								}
 							}
-							if (manaSkillsExist) {
-								statsHtml += '</span>';
-							}
-							var spiritSkill = _getSpiritSkill();
-							if (spiritSkill) {
-								if (!manaSkillsExist) {
-									statsHtml += ';';
-								} else {
-									statsHtml += '|';
-								}
-								statsHtml += '<span class="hvstat-monster-status-spirit-skill-attack-type">';
-								statsHtml += spiritSkill.toString(abbrLevel > 0 ? abbrLevel : 1);
-								statsHtml += '</span>';
-							}
-							statsHtml += ')';
+							statsHtml += '</span>';
 						}
+						// spirit skill
+						var spiritSkill = _getSpiritSkill();
+						if (spiritSkill) {
+							if (!manaSkillsExist) {
+								statsHtml += ';';
+							} else {
+								statsHtml += '|';
+							}
+							statsHtml += '<span class="hvstat-monster-status-spirit-skill-attack-type">';
+							statsHtml += spiritSkill.toString(abbrLevel > 0 ? abbrLevel : 1);
+							statsHtml += '</span>';
+						}
+						statsHtml += ')';
 					}
 					if (hv.settings.useHVFontEngine) {
 						nameOuterFrameElement.style.width = "auto"; // tweak for Firefox
@@ -5584,10 +5623,10 @@ function HVMasterReset() {
 		"HVBackup3",
 		"HVBackup4",
 		"HVBackup5",
-		"HVCollectData",		// old monster skill data
+		"HVCollectData",
 		"HVDrops",
 		"HVLoadTimeCounters",	// obsolete
-		"HVMonsterDatabase",	// old monster scan data
+		"HVMonsterDatabase",	// old monster data
 		"HVOverview",
 		"HVProf",
 		"HVRewards",
@@ -5605,6 +5644,12 @@ function HVMasterReset() {
 	var i = keys.length;
 	while (i--) {
 		localStorage.removeItem(keys[i]);
+	}
+	for (var key in localStorage) {
+		if (key.indexOf("hvStat.") === 0) {
+			console.debug("Remove from localStorage: " + key);
+//			localStorage.removeItem(key);
+		}
 	}
 }
 function clone(a) {
@@ -6351,6 +6396,7 @@ hvStat.startup = {
 		console.debug(hv);
 		hvStat.setup();
 		console.debug(hvStat);
+		console.debug(hvStat.overview);
 		if (hvStat.settings.isChangePageTitle) {
 			document.title = hvStat.settings.customPageTitle;
 		}
