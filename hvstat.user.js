@@ -55,7 +55,7 @@ var util = {
 			}
 		}
 		var clone;
-		if (item instanceof Array) {
+		if (Array.isArray(item)) {
 			clone = [];
 			i = item.length;
 			for (i = 0; i < item.length; i++) {
@@ -349,35 +349,33 @@ hvStat.util = {
 	percentRatio: function (numerator, denominator, digits) {
 		return this.percent(this.ratio(numerator, denominator), digits);
 	},
-	forEachProperty: function (target, base, fn) {
-		var primitives = [ Boolean, Number, String, Date, RegExp ];
+	forEachProperty: function (target, base, callback) {
+		var primitives = [ "boolean", "number", "string", "undefined" ];
 		for (var key in base) {
 			var property = base[key];
 			if (property instanceof Function) {
 				continue;
 			}
+			if (property === null) {
+				callback(target, base, key);
+				continue;
+			}
 			var treated = false;
 			var i = primitives.length;
 			while (i--) {
-				if (property instanceof primitives[i]) {
-					fn(target, base, key);
+				if (typeof item === primitives[i]) {
+					callback(target, base, key);
 					treated = true;
 					break;
 				}
 			}
 			if (!treated) {
-				if (typeof property === "string" || typeof property === "number" || typeof property === "boolean") {
-					fn(target, base, key);
-					treated = true;
-				}
-			}
-			if (!treated) {
-				if (property instanceof Array) {
-					if (!(target[key] instanceof Array)) {
+				if (Array.isArray(property)) {
+					if (!Array.isArray(target[key])) {
 						delete target[key];
 						target[key] = [];
 					}
-					fn(target, base, key);
+					callback(target, base, key);
 				} else {
 					if (typeof target[key] !== "object") {
 						delete target[key];
@@ -403,9 +401,15 @@ hvStat.util = {
 		this.forEachProperty(to, from, function (to, from, key) {
 			if (from[key] instanceof Array) {
 				for (var i = 0; i < from[key].length; i++) {
+					if (to[key][i] === undefined) {
+						to[key][i] = 0;
+					}
 					to[key][i] += from[key][i];
 				}
 			} else {
+				if (to[key] === undefined) {
+					to[key] = 0;
+				}
 				to[key] += from[key];
 			}
 		});
