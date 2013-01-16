@@ -73,9 +73,6 @@ var util = {
 		}
 		return clone;
 	},
-	percent: function (value) { // refactor -> hvStat
-		return Math.floor(value * 100);
-	},
 	escapeRegex: function (value) {
 		return value.replace(/[\-\[\]{}()*+?.,\\\^$|#\s]/g, "\\$&");
 	},
@@ -194,28 +191,29 @@ browser.extension = {
 //------------------------------------
 // HV utility object
 //------------------------------------
-var hv;
-var HV = (function () {
-	// private static
-	var getGaugeRate = function (gaugeElement, gaugeMaxWidth) {
-		if (!gaugeElement) {
-			return 0;
-		}
-		var result = /width\s*?:\s*?(\d+?)px/i.exec(gaugeElement.style.cssText);
-		var rate = 0;
-		if (result && result.length >= 2) {
-			rate = Number(result[1]) / gaugeMaxWidth;
-		} else {
-			rate = gaugeElement.width / gaugeMaxWidth;
-		}
-		return rate;
-	};
-	var getCharacterGaugeRate = function (gauge) {
-		return getGaugeRate(gauge, 120);
-	};
-
-	// constructor
-	function HV() {
+var hv = {
+	util: {
+		getGaugeRate: function (gaugeElement, gaugeMaxWidth) {
+			if (!gaugeElement) {
+				return 0;
+			}
+			var result = /width\s*?:\s*?(\d+?)px/i.exec(gaugeElement.style.cssText);
+			var rate = 0;
+			if (result && result.length >= 2) {
+				rate = Number(result[1]) / gaugeMaxWidth;
+			} else {
+				rate = gaugeElement.width / gaugeMaxWidth;
+			}
+			return rate;
+		},
+		getCharacterGaugeRate: function (gauge) {
+			return hv.util.getGaugeRate(gauge, 120);
+		},
+		percent: function (value) {
+			return Math.floor(value * 100);
+		},
+	},
+	setup: function () {
 		var location = {
 			isBattleItems: document.location.search === "?s=Character&ss=it",
 			isInventory: document.location.search === "?s=Character&ss=in",
@@ -249,19 +247,19 @@ var HV = (function () {
 		}
 
 		var character = {
-			healthRate: getCharacterGaugeRate(document.querySelector('img[alt="health"]')),
-			magicRate: getCharacterGaugeRate(document.querySelector('img[alt="magic"]')),
-			spiritRate: getCharacterGaugeRate(document.querySelector('img[alt="spirit"]')),
-			overchargeRate: getCharacterGaugeRate(document.querySelector('img[alt="overcharge"]')),
-			healthPercent: 0,	// refactor -> hvStat
-			magicPercent: 0,	// refactor -> hvStat
-			spiritPercent: 0,	// refactor -> hvStat
-			overchargePercent: 0,	// refactor -> hvStat
+			healthRate: hv.util.getCharacterGaugeRate(document.querySelector('img[alt="health"]')),
+			magicRate: hv.util.getCharacterGaugeRate(document.querySelector('img[alt="magic"]')),
+			spiritRate: hv.util.getCharacterGaugeRate(document.querySelector('img[alt="spirit"]')),
+			overchargeRate: hv.util.getCharacterGaugeRate(document.querySelector('img[alt="overcharge"]')),
+			healthPercent: 0,
+			magicPercent: 0,
+			spiritPercent: 0,
+			overchargePercent: 0,
 		};
-		character.healthPercent = util.percent(character.healthRate);
-		character.magicPercent = util.percent(character.magicRate);
-		character.spiritPercent = util.percent(character.spiritRate);
-		character.overchargePercent = util.percent(character.overchargeRate);
+		character.healthPercent = hv.util.percent(character.healthRate);
+		character.magicPercent = hv.util.percent(character.magicRate);
+		character.spiritPercent = hv.util.percent(character.spiritRate);
+		character.overchargePercent = hv.util.percent(character.overchargeRate);
 
 		var battleLog = document.getElementById("togpane_log");
 		var battle = {};
@@ -289,17 +287,13 @@ var HV = (function () {
 				}
 			}
 		}
-
-		return {
-			location: location,
-			elementCache: elementCache,
-			settings: settings,
-			character: character,
-			battle: battle,
-		};
-	}
-	return HV;
-})();
+		this.location = location;
+		this.elementCache = elementCache;
+		this.settings = settings;
+		this.character = character;
+		this.battle = battle;
+	},
+};
 
 //------------------------------------
 // HV STAT features
@@ -6359,7 +6353,7 @@ hvStat.startup = {
 			hvStat.onkeydown = document.onkeydown;
 			document.onkeydown = null;
 		}
-		hv = new HV();
+		hv.setup();
 		console.debug(hv);
 		hvStat.setup();
 		console.debug(hvStat);
