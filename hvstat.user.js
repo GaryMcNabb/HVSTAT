@@ -326,6 +326,9 @@ var hvStat = {
 	get overview() {
 		return hvStat.storage.overview.value;
 	},
+	get stats() {
+		return hvStat.storage.stats.value;
+	},
 };
 
 hvStat.util = {
@@ -663,6 +666,65 @@ hvStat.storage = {
 			this._overview.value.roundArray[2] +
 			this._overview.value.roundArray[3];
 		return this._overview;
+	},
+	//------------------------------------
+	// Statistics
+	//------------------------------------
+	_stats: null,
+	_statsDefault: {
+		rounds: 0,
+		kills: 0,
+		aAttempts: 0,
+		aHits: [0, 0],
+		aOffhands: [0, 0, 0, 0],
+		sAttempts: 0,
+		aDomino: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+		aCounters: [0, 0, 0, 0],
+		dDealt: [0, 0, 0],
+		sHits: [0, 0],
+		sResists: 0,
+		dDealtSp: [0, 0],
+		absArry: [0, 0, 0],
+		mAttempts: 0,
+		dTaken: [0, 0],
+		mHits: [0, 0],
+		pDodges: 0,
+		pEvades: 0,
+		pParries: 0,
+		pBlocks: 0,
+		pResists: 0,
+		mSpells: 0,
+		overStrikes: 0,
+		coalesce: 0,
+		eTheft: 0,
+		channel: 0,
+		cureTotals: [0, 0, 0],
+		cureCounts: [0, 0, 0],
+		elemEffects: [0, 0, 0],
+		effectPoison: [0, 0],
+		elemSpells: [0, 0, 0, 0],
+		divineSpells: [0, 0, 0, 0],
+		forbidSpells: [0, 0, 0, 0],
+		depSpells: [0, 0],
+		supportSpells: 0,
+		curativeSpells: 0,
+		elemGain: 0,
+		divineGain: 0,
+		forbidGain: 0,
+		depGain: 0,
+		supportGain: 0,
+		curativeGain: 0,
+		weapProfGain: [0, 0, 0, 0],
+		armorProfGain: [0, 0, 0],
+		weaponprocs: [0, 0, 0, 0, 0, 0, 0, 0],
+		pskills: [0, 0, 0, 0, 0, 0, 0],
+		datestart: 0,
+	},
+	get stats() {
+		if (!this._stats) {
+			this._stats = new hvStat.storage.Item("HVStats", this._statsDefault);
+		}
+		return this._stats;
 	},
 };
 
@@ -1327,7 +1389,6 @@ hvStat.ui = {
 			title: "[STAT] HentaiVerse Statistics, Tracking, and Analysis Tool v." + hvStat.version,
 		});
 		$('#hvstat-tabs').tabs();
-		loadStatsObject();
 		loadDropsObject();
 		loadRewardsObject();
 		loadShrineObject();
@@ -2343,17 +2404,20 @@ HVStat.Monster = (function () {
 					}
 					// melee attack and skills
 					if (hvStat.settings.showMonsterAttackTypeFromDB) {
-						statsHtml += '(';
-						// melee attack
 						var meleeAttackExists = _scanResult && _scanResult.meleeAttack;
+						var manaSkills = _getManaSkills();
+						var manaSkillsExist = manaSkills.length > 0;
+						var spiritSkill = _getSpiritSkill();
+						if (meleeAttackExists || manaSkillsExist || spiritSkill) {
+							statsHtml += '(';
+						}
+						// melee attack
 						if (meleeAttackExists) {
 							statsHtml += '<span class="hvstat-monster-status-melee-attack-type">';
 							statsHtml += _scanResult.meleeAttack.toString(abbrLevel > 0 ? abbrLevel : 1);
 							statsHtml += '</span>';
 						}
 						// mana skills
-						var manaSkills = _getManaSkills();
-						var manaSkillsExist = manaSkills.length > 0;
 						if (manaSkillsExist) {
 							if (meleeAttackExists) {
 								statsHtml += ';';
@@ -2385,7 +2449,6 @@ HVStat.Monster = (function () {
 							statsHtml += '</span>';
 						}
 						// spirit skill
-						var spiritSkill = _getSpiritSkill();
 						if (spiritSkill) {
 							if (!manaSkillsExist) {
 								statsHtml += ';';
@@ -2396,7 +2459,9 @@ HVStat.Monster = (function () {
 							statsHtml += spiritSkill.toString(abbrLevel > 0 ? abbrLevel : 1);
 							statsHtml += '</span>';
 						}
-						statsHtml += ')';
+						if (meleeAttackExists || manaSkillsExist || spiritSkill) {
+							statsHtml += ')';
+						}
 					}
 					if (hv.settings.useHVFontEngine) {
 						nameOuterFrameElement.style.width = "auto"; // tweak for Firefox
@@ -3534,8 +3599,6 @@ HVStat.migration.deleteOldDatabase = function () {
 //------------------------------------
 
 /* ========== GLOBAL VARIABLES ========== */
-HV_OVERVIEW = "HVOverview";
-HV_STATS = "HVStats";
 HV_PROF = "HVProf";
 HV_REWARDS = "HVRewards";
 HV_SHRINE = "HVShrine";
@@ -3550,8 +3613,6 @@ HOURLY = 0;
 ARENA = 1;
 GRINDFEST = 2;
 ITEM_WORLD = 3;
-_overview = null;
-_stats = null;
 _profs = null;
 _rewards = null;
 _shrine = null;
@@ -4217,7 +4278,6 @@ function RoundSave() {
 }
 
 function saveStats() {
-	loadStatsObject();
 	loadRewardsObject();
 	loadDropsObject();
 	var d = 0;
@@ -4260,118 +4320,118 @@ function saveStats() {
 		_drops.dropChances += hvStat.roundSession.dropChances;
 	}
 	if (hvStat.settings.isTrackStats) {
-		_stats.kills += hvStat.roundSession.kills;
-		_stats.aAttempts += hvStat.roundSession.aAttempts;
-		_stats.aHits[0] += hvStat.roundSession.aHits[0];
-		_stats.aHits[1] += hvStat.roundSession.aHits[1];
-		_stats.aOffhands[0] += hvStat.roundSession.aOffhands[0];
-		_stats.aOffhands[1] += hvStat.roundSession.aOffhands[1];
-		_stats.aOffhands[2] += hvStat.roundSession.aOffhands[2];
-		_stats.aOffhands[3] += hvStat.roundSession.aOffhands[3];
-		_stats.sAttempts += hvStat.roundSession.sAttempts;
-		_stats.sHits[0] += hvStat.roundSession.sHits[0];
-		_stats.sHits[1] += hvStat.roundSession.sHits[1];
-		_stats.mAttempts += hvStat.roundSession.mAttempts;
-		_stats.mHits[0] += hvStat.roundSession.mHits[0];
-		_stats.mHits[1] += hvStat.roundSession.mHits[1];
-		_stats.pDodges += hvStat.roundSession.pDodges;
-		_stats.pEvades += hvStat.roundSession.pEvades;
-		_stats.pParries += hvStat.roundSession.pParries;
-		_stats.pBlocks += hvStat.roundSession.pBlocks;
-		_stats.dDealt[0] += hvStat.roundSession.dDealt[0];
-		_stats.dDealt[1] += hvStat.roundSession.dDealt[1];
-		_stats.dDealt[2] += hvStat.roundSession.dDealt[2];
-		_stats.dTaken[0] += hvStat.roundSession.dTaken[0];
-		_stats.dTaken[1] += hvStat.roundSession.dTaken[1];
-		_stats.dDealtSp[0] += hvStat.roundSession.dDealtSp[0];
-		_stats.dDealtSp[1] += hvStat.roundSession.dDealtSp[1];
-		_stats.rounds += 1;
-		_stats.absArry[0] += hvStat.roundSession.absArry[0];
-		_stats.absArry[1] += hvStat.roundSession.absArry[1];
-		_stats.absArry[2] += hvStat.roundSession.absArry[2];
-		_stats.coalesce += hvStat.roundSession.coalesce;
-		_stats.eTheft += hvStat.roundSession.eTheft;
-		_stats.channel += hvStat.roundSession.channel;
-		_stats.aDomino[0] += hvStat.roundSession.aDomino[0];
-		_stats.aDomino[1] += hvStat.roundSession.aDomino[1];
-		_stats.aDomino[2] += hvStat.roundSession.aDomino[2];
-		_stats.aDomino[3] += hvStat.roundSession.aDomino[3];
-		_stats.aDomino[4] += hvStat.roundSession.aDomino[4];
-		_stats.aDomino[5] += hvStat.roundSession.aDomino[5];
-		_stats.aDomino[6] += hvStat.roundSession.aDomino[6];
-		_stats.aDomino[7] += hvStat.roundSession.aDomino[7];
-		_stats.aDomino[8] += hvStat.roundSession.aDomino[8];
-		_stats.aDomino[9] += hvStat.roundSession.aDomino[9];
-		_stats.overStrikes += hvStat.roundSession.overStrikes;
-		_stats.aCounters[0] += hvStat.roundSession.aCounters[0];
-		_stats.aCounters[1] += hvStat.roundSession.aCounters[1];
-		_stats.aCounters[2] += hvStat.roundSession.aCounters[2];
-		_stats.aCounters[3] += hvStat.roundSession.aCounters[3];
-		_stats.pResists += hvStat.roundSession.pResists;
-		_stats.mSpells += hvStat.roundSession.mSpells;
-		_stats.sResists += hvStat.roundSession.sResists;
-		_stats.cureTotals[0] += hvStat.roundSession.cureTotals[0];
-		_stats.cureTotals[1] += hvStat.roundSession.cureTotals[1];
-		_stats.cureTotals[2] += hvStat.roundSession.cureTotals[2];
-		_stats.cureCounts[0] += hvStat.roundSession.cureCounts[0];
-		_stats.cureCounts[1] += hvStat.roundSession.cureCounts[1];
-		_stats.cureCounts[2] += hvStat.roundSession.cureCounts[2];
-		_stats.elemEffects[0] += hvStat.roundSession.elemEffects[0];
-		_stats.elemEffects[1] += hvStat.roundSession.elemEffects[1];
-		_stats.elemEffects[2] += hvStat.roundSession.elemEffects[2];
-		_stats.effectPoison[0] += hvStat.roundSession.effectPoison[0];
-		_stats.effectPoison[1] += hvStat.roundSession.effectPoison[1];
-		_stats.elemSpells[0] += hvStat.roundSession.elemSpells[0];
-		_stats.elemSpells[1] += hvStat.roundSession.elemSpells[1];
-		_stats.elemSpells[2] += hvStat.roundSession.elemSpells[2];
-		_stats.elemSpells[3] += hvStat.roundSession.elemSpells[3];
-		_stats.divineSpells[0] += hvStat.roundSession.divineSpells[0];
-		_stats.divineSpells[1] += hvStat.roundSession.divineSpells[1];
-		_stats.divineSpells[2] += hvStat.roundSession.divineSpells[2];
-		_stats.divineSpells[3] += hvStat.roundSession.divineSpells[3];
-		_stats.forbidSpells[0] += hvStat.roundSession.forbidSpells[0];
-		_stats.forbidSpells[1] += hvStat.roundSession.forbidSpells[1];
-		_stats.forbidSpells[2] += hvStat.roundSession.forbidSpells[2];
-		_stats.forbidSpells[3] += hvStat.roundSession.forbidSpells[3];
-		_stats.depSpells[0] += hvStat.roundSession.depSpells[0];
-		_stats.depSpells[1] += hvStat.roundSession.depSpells[1];
-		_stats.supportSpells += hvStat.roundSession.supportSpells;
-		_stats.curativeSpells += hvStat.roundSession.curativeSpells;
-		_stats.elemGain += hvStat.roundSession.elemGain;
-		_stats.divineGain += hvStat.roundSession.divineGain;
-		_stats.forbidGain += hvStat.roundSession.forbidGain;
-		_stats.depGain += hvStat.roundSession.depGain;
-		_stats.supportGain += hvStat.roundSession.supportGain;
-		_stats.curativeGain += hvStat.roundSession.curativeGain;
-		_stats.weapProfGain[0] += hvStat.roundSession.weapProfGain[0];
-		_stats.weapProfGain[1] += hvStat.roundSession.weapProfGain[1];
-		_stats.weapProfGain[2] += hvStat.roundSession.weapProfGain[2];
-		_stats.weapProfGain[3] += hvStat.roundSession.weapProfGain[3];
-		_stats.armorProfGain[0] += hvStat.roundSession.armorProfGain[0];
-		_stats.armorProfGain[1] += hvStat.roundSession.armorProfGain[1];
-		_stats.armorProfGain[2] += hvStat.roundSession.armorProfGain[2];
-		_stats.weaponprocs[0] += hvStat.roundSession.weaponprocs[0];
-		_stats.weaponprocs[1] += hvStat.roundSession.weaponprocs[1];
-		_stats.weaponprocs[2] += hvStat.roundSession.weaponprocs[2];
-		_stats.weaponprocs[3] += hvStat.roundSession.weaponprocs[3];
-		_stats.weaponprocs[4] += hvStat.roundSession.weaponprocs[4];
-		_stats.weaponprocs[5] += hvStat.roundSession.weaponprocs[5];
-		_stats.weaponprocs[6] += hvStat.roundSession.weaponprocs[6];
-		_stats.weaponprocs[7] += hvStat.roundSession.weaponprocs[7];
-		_stats.pskills[0] += hvStat.roundSession.pskills[0];
-		_stats.pskills[1] += hvStat.roundSession.pskills[1];
-		_stats.pskills[2] += hvStat.roundSession.pskills[2];
-		_stats.pskills[3] += hvStat.roundSession.pskills[3];
-		_stats.pskills[4] += hvStat.roundSession.pskills[4];
-		_stats.pskills[5] += hvStat.roundSession.pskills[5];
-		_stats.pskills[6] += hvStat.roundSession.pskills[6];
-		if (_stats.datestart === 0) _stats.datestart = (new Date()).getTime();
+		hvStat.stats.kills += hvStat.roundSession.kills;
+		hvStat.stats.aAttempts += hvStat.roundSession.aAttempts;
+		hvStat.stats.aHits[0] += hvStat.roundSession.aHits[0];
+		hvStat.stats.aHits[1] += hvStat.roundSession.aHits[1];
+		hvStat.stats.aOffhands[0] += hvStat.roundSession.aOffhands[0];
+		hvStat.stats.aOffhands[1] += hvStat.roundSession.aOffhands[1];
+		hvStat.stats.aOffhands[2] += hvStat.roundSession.aOffhands[2];
+		hvStat.stats.aOffhands[3] += hvStat.roundSession.aOffhands[3];
+		hvStat.stats.sAttempts += hvStat.roundSession.sAttempts;
+		hvStat.stats.sHits[0] += hvStat.roundSession.sHits[0];
+		hvStat.stats.sHits[1] += hvStat.roundSession.sHits[1];
+		hvStat.stats.mAttempts += hvStat.roundSession.mAttempts;
+		hvStat.stats.mHits[0] += hvStat.roundSession.mHits[0];
+		hvStat.stats.mHits[1] += hvStat.roundSession.mHits[1];
+		hvStat.stats.pDodges += hvStat.roundSession.pDodges;
+		hvStat.stats.pEvades += hvStat.roundSession.pEvades;
+		hvStat.stats.pParries += hvStat.roundSession.pParries;
+		hvStat.stats.pBlocks += hvStat.roundSession.pBlocks;
+		hvStat.stats.dDealt[0] += hvStat.roundSession.dDealt[0];
+		hvStat.stats.dDealt[1] += hvStat.roundSession.dDealt[1];
+		hvStat.stats.dDealt[2] += hvStat.roundSession.dDealt[2];
+		hvStat.stats.dTaken[0] += hvStat.roundSession.dTaken[0];
+		hvStat.stats.dTaken[1] += hvStat.roundSession.dTaken[1];
+		hvStat.stats.dDealtSp[0] += hvStat.roundSession.dDealtSp[0];
+		hvStat.stats.dDealtSp[1] += hvStat.roundSession.dDealtSp[1];
+		hvStat.stats.rounds += 1;
+		hvStat.stats.absArry[0] += hvStat.roundSession.absArry[0];
+		hvStat.stats.absArry[1] += hvStat.roundSession.absArry[1];
+		hvStat.stats.absArry[2] += hvStat.roundSession.absArry[2];
+		hvStat.stats.coalesce += hvStat.roundSession.coalesce;
+		hvStat.stats.eTheft += hvStat.roundSession.eTheft;
+		hvStat.stats.channel += hvStat.roundSession.channel;
+		hvStat.stats.aDomino[0] += hvStat.roundSession.aDomino[0];
+		hvStat.stats.aDomino[1] += hvStat.roundSession.aDomino[1];
+		hvStat.stats.aDomino[2] += hvStat.roundSession.aDomino[2];
+		hvStat.stats.aDomino[3] += hvStat.roundSession.aDomino[3];
+		hvStat.stats.aDomino[4] += hvStat.roundSession.aDomino[4];
+		hvStat.stats.aDomino[5] += hvStat.roundSession.aDomino[5];
+		hvStat.stats.aDomino[6] += hvStat.roundSession.aDomino[6];
+		hvStat.stats.aDomino[7] += hvStat.roundSession.aDomino[7];
+		hvStat.stats.aDomino[8] += hvStat.roundSession.aDomino[8];
+		hvStat.stats.aDomino[9] += hvStat.roundSession.aDomino[9];
+		hvStat.stats.overStrikes += hvStat.roundSession.overStrikes;
+		hvStat.stats.aCounters[0] += hvStat.roundSession.aCounters[0];
+		hvStat.stats.aCounters[1] += hvStat.roundSession.aCounters[1];
+		hvStat.stats.aCounters[2] += hvStat.roundSession.aCounters[2];
+		hvStat.stats.aCounters[3] += hvStat.roundSession.aCounters[3];
+		hvStat.stats.pResists += hvStat.roundSession.pResists;
+		hvStat.stats.mSpells += hvStat.roundSession.mSpells;
+		hvStat.stats.sResists += hvStat.roundSession.sResists;
+		hvStat.stats.cureTotals[0] += hvStat.roundSession.cureTotals[0];
+		hvStat.stats.cureTotals[1] += hvStat.roundSession.cureTotals[1];
+		hvStat.stats.cureTotals[2] += hvStat.roundSession.cureTotals[2];
+		hvStat.stats.cureCounts[0] += hvStat.roundSession.cureCounts[0];
+		hvStat.stats.cureCounts[1] += hvStat.roundSession.cureCounts[1];
+		hvStat.stats.cureCounts[2] += hvStat.roundSession.cureCounts[2];
+		hvStat.stats.elemEffects[0] += hvStat.roundSession.elemEffects[0];
+		hvStat.stats.elemEffects[1] += hvStat.roundSession.elemEffects[1];
+		hvStat.stats.elemEffects[2] += hvStat.roundSession.elemEffects[2];
+		hvStat.stats.effectPoison[0] += hvStat.roundSession.effectPoison[0];
+		hvStat.stats.effectPoison[1] += hvStat.roundSession.effectPoison[1];
+		hvStat.stats.elemSpells[0] += hvStat.roundSession.elemSpells[0];
+		hvStat.stats.elemSpells[1] += hvStat.roundSession.elemSpells[1];
+		hvStat.stats.elemSpells[2] += hvStat.roundSession.elemSpells[2];
+		hvStat.stats.elemSpells[3] += hvStat.roundSession.elemSpells[3];
+		hvStat.stats.divineSpells[0] += hvStat.roundSession.divineSpells[0];
+		hvStat.stats.divineSpells[1] += hvStat.roundSession.divineSpells[1];
+		hvStat.stats.divineSpells[2] += hvStat.roundSession.divineSpells[2];
+		hvStat.stats.divineSpells[3] += hvStat.roundSession.divineSpells[3];
+		hvStat.stats.forbidSpells[0] += hvStat.roundSession.forbidSpells[0];
+		hvStat.stats.forbidSpells[1] += hvStat.roundSession.forbidSpells[1];
+		hvStat.stats.forbidSpells[2] += hvStat.roundSession.forbidSpells[2];
+		hvStat.stats.forbidSpells[3] += hvStat.roundSession.forbidSpells[3];
+		hvStat.stats.depSpells[0] += hvStat.roundSession.depSpells[0];
+		hvStat.stats.depSpells[1] += hvStat.roundSession.depSpells[1];
+		hvStat.stats.supportSpells += hvStat.roundSession.supportSpells;
+		hvStat.stats.curativeSpells += hvStat.roundSession.curativeSpells;
+		hvStat.stats.elemGain += hvStat.roundSession.elemGain;
+		hvStat.stats.divineGain += hvStat.roundSession.divineGain;
+		hvStat.stats.forbidGain += hvStat.roundSession.forbidGain;
+		hvStat.stats.depGain += hvStat.roundSession.depGain;
+		hvStat.stats.supportGain += hvStat.roundSession.supportGain;
+		hvStat.stats.curativeGain += hvStat.roundSession.curativeGain;
+		hvStat.stats.weapProfGain[0] += hvStat.roundSession.weapProfGain[0];
+		hvStat.stats.weapProfGain[1] += hvStat.roundSession.weapProfGain[1];
+		hvStat.stats.weapProfGain[2] += hvStat.roundSession.weapProfGain[2];
+		hvStat.stats.weapProfGain[3] += hvStat.roundSession.weapProfGain[3];
+		hvStat.stats.armorProfGain[0] += hvStat.roundSession.armorProfGain[0];
+		hvStat.stats.armorProfGain[1] += hvStat.roundSession.armorProfGain[1];
+		hvStat.stats.armorProfGain[2] += hvStat.roundSession.armorProfGain[2];
+		hvStat.stats.weaponprocs[0] += hvStat.roundSession.weaponprocs[0];
+		hvStat.stats.weaponprocs[1] += hvStat.roundSession.weaponprocs[1];
+		hvStat.stats.weaponprocs[2] += hvStat.roundSession.weaponprocs[2];
+		hvStat.stats.weaponprocs[3] += hvStat.roundSession.weaponprocs[3];
+		hvStat.stats.weaponprocs[4] += hvStat.roundSession.weaponprocs[4];
+		hvStat.stats.weaponprocs[5] += hvStat.roundSession.weaponprocs[5];
+		hvStat.stats.weaponprocs[6] += hvStat.roundSession.weaponprocs[6];
+		hvStat.stats.weaponprocs[7] += hvStat.roundSession.weaponprocs[7];
+		hvStat.stats.pskills[0] += hvStat.roundSession.pskills[0];
+		hvStat.stats.pskills[1] += hvStat.roundSession.pskills[1];
+		hvStat.stats.pskills[2] += hvStat.roundSession.pskills[2];
+		hvStat.stats.pskills[3] += hvStat.roundSession.pskills[3];
+		hvStat.stats.pskills[4] += hvStat.roundSession.pskills[4];
+		hvStat.stats.pskills[5] += hvStat.roundSession.pskills[5];
+		hvStat.stats.pskills[6] += hvStat.roundSession.pskills[6];
+		if (hvStat.stats.datestart === 0) hvStat.stats.datestart = (new Date()).getTime();
 	}
 	_rewards.tokenDrops[0] += _tokenDrops[0];
 	_rewards.tokenDrops[1] += _tokenDrops[1];
 	_rewards.tokenDrops[2] += _tokenDrops[2];
 	hvStat.storage.overview.save();
-	_stats.save();
+	hvStat.storage.stats.save();
 	_rewards.save();
 	_drops.save();
 }
@@ -4470,7 +4530,7 @@ function getReportOverviewHtml() {
 	y += hvStat.settings.showMonsterSP ? '<span style="color:green"><b>SP</b></span>' : I;
 	y += N;
 	y += hvStat.settings.isShowMonsterDuration ? '<span style="color:green"><b>Duration</b></span>' : I;
-	B = hvStat.settings.isTrackStats ? a : _stats.isLoaded && _stats.rounds > 0 ? q : w;
+	B = hvStat.settings.isTrackStats ? a : hvStat.stats.rounds > 0 ? q : w;
 	A = hvStat.settings.isTrackItems ? a : _drops.isLoaded && _drops.dropChances > 0 ? q : w;
 	l = hvStat.settings.isTrackRewards ? a : _rewards.isLoaded && _rewards.totalRwrds > 0 ? q : w;
 	Shrine = hvStat.settings.isTrackShrine ? a : _shrine.isLoaded && _shrine.totalRewards > 0 ? q : w;
@@ -4740,111 +4800,111 @@ function initOverviewPane() {
 }
 function initBattleStatsPane() {
 	var innerHTML;
-	if (_stats.isLoaded && _stats.rounds > 0) {
+	if (hvStat.stats.rounds > 0) {
 		innerHTML = browser.extension.getResourceText("html/", "battle-stats-pane.html");
 	} else {
 		innerHTML = "No data found. Complete a round to begin tracking.";
 	}
 	$("#hvstat-battle-stats-pane").html(innerHTML);
 
-	if (_stats.isLoaded && _stats.rounds > 0) {
+	if (hvStat.stats.rounds > 0) {
 		if (!hvStat.settings.isTrackStats) {
 			$("#hvstat-battle-stats-pane .hvstat-tracking-paused").show();
 		}
-		var j = _stats.elemSpells[1] + _stats.divineSpells[1] + _stats.forbidSpells[1];
-		var i = _stats.supportSpells + _stats.curativeSpells + _stats.depSpells[1] + _stats.sHits[0] + _stats.sHits[1];
-		var h = _stats.sHits[0] + _stats.sHits[1] + _stats.depSpells[1] + _stats.sResists;
-		var g = _stats.sHits[0] + _stats.sHits[1] + _stats.depSpells[1];
-		var f = _stats.aHits[0] + _stats.aHits[1];
-		var e = _stats.sHits[0] + _stats.sHits[1];
-		var d = _stats.mHits[0] + _stats.mHits[1];
-		var b = _stats.dDealt[0] + _stats.dDealt[1] + _stats.dDealt[2];
-		var a = _stats.dDealt[0] + _stats.dDealt[1];
-		var bp = _stats.pParries + _stats.pBlocks;
-		var call = _stats.aCounters[0] - _stats.aCounters[2] - 2*_stats.aCounters[3];
-		var c1 = _stats.aCounters[0] - 2*_stats.aCounters[2] - 3*_stats.aCounters[3];
+		var j = hvStat.stats.elemSpells[1] + hvStat.stats.divineSpells[1] + hvStat.stats.forbidSpells[1];
+		var i = hvStat.stats.supportSpells + hvStat.stats.curativeSpells + hvStat.stats.depSpells[1] + hvStat.stats.sHits[0] + hvStat.stats.sHits[1];
+		var h = hvStat.stats.sHits[0] + hvStat.stats.sHits[1] + hvStat.stats.depSpells[1] + hvStat.stats.sResists;
+		var g = hvStat.stats.sHits[0] + hvStat.stats.sHits[1] + hvStat.stats.depSpells[1];
+		var f = hvStat.stats.aHits[0] + hvStat.stats.aHits[1];
+		var e = hvStat.stats.sHits[0] + hvStat.stats.sHits[1];
+		var d = hvStat.stats.mHits[0] + hvStat.stats.mHits[1];
+		var b = hvStat.stats.dDealt[0] + hvStat.stats.dDealt[1] + hvStat.stats.dDealt[2];
+		var a = hvStat.stats.dDealt[0] + hvStat.stats.dDealt[1];
+		var bp = hvStat.stats.pParries + hvStat.stats.pBlocks;
+		var call = hvStat.stats.aCounters[0] - hvStat.stats.aCounters[2] - 2*hvStat.stats.aCounters[3];
+		var c1 = hvStat.stats.aCounters[0] - 2*hvStat.stats.aCounters[2] - 3*hvStat.stats.aCounters[3];
 		var dst = new Date();
-		dst.setTime(_stats.datestart);
+		dst.setTime(hvStat.stats.datestart);
 		var dst1 = dst.toLocaleString();
-		var dom = _stats.aDomino[0];
-		var elall = _stats.elemSpells[1] + _stats.elemSpells[3];
-		var divall = _stats.divineSpells[1] + _stats.divineSpells[3];
-		var forall = _stats.forbidSpells[1] + _stats.forbidSpells[3];
-		var offhand = _stats.aOffhands[0] + _stats.aOffhands[2];
-		var offhanddam = _stats.aOffhands[1] + _stats.aOffhands[3];
+		var dom = hvStat.stats.aDomino[0];
+		var elall = hvStat.stats.elemSpells[1] + hvStat.stats.elemSpells[3];
+		var divall = hvStat.stats.divineSpells[1] + hvStat.stats.divineSpells[3];
+		var forall = hvStat.stats.forbidSpells[1] + hvStat.stats.forbidSpells[3];
+		var offhand = hvStat.stats.aOffhands[0] + hvStat.stats.aOffhands[2];
+		var offhanddam = hvStat.stats.aOffhands[1] + hvStat.stats.aOffhands[3];
 		if (browser.isChrome) dst1 = dst.toLocaleDateString() + " " + dst.toLocaleTimeString();
-		$('#hvstat-battle-stats-rounds-tracked').text(_stats.rounds);
+		$('#hvstat-battle-stats-rounds-tracked').text(hvStat.stats.rounds);
 		$('#hvstat-battle-stats-since').text(dst1);
-		$('#hvstat-battle-stats-monsters-killed').text(_stats.kills);
+		$('#hvstat-battle-stats-monsters-killed').text(hvStat.stats.kills);
 
-		$('#hvstat-battle-stats-p-accuracy').text(_stats.aAttempts === 0 ? 0 : (f / _stats.aAttempts * 100).toFixed(2));
+		$('#hvstat-battle-stats-p-accuracy').text(hvStat.stats.aAttempts === 0 ? 0 : (f / hvStat.stats.aAttempts * 100).toFixed(2));
 		$('#hvstat-battle-stats-m-accuracy').text(h === 0 ? 0 : (g / h * 100).toFixed(2));
-		$('#hvstat-battle-stats-p-crit-chance').text(f === 0 ? 0 : (_stats.aHits[1] / f * 100).toFixed(2));
-		$('#hvstat-battle-stats-m-crit-chance').text(e === 0 ? 0 : (_stats.sHits[1] / e * 100).toFixed(2));
+		$('#hvstat-battle-stats-p-crit-chance').text(f === 0 ? 0 : (hvStat.stats.aHits[1] / f * 100).toFixed(2));
+		$('#hvstat-battle-stats-m-crit-chance').text(e === 0 ? 0 : (hvStat.stats.sHits[1] / e * 100).toFixed(2));
 
-		$('#hvstat-battle-stats-overwhelming-strikes-chance').text(f === 0 ? 0 : (_stats.overStrikes / f * 100).toFixed(2));
-		$('#hvstat-battle-stats-counter-chance').text(bp === 0 ? 0 : (_stats.aCounters[0]*100/bp).toFixed(2));
+		$('#hvstat-battle-stats-overwhelming-strikes-chance').text(f === 0 ? 0 : (hvStat.stats.overStrikes / f * 100).toFixed(2));
+		$('#hvstat-battle-stats-counter-chance').text(bp === 0 ? 0 : (hvStat.stats.aCounters[0]*100/bp).toFixed(2));
 		$('#hvstat-battle-stats-1-counter').text(c1 === 0 ? 0 : (c1*100/call).toFixed(2));
-		$('#hvstat-battle-stats-2-counter').text(_stats.aCounters[2] === 0 ? 0 : (_stats.aCounters[2]*100/call).toFixed(2));
-		$('#hvstat-battle-stats-3-counter').text(_stats.aCounters[3] === 0 ? 0 :(_stats.aCounters[3]*100/call).toFixed(2));
-		$('#hvstat-battle-stats-stun-chance-on-counter').text(call === 0 ? 0 : (_stats.weaponprocs[7]*100/call).toFixed(2));
-		$('#hvstat-battle-stats-average-counter-damage').text(_stats.aCounters[0] === 0 ? 0 : (_stats.aCounters[1] / _stats.aCounters[0]).toFixed(2));
+		$('#hvstat-battle-stats-2-counter').text(hvStat.stats.aCounters[2] === 0 ? 0 : (hvStat.stats.aCounters[2]*100/call).toFixed(2));
+		$('#hvstat-battle-stats-3-counter').text(hvStat.stats.aCounters[3] === 0 ? 0 :(hvStat.stats.aCounters[3]*100/call).toFixed(2));
+		$('#hvstat-battle-stats-stun-chance-on-counter').text(call === 0 ? 0 : (hvStat.stats.weaponprocs[7]*100/call).toFixed(2));
+		$('#hvstat-battle-stats-average-counter-damage').text(hvStat.stats.aCounters[0] === 0 ? 0 : (hvStat.stats.aCounters[1] / hvStat.stats.aCounters[0]).toFixed(2));
 
 		$('#hvstat-battle-stats-offhand-strike-chance').text(f === 0 ? 0 : (offhand / f * 100).toFixed(2));
-		$('#hvstat-battle-stats-chenneling-chance').text(i === 0 ? 0 : (_stats.channel / i * 100).toFixed(2));
+		$('#hvstat-battle-stats-chenneling-chance').text(i === 0 ? 0 : (hvStat.stats.channel / i * 100).toFixed(2));
 		$('#hvstat-battle-stats-average-offhand-damage').text(offhand === 0 ? 0 : (offhanddam / offhand).toFixed(2));
 
 		$('#hvstat-battle-stats-domino-strike-chance').text(f === 0 ? 0 : (dom / f * 100).toFixed(2));
-		$('#hvstat-battle-stats-domino-2-hits').text(dom === 0 ? 0 : (_stats.aDomino[2]*100 / dom).toFixed(2));
-		$('#hvstat-battle-stats-domino-3-hits').text(dom === 0 ? 0 : (_stats.aDomino[3]*100 / dom).toFixed(2));
-		$('#hvstat-battle-stats-domino-4-hits').text(dom === 0 ? 0 : (_stats.aDomino[4]*100 / dom).toFixed(2));
-		$('#hvstat-battle-stats-domino-5-hits').text(dom === 0 ? 0 : (_stats.aDomino[5]*100 / dom).toFixed(2));
-		$('#hvstat-battle-stats-domino-6-hits').text(dom === 0 ? 0 : (_stats.aDomino[6]*100 / dom).toFixed(2));
-		$('#hvstat-battle-stats-domino-7-hits').text(dom === 0 ? 0 : (_stats.aDomino[7]*100 / dom).toFixed(2));
-		$('#hvstat-battle-stats-domino-8-hits').text(dom === 0 ? 0 : (_stats.aDomino[8]*100 / dom).toFixed(2));
-		$('#hvstat-battle-stats-domino-9-hits').text(dom === 0 ? 0 : (_stats.aDomino[9]*100 / dom).toFixed(2));
-		$('#hvstat-battle-stats-domino-average-number-of-hits').text(dom === 0 ? 0 : (_stats.aDomino[1] / dom).toFixed(2));
+		$('#hvstat-battle-stats-domino-2-hits').text(dom === 0 ? 0 : (hvStat.stats.aDomino[2]*100 / dom).toFixed(2));
+		$('#hvstat-battle-stats-domino-3-hits').text(dom === 0 ? 0 : (hvStat.stats.aDomino[3]*100 / dom).toFixed(2));
+		$('#hvstat-battle-stats-domino-4-hits').text(dom === 0 ? 0 : (hvStat.stats.aDomino[4]*100 / dom).toFixed(2));
+		$('#hvstat-battle-stats-domino-5-hits').text(dom === 0 ? 0 : (hvStat.stats.aDomino[5]*100 / dom).toFixed(2));
+		$('#hvstat-battle-stats-domino-6-hits').text(dom === 0 ? 0 : (hvStat.stats.aDomino[6]*100 / dom).toFixed(2));
+		$('#hvstat-battle-stats-domino-7-hits').text(dom === 0 ? 0 : (hvStat.stats.aDomino[7]*100 / dom).toFixed(2));
+		$('#hvstat-battle-stats-domino-8-hits').text(dom === 0 ? 0 : (hvStat.stats.aDomino[8]*100 / dom).toFixed(2));
+		$('#hvstat-battle-stats-domino-9-hits').text(dom === 0 ? 0 : (hvStat.stats.aDomino[9]*100 / dom).toFixed(2));
+		$('#hvstat-battle-stats-domino-average-number-of-hits').text(dom === 0 ? 0 : (hvStat.stats.aDomino[1] / dom).toFixed(2));
 
-		$('#hvstat-battle-stats-stun-chance').text(f === 0 ? 0 : (_stats.weaponprocs[0]*100 / f).toFixed(2));
-		$('#hvstat-battle-stats-penetrated-armor-chance').text(f === 0 ? 0 : (_stats.weaponprocs[1]*100 / f).toFixed(2));
+		$('#hvstat-battle-stats-stun-chance').text(f === 0 ? 0 : (hvStat.stats.weaponprocs[0]*100 / f).toFixed(2));
+		$('#hvstat-battle-stats-penetrated-armor-chance').text(f === 0 ? 0 : (hvStat.stats.weaponprocs[1]*100 / f).toFixed(2));
 
-		$('#hvstat-battle-stats-bleeding-wound-chance').text(f === 0 ? 0 : (_stats.weaponprocs[2]*100 / f).toFixed(2));
-		$('#hvstat-battle-stats-average-damage-dealt-per-hit').text(_stats.aHits[0] === 0 ? 0 : (_stats.dDealt[0] / _stats.aHits[0]).toFixed(2));
-		$('#hvstat-battle-stats-average-damage-dealt-per-spell').text(_stats.sHits[0] === 0 ? 0 : (_stats.dDealtSp[0] / _stats.sHits[0]).toFixed(2));
-		$('#hvstat-battle-stats-average-damage-dealt-per-crit').text(_stats.aHits[1] === 0 ? 0 : (_stats.dDealt[1] / _stats.aHits[1]).toFixed(2));
-		$('#hvstat-battle-stats-average-damage-dealt-per-spell-crit').text(_stats.sHits[1] === 0 ? 0 : (_stats.dDealtSp[1] / _stats.sHits[1]).toFixed(2));
-		$('#hvstat-battle-stats-average-spell-damage-dealt').text(e === 0 ? 0 : ((_stats.dDealtSp[0] + _stats.dDealtSp[1]) / e).toFixed(2));
+		$('#hvstat-battle-stats-bleeding-wound-chance').text(f === 0 ? 0 : (hvStat.stats.weaponprocs[2]*100 / f).toFixed(2));
+		$('#hvstat-battle-stats-average-damage-dealt-per-hit').text(hvStat.stats.aHits[0] === 0 ? 0 : (hvStat.stats.dDealt[0] / hvStat.stats.aHits[0]).toFixed(2));
+		$('#hvstat-battle-stats-average-damage-dealt-per-spell').text(hvStat.stats.sHits[0] === 0 ? 0 : (hvStat.stats.dDealtSp[0] / hvStat.stats.sHits[0]).toFixed(2));
+		$('#hvstat-battle-stats-average-damage-dealt-per-crit').text(hvStat.stats.aHits[1] === 0 ? 0 : (hvStat.stats.dDealt[1] / hvStat.stats.aHits[1]).toFixed(2));
+		$('#hvstat-battle-stats-average-damage-dealt-per-spell-crit').text(hvStat.stats.sHits[1] === 0 ? 0 : (hvStat.stats.dDealtSp[1] / hvStat.stats.sHits[1]).toFixed(2));
+		$('#hvstat-battle-stats-average-spell-damage-dealt').text(e === 0 ? 0 : ((hvStat.stats.dDealtSp[0] + hvStat.stats.dDealtSp[1]) / e).toFixed(2));
 		$('#hvstat-battle-stats-average-damage-dealt-without-bleeding-wound').text(f === 0 ? 0 : (a / f).toFixed(2));
 		$('#hvstat-battle-stats-average-damage-dealt-with-bleeding-wound').text(f === 0 ? 0 : (b / f).toFixed(2));
-		$('#hvstat-battle-stats-percent-total-damage-from-bleeding-wound').text(b === 0 ? 0 : (_stats.dDealt[2] / b * 100).toFixed(2));
+		$('#hvstat-battle-stats-percent-total-damage-from-bleeding-wound').text(b === 0 ? 0 : (hvStat.stats.dDealt[2] / b * 100).toFixed(2));
 		$('#hvstat-battle-stats-percent-change-in-average-damage').text(a === 0 ? 0 : (Math.abs(((b / f) - (a / f))) / Math.abs(a / f) * 100).toFixed(2));
 
-		$('#hvstat-battle-stats-drain-hp-chance').text(f === 0 ? 0 : (_stats.weaponprocs[4]*100 / f).toFixed(2));
-		$('#hvstat-battle-stats-drain-mp-chance').text(f === 0 ? 0 : (_stats.weaponprocs[5]*100 / f).toFixed(2));
-		$('#hvstat-battle-stats-drain-sp-chance').text(f === 0 ? 0 : (_stats.weaponprocs[6]*100 / f).toFixed(2));
+		$('#hvstat-battle-stats-drain-hp-chance').text(f === 0 ? 0 : (hvStat.stats.weaponprocs[4]*100 / f).toFixed(2));
+		$('#hvstat-battle-stats-drain-mp-chance').text(f === 0 ? 0 : (hvStat.stats.weaponprocs[5]*100 / f).toFixed(2));
+		$('#hvstat-battle-stats-drain-sp-chance').text(f === 0 ? 0 : (hvStat.stats.weaponprocs[6]*100 / f).toFixed(2));
 
-		$('#hvstat-battle-stats-overall-chance-of-getting-hit').text(_stats.mAttempts === 0 ? 0 : (d / _stats.mAttempts * 100).toFixed(2));
-		$('#hvstat-battle-stats-miss-chance').text(_stats.mAttempts === 0 ? 0 : (_stats.pDodges / _stats.mAttempts * 100).toFixed(2));
-		$('#hvstat-battle-stats-average-hp-restored-by-cure').text(_stats.cureCounts[0] === 0 ? 0 : (_stats.cureTotals[0] / _stats.cureCounts[0]).toFixed(2));
-		$('#hvstat-battle-stats-evade-chance').text(_stats.mAttempts === 0 ? 0 : (_stats.pEvades / _stats.mAttempts * 100).toFixed(2));
-		$('#hvstat-battle-stats-average-hp-restored-by-cure2').text(_stats.cureCounts[1] === 0 ? 0 : (_stats.cureTotals[1] / _stats.cureCounts[1]).toFixed(2));
-		$('#hvstat-battle-stats-block-chance').text(_stats.mAttempts === 0 ? 0 : (_stats.pBlocks / _stats.mAttempts * 100).toFixed(2));
-		$('#hvstat-battle-stats-average-hp-restored-by-cure3').text(_stats.cureCounts[2] === 0 ? 0 : (_stats.cureTotals[2] / _stats.cureCounts[2]).toFixed(2));
-		$('#hvstat-battle-stats-parry-chance').text(_stats.mAttempts === 0 ? 0 : (_stats.pParries / _stats.mAttempts * 100).toFixed(2));
-		$('#hvstat-battle-stats-absorb-casting-efficiency').text(_stats.absArry[0] === 0 ? 0 : (_stats.absArry[1] / _stats.absArry[0] * 100).toFixed(2));
-		$('#hvstat-battle-stats-resist-chance').text(_stats.mSpells === 0 ? 0 : (_stats.pResists / _stats.mSpells * 100).toFixed(2));
-		$('#hvstat-battle-stats-average-mp-drained-by-absorb').text(_stats.absArry[1] === 0 ? 0 : (_stats.absArry[2] / _stats.absArry[1]).toFixed(2));
-		$('#hvstat-battle-stats-monster-crit-chance').text(_stats.mAttempts === 0 ? 0 : (_stats.mHits[1] / _stats.mAttempts * 100).toFixed(2));
-		$('#hvstat-battle-stats-average-mp-returns-of-absorb').text(_stats.absArry[0] === 0 ? 0 : (_stats.absArry[2] / _stats.absArry[0]).toFixed(2));
-		$('#hvstat-battle-stats-percent-of-monster-hits-that-are-crits').text(d === 0 ? 0 : (_stats.mHits[1] / d * 100).toFixed(2));
-		$('#hvstat-battle-stats-average-damage-taken-per-hit').text(_stats.mHits[0] === 0 ? 0 : (_stats.dTaken[0] / _stats.mHits[0]).toFixed(2));
-		$('#hvstat-battle-stats-average-damage-taken-per-crit').text(_stats.mHits[1] === 0 ? 0 : (_stats.dTaken[1] / _stats.mHits[1]).toFixed(2));
-		$('#hvstat-battle-stats-average-damage-taken').text(d === 0 ? 0 : ((_stats.dTaken[0] + _stats.dTaken[1]) / d).toFixed(2));
-		$('#hvstat-battle-stats-average-total-damage-taken-per-round').text(_stats.rounds === 0 ? 0 : ((_stats.dTaken[0] + _stats.dTaken[1]) / _stats.rounds).toFixed(2));
+		$('#hvstat-battle-stats-overall-chance-of-getting-hit').text(hvStat.stats.mAttempts === 0 ? 0 : (d / hvStat.stats.mAttempts * 100).toFixed(2));
+		$('#hvstat-battle-stats-miss-chance').text(hvStat.stats.mAttempts === 0 ? 0 : (hvStat.stats.pDodges / hvStat.stats.mAttempts * 100).toFixed(2));
+		$('#hvstat-battle-stats-average-hp-restored-by-cure').text(hvStat.stats.cureCounts[0] === 0 ? 0 : (hvStat.stats.cureTotals[0] / hvStat.stats.cureCounts[0]).toFixed(2));
+		$('#hvstat-battle-stats-evade-chance').text(hvStat.stats.mAttempts === 0 ? 0 : (hvStat.stats.pEvades / hvStat.stats.mAttempts * 100).toFixed(2));
+		$('#hvstat-battle-stats-average-hp-restored-by-cure2').text(hvStat.stats.cureCounts[1] === 0 ? 0 : (hvStat.stats.cureTotals[1] / hvStat.stats.cureCounts[1]).toFixed(2));
+		$('#hvstat-battle-stats-block-chance').text(hvStat.stats.mAttempts === 0 ? 0 : (hvStat.stats.pBlocks / hvStat.stats.mAttempts * 100).toFixed(2));
+		$('#hvstat-battle-stats-average-hp-restored-by-cure3').text(hvStat.stats.cureCounts[2] === 0 ? 0 : (hvStat.stats.cureTotals[2] / hvStat.stats.cureCounts[2]).toFixed(2));
+		$('#hvstat-battle-stats-parry-chance').text(hvStat.stats.mAttempts === 0 ? 0 : (hvStat.stats.pParries / hvStat.stats.mAttempts * 100).toFixed(2));
+		$('#hvstat-battle-stats-absorb-casting-efficiency').text(hvStat.stats.absArry[0] === 0 ? 0 : (hvStat.stats.absArry[1] / hvStat.stats.absArry[0] * 100).toFixed(2));
+		$('#hvstat-battle-stats-resist-chance').text(hvStat.stats.mSpells === 0 ? 0 : (hvStat.stats.pResists / hvStat.stats.mSpells * 100).toFixed(2));
+		$('#hvstat-battle-stats-average-mp-drained-by-absorb').text(hvStat.stats.absArry[1] === 0 ? 0 : (hvStat.stats.absArry[2] / hvStat.stats.absArry[1]).toFixed(2));
+		$('#hvstat-battle-stats-monster-crit-chance').text(hvStat.stats.mAttempts === 0 ? 0 : (hvStat.stats.mHits[1] / hvStat.stats.mAttempts * 100).toFixed(2));
+		$('#hvstat-battle-stats-average-mp-returns-of-absorb').text(hvStat.stats.absArry[0] === 0 ? 0 : (hvStat.stats.absArry[2] / hvStat.stats.absArry[0]).toFixed(2));
+		$('#hvstat-battle-stats-percent-of-monster-hits-that-are-crits').text(d === 0 ? 0 : (hvStat.stats.mHits[1] / d * 100).toFixed(2));
+		$('#hvstat-battle-stats-average-damage-taken-per-hit').text(hvStat.stats.mHits[0] === 0 ? 0 : (hvStat.stats.dTaken[0] / hvStat.stats.mHits[0]).toFixed(2));
+		$('#hvstat-battle-stats-average-damage-taken-per-crit').text(hvStat.stats.mHits[1] === 0 ? 0 : (hvStat.stats.dTaken[1] / hvStat.stats.mHits[1]).toFixed(2));
+		$('#hvstat-battle-stats-average-damage-taken').text(d === 0 ? 0 : ((hvStat.stats.dTaken[0] + hvStat.stats.dTaken[1]) / d).toFixed(2));
+		$('#hvstat-battle-stats-average-total-damage-taken-per-round').text(hvStat.stats.rounds === 0 ? 0 : ((hvStat.stats.dTaken[0] + hvStat.stats.dTaken[1]) / hvStat.stats.rounds).toFixed(2));
 	}
 
 	$("._resetStats").click(function () {
-		if (confirm("Reset Stats tab?")) _stats.reset();
+		if (confirm("Reset Stats tab?")) hvStat.storage.stats.reset();
 	});
 	$("._checkBackups").click(function () {
 		loadBackupObject(1);
@@ -4880,7 +4940,6 @@ function initBattleStatsPane() {
 	$("._backupFunc").click(function () {
 		var backupID = Number(document.getElementById("BackupNumber").options[document.getElementById("BackupNumber").selectedIndex].value);
 		var ba = 0;
-		loadStatsObject();
 		if ( backupID < 1 || backupID > 5 ) {
 			alert ("'" + backupID + "'" + " is not correct number: " + "Choose beetwen 1-5");
 			return;
@@ -4899,7 +4958,7 @@ function initBattleStatsPane() {
 		case "Load Backup":
 			if (confirm("Load stats from backup " + backupID + "?")) {
 				loadStatsBackup(backupID);
-				_stats.save();
+				hvStat.storage.stats.save();
 			}
 			break;
 		case "AddTo Backup":
@@ -4912,7 +4971,7 @@ function initBattleStatsPane() {
 		case "AddFrom Backup":
 			if (confirm("Add stats from backup " + backupID + "?")) {
 				addfromStatsBackup(backupID);
-				_stats.save();
+				hvStat.storage.stats.save();
 			}
 			break;
 		case "Remove Backup":
@@ -5571,11 +5630,6 @@ function captureShrine() {
 	}
 	_shrine.save();
 }
-function loadStatsObject() {
-	if (_stats !== null) return;
-	_stats = new HVCacheStats();
-	_stats.load();
-}
 function loadProfsObject() {
 	if (_profs !== null) return;
 	_profs = new HVCacheProf();
@@ -5609,7 +5663,7 @@ function getRelativeTime(b) {
 }
 function HVResetTracking() {
 	hvStat.storage.overview.reset();
-	_stats.reset();
+	hvStat.storage.stats.reset();
 	_rewards.reset();
 	_shrine.reset();
 	_drops.reset();
@@ -5667,60 +5721,6 @@ function loadFromStorage(c, b) {
 }
 function saveToStorage(b, a) { localStorage.setItem(a, JSON.stringify(b)); }
 function deleteFromStorage(a) { localStorage.removeItem(a); }
-function HVCacheStats() {
-	this.load = function () { loadFromStorage(this, HV_STATS); };
-	this.save = function () { saveToStorage(this, HV_STATS); };
-	this.reset = function () { deleteFromStorage(HV_STATS); };
-	this.cloneFrom = clone;
-	this.rounds = 0;
-	this.kills = 0;
-	this.aAttempts = 0;
-	this.aHits = [0, 0];
-	this.aOffhands = [0, 0, 0, 0];
-	this.sAttempts = 0;
-	this.aDomino = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-	this.aCounters = [0, 0, 0, 0];
-	this.dDealt = [0, 0, 0];
-	this.sHits = [0, 0];
-	this.sResists = 0;
-	this.dDealtSp = [0, 0];
-	this.absArry = [0, 0, 0];
-	this.mAttempts = 0;
-	this.dTaken = [0, 0];
-	this.mHits = [0, 0];
-	this.pDodges = 0;
-	this.pEvades = 0;
-	this.pParries = 0;
-	this.pBlocks = 0;
-	this.pResists = 0;
-	this.mSpells = 0;
-	this.overStrikes = 0;
-	this.coalesce = 0;
-	this.eTheft = 0;
-	this.channel = 0;
-	this.cureTotals = [0, 0, 0];
-	this.cureCounts = [0, 0, 0];
-	this.elemEffects = [0, 0, 0];
-	this.effectPoison = [0, 0];
-	this.elemSpells = [0, 0, 0, 0];
-	this.divineSpells = [0, 0, 0, 0];
-	this.forbidSpells = [0, 0, 0, 0];
-	this.depSpells = [0, 0];
-	this.supportSpells = 0;
-	this.curativeSpells = 0;
-	this.elemGain = 0;
-	this.divineGain = 0;
-	this.forbidGain = 0;
-	this.depGain = 0;
-	this.supportGain = 0;
-	this.curativeGain = 0;
-	this.weapProfGain = [0, 0, 0, 0];
-	this.armorProfGain = [0, 0, 0];
-	this.weaponprocs = [0, 0, 0, 0, 0, 0, 0, 0];
-	this.pskills = [0, 0, 0, 0, 0, 0, 0];
-	this.datestart = 0;
-	this.isLoaded = false;
-}
 function HVCacheProf() {
 	this.load = function () { loadFromStorage(this, HV_PROF); };
 	this.save = function () { saveToStorage(this, HV_PROF); };
@@ -5833,36 +5833,32 @@ function HVCacheDrops() {
 	this.isLoaded = false;
 }
 function saveStatsBackup(back) {
-	loadStatsObject();
 	var ba = 0;
 	ba = _backup[back];
 	loadBackupObject(back);
-	hvStat.util.copyEachProperty(ba, _stats);
+	hvStat.util.copyEachProperty(ba, hvStat.stats);
 	ba.save();
 }
 function addtoStatsBackup(back) {
-	loadStatsObject();
 	var ba = 0;
 	ba = _backup[back];
 	loadBackupObject(back);
-	hvStat.util.addEachPropertyValue(ba, _stats);
+	hvStat.util.addEachPropertyValue(ba, hvStat.stats);
 	ba.save();
 }
 function loadStatsBackup(back) {
-	loadStatsObject();
 	var ba = 0;
 	ba = _backup[back];
 	loadBackupObject(back);
-	hvStat.util.copyEachProperty(_stats, ba);
-	_stats.save();
+	hvStat.util.copyEachProperty(hvStat.stats, ba);
+	hvStat.storage.stats.save();
 }
 function addfromStatsBackup(back) {
-	loadStatsObject();
 	var ba = 0;
 	ba = _backup[back];
 	loadBackupObject(back);
-	hvStat.util.addEachPropertyValue(_stats, ba);
-	_stats.save();
+	hvStat.util.addEachPropertyValue(hvStat.stats, ba);
+	hvStat.storage.stats.save();
 }
 function HVTags() {
 	this.load = function () { loadFromStorage(this, HV_TAGS); };
@@ -6370,7 +6366,7 @@ hvStat.startup = {
 		console.debug(hv);
 		hvStat.setup();
 		console.debug(hvStat);
-		console.debug(hvStat.overview);
+		console.debug(hvStat.stats);
 		if (hvStat.settings.isChangePageTitle) {
 			document.title = hvStat.settings.customPageTitle;
 		}
