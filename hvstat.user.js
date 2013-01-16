@@ -381,7 +381,7 @@ hvStat.util = {
 						delete target[key];
 						target[key] = new property.constructor();
 					}
-					arguments.callee(target[key], base[key], fn);
+					arguments.callee(target[key], base[key], callback);
 				}
 			}
 		}
@@ -771,7 +771,37 @@ hvStat.storage.Item.prototype = {
 	},
 };
 
-hvStat.keyboard = {};
+hvStat.keyboard = {
+	scrollable: {
+		targets: [
+			"stats_pane",				// Character
+			"equip_pane",				// Equipment
+			"inv_item", "inv_equip",	// Inventory
+			"item_pane", "shop_pane",	// Battle Inventory, Shop, Forge, Item World
+			"slot_pane",				// Monster Lab
+			"item", "equip",			// Moogle write
+			"arena_pane",				// Arena
+		],
+		currentTarget: null,
+		mouseover: function (event) {
+			hvStat.keyboard.scrollable.currentTarget = this;
+		},
+		mouseout: function (event) {
+			hvStat.keyboard.scrollable.currentTarget = null;
+		},
+		setup: function () {
+			var i = this.targets.length,
+				element;
+			while (i--) {
+				element = document.getElementById(this.targets[i]);
+				if (element) {
+					element.addEventListener("mouseover", this.mouseover);
+					element.addEventListener("mouseout", this.mouseout);
+				}
+			}
+		},
+	},
+};
 
 hvStat.keyboard.KeyCombination = function (spec) {
 	this.altKey = spec && spec.altKey || false;
@@ -1420,24 +1450,6 @@ var HVStat = {	// -> refactor
 	key_mpAlertAlreadyShown: "hvStat.magicAlertShown",
 	key_spAlertAlreadyShown: "hvStat.spiritAlertShown",
 	key_ocAlertAlreadyShown: "hvStat.overchargeAlertShown",
-
-	// scroll targets
-	scrollTargets: [
-		// Character
-		"stats_pane",
-		// Equipment
-		"equip_pane",
-		// Inventory
-		"inv_item", "inv_equip",
-		// Battle Inventory, Shop, Forge, Item World
-		"item_pane", "shop_pane",
-		// Monster Lab
-		"slot_pane",
-		// Moogle write
-		"item", "equip",
-		// Arena
-		"arena_pane"
-	],
 
 	// indexedDB
 	idb: null,
@@ -5969,34 +5981,21 @@ function HVMonsterDatabase() {
 	this.isLoaded = false;
 }
 
-HVStat.registerScrollTargetMouseEventListeners = function () {
-	var i, element;
-	for (i = 0; i < HVStat.scrollTargets.length; i++) {
-		element = document.getElementById(HVStat.scrollTargets[i]);
-		if (element) {
-			element.addEventListener("mouseover", function (event) {
-				HVStat.scrollTarget = this;
-			});
-			element.addEventListener("mouseout", function (event) {
-				HVStat.scrollTarget = null;
-			});
-		}
-	}
-};
-
 HVStat.documentKeydownEventHandler = function (event) {
-	if (hvStat.settings.enableScrollHotkey) {
-		if (HVStat.scrollTarget && !event.altKey && !event.ctrlKey && !event.shiftKey) {
-			switch (event.keyCode) {
-			case 33:	// PAGE UP
-				HVStat.scrollTarget.scrollTop -= HVStat.scrollTarget.clientHeight - 20;
-				event.preventDefault();
-				break;
-			case 34:	// PAGE DOWN
-				HVStat.scrollTarget.scrollTop += HVStat.scrollTarget.clientHeight - 20;
-				event.preventDefault();
-				break;
-			}
+	var scrollTarget;
+	if (hvStat.settings.enableScrollHotkey &&
+			hvStat.keyboard.scrollable.currentTarget &&
+			!event.altKey && !event.ctrlKey && !event.shiftKey) {
+		scrollTarget = hvStat.keyboard.scrollable.currentTarget
+		switch (event.keyCode) {
+		case 33:	// PAGE UP
+			scrollTarget.scrollTop -= scrollTarget.clientHeight - 20;
+			event.preventDefault();
+			break;
+		case 34:	// PAGE DOWN
+			scrollTarget.scrollTop += scrollTarget.clientHeight - 20;
+			event.preventDefault();
+			break;
 		}
 	}
 	var boundKeys, i, j;
@@ -6419,7 +6418,7 @@ hvStat.startup = {
 				HVStat.resetHealthWarningStates();
 			}
 			if (hvStat.settings.enableScrollHotkey) {
-				HVStat.registerScrollTargetMouseEventListeners();
+				hvStat.keyboard.scrollable.setup();
 			}
 			// equipment tag
 			if (hv.location.isEquipment && hvStat.settings.isShowTags[0]) {
