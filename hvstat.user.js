@@ -442,7 +442,7 @@ hvStat.storage = {
 		isShowScanButton: false,
 		isShowSkillButton: false,
 		isShowEquippedSet: false,
-		//0-equipment page, 1-shop, 2-itemworld, 3-moogle, 4-forge
+		//0-equipment page, 1-shop, 2-itemworld, 3-moogle, 4-forge, 5-inventory
 		isShowTags: [false, false, false, false, false, false],
 
 		// Keyboard Options
@@ -795,7 +795,7 @@ hvStat.battle.command = {
 			};
 			if (this._subMenuItemMap["Scan"]) {
 				this._subMenuItemMap["Scan"].bindKeys([
-				new hvStat.keyboard.KeyCombination({ keyCode: 46 }),	// Delete
+				new hvStat.keyboard.KeyCombination({ keyCode: 46 }),		// Delete
 					new hvStat.keyboard.KeyCombination({ keyCode: 110 })	// Numpad . Del
 				]);
 			}
@@ -1316,10 +1316,7 @@ hvStat.ui = {
 	},
 };
 
-var HVStat = {
-	//------------------------------------
-	// package scope global constants
-	//------------------------------------
+var HVStat = {	// -> refactor
 	reMonsterScanResultsTSV: /^(\d+?)\t(.*?)\t(.*?)\t(.*?)\t(\d*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)$/gm,
 	reMonsterSkillsTSV: /^(\d+?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)$/gm,
 	monsterGaugeMaxWidth: 120,
@@ -1348,9 +1345,6 @@ var HVStat = {
 		"arena_pane"
 	],
 
-	//------------------------------------
-	// package scope global variables
-	//------------------------------------
 	// indexedDB
 	idb: null,
 	transaction: null,
@@ -6357,7 +6351,6 @@ hvStat.startup = {
 		console.debug(hv);
 		hvStat.setup();
 		console.debug(hvStat);
-		console.debug(hvStat.settings);
 		if (hvStat.settings.isChangePageTitle) {
 			document.title = hvStat.settings.customPageTitle;
 		}
