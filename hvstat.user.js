@@ -6086,7 +6086,7 @@ function registerEventHandlersForMonsterPopup() {
 		})(event, this);
 	};
 	var prepareForHidingPopup = function (event) {
-		setTimeout(hidePopup, delay);
+		hidePopup();
 		clearTimeout(timerId);
 	};
 	var i, len = HVStat.monsters.length;
