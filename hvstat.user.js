@@ -1256,6 +1256,9 @@ hvStat.battle.enhancement.scanButton = {
 		hv.battle.elementCache.monsterPane.style.overflow = "visible";
 		var monsters = hv.battle.elementCache.monsters;
 		for (var i = 0; i < monsters.length; i++) {
+			if (monsters[i].innerHTML.indexOf("bardead") >= 0) {
+				continue;
+			}
 			var button = new this.ScanButton(monsters[i]);
 			if (button) {
 				monsters[i].insertBefore(button, null);
@@ -1263,9 +1266,6 @@ hvStat.battle.enhancement.scanButton = {
 		}
 	},
 	ScanButton: function (monster) {
-		if (util.innerText(monster).indexOf("bardead") >= 0) {
-			return null;
-		}
 		var button = document.createElement("div");
 		button.className = "hvstat-scan-button";
 		button.textContent = "Scan";
@@ -1316,6 +1316,9 @@ hvStat.battle.enhancement.skillButton = {
 		hv.battle.elementCache.monsterPane.style.overflow = "visible";
 		var monsters = hv.battle.elementCache.monsters;
 		for (var i = 0; i < monsters.length; i++) {
+			if (monsters[i].innerHTML.indexOf("bardead") >= 0) {
+				continue;
+			}
 			for (j = 0; j < skills.length; j++) {
 				var button = new this.SkillButton(monsters[i], skills[j], j + 1);
 				if (button) {
@@ -1325,9 +1328,6 @@ hvStat.battle.enhancement.skillButton = {
 		}
 	},
 	SkillButton: function (monster, skill, skillNumber) {
-		if (util.innerText(monster).indexOf("bardead") >= 0) {
-			return null;
-		}
 		var button = document.createElement("div");
 		button.className = "hvstat-skill-button hvstat-skill" + skillNumber + "-button";
 		button.textContent = hvStat.battle.enhancement.skillButton.getLabelById(skill.id);
