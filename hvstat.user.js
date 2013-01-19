@@ -28,6 +28,7 @@
 // @resource        monster-database-pane.html                  html/monster-database-pane.html
 // @resource        proficiency-table.html                      html/proficiency-table.html
 // @resource        settings-pane.html                          html/settings-pane.html
+// @resource        shrine-pane.html                            html/shrine-pane.html
 // @resource        jquery-1.8.3.min.js                         scripts/jquery-1.8.3.min.js
 // @resource        jquery-ui-1.9.2.custom.min.js               scripts/jquery-ui-1.9.2.custom.min.js
 // @run-at          document-start
@@ -4845,46 +4846,6 @@ function getReportRewardHtml() {
 	e += "</table>";
 	return e;
 }
-function getReportShrineHtml() {
-	var c = "Tracking disabled.";
-	if (hvStat.settings.isTrackShrine && _shrine.totalRewards === 0)
-		c = "No data found. Make an offering at Snowflake's Shrine to begin tracking.";
-	else if (hvStat.settings.isTrackShrine && _shrine.isLoaded && _shrine.totalRewards > 0)
-		c = '<table class="_UI" cellspacing="0" cellpadding="1" style="width:100%">';
-	else if (!hvStat.settings.isTrackShrine && _shrine.isLoaded && _shrine.totalRewards > 0)
-		c = '<table class="_UI" cellspacing="0" cellpadding="1" style="width:100%"><tr><td align="center"><div align="center" class="ui-state-error ui-corner-all" style="padding:4px;margin:4px"><span class="ui-icon ui-icon-pause"></span><b>TRACKING PAUSED</b></div></td></tr>';
-	if (_shrine.isLoaded && _shrine.totalRewards > 0) {
-		var g = 0;
-		var d = 0;
-		var a = 0;
-		var b = 0;
-		var e = 0;
-		var h = 0;
-		var f = 0;
-		if (_shrine.artifactsTraded > 0) {
-			g = (_shrine.artifactsTraded) / 100;
-			d = (_shrine.artifactAP / g).toFixed(2);
-			a = (_shrine.artifactHath / g).toFixed(2);
-			e = (_shrine.artifactHathTotal / (g * 100)).toFixed(2);
-			h = (_shrine.artifactCrystal / g).toFixed(2);
-			f = (_shrine.artifactItem / g).toFixed(2)
-			b = (_shrine.artifactStat / g).toFixed(2)
-		}
-		c += "<tr><td><b>Artifacts:</b> " + _shrine.artifactsTraded + ' traded</td></tr>'
-			+ '<tr><td style="padding-left:10px">Ability Points: ' + _shrine.artifactAP + ' (' + d + '% chance)</td></tr>'
-			+ '<tr><td style="padding-left:10px">Attributes: ' + _shrine.artifactStat + ' (' + b + '% chance)</td></tr>'
-			+ '<tr><td style="padding-left:10px">Hath: ' + _shrine.artifactHathTotal + ' (' + a + '% chance; ' + e + ' Hath per Artifact)</td></tr>'
-			+ '<tr><td style="padding-left:10px">Crystals: ' + _shrine.artifactCrystal + ' (' + h + '% chance)</td></tr>'
-			+ '<tr><td style="padding-left:10px">Energy Drinks: ' + _shrine.artifactItem + ' (' + f + '% chance)</td></tr>'
-			+ '<tr><td ><b>Trophies:</b> ' + _shrine.trophyArray.length + ' traded</td></tr>';
-		var b = _shrine.trophyArray.length;
-		while (b--)
-			c += '<tr><td style="padding-left:10px">' + _shrine.trophyArray[b] + "</td></tr>";
-		c += '<tr><td align="right"><input type="button" class="_clearTrophies" value="Clear Trophies" /> <input type="button" class="_resetShrine" value="Reset Shrine" /></td></tr>';
-	}
-	c += "</table>";
-	return c;
-}
 function initOverviewPane() {
 	$("#pane1").html(getReportOverviewHtml());
 	$("._resetOverview").click(function () {
@@ -5085,17 +5046,54 @@ function initRewardsPane() {
 	});
 }
 function initShrinePane() {
-	$("#pane5").html(getReportShrineHtml());
-	$("._resetShrine").click(function () {
-		if (confirm("Reset Shrine tab?"))
-			_shrine.reset();
-	});
-	$("._clearTrophies").click(function () {
-		if (confirm("Clear Trophy list?")) {
-			_shrine.trophyArray = [];
-			_shrine.save();
+	var innerHTML;
+	if (_shrine.totalRewards === 0) {
+		innerHTML = "No data found. Make an offering at Snowflake's Shrine to begin tracking.";
+	} else {
+		innerHTML = browser.extension.getResourceText("html/", "shrine-pane.html");
+	}
+	$("#hvstat-shrine-pane").html(innerHTML);
+	if (_shrine.totalRewards > 0) {
+		if (!hvStat.settings.isTrackShrine) {
+			$("#hvstat-shrine-pane .hvstat-tracking-paused").show();
 		}
-	});
+		$("#hvstat-shrine-pane-artifacts-traded").text(_shrine.artifactsTraded);
+		var tdAbilityPoints = $("#hvstat-shrine-pane-artifact-ability-points td");
+		var tdAttributes = $("#hvstat-shrine-pane-artifact-attributes td");
+		var tdHath = $("#hvstat-shrine-pane-artifact-hath td");
+		var tdCrystals = $("#hvstat-shrine-pane-artifact-crystals td");
+		var tdrEnergyDrinks = $("#hvstat-shrine-pane-artifact-energy-drinks td");
+		$(tdAbilityPoints[0]).text(_shrine.artifactAP);
+		$(tdAbilityPoints[1]).text(hvStat.util.percentRatio(_shrine.artifactAP, _shrine.artifactsTraded, 2) + "%");
+		$(tdAttributes[0]).text(_shrine.artifactStat);
+		$(tdAttributes[1]).text(hvStat.util.percentRatio(_shrine.artifactStat, _shrine.artifactsTraded, 2) + "%");
+		$(tdHath[0]).text(_shrine.artifactHath);
+		$(tdHath[1]).text(hvStat.util.percentRatio(_shrine.artifactHath, _shrine.artifactsTraded, 2) + "%");
+		$(tdHath[2]).text("(" + hvStat.util.ratio(_shrine.artifactHathTotal, _shrine.artifactsTraded).toFixed(2) + " Hath per Artifact)");
+		$(tdCrystals[0]).text(_shrine.artifactCrystal);
+		$(tdCrystals[1]).text(hvStat.util.percentRatio(_shrine.artifactCrystal, _shrine.artifactsTraded, 2) + "%");
+		$(tdrEnergyDrinks[0]).text(_shrine.artifactItem);
+		$(tdrEnergyDrinks[1]).text(hvStat.util.percentRatio(_shrine.artifactItem, _shrine.artifactsTraded, 2) + "%");
+
+		$("#hvstat-shrine-pane-trophies-traded").text(_shrine.trophyArray.length);
+		var i = _shrine.trophyArray.length;
+		var trophiesHTML = "";
+		while (i--) {
+			trophiesHTML += _shrine.trophyArray[i] + "<br/>";
+		}
+		$("#hvstat-shrine-pane-trophies").html(trophiesHTML);
+		$("#hvstat-shrine-pane-clear-trophies").click(function () {
+			if (confirm("Clear Trophy list?")) {
+				_shrine.trophyArray = [];
+				_shrine.save();
+			}
+		});
+		$("#hvstat-shrine-pane-reset").click(function () {
+			if (confirm("Reset Shrine tab?")) {
+				_shrine.reset();
+			}
+		});
+	}
 }
 function initMonsterDatabasePane() {
 	$("#hvstat-monster-database-pane").html(browser.extension.getResourceText("html/", "monster-database-pane.html"));

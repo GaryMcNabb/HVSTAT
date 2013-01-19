@@ -275,6 +275,37 @@ input.hvstat-equipment-tag-new {
 	padding: 4px;
 	margin: 4px;
 	font-weight: bold;
+	text-align: center;
+}
+
+#hvstat-shrine-pane-main {
+	display: box;
+	display: -moz-box;
+	display: -webkit-box;
+}
+
+#hvstat-shrine-pane-main div {
+	margin: 0px 4px;
+}
+
+#hvstat-shrine-pane h2 + div {
+	font-weight: bold;
+	margin-bottom: 6px;
+}
+
+#hvstat-shrine-pane-artifact-stats table {
+	border-collapse: collapse;
+}
+
+#hvstat-shrine-pane-artifact-stats thead th {
+	border-bottom: 1px solid #5C0D11;
+}
+
+#hvstat-shrine-pane-artifact-stats th,
+#hvstat-shrine-pane-artifact-stats td {
+	text-align: right;
+	padding: 1px 3px;
+	white-space: nowrap;
 }
 
 #hvstat-settings-pane .hvstat-vertical-top {
