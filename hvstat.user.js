@@ -796,6 +796,82 @@ hvStat.keyboard = {
 			}
 		},
 	},
+	documentKeydown: function (event) {
+		var scrollTarget;
+		if (hvStat.settings.enableScrollHotkey &&
+				hvStat.keyboard.scrollable.currentTarget &&
+				!event.altKey && !event.ctrlKey && !event.shiftKey) {
+			scrollTarget = hvStat.keyboard.scrollable.currentTarget
+			switch (event.keyCode) {
+			case 33:	// PAGE UP
+				scrollTarget.scrollTop -= scrollTarget.clientHeight - 20;
+				event.preventDefault();
+				break;
+			case 34:	// PAGE DOWN
+				scrollTarget.scrollTop += scrollTarget.clientHeight - 20;
+				event.preventDefault();
+				break;
+			}
+		}
+		var boundKeys, i, j;
+		if (hv.battle.active) {
+			var miScan = hvStat.battle.command.subMenuItemMap["Scan"];
+			var miSkill1 = hvStat.battle.command.subMenuItemMap["Skill1"];
+			var miSkill2 = hvStat.battle.command.subMenuItemMap["Skill2"];
+			var miSkill3 = hvStat.battle.command.subMenuItemMap["Skill3"];
+			var miOFC = hvStat.battle.command.subMenuItemMap["OFC"];
+			var miSkills = [miSkill1, miSkill2, miSkill3];
+			if (hvStat.settings.isEnableScanHotkey && miScan) {
+				boundKeys = miScan.boundKeys;
+				for (i = 0; i < boundKeys.length; i++) {
+					if (boundKeys[i].matches(event)) {
+						if (hvStat.battle.command.commandMap["Skills"].menuOpened) {
+							hvStat.battle.command.commandMap["Skills"].close();
+						} else {
+							miScan.select();
+						}
+					}
+				}
+			}
+			if (hvStat.settings.isEnableSkillHotkey && miSkill1) {
+				var avilableSkillMaxIndex = -1;
+				for (i = 0; i < miSkills.length; i++) {
+					if (miSkills[i] && miSkills[i].available) {
+						avilableSkillMaxIndex = i;
+					}
+				}
+				boundKeys = miSkill1.boundKeys;
+				for (i = 0; i < boundKeys.length; i++) {
+					if (boundKeys[i].matches(event)) {
+						if (HVStat.selectedSkillIndex >= avilableSkillMaxIndex) {
+							hvStat.battle.command.commandMap["Skills"].close();
+							HVStat.selectedSkillIndex = -1;
+						} else {
+							for (j = HVStat.selectedSkillIndex + 1; j <= avilableSkillMaxIndex; j++) {
+								if (miSkills[j] && miSkills[j].available) {
+									miSkills[j].select();
+									HVStat.selectedSkillIndex = j;
+									break;
+								}
+							}
+						}
+					}
+				}
+			}
+			if (hvStat.settings.enableOFCHotkey && miOFC) {
+				boundKeys = miOFC.boundKeys;
+				for (i = 0; i < boundKeys.length; i++) {
+					if (boundKeys[i].matches(event)) {
+						if (hvStat.battle.command.commandMap["Skills"].menuOpened) {
+							hvStat.battle.command.commandMap["Skills"].close();
+						} else {
+							miOFC.select();
+						}
+					}
+				}
+			}
+		}
+	},
 };
 
 hvStat.keyboard.KeyCombination = function (spec) {
@@ -5972,83 +6048,6 @@ function HVMonsterDatabase() {
 	this.isLoaded = false;
 }
 
-HVStat.documentKeydownEventHandler = function (event) {
-	var scrollTarget;
-	if (hvStat.settings.enableScrollHotkey &&
-			hvStat.keyboard.scrollable.currentTarget &&
-			!event.altKey && !event.ctrlKey && !event.shiftKey) {
-		scrollTarget = hvStat.keyboard.scrollable.currentTarget
-		switch (event.keyCode) {
-		case 33:	// PAGE UP
-			scrollTarget.scrollTop -= scrollTarget.clientHeight - 20;
-			event.preventDefault();
-			break;
-		case 34:	// PAGE DOWN
-			scrollTarget.scrollTop += scrollTarget.clientHeight - 20;
-			event.preventDefault();
-			break;
-		}
-	}
-	var boundKeys, i, j;
-	if (hv.battle.active) {
-		var miScan = hvStat.battle.command.subMenuItemMap["Scan"];
-		var miSkill1 = hvStat.battle.command.subMenuItemMap["Skill1"];
-		var miSkill2 = hvStat.battle.command.subMenuItemMap["Skill2"];
-		var miSkill3 = hvStat.battle.command.subMenuItemMap["Skill3"];
-		var miOFC = hvStat.battle.command.subMenuItemMap["OFC"];
-		var miSkills = [miSkill1, miSkill2, miSkill3];
-
-		if (hvStat.settings.isEnableScanHotkey && miScan) {
-			boundKeys = miScan.boundKeys;
-			for (i = 0; i < boundKeys.length; i++) {
-				if (boundKeys[i].matches(event)) {
-					if (hvStat.battle.command.commandMap["Skills"].menuOpened) {
-						hvStat.battle.command.commandMap["Skills"].close();
-					} else {
-						miScan.select();
-					}
-				}
-			}
-		}
-		if (hvStat.settings.isEnableSkillHotkey && miSkill1) {
-			var avilableSkillMaxIndex = -1;
-			for (i = 0; i < miSkills.length; i++) {
-				if (miSkills[i] && miSkills[i].available) {
-					avilableSkillMaxIndex = i;
-				}
-			}
-			boundKeys = miSkill1.boundKeys;
-			for (i = 0; i < boundKeys.length; i++) {
-				if (boundKeys[i].matches(event)) {
-					if (HVStat.selectedSkillIndex >= avilableSkillMaxIndex) {
-						hvStat.battle.command.commandMap["Skills"].close();
-						HVStat.selectedSkillIndex = -1;
-					} else {
-						for (j = HVStat.selectedSkillIndex + 1; j <= avilableSkillMaxIndex; j++) {
-							if (miSkills[j] && miSkills[j].available) {
-								miSkills[j].select();
-								HVStat.selectedSkillIndex = j;
-								break;
-							}
-						}
-					}
-				}
-			}
-		}
-		if (hvStat.settings.enableOFCHotkey && miOFC) {
-			boundKeys = miOFC.boundKeys;
-			for (i = 0; i < boundKeys.length; i++) {
-				if (boundKeys[i].matches(event)) {
-					if (hvStat.battle.command.commandMap["Skills"].menuOpened) {
-						hvStat.battle.command.commandMap["Skills"].close();
-					} else {
-						miOFC.select();
-					}
-				}
-			}
-		}
-	}
-};
 function registerEventHandlersForMonsterPopup() {
 	var delay = hvStat.settings.monsterPopupDelay;
 	var popupLeftOffset = hvStat.settings.isMonsterPopupPlacement ? 955 : 275;
@@ -6465,7 +6464,7 @@ hvStat.startup = {
 		if (invFull) {
 			inventoryWarning();
 		}
-		document.addEventListener("keydown", HVStat.documentKeydownEventHandler);
+		document.addEventListener("keydown", hvStat.keyboard.documentKeydown);
 		hvStat.ui.setup();
 		if (hvStat.settings.adjustKeyEventHandling) {
 			document.onkeydown = hvStat.onkeydown;
