@@ -5110,12 +5110,12 @@ function initShrinePane() {
 		if (!hvStat.settings.isTrackShrine) {
 			$("#hvstat-shrine-pane .hvstat-tracking-paused").show();
 		}
-		$("#hvstat-shrine-pane-artifacts-traded").text(_shrine.artifactsTraded);
-		var tdAbilityPoints = $("#hvstat-shrine-pane-artifact-ability-points td");
-		var tdAttributes = $("#hvstat-shrine-pane-artifact-attributes td");
-		var tdHath = $("#hvstat-shrine-pane-artifact-hath td");
-		var tdCrystals = $("#hvstat-shrine-pane-artifact-crystals td");
-		var tdrEnergyDrinks = $("#hvstat-shrine-pane-artifact-energy-drinks td");
+		var tdAbilityPoints = $("#hvstat-shrine-artifact-ability-points td");
+		var tdAttributes = $("#hvstat-shrine-artifact-attributes td");
+		var tdHath = $("#hvstat-shrine-artifact-hath td");
+		var tdCrystals = $("#hvstat-shrine-artifact-crystals td");
+		var tdEnergyDrinks = $("#hvstat-shrine-artifact-energy-drinks td");
+		var tdTotal = $("#hvstat-shrine-artifact-total td");
 		$(tdAbilityPoints[0]).text(_shrine.artifactAP);
 		$(tdAbilityPoints[1]).text(hvStat.util.percentRatio(_shrine.artifactAP, _shrine.artifactsTraded, 2) + "%");
 		$(tdAttributes[0]).text(_shrine.artifactStat);
@@ -5125,23 +5125,23 @@ function initShrinePane() {
 		$(tdHath[2]).text("(" + hvStat.util.ratio(_shrine.artifactHathTotal, _shrine.artifactsTraded).toFixed(2) + " Hath per Artifact)");
 		$(tdCrystals[0]).text(_shrine.artifactCrystal);
 		$(tdCrystals[1]).text(hvStat.util.percentRatio(_shrine.artifactCrystal, _shrine.artifactsTraded, 2) + "%");
-		$(tdrEnergyDrinks[0]).text(_shrine.artifactItem);
-		$(tdrEnergyDrinks[1]).text(hvStat.util.percentRatio(_shrine.artifactItem, _shrine.artifactsTraded, 2) + "%");
+		$(tdEnergyDrinks[0]).text(_shrine.artifactItem);
+		$(tdEnergyDrinks[1]).text(hvStat.util.percentRatio(_shrine.artifactItem, _shrine.artifactsTraded, 2) + "%");
+		$(tdTotal[0]).text(_shrine.artifactsTraded);
 
-		$("#hvstat-shrine-pane-trophies-traded").text(_shrine.trophyArray.length);
 		var i = _shrine.trophyArray.length;
 		var trophiesHTML = "";
 		while (i--) {
 			trophiesHTML += _shrine.trophyArray[i] + "<br/>";
 		}
-		$("#hvstat-shrine-pane-trophies").html(trophiesHTML);
-		$("#hvstat-shrine-pane-clear-trophies").click(function () {
+		$("#hvstat-shrine-trophies").html(trophiesHTML);
+		$("#hvstat-shrine-clear-trophies").click(function () {
 			if (confirm("Clear Trophy list?")) {
 				_shrine.trophyArray = [];
 				_shrine.save();
 			}
 		});
-		$("#hvstat-shrine-pane-reset").click(function () {
+		$("#hvstat-shrine-reset").click(function () {
 			if (confirm("Reset Shrine tab?")) {
 				_shrine.reset();
 			}

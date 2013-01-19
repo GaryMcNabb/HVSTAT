@@ -303,35 +303,20 @@ input.hvstat-equipment-tag-new {
 	padding: 0px;
 }
 
-#hvstat-shrine-pane-main {
-	display: box;
-	display: -moz-box;
-	display: -webkit-box;
-}
-
-#hvstat-shrine-pane-main div {
-	margin: 0px 4px;
-}
-
-#hvstat-shrine-pane h2 + div {
-	font-weight: bold;
-	margin-bottom: 6px;
-}
-
 #hvstat-arena-rewards-pane table,
-#hvstat-shrine-pane-artifact-stats table {
+#hvstat-shrine-artifact-trade {
 	border-collapse: collapse;
 }
 
 #hvstat-arena-rewards-pane thead th,
-#hvstat-shrine-pane-artifact-stats thead th {
+#hvstat-shrine-artifact-trade thead th {
 	border-bottom: 1px solid #5C0D11;
 }
 
 #hvstat-arena-rewards-pane th,
 #hvstat-arena-rewards-pane td,
-#hvstat-shrine-pane-artifact-stats th,
-#hvstat-shrine-pane-artifact-stats td {
+#hvstat-shrine-artifact-trade th,
+#hvstat-shrine-artifact-trade td {
 	text-align: right;
 	padding: 1px 3px;
 	white-space: nowrap;
