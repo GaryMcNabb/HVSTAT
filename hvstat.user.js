@@ -23,6 +23,7 @@
 // @resource        ui-icons_2e83ff_256x240.png                 css/images/ui-icons_2e83ff_256x240.png
 // @resource        ui-icons_5c0d11_256x240.png                 css/images/ui-icons_5c0d11_256x240.png
 // @resource        ui-icons_cd0a0a_256x240.png                 css/images/ui-icons_cd0a0a_256x240.png
+// @resource        arena-rewards-pane.html                     html/arena-rewards-pane.html
 // @resource        battle-stats-pane.html                      html/battle-stats-pane.html
 // @resource        main.html                                   html/main.html
 // @resource        monster-database-pane.html                  html/monster-database-pane.html
@@ -4819,33 +4820,6 @@ function getReportItemHtml() {
 	e += "</table>";
 	return e;
 }
-function getReportRewardHtml() {
-	var e = "Tracking disabled.";
-	if (hvStat.settings.isTrackRewards && _rewards.totalRwrds === 0) e = "No data found. Complete an arena to begin tracking.";
-	else if (hvStat.settings.isTrackRewards && _rewards.isLoaded && _rewards.totalRwrds > 0) e = '<table class="_UI" cellspacing="0" cellpadding="1" style="width:100%">';
-	else if (!hvStat.settings.isTrackRewards && _rewards.isLoaded && _rewards.totalRwrds > 0) e = '<table class="_UI" cellspacing="0" cellpadding="1" style="width:100%"><tr><td align="center" colspan="2"><div align="center" class="ui-state-error ui-corner-all" style="padding:4px;margin:4px"><span class="ui-icon ui-icon-pause"></span><b>TRACKING PAUSED</b></div></td></tr>';
-	if (_rewards.isLoaded && _rewards.totalRwrds > 0) {
-		var c = _rewards.totalRwrds / 100;
-		var a = _rewards.tokenDrops[0] + _rewards.tokenDrops[1] + _rewards.tokenDrops[2];
-		var b = a / 100;
-		e += '<tr><td style="width:50%"><b>Total Rewards:</b> ' + _rewards.totalRwrds + '</td><td style="width:50%"><b>Token Bonus:</b> ' + a + " (" + (a / c).toFixed(2) + '% chance)</td></tr>'
-			+ '<tr><td style="padding-left:10px;width:50%">Artifact: ' + _rewards.artRwrd + " (" + (c === 0 ? 0 : (_rewards.artRwrd / c).toFixed(2)) + '%)</td><td style="padding-left:10px;width:50%">[Token of Blood]: ' + _rewards.tokenDrops[0] + " (" + (b === 0 ? 0 : (_rewards.tokenDrops[0] / b).toFixed(2)) + '%)</td></tr>'
-			+ '<tr><td style="padding-left:10px;width:50%">Equipment: ' + _rewards.eqRwrd + " (" + (c === 0 ? 0 : (_rewards.eqRwrd / c).toFixed(2)) + '%)</td><td style="padding-left:10px;width:50%">[Token of Healing]: ' + _rewards.tokenDrops[1] + " (" + (b === 0 ? 0 : (_rewards.tokenDrops[1] / b).toFixed(2)) + '%)</td></tr>'
-			+ '<tr><td style="padding-left:10px;width:50%">Item: ' + _rewards.itemsRwrd + " (" + (c === 0 ? 0 : (_rewards.itemsRwrd / c).toFixed(2)) + '%)</td><td style="padding-left:10px;width:50%">[Chaos Token]: ' + _rewards.tokenDrops[2] + " (" + (b === 0 ? 0 : (_rewards.tokenDrops[2] / b).toFixed(2)) + '%)</td></tr>'
-			+ '<tr><td colspan="2"><b>Artifact:</b></td></tr>';
-		var d = _rewards.artRwrdArry.length;
-		while (d--) e += '<tr><td colspan="2" style="padding-left:10px">' + _rewards.artRwrdArry[d] + " x " + _rewards.artRwrdQtyArry[d] + "</td></tr>";
-		e += '<tr><td colspan="2"><b>Equipment:</b></td></tr>';
-		d = _rewards.eqRwrdArry.length;
-		while (d--) e += '<tr><td colspan="2" style="padding-left:10px">' + _rewards.eqRwrdArry[d] + "</tr></td>";
-		e += '<tr><td colspan="2"><b>Item:</b></td></tr>';
-		d = _rewards.itemRwrdArry.length;
-		while (d--) e += '<tr><td colspan="2" style="padding-left:10px">' + _rewards.itemRwrdArry[d] + " x " + _rewards.itemRwrdQtyArry[d] + "</td></tr>";
-		e += '<tr><td align="right" colspan="2"><input type="button" class="_resetRewards" value="Reset Arena Rewards" /></td></tr>';
-	}
-	e += "</table>";
-	return e;
-}
 function initOverviewPane() {
 	$("#pane1").html(getReportOverviewHtml());
 	$("._resetOverview").click(function () {
@@ -5040,10 +5014,89 @@ function initItemPane() {
 	});
 }
 function initRewardsPane() {
-	$("#pane4").html(getReportRewardHtml());
-	$("._resetRewards").click(function () {
-		if (confirm("Reset Arena Rewards tab?")) _rewards.reset();
-	});
+	var innerHTML;
+	if (_rewards.totalRwrds === 0) {
+		innerHTML = "No data found. Complete an arena to begin tracking.";
+	} else {
+		innerHTML = browser.extension.getResourceText("html/", "arena-rewards-pane.html");
+	}
+	$('#hvstat-arena-rewards-pane').html(innerHTML);
+	if (_rewards.totalRwrds > 0) {
+		if (!hvStat.settings.isTrackRewards) {
+			$('#hvstat-arena-rewards-pane .hvstat-tracking-paused').show();
+		}
+		// Total Rewards
+		$('#hvstat-arena-rewards-total-number').text(_rewards.totalRwrds);
+		var tdTotalArtifact = $('#hvstat-arena-rewards-total-artifact td');
+		var tdTotalEquipment = $('#hvstat-arena-rewards-total-equipment td');
+		var tdTotalItem = $('#hvstat-arena-rewards-total-item td');
+		var tdTotalTotal = $('#hvstat-arena-rewards-total-total td');
+		$(tdTotalArtifact[0]).text(_rewards.artRwrd);
+		$(tdTotalArtifact[1]).text(hvStat.util.percentRatio(_rewards.artRwrd, _rewards.totalRwrds, 2) + "%");
+		$(tdTotalEquipment[0]).text(_rewards.eqRwrd);
+		$(tdTotalEquipment[1]).text(hvStat.util.percentRatio(_rewards.eqRwrd, _rewards.totalRwrds, 2) + "%");
+		$(tdTotalItem[0]).text(_rewards.itemsRwrd);
+		$(tdTotalItem[1]).text(hvStat.util.percentRatio(_rewards.itemsRwrd, _rewards.totalRwrds, 2) + "%");
+		$(tdTotalTotal[0]).text(_rewards.totalRwrds);
+		// Token Bonuses
+		var totalTokenDrops = _rewards.tokenDrops[0] + _rewards.tokenDrops[2];
+		$('#hvstat-arena-rewards-token-bonuses-number').text(totalTokenDrops);
+		var tdTokenBlood = $('#hvstat-arena-rewards-token-bonuses-blood td');
+		var tdTokenChaos = $('#hvstat-arena-rewards-token-bonuses-chaos td');
+		var tdTokenTotal = $('#hvstat-arena-rewards-token-bonuses-total td');
+		$(tdTokenBlood[0]).text(_rewards.tokenDrops[0]);
+		$(tdTokenBlood[1]).text(hvStat.util.percentRatio(_rewards.tokenDrops[0], totalTokenDrops, 2) + "%");
+		$(tdTokenChaos[0]).text(_rewards.tokenDrops[2]);
+		$(tdTokenChaos[1]).text(hvStat.util.percentRatio(_rewards.tokenDrops[2], totalTokenDrops, 2) + "%");
+		$(tdTokenTotal[0]).text(_rewards.tokenDrops[0] + _rewards.tokenDrops[2]);
+		// Artifacts
+		var i = _rewards.artRwrdArry.length;
+		var artifactsHTML = "";
+		while (i--) {
+			artifactsHTML += '<li>' + _rewards.artRwrdArry[i] + ' x ' + _rewards.artRwrdQtyArry[i] + '</li>';
+		}
+		$('#hvstat-arena-rewards-artifacts').html(artifactsHTML);
+		// Equipments
+		i = _rewards.eqRwrdArry.length;
+		var equipmentsHTML = "";
+		while (i--) {
+			equipmentsHTML += '<li>' + _rewards.eqRwrdArry[i] + '</li>';
+		}
+		$('#hvstat-arena-rewards-equipments').html(equipmentsHTML);
+		// Items
+		i = _rewards.itemRwrdArry.length;
+		var itemsHTML = "";
+		while (i--) {
+			itemsHTML += '<li>' + _rewards.itemRwrdArry[i] + ' x ' + _rewards.itemRwrdQtyArry[i] + '</li>';
+		}
+		$('#hvstat-arena-rewards-items').html(itemsHTML);
+		// Buttons
+		$('#hvstat-arena-rewards-artifacts-clear').click(function () {
+			if (confirm("Clear Artifact list?")) {
+				_rewards.artRwrdArry = [];
+				_rewards.artRwrdQtyArry = [];
+				_rewards.save();
+			}
+		});
+		$('#hvstat-arena-rewards-equipments-clear').click(function () {
+			if (confirm("Clear Equipment list?")) {
+				_rewards.eqRwrdArry = [];
+				_rewards.save();
+			}
+		});
+		$('#hvstat-arena-rewards-items-clear').click(function () {
+			if (confirm("Clear Item list?")) {
+				_rewards.itemRwrdArry = [];
+				_rewards.itemRwrdQtyArry = [];
+				_rewards.save();
+			}
+		});
+		$('#hvstat-arena-rewards-reset').click(function () {
+			if (confirm("Reset Arena Rewards tab?")) {
+				_rewards.reset();
+			}
+		});
+	}
 }
 function initShrinePane() {
 	var innerHTML;
