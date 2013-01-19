@@ -26,6 +26,7 @@
 // @resource        battle-stats-pane.html                      html/battle-stats-pane.html
 // @resource        main.html                                   html/main.html
 // @resource        monster-database-pane.html                  html/monster-database-pane.html
+// @resource        proficiency-table.html                      html/proficiency-table.html
 // @resource        settings-pane.html                          html/settings-pane.html
 // @resource        jquery-1.8.3.min.js                         scripts/jquery-1.8.3.min.js
 // @resource        jquery-ui-1.9.2.custom.min.js               scripts/jquery-ui-1.9.2.custom.min.js
@@ -763,6 +764,50 @@ hvStat.storage.Item.prototype = {
 	},
 	remove: function () {
 		hvStat.storage.removeItem(this._key);
+	},
+};
+
+hvStat.gadget = {};
+
+hvStat.gadget.proficiencyPopupIcon = {
+	popup: null,
+	create: function () {
+		loadProfsObject();
+		if (!isProfTotalsRecorded()) return;
+
+		this.popup = document.createElement("div");
+		this.popup.id = "hvstat-proficiency-popup";
+		this.popup.innerHTML = browser.extension.getResourceText("html/", "proficiency-table.html");
+		var tableData = this.popup.querySelectorAll('td');
+		tableData[ 0].textContent = _profs.weapProfTotals[0].toFixed(2);
+		tableData[ 2].textContent = _profs.weapProfTotals[1].toFixed(2);
+		tableData[ 4].textContent = _profs.weapProfTotals[2].toFixed(2);
+		tableData[ 6].textContent = _profs.weapProfTotals[3].toFixed(2);
+		tableData[ 8].textContent = _profs.armorProfTotals[0].toFixed(2);
+		tableData[10].textContent = _profs.armorProfTotals[1].toFixed(2);
+		tableData[12].textContent = _profs.armorProfTotals[2].toFixed(2);
+		tableData[ 1].textContent = _profs.elemTotal.toFixed(2);
+		tableData[ 3].textContent = _profs.divineTotal.toFixed(2);
+		tableData[ 5].textContent = _profs.forbidTotal.toFixed(2);
+		tableData[ 7].textContent = _profs.spiritTotal.toFixed(2);
+		tableData[ 9].textContent = _profs.depTotal.toFixed(2);
+		tableData[11].textContent = _profs.supportTotal.toFixed(2);
+		tableData[13].textContent = _profs.curativeTotal.toFixed(2);
+		var icon = document.createElement("div");
+		icon.id = "hvstat-proficiency-popup-icon";
+		icon.className = "ui-corner-all";
+		icon.textContent = "Proficiency";
+		icon.appendChild(this.popup);
+		icon.addEventListener("mouseover", this.mouseover);
+		icon.addEventListener("mouseout", this.mouseout);
+		var leftBar = document.querySelector("div.clb");
+		leftBar.parentNode.insertBefore(icon, leftBar.nextSibling);
+	},
+	mouseover: function (event) {
+		hvStat.gadget.proficiencyPopupIcon.popup.style.visibility = "visible";
+	},
+	mouseout: function (event) {
+		hvStat.gadget.proficiencyPopupIcon.popup.style.visibility = "hidden";
 	},
 };
 
@@ -3827,42 +3872,6 @@ function collectCurrentProfsData() {
 	_profs.curativeTotal = Number(util.innerText(proficiencyTableElements[29]));
 	_profs.save();
 }
-function showSidebarProfs() {
-	loadProfsObject();
-	if (!isProfTotalsRecorded())
-		return;
-	var b = document.querySelector("div.stuffbox").scrollHeight - 31;
-	browser.extension.addStyle(".prof_sidebar td {font-family:arial,helvetica,sans-serif; font-size:9pt; font-weight:normal; text-align:left}.prof_sidebar_top td {font-family:arial,helvetica,sans-serif; font-size:10pt; font-weight:bold; text-align:center}");
-	var div = document.createElement("div");
-	div.setAttribute("id", "_profbutton");
-	div.setAttribute("class", "ui-corner-all");
-	div.style.cssText = 'position:absolute;top:' + b + 'px;border:1px solid;margin-left:5px;padding:2px;width:132px;font-size:10pt;font-weight:bold;text-align:center;cursor:default;';
-	div.innerHTML = "Proficiency";
-	var leftBar = document.querySelector("div.clb");
-	leftBar.parentNode.insertBefore(div, leftBar.nextSibling);
-
-	div.addEventListener("mouseover", function () {
-		var c = hv.elementCache.popup;
-		var rectObject = div.getBoundingClientRect();
-		c.style.left = rectObject.left + 145 + "px";
-		c.style.top = rectObject.top - 126 + "px";
-		c.style.width = "260px";
-		c.style.height = "126px";
-		c.innerHTML = '<table class="prof_sidebar" cellspacing="0" cellpadding="0" style="width:100%">'
-			+ '<tr class="prof_sidebar_top"><td colspan="2"><b>Equipment</b></td><td colspan="2"><b>Magic</b></td></tr>'
-			+ '<tr><td style="width:34%">One-handed:</td><td>' + _profs.weapProfTotals[0].toFixed(2) + '</td><td style="width:34%">Elemental:</td><td>' + _profs.elemTotal.toFixed(2) + '</td></tr>'
-			+ '<tr><td>Two-handed:</td><td>' + _profs.weapProfTotals[1].toFixed(2) + '</td><td>Divine:</td><td>' + _profs.divineTotal.toFixed(2) + '</td></tr>'
-			+ '<tr><td>Dual wielding:</td><td>' + _profs.weapProfTotals[2].toFixed(2) + '</td><td>Forbidden:</td><td>' + _profs.forbidTotal.toFixed(2) + '</td></tr>'
-			+ '<tr><td>Staff:</td><td>' + _profs.weapProfTotals[3].toFixed(2) + '</td><td>Spiritual:</td><td>' + _profs.spiritTotal.toFixed(2) + '</td></tr>'
-			+ '<tr><td>Cloth armor:</td><td>' + _profs.armorProfTotals[0].toFixed(2) + '</td><td>Deprecating:</td><td>' + _profs.depTotal.toFixed(2) + '</td></tr>'
-			+ '<tr><td>Light armor:</td><td>' + _profs.armorProfTotals[1].toFixed(2) + '</td><td>Supportive:</td><td>' + _profs.supportTotal.toFixed(2) + '</td></tr>'
-			+ '<tr><td>Heavy armor:</td><td>' + _profs.armorProfTotals[2].toFixed(2) + '</td><td>Curative:</td><td>' + _profs.curativeTotal.toFixed(2) + '</td></tr></table>'; //spiritTotal added by Ilirith
-		c.style.visibility = "visible";
-	});
-	div.addEventListener("mouseout", function () {
-		hv.elementCache.popup.style.visibility = "hidden";
-	});
-}
 function isProfTotalsRecorded() {
 	loadProfsObject();
 	return _profs.weapProfTotals.length > 0;
@@ -6458,7 +6467,7 @@ hvStat.startup = {
 			HVStat.showEquippedSet();
 		}
 		if (hvStat.settings.isShowSidebarProfs) {
-			showSidebarProfs();
+			hvStat.gadget.proficiencyPopupIcon.create();
 		}
 		var invAlert = localStorage.getItem(HV_EQUIP);
 		var invFull = (invAlert === null) ? false : JSON.parse(invAlert);
