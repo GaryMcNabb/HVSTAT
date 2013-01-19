@@ -436,22 +436,19 @@ hvStat.storage = {
 	//------------------------------------
 	_settings: null,
 	_settingsDefault: {
-		// General Options
-		isShowSidebarProfs: false,
+		// General
 		isChangePageTitle: false,
 		customPageTitle: "HV",
+		isShowEquippedSet: false,
+		isShowSidebarProfs: false,
 		isStartAlert: false,
 		StartAlertHP: 95,
 		StartAlertMP: 95,
 		StartAlertSP: 95,
 		StartAlertDifficulty: 2,
-		isShowScanButton: false,
-		isShowSkillButton: false,
-		isShowEquippedSet: false,
-		//0-equipment page, 1-shop, 2-itemworld, 3-moogle, 4-forge, 5-inventory
-		isShowTags: [false, false, false, false, false, false],
+		isShowTags: [false, false, false, false, false, false],	// 0-equipment page, 1-shop, 2-itemworld, 3-moogle, 4-forge, 5-inventory
 
-		// Keyboard Options
+		// Keyboard
 		adjustKeyEventHandling: false,
 		isEnableScanHotkey: false,
 		isEnableSkillHotkey: false,
@@ -460,72 +457,42 @@ hvStat.storage = {
 		isDisableForgeHotKeys: false,
 		enableShrineKeyPatch: false,
 
-		// Battle Enhancement
-		isShowHighlight: true,
-		isAltHighlight: false,
-		isShowDivider: true,
-		isShowSelfDuration: true,
-		isSelfEffectsWarnColor: false,
-		SelfWarnOrangeRounds: 5,
-		SelfWarnRedRounds: 1,
-		isShowRoundReminder: false,
-		reminderMinRounds: 3,
-		reminderBeforeEnd: 1,
-		isShowEndStats: true,
-		isShowEndProfs: true,
-		isShowEndProfsMagic: true,
-		isShowEndProfsArmor: true,
-		isShowEndProfsWeapon: true,
-		isAlertGem: true,
-		isAlertOverchargeFull: false,
-		isShowMonsterNumber: false,
-		isShowRoundCounter: false,
-		isShowPowerupBox: false,
-		autoAdvanceBattleRound: false,
-		autoAdvanceBattleRoundDelay: 500,
-
-		// Display Monster Stats
-		showMonsterHP: true,
-		showMonsterHPPercent: false,
-		showMonsterMP: true,
-		showMonsterSP: true,
-		showMonsterInfoFromDB: false,
-		showMonsterClassFromDB: false,
-		showMonsterPowerLevelFromDB: false,
-		showMonsterAttackTypeFromDB: false,
-		showMonsterWeaknessesFromDB: false,
-		showMonsterResistancesFromDB: false,
-		hideSpecificDamageType: [false, false, false, false, false, false, false, false, false, false, false],
-		ResizeMonsterInfo: false,
-		isShowStatsPopup: false,
-		isMonsterPopupPlacement: false,
-		monsterPopupDelay: 0,
-		isShowMonsterDuration: true,
-		isMonstersEffectsWarnColor: false,
-		MonstersWarnOrangeRounds: 5,
-		MonstersWarnRedRounds: 1,
-
-		// Tracking Functions
+		// Tracking
 		isTrackStats: true,
 		isTrackRewards: false,
 		isTrackShrine: false,
 		isTrackItems: false,
 
+		// Battle Enhancement
+		isShowRoundCounter: false,
+		isShowRoundReminder: false,
+		reminderMinRounds: 3,
+		reminderBeforeEnd: 1,
+		isShowSelfDuration: true,
+		isSelfEffectsWarnColor: false,
+		SelfWarnOrangeRounds: 5,
+		SelfWarnRedRounds: 1,
+		isShowPowerupBox: false,
+		isShowHighlight: true,
+		isAltHighlight: false,
+		isShowDivider: true,
+		isShowScanButton: false,
+		isShowSkillButton: false,
+		isShowMonsterNumber: false,
+		isShowMonsterDuration: true,
+		isMonstersEffectsWarnColor: false,
+		MonstersWarnOrangeRounds: 5,
+		MonstersWarnRedRounds: 1,
+		isShowEndStats: true,
+		isShowEndProfs: true,
+		isShowEndProfsMagic: true,
+		isShowEndProfsArmor: true,
+		isShowEndProfsWeapon: true,
+		autoAdvanceBattleRound: false,
+		autoAdvanceBattleRoundDelay: 500,
+
 		// Warning System
-		// Effects Expiring Warnings
-		isMainEffectsAlertSelf: false,
-		isEffectsAlertSelf: [false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false],
-		EffectsAlertSelfRounds: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-		isMainEffectsAlertMonsters: false,
-		isEffectsAlertMonsters: [false, false, false, false, false, false, false, false, false, false, false, false],
-		EffectsAlertMonstersRounds: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-
-		// Specific Spell Warnings
-		isWarnAbsorbTrigger: false,
-		isWarnSparkTrigger: true,
-		isWarnSparkExpire: true,
-
-		// Alert Mode
+		// - Self Status
 		isHighlightQC: true,
 		warnOrangeLevel: 40,
 		warnRedLevel: 35,
@@ -540,13 +507,41 @@ hvStat.storage = {
 		isNagHP: false,
 		isNagMP: false,
 		isNagSP: false,
-
-		// Battle Type
 		warnMode: [true, true, false, false],
+		// - Event Notifications
+		isAlertGem: true,
+		isAlertOverchargeFull: false,
+		isWarnAbsorbTrigger: false,
+		isWarnSparkTrigger: true,
+		isWarnSparkExpire: true,
+		// - Effects Expiring Warnings
+		isMainEffectsAlertSelf: false,
+		isEffectsAlertSelf: [false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false],
+		EffectsAlertSelfRounds: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+		isMainEffectsAlertMonsters: false,
+		isEffectsAlertMonsters: [false, false, false, false, false, false, false, false, false, false, false, false],
+		EffectsAlertMonstersRounds: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
 
-		// Database Options
+		// Monster Information
+		// - Monster Database
 		isRememberScan: false,
 		isRememberSkillsTypes: false,
+		// - Monster Display
+		showMonsterHP: true,
+		showMonsterHPPercent: false,
+		showMonsterMP: true,
+		showMonsterSP: true,
+		showMonsterInfoFromDB: false,
+		showMonsterClassFromDB: false,
+		showMonsterPowerLevelFromDB: false,
+		showMonsterAttackTypeFromDB: false,
+		showMonsterWeaknessesFromDB: false,
+		showMonsterResistancesFromDB: false,
+		hideSpecificDamageType: [false, false, false, false, false, false, false, false, false, false, false],
+		ResizeMonsterInfo: false,
+		isShowStatsPopup: false,
+		monsterPopupDelay: 0,
+		isMonsterPopupPlacement: false,
 	},
 	get settings() {
 		if (!this._settings) {
@@ -5099,19 +5094,22 @@ function initMonsterDatabasePane() {
 }
 function initSettingsPane() {
 	$("#hvstat-settings-pane").html(browser.extension.getResourceText("html/", "settings-pane.html"));
-	// General Options
-	if (hvStat.settings.isShowSidebarProfs) $("input[name=isShowSidebarProfs]").attr("checked", "checked");
+
+	//------------------------------------
+	// Set initial values
+	//------------------------------------
+
+	// General
 	if (hvStat.settings.isChangePageTitle) $("input[name=isChangePageTitle]").attr("checked", "checked");
 	$("input[name=customPageTitle]").attr("value", hvStat.settings.customPageTitle);
+	if (hvStat.settings.isShowEquippedSet) $("input[name=isShowEquippedSet]").attr("checked", "checked");
+	if (hvStat.settings.isShowSidebarProfs) $("input[name=isShowSidebarProfs]").attr("checked", "checked");
 	if (hvStat.settings.isStartAlert) $("input[name=isStartAlert]").attr("checked", "checked");
 	$("input[name=StartAlertHP]").attr("value", hvStat.settings.StartAlertHP);
 	$("input[name=StartAlertMP]").attr("value", hvStat.settings.StartAlertMP);
 	$("input[name=StartAlertSP]").attr("value", hvStat.settings.StartAlertSP);
 	var diffsel = "diff" + String(hvStat.settings.StartAlertDifficulty);
 	$("#" + diffsel).attr("selected", true);
-	if (hvStat.settings.isShowScanButton) $("input[name=isShowScanButton]").attr("checked", "checked");
-	if (hvStat.settings.isShowSkillButton) $("input[name=isShowSkillButton]").attr("checked", "checked");
-	if (hvStat.settings.isShowEquippedSet) $("input[name=isShowEquippedSet]").attr("checked", "checked");
 	if (hvStat.settings.isShowTags[0]) $("input[name=isShowTags0]").attr("checked", "checked");
 	if (hvStat.settings.isShowTags[1]) $("input[name=isShowTags1]").attr("checked", "checked");
 	if (hvStat.settings.isShowTags[2]) $("input[name=isShowTags2]").attr("checked", "checked");
@@ -5119,7 +5117,7 @@ function initSettingsPane() {
 	if (hvStat.settings.isShowTags[4]) $("input[name=isShowTags4]").attr("checked", "checked");
 	if (hvStat.settings.isShowTags[5]) $("input[name=isShowTags5]").attr("checked", "checked");
 
-	// Keyboard Options
+	// Keyboard
 	if (hvStat.settings.adjustKeyEventHandling) $("input[name=adjustKeyEventHandling]").attr("checked", "checked");
 	if (hvStat.settings.isEnableScanHotkey) $("input[name=isEnableScanHotkey]").attr("checked", "checked");
 	if (hvStat.settings.isEnableSkillHotkey) $("input[name=isEnableSkillHotkey]").attr("checked", "checked");
@@ -5128,17 +5126,32 @@ function initSettingsPane() {
 	if (hvStat.settings.isDisableForgeHotKeys) $("input[name=isDisableForgeHotKeys]").attr("checked", "checked");
 	if (hvStat.settings.enableShrineKeyPatch) $("input[name=enableShrineKeyPatch]").attr("checked", "checked");
 
+	// Tracking
+	if (hvStat.settings.isTrackStats) $("input[name=isTrackStats]").attr("checked", "checked");
+	if (hvStat.settings.isTrackRewards) $("input[name=isTrackRewards]").attr("checked", "checked");
+	if (hvStat.settings.isTrackShrine) $("input[name=isTrackShrine]").attr("checked", "checked");
+	if (hvStat.settings.isTrackItems) $("input[name=isTrackItems]").attr("checked", "checked");
+
 	// Battle Enhancement
-	if (hvStat.settings.isShowHighlight) $("input[name=isShowHighlight]").attr("checked", "checked");
-	if (hvStat.settings.isAltHighlight) $("input[name=isAltHighlight]").attr("checked", "checked");
-	if (hvStat.settings.isShowDivider) $("input[name=isShowDivider]").attr("checked", "checked");
+	if (hvStat.settings.isShowRoundCounter) $("input[name=isShowRoundCounter]").attr("checked", "checked");
+	if (hvStat.settings.isShowRoundReminder) $("input[name=isShowRoundReminder]").attr("checked", "checked");
+	$("input[name=reminderMinRounds]").attr("value", hvStat.settings.reminderMinRounds);
+	$("input[name=reminderBeforeEnd]").attr("value", hvStat.settings.reminderBeforeEnd);
 	if (hvStat.settings.isShowSelfDuration) $("input[name=isShowSelfDuration]").attr("checked", "checked");
 	if (hvStat.settings.isSelfEffectsWarnColor) $("input[name=isSelfEffectsWarnColor]").attr("checked", "checked");
 	$("input[name=SelfWarnOrangeRounds]").attr("value", hvStat.settings.SelfWarnOrangeRounds);
 	$("input[name=SelfWarnRedRounds]").attr("value", hvStat.settings.SelfWarnRedRounds);
-	if (hvStat.settings.isShowRoundReminder) $("input[name=isShowRoundReminder]").attr("checked", "checked");
-	$("input[name=reminderMinRounds]").attr("value", hvStat.settings.reminderMinRounds);
-	$("input[name=reminderBeforeEnd]").attr("value", hvStat.settings.reminderBeforeEnd);
+	if (hvStat.settings.isShowPowerupBox) $("input[name=isShowPowerupBox]").attr("checked", "checked");
+	if (hvStat.settings.isShowHighlight) $("input[name=isShowHighlight]").attr("checked", "checked");
+	if (hvStat.settings.isAltHighlight) $("input[name=isAltHighlight]").attr("checked", "checked");
+	if (hvStat.settings.isShowDivider) $("input[name=isShowDivider]").attr("checked", "checked");
+	if (hvStat.settings.isShowScanButton) $("input[name=isShowScanButton]").attr("checked", "checked");
+	if (hvStat.settings.isShowSkillButton) $("input[name=isShowSkillButton]").attr("checked", "checked");
+	if (hvStat.settings.isShowMonsterNumber) $("input[name=isShowMonsterNumber]").attr("checked", "checked"); //isShowMonsterNumber stolen from HV Lite, and added by Ilirith
+	if (hvStat.settings.isShowMonsterDuration) $("input[name=isShowMonsterDuration]").attr("checked", "checked");
+	if (hvStat.settings.isMonstersEffectsWarnColor) $("input[name=isMonstersEffectsWarnColor]").attr("checked", "checked");
+	$("input[name=MonstersWarnOrangeRounds]").attr("value", hvStat.settings.MonstersWarnOrangeRounds);
+	$("input[name=MonstersWarnRedRounds]").attr("value", hvStat.settings.MonstersWarnRedRounds);
 	if (hvStat.settings.isShowEndStats) $("input[name=isShowEndStats]").attr("checked", "checked");
 	if (hvStat.settings.isShowEndProfs) {	//isShowEndProfs added by Ilirith
 		$("input[name=isShowEndProfs]").attr("checked", "checked");
@@ -5150,53 +5163,36 @@ function initSettingsPane() {
 		$("input[name=isShowEndProfsArmor]").removeAttr("checked");
 		$("input[name=isShowEndProfsWeapon]").removeAttr("checked");
 	}
-	if (hvStat.settings.isAlertGem) $("input[name=isAlertGem]").attr("checked", "checked");
-	if (hvStat.settings.isAlertOverchargeFull) $("input[name=isAlertOverchargeFull]").attr("checked", "checked");
-	if (hvStat.settings.isShowMonsterNumber) $("input[name=isShowMonsterNumber]").attr("checked", "checked"); //isShowMonsterNumber stolen from HV Lite, and added by Ilirith
-	if (hvStat.settings.isShowRoundCounter) $("input[name=isShowRoundCounter]").attr("checked", "checked");
-	if (hvStat.settings.isShowPowerupBox) $("input[name=isShowPowerupBox]").attr("checked", "checked");
 	if (hvStat.settings.autoAdvanceBattleRound) $("input[name=autoAdvanceBattleRound]").attr("checked", "checked");
 	$("input[name=autoAdvanceBattleRoundDelay]").attr("value", hvStat.settings.autoAdvanceBattleRoundDelay);
 
-	// Display Monster Stats
-	if (hvStat.settings.showMonsterHP) $("input[name=showMonsterHP]").attr("checked", "checked");
-	if (hvStat.settings.showMonsterHPPercent) $("input[name=showMonsterHPPercent]").attr("checked", "checked");
-	if (hvStat.settings.showMonsterMP) $("input[name=showMonsterMP]").attr("checked", "checked");
-	if (hvStat.settings.showMonsterSP) $("input[name=showMonsterSP]").attr("checked", "checked");
-	if (hvStat.settings.showMonsterInfoFromDB) $("input[name=showMonsterInfoFromDB]").attr("checked", "checked");
-	if (hvStat.settings.showMonsterClassFromDB) $("input[name=showMonsterClassFromDB]").attr("checked", "checked");
-	if (hvStat.settings.showMonsterPowerLevelFromDB) $("input[name=showMonsterPowerLevelFromDB]").attr("checked", "checked");
-	if (hvStat.settings.showMonsterAttackTypeFromDB) $("input[name=showMonsterAttackTypeFromDB]").attr("checked", "checked");
-	if (hvStat.settings.showMonsterWeaknessesFromDB) $("input[name=showMonsterWeaknessesFromDB]").attr("checked", "checked");
-	if (hvStat.settings.showMonsterResistancesFromDB) $("input[name=showMonsterResistancesFromDB]").attr("checked", "checked");
-	if (hvStat.settings.hideSpecificDamageType[0]) $("input[name=hideSpecificDamageType0]").attr("checked", "checked");
-	if (hvStat.settings.hideSpecificDamageType[1]) $("input[name=hideSpecificDamageType1]").attr("checked", "checked");
-	if (hvStat.settings.hideSpecificDamageType[2]) $("input[name=hideSpecificDamageType2]").attr("checked", "checked");
-	if (hvStat.settings.hideSpecificDamageType[3]) $("input[name=hideSpecificDamageType3]").attr("checked", "checked");
-	if (hvStat.settings.hideSpecificDamageType[4]) $("input[name=hideSpecificDamageType4]").attr("checked", "checked");
-	if (hvStat.settings.hideSpecificDamageType[5]) $("input[name=hideSpecificDamageType5]").attr("checked", "checked");
-	if (hvStat.settings.hideSpecificDamageType[6]) $("input[name=hideSpecificDamageType6]").attr("checked", "checked");
-	if (hvStat.settings.hideSpecificDamageType[7]) $("input[name=hideSpecificDamageType7]").attr("checked", "checked");
-	if (hvStat.settings.hideSpecificDamageType[8]) $("input[name=hideSpecificDamageType8]").attr("checked", "checked");
-	if (hvStat.settings.hideSpecificDamageType[9]) $("input[name=hideSpecificDamageType9]").attr("checked", "checked");
-	if (hvStat.settings.hideSpecificDamageType[10]) $("input[name=hideSpecificDamageType10]").attr("checked", "checked");
-	if (hvStat.settings.ResizeMonsterInfo) $("input[name=ResizeMonsterInfo]").attr("checked", "checked");
-	if (hvStat.settings.isShowStatsPopup) $("input[name=isShowStatsPopup]").attr("checked", "checked");
-	if (hvStat.settings.isMonsterPopupPlacement) $("input[name=isMonsterPopupPlacement]").attr("checked", "checked");
-	$("input[name=monsterPopupDelay]").attr("value", hvStat.settings.monsterPopupDelay);
-	if (hvStat.settings.isShowMonsterDuration) $("input[name=isShowMonsterDuration]").attr("checked", "checked");
-	if (hvStat.settings.isMonstersEffectsWarnColor) $("input[name=isMonstersEffectsWarnColor]").attr("checked", "checked");
-	$("input[name=MonstersWarnOrangeRounds]").attr("value", hvStat.settings.MonstersWarnOrangeRounds);
-	$("input[name=MonstersWarnRedRounds]").attr("value", hvStat.settings.MonstersWarnRedRounds);
-
-	// Tracking Functions
-	if (hvStat.settings.isTrackStats) $("input[name=isTrackStats]").attr("checked", "checked");
-	if (hvStat.settings.isTrackRewards) $("input[name=isTrackRewards]").attr("checked", "checked");
-	if (hvStat.settings.isTrackShrine) $("input[name=isTrackShrine]").attr("checked", "checked");
-	if (hvStat.settings.isTrackItems) $("input[name=isTrackItems]").attr("checked", "checked");
-
 	// Warning System
-	// Effects Expiring Warnings
+	// - Self Status
+	if (hvStat.settings.isHighlightQC) $("input[name=isHighlightQC]").attr("checked", "checked");
+	$("input[name=warnOrangeLevel]").attr("value", hvStat.settings.warnOrangeLevel);
+	$("input[name=warnRedLevel]").attr("value", hvStat.settings.warnRedLevel);
+	$("input[name=warnAlertLevel]").attr("value", hvStat.settings.warnAlertLevel);
+	$("input[name=warnOrangeLevelMP]").attr("value", hvStat.settings.warnOrangeLevelMP);
+	$("input[name=warnRedLevelMP]").attr("value", hvStat.settings.warnRedLevelMP);
+	$("input[name=warnAlertLevelMP]").attr("value", hvStat.settings.warnAlertLevelMP);
+	$("input[name=warnOrangeLevelSP]").attr("value", hvStat.settings.warnOrangeLevelSP);
+	$("input[name=warnRedLevelSP]").attr("value", hvStat.settings.warnRedLevelSP);
+	$("input[name=warnAlertLevelSP]").attr("value", hvStat.settings.warnAlertLevelSP);
+	if (hvStat.settings.isShowPopup) $("input[name=isShowPopup]").attr("checked", "checked");
+	if (hvStat.settings.isNagHP) $("input[name=isNagHP]").attr("checked", "checked")
+	if (hvStat.settings.isNagMP) $("input[name=isNagMP]").attr("checked", "checked")
+	if (hvStat.settings.isNagSP) $("input[name=isNagSP]").attr("checked", "checked");
+	if (hvStat.settings.warnMode[0]) $("input[name=isWarnH]").attr("checked", "checked");
+	if (hvStat.settings.warnMode[1]) $("input[name=isWarnA]").attr("checked", "checked");
+	if (hvStat.settings.warnMode[2]) $("input[name=isWarnGF]").attr("checked", "checked");
+	if (hvStat.settings.warnMode[3]) $("input[name=isWarnIW]").attr("checked", "checked");
+	// - Event Notifications
+	if (hvStat.settings.isAlertGem) $("input[name=isAlertGem]").attr("checked", "checked");
+	if (hvStat.settings.isAlertOverchargeFull) $("input[name=isAlertOverchargeFull]").attr("checked", "checked");
+	if (hvStat.settings.isWarnAbsorbTrigger) $("input[name=isWarnAbsorbTrigger]").attr("checked", "checked");
+	if (hvStat.settings.isWarnSparkTrigger) $("input[name=isWarnSparkTrigger]").attr("checked", "checked");
+	if (hvStat.settings.isWarnSparkExpire) $("input[name=isWarnSparkExpire]").attr("checked", "checked");
+	// - Effects Expiring Warnings
 	if (hvStat.settings.isMainEffectsAlertSelf) $("input[name=isMainEffectsAlertSelf]").attr("checked", "checked");
 	if (hvStat.settings.isEffectsAlertSelf[0]) $("input[name=isEffectsAlertSelf0]").attr("checked", "checked");
 	if (hvStat.settings.isEffectsAlertSelf[1]) $("input[name=isEffectsAlertSelf1]").attr("checked", "checked");
@@ -5254,52 +5250,54 @@ function initSettingsPane() {
 	$("input[name=EffectsAlertMonstersRounds10]").attr("value", hvStat.settings.EffectsAlertMonstersRounds[10]);
 	$("input[name=EffectsAlertMonstersRounds11]").attr("value", hvStat.settings.EffectsAlertMonstersRounds[11]);
 
-	// Specific Spell Warnings
-	if (hvStat.settings.isWarnAbsorbTrigger) $("input[name=isWarnAbsorbTrigger]").attr("checked", "checked");
-	if (hvStat.settings.isWarnSparkTrigger) $("input[name=isWarnSparkTrigger]").attr("checked", "checked");
-	if (hvStat.settings.isWarnSparkExpire) $("input[name=isWarnSparkExpire]").attr("checked", "checked");
-
-	// Alert Mode
-	if (hvStat.settings.isHighlightQC) $("input[name=isHighlightQC]").attr("checked", "checked");
-	$("input[name=warnOrangeLevel]").attr("value", hvStat.settings.warnOrangeLevel);
-	$("input[name=warnRedLevel]").attr("value", hvStat.settings.warnRedLevel);
-	$("input[name=warnAlertLevel]").attr("value", hvStat.settings.warnAlertLevel);
-	$("input[name=warnOrangeLevelMP]").attr("value", hvStat.settings.warnOrangeLevelMP);
-	$("input[name=warnRedLevelMP]").attr("value", hvStat.settings.warnRedLevelMP);
-	$("input[name=warnAlertLevelMP]").attr("value", hvStat.settings.warnAlertLevelMP);
-	$("input[name=warnOrangeLevelSP]").attr("value", hvStat.settings.warnOrangeLevelSP);
-	$("input[name=warnRedLevelSP]").attr("value", hvStat.settings.warnRedLevelSP);
-	$("input[name=warnAlertLevelSP]").attr("value", hvStat.settings.warnAlertLevelSP);
-	if (hvStat.settings.isShowPopup) $("input[name=isShowPopup]").attr("checked", "checked");
-	if (hvStat.settings.isNagHP) $("input[name=isNagHP]").attr("checked", "checked")
-	if (hvStat.settings.isNagMP) $("input[name=isNagMP]").attr("checked", "checked")
-	if (hvStat.settings.isNagSP) $("input[name=isNagSP]").attr("checked", "checked");
-
-	// Battle Type
-	if (hvStat.settings.warnMode[0]) $("input[name=isWarnH]").attr("checked", "checked");
-	if (hvStat.settings.warnMode[1]) $("input[name=isWarnA]").attr("checked", "checked");
-	if (hvStat.settings.warnMode[2]) $("input[name=isWarnGF]").attr("checked", "checked");
-	if (hvStat.settings.warnMode[3]) $("input[name=isWarnIW]").attr("checked", "checked");
-
-	// Database Options
+	// Monster Information
+	// - Monster Database
 	if (hvStat.settings.isRememberScan) $("input[name=isRememberScan]").attr("checked", "checked");
 	if (hvStat.settings.isRememberSkillsTypes) $("input[name=isRememberSkillsTypes]").attr("checked", "checked");
+	// - Monster Display
+	if (hvStat.settings.showMonsterHP) $("input[name=showMonsterHP]").attr("checked", "checked");
+	if (hvStat.settings.showMonsterHPPercent) $("input[name=showMonsterHPPercent]").attr("checked", "checked");
+	if (hvStat.settings.showMonsterMP) $("input[name=showMonsterMP]").attr("checked", "checked");
+	if (hvStat.settings.showMonsterSP) $("input[name=showMonsterSP]").attr("checked", "checked");
+	if (hvStat.settings.showMonsterInfoFromDB) $("input[name=showMonsterInfoFromDB]").attr("checked", "checked");
+	if (hvStat.settings.showMonsterClassFromDB) $("input[name=showMonsterClassFromDB]").attr("checked", "checked");
+	if (hvStat.settings.showMonsterPowerLevelFromDB) $("input[name=showMonsterPowerLevelFromDB]").attr("checked", "checked");
+	if (hvStat.settings.showMonsterAttackTypeFromDB) $("input[name=showMonsterAttackTypeFromDB]").attr("checked", "checked");
+	if (hvStat.settings.showMonsterWeaknessesFromDB) $("input[name=showMonsterWeaknessesFromDB]").attr("checked", "checked");
+	if (hvStat.settings.showMonsterResistancesFromDB) $("input[name=showMonsterResistancesFromDB]").attr("checked", "checked");
+	if (hvStat.settings.hideSpecificDamageType[0]) $("input[name=hideSpecificDamageType0]").attr("checked", "checked");
+	if (hvStat.settings.hideSpecificDamageType[1]) $("input[name=hideSpecificDamageType1]").attr("checked", "checked");
+	if (hvStat.settings.hideSpecificDamageType[2]) $("input[name=hideSpecificDamageType2]").attr("checked", "checked");
+	if (hvStat.settings.hideSpecificDamageType[3]) $("input[name=hideSpecificDamageType3]").attr("checked", "checked");
+	if (hvStat.settings.hideSpecificDamageType[4]) $("input[name=hideSpecificDamageType4]").attr("checked", "checked");
+	if (hvStat.settings.hideSpecificDamageType[5]) $("input[name=hideSpecificDamageType5]").attr("checked", "checked");
+	if (hvStat.settings.hideSpecificDamageType[6]) $("input[name=hideSpecificDamageType6]").attr("checked", "checked");
+	if (hvStat.settings.hideSpecificDamageType[7]) $("input[name=hideSpecificDamageType7]").attr("checked", "checked");
+	if (hvStat.settings.hideSpecificDamageType[8]) $("input[name=hideSpecificDamageType8]").attr("checked", "checked");
+	if (hvStat.settings.hideSpecificDamageType[9]) $("input[name=hideSpecificDamageType9]").attr("checked", "checked");
+	if (hvStat.settings.hideSpecificDamageType[10]) $("input[name=hideSpecificDamageType10]").attr("checked", "checked");
+	if (hvStat.settings.ResizeMonsterInfo) $("input[name=ResizeMonsterInfo]").attr("checked", "checked");
+	if (hvStat.settings.isShowStatsPopup) $("input[name=isShowStatsPopup]").attr("checked", "checked");
+	$("input[name=monsterPopupDelay]").attr("value", hvStat.settings.monsterPopupDelay);
+	if (hvStat.settings.isMonsterPopupPlacement) $("input[name=isMonsterPopupPlacement]").attr("checked", "checked");
 
-	// General Options
-	$("input[name=isShowSidebarProfs]").click(reminderAndSaveSettings);
+	//------------------------------------
+	// Set event handlers
+	//------------------------------------
+
+	// General
 	$("input[name=isChangePageTitle]").click(saveSettings);
 	$("input[name=customPageTitle]").change(saveSettings);
+	$("input[name=isShowEquippedSet]").click(saveSettings);
+	$("input[name=isShowSidebarProfs]").click(reminderAndSaveSettings);
 	$("input[name=isStartAlert]").click(saveSettings);
 	$("input[name=StartAlertHP]").change(saveSettings);
 	$("input[name=StartAlertMP]").change(saveSettings);
 	$("input[name=StartAlertSP]").change(saveSettings);
 	$("select[id=StartAlertDifficulty]").change(saveSettings);
-	$("input[name=isShowScanButton]").click(saveSettings);
-	$("input[name=isShowSkillButton]").click(saveSettings);
-	$("input[name=isShowEquippedSet]").click(saveSettings);
 	$("input[name^=isShowTags]").click(saveSettings);
 
-	// Keyboard Options
+	// Keyboard
 	$("input[name=adjustKeyEventHandling]").click(saveSettings);
 	$("input[name=isEnableScanHotkey]").click(saveSettings);
 	$("input[name=isEnableSkillHotkey]").click(saveSettings);
@@ -5308,31 +5306,80 @@ function initSettingsPane() {
 	$("input[name=isDisableForgeHotKeys]").click(saveSettings);
 	$("input[name=enableShrineKeyPatch]").click(saveSettings);
 
+	// Tracking Functions
+	$("input[name=isTrackStats]").click(saveSettings);
+	$("input[name=isTrackRewards]").click(saveSettings);
+	$("input[name=isTrackShrine]").click(saveSettings);
+	$("input[name=isTrackItems]").click(saveSettings);
+
 	// Battle Enhancement
-	$("input[name=isShowHighlight]").click(saveSettings);
-	$("input[name=isAltHighlight]").click(saveSettings);
-	$("input[name=isShowDivider]").click(saveSettings);
+	$("input[name=isShowRoundCounter]").click(saveSettings);
+	$("input[name=isShowRoundReminder]").click(saveSettings);
+	$("input[name=reminderMinRounds]").change(saveSettings);
+	$("input[name=reminderBeforeEnd]").change(saveSettings);
 	$("input[name=isShowSelfDuration]").click(saveSettings);
 	$("input[name=isSelfEffectsWarnColor]").click(saveSettings);
 	$("input[name=SelfWarnOrangeRounds]").change(saveSettings);
 	$("input[name=SelfWarnRedRounds]").change(saveSettings);
-	$("input[name=isShowRoundReminder]").click(saveSettings);
-	$("input[name=reminderMinRounds]").change(saveSettings);
-	$("input[name=reminderBeforeEnd]").change(saveSettings);
+	$("input[name=isShowPowerupBox]").click(saveSettings);
+	$("input[name=isShowHighlight]").click(saveSettings);
+	$("input[name=isAltHighlight]").click(saveSettings);
+	$("input[name=isShowDivider]").click(saveSettings);
+	$("input[name=isShowScanButton]").click(saveSettings);
+	$("input[name=isShowSkillButton]").click(saveSettings);
+	$("input[name=isShowMonsterNumber]").click(saveSettings);
+	$("input[name=isShowMonsterDuration]").click(saveSettings);
+	$("input[name=isMonstersEffectsWarnColor]").click(saveSettings);
+	$("input[name=MonstersWarnOrangeRounds]").change(saveSettings);
+	$("input[name=MonstersWarnRedRounds]").change(saveSettings);
 	$("input[name=isShowEndStats]").click(saveSettings);
 	$("input[name=isShowEndProfs]").click(saveSettings); //isShowEndProfs added by Ilirith
 	$("input[name=isShowEndProfsMagic]").click(saveSettings); //isShowEndProfs added by Ilirith
 	$("input[name=isShowEndProfsArmor]").click(saveSettings); //isShowEndProfs added by Ilirith
 	$("input[name=isShowEndProfsWeapon]").click(saveSettings); //isShowEndProfs added by Ilirith
-	$("input[name=isAlertGem]").click(saveSettings);
-	$("input[name=isAlertOverchargeFull]").click(saveSettings);
-	$("input[name=isShowMonsterNumber]").click(saveSettings);
-	$("input[name=isShowRoundCounter]").click(saveSettings);
-	$("input[name=isShowPowerupBox]").click(saveSettings);
 	$("input[name=autoAdvanceBattleRound]").click(saveSettings);
 	$("input[name=autoAdvanceBattleRoundDelay]").change(saveSettings);
 
-	// Display Monster Stats
+	// Warning System
+	// - Self Status
+	$("input[name=isHighlightQC]").click(saveSettings);
+	$("input[name=warnOrangeLevel]").change(saveSettings);
+	$("input[name=warnRedLevel]").change(saveSettings);
+	$("input[name=warnAlertLevel]").change(saveSettings);
+	$("input[name=warnOrangeLevelMP]").change(saveSettings);
+	$("input[name=warnRedLevelMP]").change(saveSettings);
+	$("input[name=warnAlertLevelMP]").change(saveSettings);
+	$("input[name=warnOrangeLevelSP]").change(saveSettings);
+	$("input[name=warnRedLevelSP]").change(saveSettings);
+	$("input[name=warnAlertLevelSP]").change(saveSettings);
+	$("input[name=isShowPopup]").click(saveSettings);
+	$("input[name=isNagHP]").click(saveSettings);
+	$("input[name=isNagMP]").click(saveSettings);
+	$("input[name=isNagSP]").click(saveSettings);
+	$("input[name=isWarnH]").click(saveSettings);
+	$("input[name=isWarnA]").click(saveSettings);
+	$("input[name=isWarnGF]").click(saveSettings);
+	$("input[name=isWarnIW]").click(saveSettings);
+	$("input[name=isWarnCF]").click(saveSettings);
+	// - Event Notifications
+	$("input[name=isAlertGem]").click(saveSettings);
+	$("input[name=isAlertOverchargeFull]").click(saveSettings);
+	$("input[name=isWarnAbsorbTrigger]").click(saveSettings);
+	$("input[name=isWarnSparkTrigger]").click(saveSettings);
+	$("input[name=isWarnSparkExpire]").click(saveSettings);
+	// - Effects Expiring Warnings
+	$("input[name=isMainEffectsAlertSelf]").click(saveSettings);
+	$("input[name^=isEffectsAlertSelf]").click(saveSettings);
+	$("input[name^=EffectsAlertSelfRounds]").change(saveSettings);
+	$("input[name=isMainEffectsAlertMonsters]").click(saveSettings);
+	$("input[name^=isEffectsAlertMonsters]").click(saveSettings);
+	$("input[name^=EffectsAlertMonstersRounds]").change(saveSettings);
+
+	// Monster Information
+	// - Monster Database
+	$("input[name=isRememberScan]").click(reminderAndSaveSettings);
+	$("input[name=isRememberSkillsTypes]").click(reminderAndSaveSettings);
+	// - Monster Display
 	$("input[name=showMonsterHP]").click(saveSettings);
 	$("input[name=showMonsterHPPercent]").click(saveSettings);
 	$("input[name=showMonsterMP]").click(saveSettings);
@@ -5356,59 +5403,8 @@ function initSettingsPane() {
 	$("input[name=hideSpecificDamageType10]").click(saveSettings);
 	$("input[name=ResizeMonsterInfo]").click(saveSettings);
 	$("input[name=isShowStatsPopup]").click(saveSettings);
-	$("input[name=isMonsterPopupPlacement]").click(saveSettings);
 	$("input[name=monsterPopupDelay]").change(saveSettings);
-	$("input[name=isShowMonsterDuration]").click(saveSettings);
-	$("input[name=isMonstersEffectsWarnColor]").click(saveSettings);
-	$("input[name=MonstersWarnOrangeRounds]").change(saveSettings);
-	$("input[name=MonstersWarnRedRounds]").change(saveSettings);
-
-	// Tracking Functions
-	$("input[name=isTrackStats]").click(saveSettings);
-	$("input[name=isTrackRewards]").click(saveSettings);
-	$("input[name=isTrackShrine]").click(saveSettings);
-	$("input[name=isTrackItems]").click(saveSettings);
-
-	// Warning System
-	// Effects Expiring Warnings
-	$("input[name=isMainEffectsAlertSelf]").click(saveSettings);
-	$("input[name^=isEffectsAlertSelf]").click(saveSettings);
-	$("input[name^=EffectsAlertSelfRounds]").change(saveSettings);
-	$("input[name=isMainEffectsAlertMonsters]").click(saveSettings);
-	$("input[name^=isEffectsAlertMonsters]").click(saveSettings);
-	$("input[name^=EffectsAlertMonstersRounds]").change(saveSettings);
-
-	// Specific Spell Warnings
-	$("input[name=isWarnAbsorbTrigger]").click(saveSettings);
-	$("input[name=isWarnSparkTrigger]").click(saveSettings);
-	$("input[name=isWarnSparkExpire]").click(saveSettings);
-
-	// Alert Mode
-	$("input[name=isHighlightQC]").click(saveSettings);
-	$("input[name=warnOrangeLevel]").change(saveSettings);
-	$("input[name=warnRedLevel]").change(saveSettings);
-	$("input[name=warnAlertLevel]").change(saveSettings);
-	$("input[name=warnOrangeLevelMP]").change(saveSettings);
-	$("input[name=warnRedLevelMP]").change(saveSettings);
-	$("input[name=warnAlertLevelMP]").change(saveSettings);
-	$("input[name=warnOrangeLevelSP]").change(saveSettings);
-	$("input[name=warnRedLevelSP]").change(saveSettings);
-	$("input[name=warnAlertLevelSP]").change(saveSettings);
-	$("input[name=isShowPopup]").click(saveSettings);
-	$("input[name=isNagHP]").click(saveSettings);
-	$("input[name=isNagMP]").click(saveSettings);
-	$("input[name=isNagSP]").click(saveSettings);
-
-	// Battle Type
-	$("input[name=isWarnH]").click(saveSettings);
-	$("input[name=isWarnA]").click(saveSettings);
-	$("input[name=isWarnGF]").click(saveSettings);
-	$("input[name=isWarnIW]").click(saveSettings);
-	$("input[name=isWarnCF]").click(saveSettings);
-
-	// Database Options
-	$("input[name=isRememberScan]").click(reminderAndSaveSettings);
-	$("input[name=isRememberSkillsTypes]").click(reminderAndSaveSettings);
+	$("input[name=isMonsterPopupPlacement]").click(saveSettings);
 
 	$("._resetSettings").click(function () {
 		if (confirm("Reset Settings to default?"))
@@ -5424,18 +5420,16 @@ function initSettingsPane() {
 	});
 }
 function saveSettings() {
-	// General Options
-	hvStat.settings.isShowSidebarProfs = $("input[name=isShowSidebarProfs]").get(0).checked;
+	// General
 	hvStat.settings.isChangePageTitle = $("input[name=isChangePageTitle]").get(0).checked;
 	hvStat.settings.customPageTitle = $("input[name=customPageTitle]").get(0).value;
+	hvStat.settings.isShowEquippedSet = $("input[name=isShowEquippedSet]").get(0).checked;
+	hvStat.settings.isShowSidebarProfs = $("input[name=isShowSidebarProfs]").get(0).checked;
 	hvStat.settings.isStartAlert = $("input[name=isStartAlert]").get(0).checked;
 	hvStat.settings.StartAlertHP = $("input[name=StartAlertHP]").get(0).value;
 	hvStat.settings.StartAlertMP = $("input[name=StartAlertMP]").get(0).value;
 	hvStat.settings.StartAlertSP = $("input[name=StartAlertSP]").get(0).value;
 	hvStat.settings.StartAlertDifficulty = $("select[id=StartAlertDifficulty]").get(0).value;
-	hvStat.settings.isShowScanButton = $("input[name=isShowScanButton]").get(0).checked;
-	hvStat.settings.isShowSkillButton = $("input[name=isShowSkillButton]").get(0).checked;
-	hvStat.settings.isShowEquippedSet = $("input[name=isShowEquippedSet]").get(0).checked;
 	hvStat.settings.isShowTags[0] = $("input[name=isShowTags0]").get(0).checked;
 	hvStat.settings.isShowTags[1] = $("input[name=isShowTags1]").get(0).checked;
 	hvStat.settings.isShowTags[2] = $("input[name=isShowTags2]").get(0).checked;
@@ -5443,7 +5437,7 @@ function saveSettings() {
 	hvStat.settings.isShowTags[4] = $("input[name=isShowTags4]").get(0).checked;
 	hvStat.settings.isShowTags[5] = $("input[name=isShowTags5]").get(0).checked;
 
-	// Keyboard Options
+	// Keyboard
 	hvStat.settings.adjustKeyEventHandling = $("input[name=adjustKeyEventHandling]").get(0).checked;
 	hvStat.settings.isEnableScanHotkey = $("input[name=isEnableScanHotkey]").get(0).checked;
 	hvStat.settings.isEnableSkillHotkey = $("input[name=isEnableSkillHotkey]").get(0).checked;
@@ -5452,69 +5446,67 @@ function saveSettings() {
 	hvStat.settings.isDisableForgeHotKeys = $("input[name=isDisableForgeHotKeys]").get(0).checked;
 	hvStat.settings.enableShrineKeyPatch = $("input[name=enableShrineKeyPatch]").get(0).checked;
 
-	// Battle Enhancement
-	hvStat.settings.isShowHighlight = $("input[name=isShowHighlight]").get(0).checked;
-	hvStat.settings.isAltHighlight = $("input[name=isAltHighlight]").get(0).checked;
-	hvStat.settings.isShowDivider = $("input[name=isShowDivider]").get(0).checked;
-	hvStat.settings.isShowSelfDuration = $("input[name=isShowSelfDuration]").get(0).checked;
-	hvStat.settings.isSelfEffectsWarnColor = $("input[name=isSelfEffectsWarnColor]").get(0).checked;
-	hvStat.settings.SelfWarnOrangeRounds = $("input[name=SelfWarnOrangeRounds]").get(0).value;
-	hvStat.settings.SelfWarnRedRounds = $("input[name=SelfWarnRedRounds]").get(0).value;
-	hvStat.settings.isShowRoundReminder = $("input[name=isShowRoundReminder]").get(0).checked;
-	hvStat.settings.reminderMinRounds = $("input[name=reminderMinRounds]").get(0).value;
-	hvStat.settings.reminderBeforeEnd = $("input[name=reminderBeforeEnd]").get(0).value;
-	hvStat.settings.isShowEndStats = $("input[name=isShowEndStats]").get(0).checked;
-	hvStat.settings.isShowEndProfs = $("input[name=isShowEndProfs]").get(0).checked; //isShowEndProfs added by Ilirith
-	hvStat.settings.isShowEndProfsMagic = $("input[name=isShowEndProfsMagic]").get(0).checked; //isShowEndProfs added by Ilirith
-	hvStat.settings.isShowEndProfsArmor = $("input[name=isShowEndProfsArmor]").get(0).checked; //isShowEndProfs added by Ilirith
-	hvStat.settings.isShowEndProfsWeapon = $("input[name=isShowEndProfsWeapon]").get(0).checked; //isShowEndProfs added by Ilirith
-	hvStat.settings.isAlertGem = $("input[name=isAlertGem]").get(0).checked;
-	hvStat.settings.isAlertOverchargeFull = $("input[name=isAlertOverchargeFull]").get(0).checked;
-	hvStat.settings.isShowMonsterNumber = $("input[name=isShowMonsterNumber]").get(0).checked;
-	hvStat.settings.isShowRoundCounter = $("input[name=isShowRoundCounter]").get(0).checked;
-	hvStat.settings.isShowPowerupBox = $("input[name=isShowPowerupBox]").get(0).checked;
-	hvStat.settings.autoAdvanceBattleRound = $("input[name=autoAdvanceBattleRound]").get(0).checked;
-	hvStat.settings.autoAdvanceBattleRoundDelay = $("input[name=autoAdvanceBattleRoundDelay]").get(0).value;
-
-	// Display Monster Stats
-	hvStat.settings.showMonsterHP = $("input[name=showMonsterHP]").get(0).checked;
-	hvStat.settings.showMonsterHPPercent = $("input[name=showMonsterHPPercent]").get(0).checked;
-	hvStat.settings.showMonsterMP = $("input[name=showMonsterMP]").get(0).checked;
-	hvStat.settings.showMonsterSP = $("input[name=showMonsterSP]").get(0).checked;
-	hvStat.settings.showMonsterInfoFromDB = $("input[name=showMonsterInfoFromDB]").get(0).checked;
-	hvStat.settings.showMonsterClassFromDB = $("input[name=showMonsterClassFromDB]").get(0).checked;
-	hvStat.settings.showMonsterPowerLevelFromDB = $("input[name=showMonsterPowerLevelFromDB]").get(0).checked;
-	hvStat.settings.showMonsterAttackTypeFromDB = $("input[name=showMonsterAttackTypeFromDB]").get(0).checked;
-	hvStat.settings.showMonsterWeaknessesFromDB = $("input[name=showMonsterWeaknessesFromDB]").get(0).checked;
-	hvStat.settings.showMonsterResistancesFromDB = $("input[name=showMonsterResistancesFromDB]").get(0).checked;
-	hvStat.settings.hideSpecificDamageType[0] = $("input[name=hideSpecificDamageType0]").get(0).checked;
-	hvStat.settings.hideSpecificDamageType[1] = $("input[name=hideSpecificDamageType1]").get(0).checked;
-	hvStat.settings.hideSpecificDamageType[2] = $("input[name=hideSpecificDamageType2]").get(0).checked;
-	hvStat.settings.hideSpecificDamageType[3] = $("input[name=hideSpecificDamageType3]").get(0).checked;
-	hvStat.settings.hideSpecificDamageType[4] = $("input[name=hideSpecificDamageType4]").get(0).checked;
-	hvStat.settings.hideSpecificDamageType[5] = $("input[name=hideSpecificDamageType5]").get(0).checked;
-	hvStat.settings.hideSpecificDamageType[6] = $("input[name=hideSpecificDamageType6]").get(0).checked;
-	hvStat.settings.hideSpecificDamageType[7] = $("input[name=hideSpecificDamageType7]").get(0).checked;
-	hvStat.settings.hideSpecificDamageType[8] = $("input[name=hideSpecificDamageType8]").get(0).checked;
-	hvStat.settings.hideSpecificDamageType[9] = $("input[name=hideSpecificDamageType9]").get(0).checked;
-	hvStat.settings.hideSpecificDamageType[10] = $("input[name=hideSpecificDamageType10]").get(0).checked;
-	hvStat.settings.ResizeMonsterInfo = $("input[name=ResizeMonsterInfo]").get(0).checked;
-	hvStat.settings.isShowStatsPopup = $("input[name=isShowStatsPopup]").get(0).checked;
-	hvStat.settings.isMonsterPopupPlacement = $("input[name=isMonsterPopupPlacement]").get(0).checked;
-	hvStat.settings.monsterPopupDelay = $("input[name=monsterPopupDelay]").get(0).value;
-	hvStat.settings.isShowMonsterDuration = $("input[name=isShowMonsterDuration]").get(0).checked;
-	hvStat.settings.isMonstersEffectsWarnColor = $("input[name=isMonstersEffectsWarnColor]").get(0).checked;
-	hvStat.settings.MonstersWarnOrangeRounds = $("input[name=MonstersWarnOrangeRounds]").get(0).value;
-	hvStat.settings.MonstersWarnRedRounds = $("input[name=MonstersWarnRedRounds]").get(0).value;
-
-	// Tracking Functions
+	// Tracking
 	hvStat.settings.isTrackStats = $("input[name=isTrackStats]").get(0).checked;
 	hvStat.settings.isTrackRewards = $("input[name=isTrackRewards]").get(0).checked;
 	hvStat.settings.isTrackShrine = $("input[name=isTrackShrine]").get(0).checked;
 	hvStat.settings.isTrackItems = $("input[name=isTrackItems]").get(0).checked;
 
+	// Battle Enhancement
+	hvStat.settings.isShowRoundCounter = $("input[name=isShowRoundCounter]").get(0).checked;
+	hvStat.settings.isShowRoundReminder = $("input[name=isShowRoundReminder]").get(0).checked;
+	hvStat.settings.reminderMinRounds = $("input[name=reminderMinRounds]").get(0).value;
+	hvStat.settings.reminderBeforeEnd = $("input[name=reminderBeforeEnd]").get(0).value;
+	hvStat.settings.isShowSelfDuration = $("input[name=isShowSelfDuration]").get(0).checked;
+	hvStat.settings.isSelfEffectsWarnColor = $("input[name=isSelfEffectsWarnColor]").get(0).checked;
+	hvStat.settings.SelfWarnOrangeRounds = $("input[name=SelfWarnOrangeRounds]").get(0).value;
+	hvStat.settings.SelfWarnRedRounds = $("input[name=SelfWarnRedRounds]").get(0).value;
+	hvStat.settings.isShowPowerupBox = $("input[name=isShowPowerupBox]").get(0).checked;
+	hvStat.settings.isShowHighlight = $("input[name=isShowHighlight]").get(0).checked;
+	hvStat.settings.isAltHighlight = $("input[name=isAltHighlight]").get(0).checked;
+	hvStat.settings.isShowDivider = $("input[name=isShowDivider]").get(0).checked;
+	hvStat.settings.isShowScanButton = $("input[name=isShowScanButton]").get(0).checked;
+	hvStat.settings.isShowSkillButton = $("input[name=isShowSkillButton]").get(0).checked;
+	hvStat.settings.isShowMonsterNumber = $("input[name=isShowMonsterNumber]").get(0).checked;
+	hvStat.settings.isShowMonsterDuration = $("input[name=isShowMonsterDuration]").get(0).checked;
+	hvStat.settings.isMonstersEffectsWarnColor = $("input[name=isMonstersEffectsWarnColor]").get(0).checked;
+	hvStat.settings.MonstersWarnOrangeRounds = $("input[name=MonstersWarnOrangeRounds]").get(0).value;
+	hvStat.settings.MonstersWarnRedRounds = $("input[name=MonstersWarnRedRounds]").get(0).value;
+	hvStat.settings.isShowEndStats = $("input[name=isShowEndStats]").get(0).checked;
+	hvStat.settings.isShowEndProfs = $("input[name=isShowEndProfs]").get(0).checked; //isShowEndProfs added by Ilirith
+	hvStat.settings.isShowEndProfsMagic = $("input[name=isShowEndProfsMagic]").get(0).checked; //isShowEndProfs added by Ilirith
+	hvStat.settings.isShowEndProfsArmor = $("input[name=isShowEndProfsArmor]").get(0).checked; //isShowEndProfs added by Ilirith
+	hvStat.settings.isShowEndProfsWeapon = $("input[name=isShowEndProfsWeapon]").get(0).checked; //isShowEndProfs added by Ilirith
+	hvStat.settings.autoAdvanceBattleRound = $("input[name=autoAdvanceBattleRound]").get(0).checked;
+	hvStat.settings.autoAdvanceBattleRoundDelay = $("input[name=autoAdvanceBattleRoundDelay]").get(0).value;
+
 	// Warning System
-	// Effects Expiring Warnings
+	// - Self Status
+	hvStat.settings.isHighlightQC = $("input[name=isHighlightQC]").get(0).checked;
+	hvStat.settings.warnOrangeLevel = $("input[name=warnOrangeLevel]").get(0).value;
+	hvStat.settings.warnRedLevel = $("input[name=warnRedLevel]").get(0).value;
+	hvStat.settings.warnAlertLevel = $("input[name=warnAlertLevel]").get(0).value;
+	hvStat.settings.warnOrangeLevelMP = $("input[name=warnOrangeLevelMP]").get(0).value;
+	hvStat.settings.warnRedLevelMP = $("input[name=warnRedLevelMP]").get(0).value;
+	hvStat.settings.warnAlertLevelMP = $("input[name=warnAlertLevelMP]").get(0).value;
+	hvStat.settings.warnOrangeLevelSP = $("input[name=warnOrangeLevelSP]").get(0).value;
+	hvStat.settings.warnRedLevelSP = $("input[name=warnRedLevelSP]").get(0).value;
+	hvStat.settings.warnAlertLevelSP = $("input[name=warnAlertLevelSP]").get(0).value;
+	hvStat.settings.isShowPopup = $("input[name=isShowPopup]").get(0).checked;
+	hvStat.settings.isNagHP = $("input[name=isNagHP]").get(0).checked;
+	hvStat.settings.isNagMP = $("input[name=isNagMP]").get(0).checked;
+	hvStat.settings.isNagSP = $("input[name=isNagSP]").get(0).checked;
+	hvStat.settings.warnMode[0] = $("input[name=isWarnH]").get(0).checked;
+	hvStat.settings.warnMode[1] = $("input[name=isWarnA]").get(0).checked;
+	hvStat.settings.warnMode[2] = $("input[name=isWarnGF]").get(0).checked;
+	hvStat.settings.warnMode[3] = $("input[name=isWarnIW]").get(0).checked;
+	// - Event Notifications
+	hvStat.settings.isAlertGem = $("input[name=isAlertGem]").get(0).checked;
+	hvStat.settings.isAlertOverchargeFull = $("input[name=isAlertOverchargeFull]").get(0).checked;
+	hvStat.settings.isWarnAbsorbTrigger = $("input[name=isWarnAbsorbTrigger]").get(0).checked;
+	hvStat.settings.isWarnSparkTrigger = $("input[name=isWarnSparkTrigger]").get(0).checked;
+	hvStat.settings.isWarnSparkExpire = $("input[name=isWarnSparkExpire]").get(0).checked;
+	// - Effects Expiring Warnings
 	hvStat.settings.isMainEffectsAlertSelf = $("input[name=isMainEffectsAlertSelf]").get(0).checked;
 	hvStat.settings.isEffectsAlertSelf[0] = $("input[name=isEffectsAlertSelf0]").get(0).checked;
 	hvStat.settings.isEffectsAlertSelf[1] = $("input[name=isEffectsAlertSelf1]").get(0).checked;
@@ -5574,36 +5566,35 @@ function saveSettings() {
 	hvStat.settings.EffectsAlertMonstersRounds[10] = $("input[name=EffectsAlertMonstersRounds10]").get(0).value;
 	hvStat.settings.EffectsAlertMonstersRounds[11] = $("input[name=EffectsAlertMonstersRounds11]").get(0).value;
 
-	// Specific Spell Warnings
-	hvStat.settings.isWarnAbsorbTrigger = $("input[name=isWarnAbsorbTrigger]").get(0).checked;
-	hvStat.settings.isWarnSparkTrigger = $("input[name=isWarnSparkTrigger]").get(0).checked;
-	hvStat.settings.isWarnSparkExpire = $("input[name=isWarnSparkExpire]").get(0).checked;
-
-	// Alert Mode
-	hvStat.settings.isHighlightQC = $("input[name=isHighlightQC]").get(0).checked;
-	hvStat.settings.warnOrangeLevel = $("input[name=warnOrangeLevel]").get(0).value;
-	hvStat.settings.warnRedLevel = $("input[name=warnRedLevel]").get(0).value;
-	hvStat.settings.warnAlertLevel = $("input[name=warnAlertLevel]").get(0).value;
-	hvStat.settings.warnOrangeLevelMP = $("input[name=warnOrangeLevelMP]").get(0).value;
-	hvStat.settings.warnRedLevelMP = $("input[name=warnRedLevelMP]").get(0).value;
-	hvStat.settings.warnAlertLevelMP = $("input[name=warnAlertLevelMP]").get(0).value;
-	hvStat.settings.warnOrangeLevelSP = $("input[name=warnOrangeLevelSP]").get(0).value;
-	hvStat.settings.warnRedLevelSP = $("input[name=warnRedLevelSP]").get(0).value;
-	hvStat.settings.warnAlertLevelSP = $("input[name=warnAlertLevelSP]").get(0).value;
-	hvStat.settings.isShowPopup = $("input[name=isShowPopup]").get(0).checked;
-	hvStat.settings.isNagHP = $("input[name=isNagHP]").get(0).checked;
-	hvStat.settings.isNagMP = $("input[name=isNagMP]").get(0).checked;
-	hvStat.settings.isNagSP = $("input[name=isNagSP]").get(0).checked;
-
-	// Battle Type
-	hvStat.settings.warnMode[0] = $("input[name=isWarnH]").get(0).checked;
-	hvStat.settings.warnMode[1] = $("input[name=isWarnA]").get(0).checked;
-	hvStat.settings.warnMode[2] = $("input[name=isWarnGF]").get(0).checked;
-	hvStat.settings.warnMode[3] = $("input[name=isWarnIW]").get(0).checked;
-
-	// Database Options
+	// Monster Information
+	// - Monster Database
 	hvStat.settings.isRememberScan = $("input[name=isRememberScan]").get(0).checked;
 	hvStat.settings.isRememberSkillsTypes = $("input[name=isRememberSkillsTypes]").get(0).checked;
+	hvStat.settings.showMonsterHP = $("input[name=showMonsterHP]").get(0).checked;
+	hvStat.settings.showMonsterHPPercent = $("input[name=showMonsterHPPercent]").get(0).checked;
+	hvStat.settings.showMonsterMP = $("input[name=showMonsterMP]").get(0).checked;
+	hvStat.settings.showMonsterSP = $("input[name=showMonsterSP]").get(0).checked;
+	hvStat.settings.showMonsterInfoFromDB = $("input[name=showMonsterInfoFromDB]").get(0).checked;
+	hvStat.settings.showMonsterClassFromDB = $("input[name=showMonsterClassFromDB]").get(0).checked;
+	hvStat.settings.showMonsterPowerLevelFromDB = $("input[name=showMonsterPowerLevelFromDB]").get(0).checked;
+	hvStat.settings.showMonsterAttackTypeFromDB = $("input[name=showMonsterAttackTypeFromDB]").get(0).checked;
+	hvStat.settings.showMonsterWeaknessesFromDB = $("input[name=showMonsterWeaknessesFromDB]").get(0).checked;
+	hvStat.settings.showMonsterResistancesFromDB = $("input[name=showMonsterResistancesFromDB]").get(0).checked;
+	hvStat.settings.hideSpecificDamageType[0] = $("input[name=hideSpecificDamageType0]").get(0).checked;
+	hvStat.settings.hideSpecificDamageType[1] = $("input[name=hideSpecificDamageType1]").get(0).checked;
+	hvStat.settings.hideSpecificDamageType[2] = $("input[name=hideSpecificDamageType2]").get(0).checked;
+	hvStat.settings.hideSpecificDamageType[3] = $("input[name=hideSpecificDamageType3]").get(0).checked;
+	hvStat.settings.hideSpecificDamageType[4] = $("input[name=hideSpecificDamageType4]").get(0).checked;
+	hvStat.settings.hideSpecificDamageType[5] = $("input[name=hideSpecificDamageType5]").get(0).checked;
+	hvStat.settings.hideSpecificDamageType[6] = $("input[name=hideSpecificDamageType6]").get(0).checked;
+	hvStat.settings.hideSpecificDamageType[7] = $("input[name=hideSpecificDamageType7]").get(0).checked;
+	hvStat.settings.hideSpecificDamageType[8] = $("input[name=hideSpecificDamageType8]").get(0).checked;
+	hvStat.settings.hideSpecificDamageType[9] = $("input[name=hideSpecificDamageType9]").get(0).checked;
+	hvStat.settings.hideSpecificDamageType[10] = $("input[name=hideSpecificDamageType10]").get(0).checked;
+	hvStat.settings.ResizeMonsterInfo = $("input[name=ResizeMonsterInfo]").get(0).checked;
+	hvStat.settings.isShowStatsPopup = $("input[name=isShowStatsPopup]").get(0).checked;
+	hvStat.settings.monsterPopupDelay = $("input[name=monsterPopupDelay]").get(0).value;
+	hvStat.settings.isMonsterPopupPlacement = $("input[name=isMonsterPopupPlacement]").get(0).checked;
 
 	hvStat.storage.settings.save();
 }
