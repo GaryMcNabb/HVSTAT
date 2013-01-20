@@ -622,7 +622,6 @@ hvStat.storage = {
 		forbidGain: 0,	// stats
 		depGain: 0,	// stats
 		supportGain: 0,	// stats
-		curativeGain: 0,	// stats
 		weapProfGain: [0, 0, 0, 0],	// stats
 		armorProfGain: [0, 0, 0],	// stats
 		weaponprocs: [0, 0, 0, 0, 0, 0, 0, 0],	// stats
@@ -711,7 +710,6 @@ hvStat.storage = {
 		forbidGain: 0,
 		depGain: 0,
 		supportGain: 0,
-		curativeGain: 0,
 		weapProfGain: [0, 0, 0, 0],
 		armorProfGain: [0, 0, 0],
 		weaponprocs: [0, 0, 0, 0, 0, 0, 0, 0],
@@ -794,7 +792,6 @@ hvStat.gadget.proficiencyPopupIcon = {
 		tableData[ 7].textContent = _profs.spiritTotal.toFixed(2);
 		tableData[ 9].textContent = _profs.depTotal.toFixed(2);
 		tableData[11].textContent = _profs.supportTotal.toFixed(2);
-		tableData[13].textContent = _profs.curativeTotal.toFixed(2);
 		var icon = document.createElement("div");
 		icon.id = "hvstat-proficiency-popup-icon";
 		icon.className = "ui-corner-all";
@@ -3871,7 +3868,6 @@ function collectCurrentProfsData() {
 	_profs.spiritTotal = Number(util.innerText(proficiencyTableElements[23]));
 	_profs.depTotal = Number(util.innerText(proficiencyTableElements[25]));
 	_profs.supportTotal = Number(util.innerText(proficiencyTableElements[27]));
-	_profs.curativeTotal = Number(util.innerText(proficiencyTableElements[29]));
 	_profs.save();
 }
 function isProfTotalsRecorded() {
@@ -4019,9 +4015,6 @@ function collectRoundInfo() {
 			} else if (r.match(/supportive magic/)) {
 				_profs.supportTotal += p;
 				hvStat.roundInfo.supportGain += p;
-			} else if (r.match(/curative magic/)) {
-				_profs.curativeTotal += p;
-				hvStat.roundInfo.curativeGain += p;
 			}
 			_profs.save();
 		}
@@ -4347,7 +4340,7 @@ function collectRoundInfo() {
 			}
 		}
 		if (logHTML.match(/reached equipment inventory limit/i)) {
-			localStorage.setItem(HV_EQUIP, JSON.stringify("true"));
+			localStorage.setItem(HV_EQUIP, "true");
 		}
 	}
 	if (a > 1) {
@@ -4497,7 +4490,6 @@ function saveStats() {
 		hvStat.stats.forbidGain += hvStat.roundInfo.forbidGain;
 		hvStat.stats.depGain += hvStat.roundInfo.depGain;
 		hvStat.stats.supportGain += hvStat.roundInfo.supportGain;
-		hvStat.stats.curativeGain += hvStat.roundInfo.curativeGain;
 		hvStat.stats.weapProfGain[0] += hvStat.roundInfo.weapProfGain[0];
 		hvStat.stats.weapProfGain[1] += hvStat.roundInfo.weapProfGain[1];
 		hvStat.stats.weapProfGain[2] += hvStat.roundInfo.weapProfGain[2];
@@ -4573,8 +4565,7 @@ function getBattleEndStatsHtml() {
 				+ ", <b>Forbidden Spells</b>: " + hvStat.roundInfo.forbidSpells[1]
 				+ ", <b>Elemental Spells</b>: " + hvStat.roundInfo.elemSpells[1]
 				+ "<hr style='height:1px;border:0;background-color:#333333;color:#333333' />"
-				+ "<b>Curative Gain</b>: " + hvStat.roundInfo.curativeGain.toFixed(2)
-				+ ", <b>SupportGain</b>: " + hvStat.roundInfo.supportGain.toFixed(2)
+				+ "<b>SupportGain</b>: " + hvStat.roundInfo.supportGain.toFixed(2)
 				+ ", <b>Deprecating Gain</b>: " + hvStat.roundInfo.depGain.toFixed(2)
 				+ ", <b>Divine Gain</b>: " + hvStat.roundInfo.divineGain.toFixed(2)
 				+ ", <b>Forbidden Gain</b>: " + hvStat.roundInfo.forbidGain.toFixed(2)
@@ -6073,7 +6064,6 @@ function HVCacheBackup(ID) {
 	this.forbidGain = 0;
 	this.depGain = 0;
 	this.supportGain = 0;
-	this.curativeGain = 0;
 	this.weapProfGain = [0, 0, 0, 0];
 	this.armorProfGain = [0, 0, 0];
 	this.weaponprocs = [0, 0, 0, 0, 0, 0, 0, 0];
