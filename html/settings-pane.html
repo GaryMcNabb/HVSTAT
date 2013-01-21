@@ -1,0 +1,293 @@
+<p style="color: red;">All changes will take effect on next page load.</p>
+
+<h2>General</h2>
+
+<div>
+<table>
+<tr><td><input type="checkbox" name="isChangePageTitle" /></td>		<td>Change HentaiVerse page title: <input type="text" name="customPageTitle" size="40" /></td></tr>
+<tr><td><input type="checkbox" name="isShowEquippedSet" /></td>		<td>Show equipped set number at left panel (<span style="color: red;">Downloadable/Custom Local Fonts only!</span>)</td></tr>
+<tr><td><input type="checkbox" name="isShowSidebarProfs" /></td>	<td>Show proficiencies in sidebar</td></tr>
+<tr><td><input type="checkbox" name="isStartAlert" /></td>
+	<td>Warnings before starting Challenges when
+	HP is below <input type="text" name="StartAlertHP" size="1" maxLength="2" style="text-align: right;" />%,
+	MP is below <input type="text" name="StartAlertMP" size="1" maxLength="2" style="text-align: right;" />%,
+	SP is below <input type="text" name="StartAlertSP" size="1" maxLength="2" style="text-align: right;" />%
+	<br />
+	or difficulty is over
+	<select id="StartAlertDifficulty">
+		<option id="diff1" value="1">Easy</option>
+		<option id="diff2" value="2">Normal</option>
+		<option id="diff3" value="3">Hard</option>
+		<option id="diff4" value="4">Heroic</option>
+		<option id="diff5" value="5">Nightmare</option>
+		<option id="diff6" value="6">Hell</option>
+		<option id="diff7" value="7">Nintendo</option>
+		<option id="diff8" value="8">Battletoads</option>
+	</select>
+	(<span style="color: red;">Downloadable/Custom Local Fonts only!</span>)</td></tr>
+</table>
+
+<table>
+<tr>
+	<td class="hvstat-vertical-top" rowspan="5">Show equipment tags in:</td>
+	<td>
+		<table>
+		<tr><td><input type="checkbox" name="isShowTags0" /></td><td>Equipment page</td></tr>
+		<tr><td><input type="checkbox" name="isShowTags1" /></td><td>Bazaar shop page</td></tr>
+		<tr><td><input type="checkbox" name="isShowTags2" /></td><td>Item World</td></tr>
+		<tr><td><input type="checkbox" name="isShowTags3" /></td><td>Moogle Mail Attachments list</td></tr>
+		<tr><td><input type="checkbox" name="isShowTags4" /></td><td>Forge</td></tr>
+		<tr><td><input type="checkbox" name="isShowTags5" /></td><td>Inventory (<span style="color: red;">Strongly suggested to turn it on and visit inventory once for a while</span>)</td></tr>
+		</table>
+	</td></tr>
+</table>
+
+</div>
+
+<h2>Keyboard</h2>
+<div>
+<table>
+<tr><td><input type="checkbox" name="adjustKeyEventHandling" /></td>	<td>Adjust key event handling not to overrun when an alert is shown</td></tr>
+<tr><td><input type="checkbox" name="isEnableScanHotkey" /></td>	<td>Enable Scan Hotkeys: numpad","/numpad delete</td></tr>
+<tr><td><input type="checkbox" name="isEnableSkillHotkey" /></td>	<td>Enable Weapon Skill Hotkeys: "+" / "=" and numpad"+"</td></tr>
+<tr><td><input type="checkbox" name="enableOFCHotkey" /></td>		<td>Enable Orbital Friendship Cannon Hotkeys: "-" / "_" and numpad"-"</td></tr>
+<tr><td><input type="checkbox" name="enableScrollHotkey" /></td>	<td>Enable Page Up/Down key on scrollable panes</td></tr>
+<tr><td><input type="checkbox" name="isDisableForgeHotKeys" /></td>	<td>Disable hotkeys in the Forge (<span style="color: red;">Strongly recommended if using equipment tags</span>)</td></tr>
+<tr><td><input type="checkbox" name="enableShrineKeyPatch" /></td>	<td>Patch to enable Space key in the Shrine (Chrome only)</td></tr>
+</table>
+</div>
+
+<h2>Tracking</h2>
+<div>
+<table>
+<tr><td><input type="checkbox" name="isTrackStats" />	</td><td>Track Battle Statistics</td></tr>
+<tr><td><input type="checkbox" name="isTrackItems" />	</td><td>Track Item Drops</td></tr>
+<tr><td><input type="checkbox" name="isTrackRewards" />	</td><td>Track Arena Rewards</td></tr>
+<tr><td><input type="checkbox" name="isTrackShrine" />	</td><td>Track Shrine (<span style="color: red;">Downloadable/Custom Local Fonts only!</span>)</td></tr>
+</table>
+<p><input type="button" class="_resetAll" value="Reset" title="Reset all tracking data." /></p>
+</div>
+
+<h2>Battle Enhancement</h2>
+<div>
+<table>
+<tr><td><input type="checkbox" name="isShowRoundCounter" /></td>	<td>Show Round Counter</td></tr>
+<tr><td><input type="checkbox" name="isShowRoundReminder" /></td>	<td>Final round reminder -
+	minimum <input type="text" name="reminderMinRounds" size="1" maxLength="3" style="text-align: right;" /> rounds;
+	Alert <input type="text" name="reminderBeforeEnd" size="1" maxLength="1" style="text-align: right;" /> rounds before end</td></tr>
+<tr><td><input type="checkbox" name="isShowSelfDuration" /></td>	<td>Show self effect durations</td><td></td></tr>
+<tr><td></td><td>
+	<table>
+	<tr><td><input type="checkbox" name="isSelfEffectsWarnColor" /></td>	<td>Highlight duration badges -
+		<span style="color: orange;">Orange</span>: below <input type="text" name="SelfWarnOrangeRounds" size="1" maxLength="2" style="text-align: right;" /> rounds;
+		<span style="color: red;">Red</span>: below <input type="text" name="SelfWarnRedRounds" size="1" maxLength="1" style="text-align: right;" /> rounds</td></tr>
+	</table>
+</td></tr>
+<tr><td><input type="checkbox" name="isShowPowerupBox" /></td>		<td>Show Powerup Box</td></tr>
+<tr><td><input type="checkbox" name="isShowHighlight" /></td>		<td>Highlight battle log</td><td></td></tr>
+<tr><td></td><td>
+	<table>
+	<tr><td><input type="checkbox" name="isAltHighlight" /></td>		<td>Use alternate highlighting</td></tr>
+	</table>
+</td></tr>
+<tr><td><input type="checkbox" name="isShowDivider" /></td>		<td>Show turn dividers</td><td></td></tr>
+<tr><td><input type="checkbox" name="isShowScanButton" /></td>		<td>Show scan buttons</td></tr>
+<tr><td><input type="checkbox" name="isShowSkillButton" /></td>		<td>Show skill buttons</td></tr>
+<tr><td><input type="checkbox" name="isShowMonsterNumber"></td>		<td>Show numbers instead of letters next to monsters</td></tr>
+
+<tr><td><input type="checkbox" name="isShowMonsterDuration" /></td>	<td>Show monster effect durations</td></tr>
+<tr><td></td><td>
+	<table>
+	<tr><td><input type="checkbox" name="isMonstersEffectsWarnColor" /></td><td>Highlight duration badges
+		- <span style="color: orange;">Orange</span>: below <input type="text" name="MonstersWarnOrangeRounds" size="1" maxLength="2" style="text-align: right;" /> rounds;
+		<span style="color: red;">Red</span>: below <input type="text" name="MonstersWarnRedRounds" size="1" maxLength="1" style="text-align: right;" /> rounds</td></tr>
+	</table>
+</td></tr>
+<tr><td><input type="checkbox" name="isShowEndStats" /></td>		<td>Show Battle Summary</td></tr>
+<tr><td></td><td>
+	<table>
+	<tr><td><input type="checkbox" name="isShowEndProfs" /></td>		<td>Show Proficiency Gain Summary</td></tr>
+	<tr><td></td><td>
+		<table>
+		<tr><td><input type="checkbox" name="isShowEndProfsMagic" /></td>	<td>Show Magic Proficiency Gain Summary</td></tr>
+		<tr><td><input type="checkbox" name="isShowEndProfsArmor" /></td>	<td>Show Armor Proficiency Gain Summary</td></tr>
+		<tr><td><input type="checkbox" name="isShowEndProfsWeapon" /></td>	<td>Show Weapon Proficiency Gain Summary</td></tr>
+		</table>
+	</td></tr>
+	</table>
+</td></tr>
+<tr><td><input type="checkbox" name="autoAdvanceBattleRound" /></td>	<td>Automatically advance rounds when "You are Victorious"
+	- delay: <input type="text" name="autoAdvanceBattleRoundDelay" size="4" maxLength="5" style="text-align: right;" />ms</td></tr>
+</table>
+</div>
+
+<h2>Warning System</h2>
+<h3>Self Status</h3>
+<div>
+<table>
+<tr><td><input type="checkbox" name="isHighlightQC" /></td>	<td>Highlight Quickcast -
+	<span style="color: orange;">Orange</span>:	<input type="text" name="warnOrangeLevel"   size="1" maxLength="2" style="text-align: right;" />% HP;
+	<span style="color: red;">Red</span>:		<input type="text" name="warnRedLevel"      size="1" maxLength="2" style="text-align: right;" />% HP;
+	<span style="color: blue;">Blue</span>:		<input type="text" name="warnOrangeLevelMP" size="1" maxLength="2" style="text-align: right;" />% MP;
+	<span style="color: darkblue;">Darkblue</span>:	<input type="text" name="warnRedLevelMP"    size="1" maxLength="2" style="text-align: right;" />% MP; <br/>
+	<span style="color: lime;">Lime</span>:		<input type="text" name="warnOrangeLevelSP" size="1" maxLength="2" style="text-align: right;" />% SP;
+	<span style="color: green;">Green</span>:	<input type="text" name="warnRedLevelSP"    size="1" maxLength="2" style="text-align: right;" />% SP</td></tr>
+<tr><td><input type="checkbox" name="isShowPopup" /></td>	<td>Alert Message -
+	<input type="text" name="warnAlertLevel" size="1" maxLength="2" style="text-align: right;" />% HP;
+	<input type="text" name="warnAlertLevelMP" size="1" maxLength="2" style="text-align: right;" />% MP;
+	<input type="text" name="warnAlertLevelSP" size="1" maxLength="2" style="text-align: right;" />% SP</td></tr>
+<tr><td></td><td>
+	<table>
+	<tr><td><input type="checkbox" name="isNagHP" /></td>		<td>HP Nag Mode - Alert message appears every turn your HP is critical</td></tr>
+	<tr><td><input type="checkbox" name="isNagMP" /></td>		<td>MP Nag Mode - Alert message appears every turn your MP is critical</td></tr>
+	<tr><td><input type="checkbox" name="isNagSP" /></td>		<td>SP Nag Mode - Alert message appears every turn your SP is critical</td></tr>
+	</table>
+</td></tr>
+<tr><td></td><td>
+	<table>
+	<tr><td>Battle Type:</td>
+	<td>
+		<table>
+		<tr>
+			<td><input type="checkbox" name="isWarnH" /></td><td>Hourly encounters</td>
+			<td><input type="checkbox" name="isWarnA" /></td><td>Arena</td>
+			<td><input type="checkbox" name="isWarnGF" /></td><td>Grindfest</td>
+			<td><input type="checkbox" name="isWarnIW" /></td><td>Item World</td>
+		</tr>
+		</table>
+	</td></tr>
+	</table>
+</td></tr>
+</table>
+</div>
+
+<h3>Event Notifications</h3>
+<div>
+<table>
+<tr><td><input type="checkbox" name="isAlertGem" /></td>		<td>Alert on Powerup drops</td></tr>
+<tr><td><input type="checkbox" name="isAlertOverchargeFull" /></td>	<td>Alert when Overcharge becomes full</td></tr>
+<tr><td><input type="checkbox" name="isWarnAbsorbTrigger" /></td>	<td>Alert when Absorbing Ward triggers</td></tr>
+<tr><td><input type="checkbox" name="isWarnSparkTrigger" /></td>	<td>Alert when Spark of Life triggers</td></tr>
+<tr><td><input type="checkbox" name="isWarnSparkExpire" /></td>		<td>Alert when Spark of Life expires</td></tr>
+</table>
+</div>
+
+<h3>Effect Expiring Warnings</h3>
+<div id="hvstat-settings-effect-expiring-warnings">
+<div>
+<table>
+<tr><td><input type="checkbox" name="isMainEffectsAlertSelf" /></td>	<td>Alert when effects on yourself are expiring</td></tr>
+<tr><td></td><td>
+	<table>
+	<tr><td><input type="checkbox" name="isEffectsAlertSelf6" /></td>	<td>Channeling</td>		<td>- alert on <input type="text" name="EffectsAlertSelfRounds6"  size="1" maxLength="3" style="text-align:right;" />rounds remaining</td></tr>
+	<tr><td><input type="checkbox" name="isEffectsAlertSelf0" /></td>	<td>Protection</td>		<td>- alert on <input type="text" name="EffectsAlertSelfRounds0"  size="1" maxLength="3" style="text-align:right;" />rounds remaining</td></tr>
+	<tr><td><input type="checkbox" name="isEffectsAlertSelf1" /></td>	<td>Hastened</td>		<td>- alert on <input type="text" name="EffectsAlertSelfRounds1"  size="1" maxLength="3" style="text-align:right;" />rounds remaining</td></tr>
+	<tr><td><input type="checkbox" name="isEffectsAlertSelf2" /></td>	<td>Shadow Veil</td>		<td>- alert on <input type="text" name="EffectsAlertSelfRounds2"  size="1" maxLength="3" style="text-align:right;" />rounds remaining</td></tr>
+	<tr><td><input type="checkbox" name="isEffectsAlertSelf3" /></td>	<td>Regen</td>			<td>- alert on <input type="text" name="EffectsAlertSelfRounds3"  size="1" maxLength="3" style="text-align:right;" />rounds remaining</td></tr>
+	<tr><td><input type="checkbox" name="isEffectsAlertSelf5" /></td>	<td>Spark of Life</td>		<td>- alert on <input type="text" name="EffectsAlertSelfRounds5"  size="1" maxLength="3" style="text-align:right;" />rounds remaining</td></tr>
+	<tr><td><input type="checkbox" name="isEffectsAlertSelf7" /></td>	<td>Arcane Focus</td>		<td>- alert on <input type="text" name="EffectsAlertSelfRounds7"  size="1" maxLength="3" style="text-align:right;" />rounds remaining</td></tr>
+	<tr><td><input type="checkbox" name="isEffectsAlertSelf8" /></td>	<td>Heartseeker</td>		<td>- alert on <input type="text" name="EffectsAlertSelfRounds8"  size="1" maxLength="3" style="text-align:right;" />rounds remaining</td></tr>
+	<tr><td><input type="checkbox" name="isEffectsAlertSelf9" /></td>	<td>Spirit Shield</td>		<td>- alert on <input type="text" name="EffectsAlertSelfRounds9"  size="1" maxLength="3" style="text-align:right;" />rounds remaining</td></tr>
+	<tr><td><input type="checkbox" name="isEffectsAlertSelf10" /></td>	<td>Flame Spikes</td>		<td>- alert on <input type="text" name="EffectsAlertSelfRounds10" size="1" maxLength="3" style="text-align:right;" />rounds remaining</td></tr>
+	<tr><td><input type="checkbox" name="isEffectsAlertSelf11" /></td>	<td>Frost Spikes</td>		<td>- alert on <input type="text" name="EffectsAlertSelfRounds11" size="1" maxLength="3" style="text-align:right;" />rounds remaining</td></tr>
+	<tr><td><input type="checkbox" name="isEffectsAlertSelf12" /></td>	<td>Lightning Spikes</td>	<td>- alert on <input type="text" name="EffectsAlertSelfRounds12" size="1" maxLength="3" style="text-align:right;" />rounds remaining</td></tr>
+	<tr><td><input type="checkbox" name="isEffectsAlertSelf13" /></td>	<td>Storm Spikes</td>		<td>- alert on <input type="text" name="EffectsAlertSelfRounds13" size="1" maxLength="3" style="text-align:right;" />rounds remaining</td></tr>
+	<tr><td><input type="checkbox" name="isEffectsAlertSelf14" /></td>	<td>Chain 1</td>		<td>- alert on <input type="text" name="EffectsAlertSelfRounds14" size="1" maxLength="1" style="text-align:right;" />rounds remaining</td></tr>
+	<tr><td><input type="checkbox" name="isEffectsAlertSelf15" /></td>	<td>Chain 2</td>		<td>- alert on <input type="text" name="EffectsAlertSelfRounds15" size="1" maxLength="1" style="text-align:right;" />rounds remaining</td></tr>
+	</table>
+</td></tr>
+</table>
+</div>
+<div>
+<table>
+<tr><td><input type="checkbox" name="isMainEffectsAlertMonsters" /></td><td>Alert when effects on monsters are expiring</td></tr>
+<tr><td></td><td>
+	<table>
+	<tr><td><input type="checkbox" name="isEffectsAlertMonsters11" /></td>	<td>Coalesced Mana</td>		<td>- alert on <input type="text" name="EffectsAlertMonstersRounds11" size="1" maxLength="3" style="text-align:right;" />rounds remaining</td></tr>
+	<tr><td><input type="checkbox" name="isEffectsAlertMonsters0" /></td>	<td>Spreading Poison</td>	<td>- alert on <input type="text" name="EffectsAlertMonstersRounds0"  size="1" maxLength="3" style="text-align:right;" />rounds remaining</td></tr>
+	<tr><td><input type="checkbox" name="isEffectsAlertMonsters1" /></td>	<td>Slowed</td>			<td>- alert on <input type="text" name="EffectsAlertMonstersRounds1"  size="1" maxLength="3" style="text-align:right;" />rounds remaining</td></tr>
+	<tr><td><input type="checkbox" name="isEffectsAlertMonsters2" /></td>	<td>Weakened</td>		<td>- alert on <input type="text" name="EffectsAlertMonstersRounds2"  size="1" maxLength="3" style="text-align:right;" />rounds remaining</td></tr>
+	<tr><td><input type="checkbox" name="isEffectsAlertMonsters3" /></td>	<td>Asleep</td>			<td>- alert on <input type="text" name="EffectsAlertMonstersRounds3"  size="1" maxLength="3" style="text-align:right;" />rounds remaining</td></tr>
+	<tr><td><input type="checkbox" name="isEffectsAlertMonsters4" /></td>	<td>Confused</td>		<td>- alert on <input type="text" name="EffectsAlertMonstersRounds4"  size="1" maxLength="3" style="text-align:right;" />rounds remaining</td></tr>
+	<tr><td><input type="checkbox" name="isEffectsAlertMonsters5" /></td>	<td>Imperiled</td>		<td>- alert on <input type="text" name="EffectsAlertMonstersRounds5"  size="1" maxLength="3" style="text-align:right;" />rounds remaining</td></tr>
+	<tr><td><input type="checkbox" name="isEffectsAlertMonsters6" /></td>	<td>Blinded</td>		<td>- alert on <input type="text" name="EffectsAlertMonstersRounds6"  size="1" maxLength="3" style="text-align:right;" />rounds remaining</td></tr>
+	<tr><td><input type="checkbox" name="isEffectsAlertMonsters7" /></td>	<td>Silenced</td>		<td>- alert on <input type="text" name="EffectsAlertMonstersRounds7"  size="1" maxLength="3" style="text-align:right;" />rounds remaining</td></tr>
+	<tr><td><input type="checkbox" name="isEffectsAlertMonsters8" /></td>	<td>Nerfed</td>			<td>- alert on <input type="text" name="EffectsAlertMonstersRounds8"  size="1" maxLength="3" style="text-align:right;" />rounds remaining</td></tr>
+	<tr><td><input type="checkbox" name="isEffectsAlertMonsters9" /></td>	<td>Magically Snared</td>	<td>- alert on <input type="text" name="EffectsAlertMonstersRounds9"  size="1" maxLength="3" style="text-align:right;" />rounds remaining</td></tr>
+	<tr><td><input type="checkbox" name="isEffectsAlertMonsters10" /></td>	<td>Lifestream</td>		<td>- alert on <input type="text" name="EffectsAlertMonstersRounds10" size="1" maxLength="3" style="text-align:right;" />rounds remaining</td></tr>
+	</table>
+</td></tr>
+</table>
+</div>
+</div>
+
+<h2>Monster Information</h2>
+<h3>Monster Database</h3>
+<div>
+<table>
+<tr><td><input type="checkbox" name="isRememberScan" /></td>		<td>Record monster scan results</td></tr>
+<tr><td><input type="checkbox" name="isRememberSkillsTypes" /></td>	<td>Record monster skills</td></tr>
+</table>
+</div>
+<h3>Monster Display</h3>
+<div>
+<table>
+<tr><td><input type="checkbox" name="showMonsterHP" /></td>		<td>Show monster HP (<span style="color: red;">Estimated</span>)</td></tr>
+<tr><td></td><td>
+	<table>
+	<tr><td><input type="checkbox" name="showMonsterHPPercent" /></td>	<td>Show monster HP in percentage</td></tr>
+	</table>
+</td></tr>
+<tr><td><input type="checkbox" name="showMonsterMP" /></td>		<td>Show monster MP percentage</td></tr>
+<tr><td><input type="checkbox" name="showMonsterSP" /></td>		<td>Show monster SP percentage</td></tr>
+<tr><td><input type="checkbox" name="showMonsterInfoFromDB" /></td>	<td>Show monster statuses from database</td></tr>
+<tr><td></td><td>
+	<table>
+	<tr><td><input type="checkbox" name="showMonsterClassFromDB" /></td>		<td>Show monster class</td></tr>
+	<tr><td><input type="checkbox" name="showMonsterPowerLevelFromDB" /></td>	<td>Show monster power level</td></tr>
+	<tr><td><input type="checkbox" name="showMonsterAttackTypeFromDB" /></td>	<td>Show monster attack type</td></tr>
+	<tr><td><input type="checkbox" name="showMonsterWeaknessesFromDB" /></td>	<td>Show monster weaknesses</td></tr>
+	<tr><td><input type="checkbox" name="showMonsterResistancesFromDB" /></td>	<td>Show monster resistances</td></tr>
+	<tr><td></td><td>
+		<table>
+		<tr><td class="hvstat-vertical-top">Hide specific weaknesses/resitances: </td>
+		<td>
+			<table>
+			<tr>
+				<td><input type="checkbox" name="hideSpecificDamageType0" /></td><td>Crushing</td>
+				<td><input type="checkbox" name="hideSpecificDamageType1" /></td><td>Slashing</td>
+				<td><input type="checkbox" name="hideSpecificDamageType2" /></td><td>Piercing</td>
+				<td></td>
+			</tr><tr>
+				<td><input type="checkbox" name="hideSpecificDamageType3" /></td><td>Fire</td>
+				<td><input type="checkbox" name="hideSpecificDamageType4" /></td><td>Cold</td>
+				<td><input type="checkbox" name="hideSpecificDamageType5" /></td><td>Elec</td>
+				<td><input type="checkbox" name="hideSpecificDamageType6" /></td><td>Wind</td>
+			</tr><tr>
+				<td><input type="checkbox" name="hideSpecificDamageType7" /></td><td>Holy</td>
+				<td><input type="checkbox" name="hideSpecificDamageType8" /></td><td>Dark</td>
+				<td><input type="checkbox" name="hideSpecificDamageType9" /></td><td>Soul</td>
+				<td><input type="checkbox" name="hideSpecificDamageType10" /></td><td>Void</td>
+			</tr>
+			</table>
+		</td></tr>
+		</table>
+	</td></tr>
+	<tr><td><input type="checkbox" name="ResizeMonsterInfo" /></td>	<td>Shorten monster statuses if longer than frame width</td></tr>
+	</table>
+</td></tr>
+<tr><td><input type="checkbox" name="isShowStatsPopup" /></td>		<td>Show monster information popup on mouseover
+	- delay: <input type="text" name="monsterPopupDelay" size="3" maxLength="4" style="text-align:right" />ms</td></tr>
+<tr><td></td><td>
+	<table>
+	<tr><td><input type="checkbox" name="isMonsterPopupPlacement" /></td>	<td>Alternative placement for popup</td></tr>
+	</table>
+</td></tr>
+</table>
+</div>
+
+<hr/>
+<div>
+<input type="button" class="_resetSettings" value="Default Settings" title="Reset settings to default."/>
+<input type="button" class="_masterReset" value="MASTER RESET" title="Deletes all of STAT's saved data and settings."/>
+</div>

@@ -15,8 +15,8 @@ Write efficient loops:
 - Performance: Great;
 
 Always use === instead of ==. If the types being compared are the same, both will return true at the same time.
-- Fast: if(0 === "0") //returns false;
-- Slow: if(0 == "0") //returns true; Converts the type of "0" for the test(SLOW);
+- Fast: if (0 === "0") //returns false;
+- Slow: if (0 == "0") //returns true; Converts the type of "0" for the test(SLOW);
 - Performance: Great if types are different;
 
 regex.test(string) is faster than string.match(regex).
@@ -26,12 +26,11 @@ regex.test(string) is faster than string.match(regex).
 
 Don't use regex if possible. It can be extremely slow.
 
+jQuery and jQuery UI must not be used except on the dialog panel for performance reason.
+
 Release Info
 ------------
-- For Chrome, name the crx "HVS\_CHROME\_[VERSION].crx"
-- For Firefox, name main.js "HVS\_FIREFOX\_[VERSION].user.js"
-
-Firefox users DON'T need jquery.min.js, jqueryui.css or jquery-ui.min.js.
-Before releasing a build, group all the javascript files into 1 and minify it.
+- For Chrome, name the crx "hvstat-[VERSION].crx"
+- For Firefox, name zipped package "hvstat-[VERSION].zip"
 
 No one needs the privatekey (pem file) except developers.
