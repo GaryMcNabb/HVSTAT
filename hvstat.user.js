@@ -5,7 +5,7 @@
 // @include         http://hentaiverse.org/*
 // @exclude         http://hentaiverse.org/pages/showequip*
 // @author          Various (http://forums.e-hentai.org/index.php?showtopic=79552)
-// @version         5.4.8
+// @version         5.5.0
 // @resource        battle-log-type0.css                        css/battle-log-type0.css
 // @resource        battle-log-type1.css                        css/battle-log-type1.css
 // @resource        hvstat.css                                  css/hvstat.css
@@ -302,7 +302,7 @@ var hv = {
 // HV STAT features
 //------------------------------------
 var hvStat = {
-	version: "5.4.8",
+	version: "5.5.0",
 	setup: function () {
 		this.addStyle();
 	},
@@ -739,16 +739,16 @@ hvStat.storage.Item.prototype = {
 				// copy newly added properties from default
 				hvStat.util.forEachProperty(this._value, this._defaultValue, function (storedValue, defaultValue, key) {
 					if (storedValue[key] === undefined) {
-						console.debug(storedValue);
-						console.debug(defaultValue);
-						console.debug(key);
+						//console.debug(storedValue);
+						//console.debug(defaultValue);
+						//console.debug(key);
 						storedValue[key] = util.clone(defaultValue[key]);
 					}
 				});
 				// remove disused properties
 				hvStat.util.forEachProperty(this._defaultValue, this._value, function (defaultValue, storedValue, key) {
 					if (defaultValue[key] === undefined) {
-						console.debug(String(key));
+						//console.debug(String(key));
 						delete storedValue[key];
 					}
 				});
@@ -5830,7 +5830,7 @@ function HVMasterReset() {
 	}
 	for (var key in localStorage) {
 		if (key.indexOf("hvStat.") === 0) {
-			console.debug("Remove from localStorage: " + key);
+//			console.debug("Remove from localStorage: " + key);
 //			localStorage.removeItem(key);
 		}
 	}
@@ -6403,10 +6403,10 @@ hvStat.startup = {
 			document.onkeydown = null;
 		}
 		hv.setup();
-		console.debug(hv);
+//		console.debug(hv);
 		hvStat.setup();
-		console.debug(hvStat);
-		console.debug(hvStat.stats);
+//		console.debug(hvStat);
+//		console.debug(hvStat.stats);
 		if (hvStat.settings.isChangePageTitle) {
 			document.title = hvStat.settings.customPageTitle;
 		}
