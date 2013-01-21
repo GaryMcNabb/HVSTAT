@@ -30,7 +30,7 @@ jQuery and jQuery UI must not be used except on the dialog panel for performance
 
 Release Info
 ------------
-- For Chrome, name the crx "hvstat-[VERSION].crx"
-- For Firefox, name zipped package "hvstat-[VERSION].zip"
+- For Chrome, name the crx "hvstat\_chrome\_[VERSION].crx"
+- For Firefox, name zipped package "hvstat\_firefox\_[VERSION].zip"
 
 No one needs the privatekey (pem file) except developers.
