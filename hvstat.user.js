@@ -761,6 +761,7 @@ hvStat.storage.Item.prototype = {
 	},
 	reset: function () {
 		this._value = this._defaultValue;
+		this.save();
 	},
 	remove: function () {
 		hvStat.storage.removeItem(this._key);
