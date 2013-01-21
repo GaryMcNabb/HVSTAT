@@ -1,0 +1,334 @@
+/* icon */
+#hvstat-icon {
+	position: absolute;
+	top: 4px;
+	left: 916px;
+	cursor: pointer;
+}
+#hvstat-icon span {
+	margin: 3px;
+}
+
+/* proficiency popup icon */
+#hvstat-proficiency-popup-icon {
+	position: absolute;
+	top: 671px;
+	border: 1px solid;
+	margin-left: 5px;
+	padding: 2px;
+	width: 132px;
+	font-size: 10pt;
+	font-weight: bold;
+	text-align: center;
+	cursor: default;
+}
+
+/* proficiency popup */
+#hvstat-proficiency-popup {
+	visibility: hidden;
+	position: absolute;
+	top: -135px;
+	left: 145px;
+	border: 1px solid #5C0D11;
+	background: #EDEBDF;
+	width: auto;
+	height: auto;
+	opacity: 1.0;
+	z-index: 5;
+}
+#hvstat-proficiency-popup table {
+	border-collapse: collapse;
+}
+#hvstat-proficiency-popup th,
+#hvstat-proficiency-popup td {
+	padding: 1px 3px;
+	white-space: nowrap;
+}
+#hvstat-proficiency-popup thead th {
+	font-size: 10pt;
+	font-weight: bold;
+	text-align: center;
+}
+#hvstat-proficiency-popup tbody th {
+	font-size: 9pt;
+	font-weight: normal;
+	text-align: right;
+}
+#hvstat-proficiency-popup td {
+	font-size: 9pt;
+	font-weight: normal;
+	text-align: right;
+}
+
+/* duration badge */
+.hvstat-duration-badge {
+	width: 30px;
+	display: inline-block;
+	text-align: center;
+	position: relative;
+	margin-left: -30px;
+}
+.hvstat-duration-badge > div {
+	background: #EFEEDC;
+	border: 1px solid #5C0D11;
+	padding: 0px 2px;
+	display: inline-block;
+	min-width: 15px;
+	font-weight: bold;
+}
+.hvstat-duration-badge-character { top: 2px; }
+.hvstat-duration-badge-monster { top: -25px; }
+.hvstat-duration-badge-yellow-alert > div { background-color: orange; }
+.hvstat-duration-badge-red-alert > div { background-color: red; }
+
+/* powerup box */
+.hvstat-powerup-box {
+	position: absolute;
+	top: 7px;
+	right: 5px;
+	width: 30px;
+	height: 32px;
+	background-color: #EFEEDC;
+	border: 2px double #555555;
+}
+.hvstat-powerup-box-none {
+	background-image: none;
+	font-size: 16px;
+	font-weight: bold;
+	text-align: center;
+	line-height: 32px;
+	cursor: default;
+}
+.hvstat-powerup-box-channeling { background-image: url(images/channeling.png); cursor: pointer; }
+.hvstat-powerup-box-health { background-image: url(images/healthpot.png); cursor: pointer; }
+.hvstat-powerup-box-mana { background-image: url(images/manapot.png); cursor: pointer; }
+.hvstat-powerup-box-spirit { background-image: url(images/spiritpot.png); cursor: pointer; }
+
+/* quickcast highlight */
+.hvstat-health-yellow-alert { background-color: orange; }
+.hvstat-health-red-alert { background-color: red; }
+.hvstat-magic-yellow-alert { background-color: blue; }
+.hvstat-magic-red-alert { background-color: darkblue; }
+.hvstat-spirit-yellow-alert { background-color: lime; }
+.hvstat-spirit-red-alert { background-color: green; }
+
+/* battle log turn divider */
+.hvstat-turn-divider { border-bottom: 1px solid #5c0d11; padding-bottom: 3px; }
+
+/* round counter */
+.hvstat-round-counter {
+	font-size: 18px;
+	font-weight: bold;
+	text-align: right;
+	position: absolute;
+	top: 6px;
+	right: 17px;
+}
+.hvstat-round-counter-second-last { color: orange; }
+.hvstat-round-counter-last { color: red; }
+
+/* scan/skill button */
+.hvstat-scan-button {
+	top: -2px;
+	left: -32px;
+	position: absolute;
+	background-color: #EFEEDC;
+	width: 25px;
+	height:10px;
+	border: 2px double #555555;
+	font-size: 9px;
+	font-weight: bold;
+	text-align: center;
+	cursor: pointer;
+}
+.hvstat-skill-button {
+	left: -32px;
+	position: absolute;
+	background-color: #EFEEDC;
+	width: 25px;
+	height:10px;
+	border: 2px double #555555;
+	font-size: 9px;
+	font-weight: bold;
+	text-align: center;
+	cursor: pointer;
+}
+.hvstat-skill1-button { top: 12px; }
+.hvstat-skill2-button { top: 26px; }
+.hvstat-skill3-button { top: 40px; }
+
+/* monster */
+.hvstat-monster-number { display: none; }
+.hvstat-monster-number + div {
+	position: relative;
+	display: inline-block;
+	top: 0px;
+	left: 0px;
+	width: 25px;
+	font-size: 7pt;
+	font-weight: bold;
+	padding-top: 0.0em;
+	color: rgb(92,13,17);
+	text-shadow: 0px 0px 1px rgba(92,13,17,0.5);
+}
+.hvstat-monster-number + div + div {
+	position: relative;
+	display: inline-block;
+	top: 0px;
+	left: 0px;
+	width: 25px;
+	font-size: 12pt;
+	font-weight: bold;
+	margin-top: -2px;
+	margin-bottom: 2px;
+	color: rgb(193,0,19);
+	text-shadow: -1px -1px 5px #000,1px -1px 5px #000,-1px 1px 5px #000,1px 1px 5px #000;
+}
+
+div.hvstat-monster-health {
+	z-index: 10;
+	position: absolute;
+	top: -1px;
+	width: 120px;
+	text-align: center;
+	font-size: 8pt;
+	font-weight: bolder;
+	color: yellow;
+}
+div.hvstat-monster-magic {
+	z-index: 10;
+	position: absolute;
+	top: 11px;
+	width: 120px;
+	text-align: center;
+	font-size: 8pt;
+	font-weight: bolder;
+	color: yellow;
+}
+div.hvstat-monster-spirit {
+	z-index: 10;
+	position: absolute;
+	top: 23px;
+	width: 120px;
+	text-align: center;
+	font-size: 8pt;
+	font-weight: bolder;
+	color: yellow;
+}
+
+.hvstat-monster-status-on-hv-font {
+	font-family: arial;
+	font-size: 7pt;
+	font-weight: bold;
+	padding: 0 1px;
+	white-space: nowrap;
+}
+.hvstat-monster-status-on-custom-font {
+	display: inline;
+	margin-left: 1px;
+	font-family: arial;
+	font-size: 7pt;
+	font-weight: bold;
+	padding: 0 1px;
+	white-space: nowrap;
+}
+.hvstat-monster-status-unknown { color: red; }
+.hvstat-monster-status-class { color: blue; }
+.hvstat-monster-status-power-level { color: blue; }
+.hvstat-monster-status-weakness { color: #3CB878; }
+.hvstat-monster-status-resistance { color: #FF3300; }
+.hvstat-monster-status-imperviableness { color: #990000; text-decoration: underline; }
+.hvstat-monster-status-melee-attack-type { color: black; }
+.hvstat-monster-status-magic-skill-attack-type { color: blue; }
+.hvstat-monster-status-spirit-skill-attack-type { color: red; }
+
+/* monster popup */
+
+/* battle round stats */
+.hvstat-battle-round-stats {
+}
+
+/* equipment tag */
+input.hvstat-equipment-tag {
+	position: absolute;
+	left: 330px;
+	bottom: -21px;
+	opacity: 0.8;
+	font-size: 8pt;
+}
+input.hvstat-equipment-tag-new {
+	color: Red;
+}
+
+/*** Dialog UI ***/
+#hvstat-panel {
+	text-align: left;
+}
+
+#hvstat-tabs > div {
+	height: 512px;
+	overflow: auto;
+}
+
+.hvstat-tracking-paused {
+	display: none;
+	padding: 4px;
+	margin: 4px;
+	font-weight: bold;
+	text-align: center;
+}
+
+.hvstat-box {
+	display: box;
+	display: -moz-box;
+	display: -webkit-box;
+}
+.hvstat-box > div {
+	margin: 4px 8px;
+}
+
+.hvstat-table-total th,
+.hvstat-table-total td {
+	border-top: 1px solid #5C0D11;
+	font-style: italic;
+}
+
+#hvstat-arena-rewards-pane ul {
+	list-style-type: none;
+}
+
+#hvstat-arena-rewards-pane ul,
+#hvstat-arena-rewards-pane li {
+	margin: 0px;
+	padding: 0px;
+}
+
+#hvstat-arena-rewards-pane table,
+#hvstat-shrine-artifact-trade {
+	border-collapse: collapse;
+}
+
+#hvstat-arena-rewards-pane thead th,
+#hvstat-shrine-artifact-trade thead th {
+	border-bottom: 1px solid #5C0D11;
+}
+
+#hvstat-arena-rewards-pane th,
+#hvstat-arena-rewards-pane td,
+#hvstat-shrine-artifact-trade th,
+#hvstat-shrine-artifact-trade td {
+	text-align: right;
+	padding: 1px 3px;
+	white-space: nowrap;
+}
+
+#hvstat-settings-pane .hvstat-vertical-top {
+	vertical-align: top;
+	padding-top: 3px;
+}
+
+#hvstat-settings-effect-expiring-warnings {
+	display: box;
+	display: -moz-box;
+	display: -webkit-box;
+}
