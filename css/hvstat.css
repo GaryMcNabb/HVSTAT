@@ -185,6 +185,24 @@
 	text-shadow: -1px -1px 5px #000,1px -1px 5px #000,-1px 1px 5px #000,1px 1px 5px #000;
 }
 
+.hvstat-proc-stack-level-badge {
+	width: 30px;
+	display: inline-block;
+	text-align: right;
+	position: relative;
+	margin-left: -30px;
+	top: -4px;
+	opacity: 0.75;
+}
+.hvstat-proc-stack-level-badge > div {
+	color: white;
+	background: Purple;
+	border: 0px solid #5C0D11;
+	padding: 0px 2px;
+	display: inline-block;
+	font-weight: bold;
+}
+
 div.hvstat-monster-health {
 	z-index: 10;
 	position: absolute;

@@ -486,6 +486,7 @@ hvStat.storage = {
 		isMonstersEffectsWarnColor: false,
 		MonstersWarnOrangeRounds: 5,
 		MonstersWarnRedRounds: 1,
+		showProcStackLevel: false,
 		isShowEndStats: true,
 		isShowEndProfs: true,
 		isShowEndProfsMagic: true,
@@ -983,6 +984,9 @@ hvStat.battle = {
 		if (hvStat.settings.isShowMonsterDuration) {
 			hvStat.battle.enhancement.effectDurationBadge.showForMonster();
 		}
+		if (hvStat.settings.showProcStackLevel) {
+			hvStat.battle.enhancement.procStackLevelBadge.showAll();
+		}
 	},
 	advanceRound: function () {
 		if (!hv.battle.finished && hv.battle.round.finished) {
@@ -1263,10 +1267,38 @@ hvStat.battle.enhancement.effectDurationBadge = {
 			var baseElement = document.getElementById(HVStat.Monster.getDomElementId(i));
 			var effectIcons = baseElement.querySelectorAll('img[onmouseover^="battle.set_infopane_effect"]');
 			for (var j = 0; j < effectIcons.length; j++) {
-				var badge = hvStat.battle.enhancement.effectDurationBadge.create(effectIcons[j]);
+				var badge = this.create(effectIcons[j]);
 				if (badge) {
 					badge.className += " hvstat-duration-badge-monster";
 				}
+			}
+		}
+	}
+};
+
+hvStat.battle.enhancement.procStackLevelBadge = {
+	create: function (effectIcon) {
+		var rEffect = hvStat.battle.constant.rInfoPaneParameters.exec(effectIcon.getAttribute("onmouseover"));
+		if (!rEffect) {
+			return null;
+		}
+		var rProcStackLevel = rEffect[1].match(/\(x(\d+)\)/);
+		if (!rProcStackLevel) {
+			return null;
+		}
+		var badgeBase = document.createElement("div");
+		badgeBase.className = "hvstat-proc-stack-level-badge";
+		var badge = badgeBase.appendChild(document.createElement('div'));
+		badge.textContent = String(rProcStackLevel[1]);
+		effectIcon.parentNode.insertBefore(badgeBase, effectIcon.nextSibling);
+		return badgeBase;
+	},
+	showAll: function () {
+		for (var i = 0; i < hv.battle.elementCache.monsters.length; i++) {
+			var baseElement = document.getElementById(HVStat.Monster.getDomElementId(i));
+			var effectIcons = baseElement.querySelectorAll('img[onmouseover^="battle.set_infopane_effect"]');
+			for (var j = 0; j < effectIcons.length; j++) {
+				this.create(effectIcons[j]);
 			}
 		}
 	}
@@ -5281,6 +5313,7 @@ function initSettingsPane() {
 	if (hvStat.settings.isMonstersEffectsWarnColor) $("input[name=isMonstersEffectsWarnColor]").attr("checked", "checked");
 	$("input[name=MonstersWarnOrangeRounds]").attr("value", hvStat.settings.MonstersWarnOrangeRounds);
 	$("input[name=MonstersWarnRedRounds]").attr("value", hvStat.settings.MonstersWarnRedRounds);
+	if (hvStat.settings.showProcStackLevel) $("input[name=showProcStackLevel]").attr("checked", "checked");
 	if (hvStat.settings.isShowEndStats) $("input[name=isShowEndStats]").attr("checked", "checked");
 	if (hvStat.settings.isShowEndProfs) {	//isShowEndProfs added by Ilirith
 		$("input[name=isShowEndProfs]").attr("checked", "checked");
@@ -5461,6 +5494,7 @@ function initSettingsPane() {
 	$("input[name=isMonstersEffectsWarnColor]").click(saveSettings);
 	$("input[name=MonstersWarnOrangeRounds]").change(saveSettings);
 	$("input[name=MonstersWarnRedRounds]").change(saveSettings);
+	$("input[name=showProcStackLevel]").click(saveSettings);
 	$("input[name=isShowEndStats]").click(saveSettings);
 	$("input[name=isShowEndProfs]").click(saveSettings); //isShowEndProfs added by Ilirith
 	$("input[name=isShowEndProfsMagic]").click(saveSettings); //isShowEndProfs added by Ilirith
@@ -5601,6 +5635,7 @@ function saveSettings() {
 	hvStat.settings.isMonstersEffectsWarnColor = $("input[name=isMonstersEffectsWarnColor]").get(0).checked;
 	hvStat.settings.MonstersWarnOrangeRounds = $("input[name=MonstersWarnOrangeRounds]").get(0).value;
 	hvStat.settings.MonstersWarnRedRounds = $("input[name=MonstersWarnRedRounds]").get(0).value;
+	hvStat.settings.showProcStackLevel = $("input[name=showProcStackLevel]").get(0).checked;
 	hvStat.settings.isShowEndStats = $("input[name=isShowEndStats]").get(0).checked;
 	hvStat.settings.isShowEndProfs = $("input[name=isShowEndProfs]").get(0).checked; //isShowEndProfs added by Ilirith
 	hvStat.settings.isShowEndProfsMagic = $("input[name=isShowEndProfsMagic]").get(0).checked; //isShowEndProfs added by Ilirith
