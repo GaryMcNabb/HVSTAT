@@ -311,12 +311,15 @@ input.hvstat-equipment-tag-new {
 	font-style: italic;
 }
 
-#hvstat-arena-rewards-pane ul {
+#hvstat-arena-rewards-pane ul,
+#hvstat-shrine-pane ul {
 	list-style-type: none;
 }
 
 #hvstat-arena-rewards-pane ul,
-#hvstat-arena-rewards-pane li {
+#hvstat-arena-rewards-pane li,
+#hvstat-shrine-pane ul,
+#hvstat-shrine-pane li {
 	margin: 0px;
 	padding: 0px;
 }

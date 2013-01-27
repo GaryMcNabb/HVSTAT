@@ -5137,17 +5137,17 @@ function initShrinePane() {
 	} else {
 		innerHTML = browser.extension.getResourceText("html/", "shrine-pane.html");
 	}
-	$("#hvstat-shrine-pane").html(innerHTML);
+	$('#hvstat-shrine-pane').html(innerHTML);
 	if (_shrine.totalRewards > 0) {
 		if (!hvStat.settings.isTrackShrine) {
-			$("#hvstat-shrine-pane .hvstat-tracking-paused").show();
+			$('#hvstat-shrine-pane .hvstat-tracking-paused').show();
 		}
-		var tdAbilityPoints = $("#hvstat-shrine-artifact-ability-points td");
-		var tdAttributes = $("#hvstat-shrine-artifact-attributes td");
-		var tdHath = $("#hvstat-shrine-artifact-hath td");
-		var tdCrystals = $("#hvstat-shrine-artifact-crystals td");
-		var tdEnergyDrinks = $("#hvstat-shrine-artifact-energy-drinks td");
-		var tdTotal = $("#hvstat-shrine-artifact-total td");
+		var tdAbilityPoints = $('#hvstat-shrine-artifact-ability-points td');
+		var tdAttributes = $('#hvstat-shrine-artifact-attributes td');
+		var tdHath = $('#hvstat-shrine-artifact-hath td');
+		var tdCrystals = $('#hvstat-shrine-artifact-crystals td');
+		var tdEnergyDrinks = $('#hvstat-shrine-artifact-energy-drinks td');
+		var tdTotal = $('#hvstat-shrine-artifact-total td');
 		$(tdAbilityPoints[0]).text(_shrine.artifactAP);
 		$(tdAbilityPoints[1]).text(hvStat.util.percentRatio(_shrine.artifactAP, _shrine.artifactsTraded, 2) + "%");
 		$(tdAttributes[0]).text(_shrine.artifactStat);
@@ -5164,16 +5164,16 @@ function initShrinePane() {
 		var i = _shrine.trophyArray.length;
 		var trophiesHTML = "";
 		while (i--) {
-			trophiesHTML += _shrine.trophyArray[i] + "<br/>";
+			trophiesHTML += '<li>' + _shrine.trophyArray[i] + '</li>';
 		}
-		$("#hvstat-shrine-trophies").html(trophiesHTML);
-		$("#hvstat-shrine-clear-trophies").click(function () {
+		$('#hvstat-shrine-trophies').html(trophiesHTML);
+		$('#hvstat-shrine-clear-trophies').click(function () {
 			if (confirm("Clear Trophy list?")) {
 				_shrine.trophyArray = [];
 				_shrine.save();
 			}
 		});
-		$("#hvstat-shrine-reset").click(function () {
+		$('#hvstat-shrine-reset').click(function () {
 			if (confirm("Reset Shrine tab?")) {
 				_shrine.reset();
 			}
