@@ -475,6 +475,7 @@ hvStat.storage = {
 		isSelfEffectsWarnColor: false,
 		SelfWarnOrangeRounds: 5,
 		SelfWarnRedRounds: 1,
+		showSelfEffectStackLevel: false,
 		isShowPowerupBox: false,
 		isShowHighlight: true,
 		isAltHighlight: false,
@@ -486,7 +487,7 @@ hvStat.storage = {
 		isMonstersEffectsWarnColor: false,
 		MonstersWarnOrangeRounds: 5,
 		MonstersWarnRedRounds: 1,
-		showProcStackLevel: false,
+		showMonsterEffectStackLevel: false,
 		isShowEndStats: true,
 		isShowEndProfs: true,
 		isShowEndProfsMagic: true,
@@ -959,6 +960,9 @@ hvStat.battle = {
 		if (hvStat.settings.isShowSelfDuration) {
 			hvStat.battle.enhancement.effectDurationBadge.showForCharacter();
 		}
+		if (hvStat.settings.showSelfEffectStackLevel) {
+			hvStat.battle.enhancement.effectStackLevelBadge.showForCharacter();
+		}
 		if (hvStat.settings.isShowPowerupBox) {
 			hvStat.battle.enhancement.powerupBox.show();
 		}
@@ -982,10 +986,10 @@ hvStat.battle = {
  			hvStat.battle.enhancement.monsterLabel.replaceWithNumber();
  		}
 		if (hvStat.settings.isShowMonsterDuration) {
-			hvStat.battle.enhancement.effectDurationBadge.showForMonster();
+			hvStat.battle.enhancement.effectDurationBadge.showForMonsters();
 		}
-		if (hvStat.settings.showProcStackLevel) {
-			hvStat.battle.enhancement.procStackLevelBadge.showAll();
+		if (hvStat.settings.showMonsterEffectStackLevel) {
+			hvStat.battle.enhancement.effectStackLevelBadge.showForMonsters();
 		}
 	},
 	advanceRound: function () {
@@ -1241,6 +1245,8 @@ hvStat.battle.enhancement.effectDurationBadge = {
 		}
 		var badgeBase = document.createElement("div");
 		badgeBase.className = "hvstat-duration-badge";
+		badgeBase.onmouseover = effectIcon.onmouseover;
+		badgeBase.onmouseout = effectIcon.onmouseout;
 		if (hvStat.settings.isSelfEffectsWarnColor) {
 			if (duration <= Number(hvStat.settings.SelfWarnRedRounds)) {
 				badgeBase.className += " hvstat-duration-badge-red-alert";
@@ -1248,7 +1254,7 @@ hvStat.battle.enhancement.effectDurationBadge = {
 				badgeBase.className += " hvstat-duration-badge-yellow-alert";
 			}
 		}
-		var badge = badgeBase.appendChild(document.createElement('div'));
+		var badge = badgeBase.appendChild(document.createElement("div"));
 		badge.textContent = String(duration);
 		effectIcon.parentNode.insertBefore(badgeBase, effectIcon.nextSibling);
 		return badgeBase;
@@ -1256,47 +1262,49 @@ hvStat.battle.enhancement.effectDurationBadge = {
 	showForCharacter: function () {
 		var effectIcons = hv.battle.elementCache.characterEffectIcons;
 		for (var i = 0; i < effectIcons.length; i++) {
-			var badge = hvStat.battle.enhancement.effectDurationBadge.create(effectIcons[i]);
-			if (badge) {
-				badge.className += " hvstat-duration-badge-character";
-			}
+			var badge = this.create(effectIcons[i]);
 		}
 	},
-	showForMonster: function () {
+	showForMonsters: function () {
 		for (var i = 0; i < hv.battle.elementCache.monsters.length; i++) {
-			var baseElement = document.getElementById(HVStat.Monster.getDomElementId(i));
-			var effectIcons = baseElement.querySelectorAll('img[onmouseover^="battle.set_infopane_effect"]');
+			var monster = hv.battle.elementCache.monsters[i];
+			var effectIcons = monster.querySelectorAll('img[onmouseover^="battle.set_infopane_effect"]');
 			for (var j = 0; j < effectIcons.length; j++) {
 				var badge = this.create(effectIcons[j]);
-				if (badge) {
-					badge.className += " hvstat-duration-badge-monster";
-				}
 			}
 		}
 	}
 };
 
-hvStat.battle.enhancement.procStackLevelBadge = {
+hvStat.battle.enhancement.effectStackLevelBadge = {
 	create: function (effectIcon) {
 		var rEffect = hvStat.battle.constant.rInfoPaneParameters.exec(effectIcon.getAttribute("onmouseover"));
 		if (!rEffect) {
 			return null;
 		}
-		var rProcStackLevel = rEffect[1].match(/\(x(\d+)\)/);
-		if (!rProcStackLevel) {
+		var rEffectStackLevel = rEffect[1].match(/\(x(\d+)\)/);
+		if (!rEffectStackLevel) {
 			return null;
 		}
 		var badgeBase = document.createElement("div");
-		badgeBase.className = "hvstat-proc-stack-level-badge";
-		var badge = badgeBase.appendChild(document.createElement('div'));
-		badge.textContent = String(rProcStackLevel[1]);
+		badgeBase.onmouseover = effectIcon.onmouseover;
+		badgeBase.onmouseout = effectIcon.onmouseout;
+		badgeBase.className = "hvstat-effect-stack-level-badge";
+		var badge = badgeBase.appendChild(document.createElement("div"));
+		badge.textContent = String(rEffectStackLevel[1]);
 		effectIcon.parentNode.insertBefore(badgeBase, effectIcon.nextSibling);
 		return badgeBase;
 	},
-	showAll: function () {
+	showForCharacter: function () {
+		var effectIcons = hv.battle.elementCache.characterEffectIcons;
+		for (var i = 0; i < effectIcons.length; i++) {
+			var badge = this.create(effectIcons[i]);
+		}
+	},
+	showForMonsters: function () {
 		for (var i = 0; i < hv.battle.elementCache.monsters.length; i++) {
-			var baseElement = document.getElementById(HVStat.Monster.getDomElementId(i));
-			var effectIcons = baseElement.querySelectorAll('img[onmouseover^="battle.set_infopane_effect"]');
+			var monster = hv.battle.elementCache.monsters[i];
+			var effectIcons = monster.querySelectorAll('img[onmouseover^="battle.set_infopane_effect"]');
 			for (var j = 0; j < effectIcons.length; j++) {
 				this.create(effectIcons[j]);
 			}
@@ -5302,6 +5310,7 @@ function initSettingsPane() {
 	if (hvStat.settings.isSelfEffectsWarnColor) $("input[name=isSelfEffectsWarnColor]").attr("checked", "checked");
 	$("input[name=SelfWarnOrangeRounds]").attr("value", hvStat.settings.SelfWarnOrangeRounds);
 	$("input[name=SelfWarnRedRounds]").attr("value", hvStat.settings.SelfWarnRedRounds);
+	if (hvStat.settings.showSelfEffectStackLevel) $("input[name=showSelfEffectStackLevel]").attr("checked", "checked");
 	if (hvStat.settings.isShowPowerupBox) $("input[name=isShowPowerupBox]").attr("checked", "checked");
 	if (hvStat.settings.isShowHighlight) $("input[name=isShowHighlight]").attr("checked", "checked");
 	if (hvStat.settings.isAltHighlight) $("input[name=isAltHighlight]").attr("checked", "checked");
@@ -5313,7 +5322,7 @@ function initSettingsPane() {
 	if (hvStat.settings.isMonstersEffectsWarnColor) $("input[name=isMonstersEffectsWarnColor]").attr("checked", "checked");
 	$("input[name=MonstersWarnOrangeRounds]").attr("value", hvStat.settings.MonstersWarnOrangeRounds);
 	$("input[name=MonstersWarnRedRounds]").attr("value", hvStat.settings.MonstersWarnRedRounds);
-	if (hvStat.settings.showProcStackLevel) $("input[name=showProcStackLevel]").attr("checked", "checked");
+	if (hvStat.settings.showMonsterEffectStackLevel) $("input[name=showMonsterEffectStackLevel]").attr("checked", "checked");
 	if (hvStat.settings.isShowEndStats) $("input[name=isShowEndStats]").attr("checked", "checked");
 	if (hvStat.settings.isShowEndProfs) {	//isShowEndProfs added by Ilirith
 		$("input[name=isShowEndProfs]").attr("checked", "checked");
@@ -5483,6 +5492,7 @@ function initSettingsPane() {
 	$("input[name=isSelfEffectsWarnColor]").click(saveSettings);
 	$("input[name=SelfWarnOrangeRounds]").change(saveSettings);
 	$("input[name=SelfWarnRedRounds]").change(saveSettings);
+	$("input[name=showSelfEffectStackLevel]").click(saveSettings);
 	$("input[name=isShowPowerupBox]").click(saveSettings);
 	$("input[name=isShowHighlight]").click(saveSettings);
 	$("input[name=isAltHighlight]").click(saveSettings);
@@ -5494,7 +5504,7 @@ function initSettingsPane() {
 	$("input[name=isMonstersEffectsWarnColor]").click(saveSettings);
 	$("input[name=MonstersWarnOrangeRounds]").change(saveSettings);
 	$("input[name=MonstersWarnRedRounds]").change(saveSettings);
-	$("input[name=showProcStackLevel]").click(saveSettings);
+	$("input[name=showMonsterEffectStackLevel]").click(saveSettings);
 	$("input[name=isShowEndStats]").click(saveSettings);
 	$("input[name=isShowEndProfs]").click(saveSettings); //isShowEndProfs added by Ilirith
 	$("input[name=isShowEndProfsMagic]").click(saveSettings); //isShowEndProfs added by Ilirith
@@ -5624,6 +5634,7 @@ function saveSettings() {
 	hvStat.settings.isSelfEffectsWarnColor = $("input[name=isSelfEffectsWarnColor]").get(0).checked;
 	hvStat.settings.SelfWarnOrangeRounds = $("input[name=SelfWarnOrangeRounds]").get(0).value;
 	hvStat.settings.SelfWarnRedRounds = $("input[name=SelfWarnRedRounds]").get(0).value;
+	hvStat.settings.showSelfEffectStackLevel = $("input[name=showSelfEffectStackLevel]").get(0).checked;
 	hvStat.settings.isShowPowerupBox = $("input[name=isShowPowerupBox]").get(0).checked;
 	hvStat.settings.isShowHighlight = $("input[name=isShowHighlight]").get(0).checked;
 	hvStat.settings.isAltHighlight = $("input[name=isAltHighlight]").get(0).checked;
@@ -5635,7 +5646,7 @@ function saveSettings() {
 	hvStat.settings.isMonstersEffectsWarnColor = $("input[name=isMonstersEffectsWarnColor]").get(0).checked;
 	hvStat.settings.MonstersWarnOrangeRounds = $("input[name=MonstersWarnOrangeRounds]").get(0).value;
 	hvStat.settings.MonstersWarnRedRounds = $("input[name=MonstersWarnRedRounds]").get(0).value;
-	hvStat.settings.showProcStackLevel = $("input[name=showProcStackLevel]").get(0).checked;
+	hvStat.settings.showMonsterEffectStackLevel = $("input[name=showMonsterEffectStackLevel]").get(0).checked;
 	hvStat.settings.isShowEndStats = $("input[name=isShowEndStats]").get(0).checked;
 	hvStat.settings.isShowEndProfs = $("input[name=isShowEndProfs]").get(0).checked; //isShowEndProfs added by Ilirith
 	hvStat.settings.isShowEndProfsMagic = $("input[name=isShowEndProfsMagic]").get(0).checked; //isShowEndProfs added by Ilirith

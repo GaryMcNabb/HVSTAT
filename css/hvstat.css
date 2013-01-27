@@ -64,22 +64,39 @@
 .hvstat-duration-badge {
 	width: 30px;
 	display: inline-block;
-	text-align: center;
+	text-align: left;
 	position: relative;
 	margin-left: -30px;
+	top: -22px;
+	opacity: 0.75;
 }
 .hvstat-duration-badge > div {
-	background: #EFEEDC;
-	border: 1px solid #5C0D11;
-	padding: 0px 2px;
+	color: Black;
+	background: White;
+	padding: 0px 1px;
 	display: inline-block;
-	min-width: 15px;
 	font-weight: bold;
 }
-.hvstat-duration-badge-character { top: 2px; }
-.hvstat-duration-badge-monster { top: -25px; }
 .hvstat-duration-badge-yellow-alert > div { background-color: orange; }
 .hvstat-duration-badge-red-alert > div { background-color: red; }
+
+/* effect stack level badge */
+.hvstat-effect-stack-level-badge {
+	width: 30px;
+	display: inline-block;
+	text-align: right;
+	position: relative;
+	margin-left: -30px;
+	top: -4px;
+	opacity: 0.75;
+}
+.hvstat-effect-stack-level-badge > div {
+	color: white;
+	background: Purple;
+	padding: 0px 1px;
+	display: inline-block;
+	font-weight: bold;
+}
 
 /* powerup box */
 .hvstat-powerup-box {
@@ -185,24 +202,6 @@
 	text-shadow: -1px -1px 5px #000,1px -1px 5px #000,-1px 1px 5px #000,1px 1px 5px #000;
 }
 
-.hvstat-proc-stack-level-badge {
-	width: 30px;
-	display: inline-block;
-	text-align: right;
-	position: relative;
-	margin-left: -30px;
-	top: -4px;
-	opacity: 0.75;
-}
-.hvstat-proc-stack-level-badge > div {
-	color: white;
-	background: Purple;
-	border: 0px solid #5C0D11;
-	padding: 0px 2px;
-	display: inline-block;
-	font-weight: bold;
-}
-
 div.hvstat-monster-health {
 	z-index: 10;
 	position: absolute;
@@ -269,10 +268,11 @@ div.hvstat-monster-spirit {
 /* equipment tag */
 input.hvstat-equipment-tag {
 	position: absolute;
-	left: 330px;
-	bottom: -21px;
+	left: 332px;
 	opacity: 0.8;
 	font-size: 8pt;
+	padding: 0px 0px;
+	margin: 1px 0px;
 }
 input.hvstat-equipment-tag-new {
 	color: Red;
