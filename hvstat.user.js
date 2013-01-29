@@ -323,9 +323,6 @@ var hvStat = {
 	get characterStatus() {
 		return hvStat.storage.characterStatus.value;
 	},
-	get proficiencies() {
-		return hvStat.storage.proficiencies.value;
-	},
 	get overview() {
 		return hvStat.storage.overview.value;
 	},
@@ -595,18 +592,6 @@ hvStat.storage.initialValue = {
 			supportive: 0,
 		},
 		overcharge: 100,
-	},
-	// Proficiencies object
-	proficiencies: {
-		elemTotal: 0,
-		divineTotal: 0,
-		forbidTotal: 0,
-		spiritTotal: 0,
-		depTotal: 0,
-		supportTotal: 0,
-		curativeTotal: 0,
-		weapProfTotals: [0, 0, 0, 0],
-		armorProfTotals: [0, 0, 0],
 	},
 	// Overview object
 	overview: {
@@ -930,9 +915,6 @@ hvStat.storage.settings = new hvStat.storage.Item("HVSettings", hvStat.storage.i
 // Character Status object
 hvStat.storage.characterStatus = new hvStat.storage.Item("hvStat.characterStatus", hvStat.storage.initialValue.characterStatus);
 
-// Proficiencies object
-hvStat.storage.proficiencies = new hvStat.storage.Item("HVProf", hvStat.storage.initialValue.proficiencies);
-
 // Overview constructor inherits Item
 hvStat.storage.Overview = function (key, defaultValue) {
 	hvStat.storage.Item.apply(this, [key, defaultValue]);
@@ -1018,7 +1000,6 @@ hvStat.storage.equipmentTags = new hvStat.storage.Item("HVTags", hvStat.storage.
 // Old Monster Database object
 hvStat.storage.oldMonsterDatabase = new hvStat.storage.Item("HVDatabase", hvStat.storage.initialValue.oldMonsterDatabase);
 
-
 //------------------------------------
 // Gadgets
 //------------------------------------
@@ -1030,38 +1011,24 @@ hvStat.gadget.proficiencyPopupIcon = {
 		if (!hvStat.characterStatus.areProficienciesCaptured) {
 			return;
 		}
-//		loadProfsObject();
-//		if (!isProfTotalsRecorded()) return;
 		this.popup = document.createElement("div");
 		this.popup.id = "hvstat-proficiency-popup";
 		this.popup.innerHTML = browser.extension.getResourceText("html/", "proficiency-table.html");
 		var tableData = this.popup.querySelectorAll('td');
-// 		tableData[ 0].textContent = _profs.weapProfTotals[0].toFixed(2);
-// 		tableData[ 2].textContent = _profs.weapProfTotals[1].toFixed(2);
-// 		tableData[ 4].textContent = _profs.weapProfTotals[2].toFixed(2);
-// 		tableData[ 6].textContent = _profs.weapProfTotals[3].toFixed(2);
-// 		tableData[ 8].textContent = _profs.armorProfTotals[0].toFixed(2);
-// 		tableData[10].textContent = _profs.armorProfTotals[1].toFixed(2);
-// 		tableData[12].textContent = _profs.armorProfTotals[2].toFixed(2);
-// 		tableData[ 1].textContent = _profs.elemTotal.toFixed(2);
-// 		tableData[ 3].textContent = _profs.divineTotal.toFixed(2);
-// 		tableData[ 5].textContent = _profs.forbidTotal.toFixed(2);
-// 		tableData[ 7].textContent = _profs.spiritTotal.toFixed(2);
-// 		tableData[ 9].textContent = _profs.depTotal.toFixed(2);
-// 		tableData[11].textContent = _profs.supportTotal.toFixed(2);
-		tableData[ 0].textContent = hvStat.characterStatus.proficiencies.oneHanded.toFixed(2);
-		tableData[ 2].textContent = hvStat.characterStatus.proficiencies.twoHanded.toFixed(2);
-		tableData[ 4].textContent = hvStat.characterStatus.proficiencies.dualWielding.toFixed(2);
-		tableData[ 6].textContent = hvStat.characterStatus.proficiencies.staff.toFixed(2);
-		tableData[ 8].textContent = hvStat.characterStatus.proficiencies.clothArmor.toFixed(2);
-		tableData[10].textContent = hvStat.characterStatus.proficiencies.lightArmor.toFixed(2);
-		tableData[12].textContent = hvStat.characterStatus.proficiencies.heavyArmor.toFixed(2);
-		tableData[ 1].textContent = hvStat.characterStatus.proficiencies.elemental.toFixed(2);
-		tableData[ 3].textContent = hvStat.characterStatus.proficiencies.divine.toFixed(2);
-		tableData[ 5].textContent = hvStat.characterStatus.proficiencies.forbidden.toFixed(2);
-		tableData[ 7].textContent = hvStat.characterStatus.proficiencies.spiritual.toFixed(2);
-		tableData[ 9].textContent = hvStat.characterStatus.proficiencies.deprecating.toFixed(2);
-		tableData[11].textContent = hvStat.characterStatus.proficiencies.supportive.toFixed(2);
+		var prof = hvStat.characterStatus.proficiencies;
+		tableData[ 0].textContent = prof.oneHanded.toFixed(2);
+		tableData[ 2].textContent = prof.twoHanded.toFixed(2);
+		tableData[ 4].textContent = prof.dualWielding.toFixed(2);
+		tableData[ 6].textContent = prof.staff.toFixed(2);
+		tableData[ 8].textContent = prof.clothArmor.toFixed(2);
+		tableData[10].textContent = prof.lightArmor.toFixed(2);
+		tableData[12].textContent = prof.heavyArmor.toFixed(2);
+		tableData[ 1].textContent = prof.elemental.toFixed(2);
+		tableData[ 3].textContent = prof.divine.toFixed(2);
+		tableData[ 5].textContent = prof.forbidden.toFixed(2);
+		tableData[ 7].textContent = prof.spiritual.toFixed(2);
+		tableData[ 9].textContent = prof.deprecating.toFixed(2);
+		tableData[11].textContent = prof.supportive.toFixed(2);
 		var icon = document.createElement("div");
 		icon.id = "hvstat-proficiency-popup-icon";
 		icon.className = "ui-corner-all";
@@ -4041,7 +4008,6 @@ HVStat.migration.deleteOldDatabase = function () {
 //------------------------------------
 
 /* ========== GLOBAL VARIABLES ========== */
-HV_PROF = "HVProf";
 HV_REWARDS = "HVRewards";
 HV_SHRINE = "HVShrine";
 HV_DROPS = "HVDrops";
@@ -4055,7 +4021,6 @@ HOURLY = 0;
 ARENA = 1;
 GRINDFEST = 2;
 ITEM_WORLD = 3;
-// _profs = null;
 _rewards = null;
 _shrine = null;
 _drops = null;
@@ -4167,42 +4132,24 @@ function collectCurrentProfsData() {
 	if (!hv.location.isCharacter || hv.settings.useHVFontEngine) {
 		return;
 	}
-// 	loadProfsObject();
-	var proficiencyTableElements = document.getElementById("leftpane").children[1].querySelectorAll("div.fd12");
-// 	_profs.weapProfTotals[0] = Number(util.innerText(proficiencyTableElements[2]));
-// 	_profs.weapProfTotals[1] = Number(util.innerText(proficiencyTableElements[4]));
-// 	_profs.weapProfTotals[2] = Number(util.innerText(proficiencyTableElements[6]));
-// 	_profs.weapProfTotals[3] = Number(util.innerText(proficiencyTableElements[8]));
-// 	_profs.armorProfTotals[0] = Number(util.innerText(proficiencyTableElements[10]));
-// 	_profs.armorProfTotals[1] = Number(util.innerText(proficiencyTableElements[12]));
-// 	_profs.armorProfTotals[2] = Number(util.innerText(proficiencyTableElements[14]));
-// 	_profs.elemTotal = Number(util.innerText(proficiencyTableElements[17]));
-// 	_profs.divineTotal = Number(util.innerText(proficiencyTableElements[19]));
-// 	_profs.forbidTotal = Number(util.innerText(proficiencyTableElements[21]));
-// 	_profs.spiritTotal = Number(util.innerText(proficiencyTableElements[23]));
-// 	_profs.depTotal = Number(util.innerText(proficiencyTableElements[25]));
-// 	_profs.supportTotal = Number(util.innerText(proficiencyTableElements[27]));
-// 	_profs.save();
-	hvStat.characterStatus.proficiencies.oneHanded = Number(util.innerText(proficiencyTableElements[2]));
-	hvStat.characterStatus.proficiencies.twoHanded = Number(util.innerText(proficiencyTableElements[4]));
-	hvStat.characterStatus.proficiencies.dualWielding = Number(util.innerText(proficiencyTableElements[6]));
-	hvStat.characterStatus.proficiencies.staff = Number(util.innerText(proficiencyTableElements[8]));
-	hvStat.characterStatus.proficiencies.clothArmor = Number(util.innerText(proficiencyTableElements[10]));
-	hvStat.characterStatus.proficiencies.lightArmor = Number(util.innerText(proficiencyTableElements[12]));
-	hvStat.characterStatus.proficiencies.heavyArmor = Number(util.innerText(proficiencyTableElements[14]));
-	hvStat.characterStatus.proficiencies.elemental = Number(util.innerText(proficiencyTableElements[17]));
-	hvStat.characterStatus.proficiencies.divine = Number(util.innerText(proficiencyTableElements[19]));
-	hvStat.characterStatus.proficiencies.forbidden = Number(util.innerText(proficiencyTableElements[21]));
-	hvStat.characterStatus.proficiencies.spiritual = Number(util.innerText(proficiencyTableElements[23]));
-	hvStat.characterStatus.proficiencies.deprecating = Number(util.innerText(proficiencyTableElements[25]));
-	hvStat.characterStatus.proficiencies.supportive = Number(util.innerText(proficiencyTableElements[27]));
-	hvStat.characterStatus.areProficienciesCaptured = true;
+	var proficiencyTable = document.getElementById("leftpane").children[1].querySelectorAll("div.fd12");
+	var prof = hvStat.characterStatus.proficiencies;
+	prof.oneHanded = Number(util.innerText(proficiencyTable[2]));
+	prof.twoHanded = Number(util.innerText(proficiencyTable[4]));
+	prof.dualWielding = Number(util.innerText(proficiencyTable[6]));
+	prof.staff = Number(util.innerText(proficiencyTable[8]));
+	prof.clothArmor = Number(util.innerText(proficiencyTable[10]));
+	prof.lightArmor = Number(util.innerText(proficiencyTable[12]));
+	prof.heavyArmor = Number(util.innerText(proficiencyTable[14]));
+	prof.elemental = Number(util.innerText(proficiencyTable[17]));
+	prof.divine = Number(util.innerText(proficiencyTable[19]));
+	prof.forbidden = Number(util.innerText(proficiencyTable[21]));
+	prof.spiritual = Number(util.innerText(proficiencyTable[23]));
+	prof.deprecating = Number(util.innerText(proficiencyTable[25]));
+	prof.supportive = Number(util.innerText(proficiencyTable[27]));
+	areProficienciesCaptured = true;
 	hvStat.storage.characterStatus.save();
 }
-// function isProfTotalsRecorded() {
-// 	loadProfsObject();
-// 	return _profs.weapProfTotals.length > 0;
-// }
 function inventoryWarning() {
 	var d = 4;
 	var rectObject = document.querySelector("div.stuffbox").getBoundingClientRect();
@@ -4305,62 +4252,46 @@ function collectRoundInfo() {
 		if ((hvStat.settings.isShowSidebarProfs || hvStat.settings.isTrackStats) && logHTML.match(/0.0(\d+) points of (.*?) proficiency/ig)) {
 			var p = (RegExp.$1) / 100;
 			var r = RegExp.$2;
-// 			loadProfsObject();
 			if (r.match(/one-handed weapon/)) {
 				hvStat.characterStatus.proficiencies.oneHanded += p;
-// 				_profs.weapProfTotals[0] += p;
 				hvStat.roundInfo.weapProfGain[0] += p;
 			} else if (r.match(/two-handed weapon/)) {
 				hvStat.characterStatus.proficiencies.twoHanded += p;
-// 				_profs.weapProfTotals[1] += p;
 				hvStat.roundInfo.weapProfGain[1] += p;
 			} else if (r.match(/dual wielding/)) {
 				hvStat.characterStatus.proficiencies.dualWielding += p;
-// 				_profs.weapProfTotals[2] += p;
 				hvStat.roundInfo.weapProfGain[2] += p;
 			} else if (r.match(/staff/)) {
 				hvStat.characterStatus.proficiencies.staff += p;
-// 				_profs.weapProfTotals[3] += p;
 				hvStat.roundInfo.weapProfGain[3] += p;
 			} else if (r.match(/cloth armor/)) {
 				hvStat.characterStatus.proficiencies.clothArmor += p;
-// 				_profs.armorProfTotals[0] += p;
 				hvStat.roundInfo.armorProfGain[0] += p;
 			} else if (r.match(/light armor/)) {
 				hvStat.characterStatus.proficiencies.lightArmor += p;
-// 				_profs.armorProfTotals[1] += p;
 				hvStat.roundInfo.armorProfGain[1] += p;
 			} else if (r.match(/heavy armor/)) {
 				hvStat.characterStatus.proficiencies.heavyArmor += p;
-// 				_profs.armorProfTotals[2] += p;
 				hvStat.roundInfo.armorProfGain[2] += p;
 			} else if (r.match(/elemental magic/)) {
 				hvStat.characterStatus.proficiencies.elemental += p;
-// 				_profs.elemTotal += p;
 				hvStat.roundInfo.elemGain += p;
 			} else if (r.match(/divine magic/)) {
 				hvStat.characterStatus.proficiencies.divine += p;
 				hvStat.characterStatus.proficiencies.spiritual = (hvStat.characterStatus.proficiencies.divine + hvStat.characterStatus.proficiencies.forbidden) / 2;
-// 				_profs.divineTotal += p;
-// 				_profs.spiritTotal = (_profs.divineTotal+_profs.forbidTotal) / 2;
 				hvStat.roundInfo.divineGain += p;
 			} else if (r.match(/forbidden magic/)) {
 				hvStat.characterStatus.proficiencies.forbidden += p;
 				hvStat.characterStatus.proficiencies.spiritual = (hvStat.characterStatus.proficiencies.divine + hvStat.characterStatus.proficiencies.forbidden) / 2;
-// 				_profs.forbidTotal += p;
-// 				_profs.spiritTotal = (_profs.divineTotal+_profs.forbidTotal) / 2;
 				hvStat.roundInfo.forbidGain += p;
 			} else if (r.match(/deprecating magic/)) {
 				hvStat.characterStatus.proficiencies.deprecating += p;
-// 				_profs.depTotal += p;
 				hvStat.roundInfo.depGain += p;
 			} else if (r.match(/supportive magic/)) {
 				hvStat.characterStatus.proficiencies.supportive += p;
-// 				_profs.supportTotal += p;
 				hvStat.roundInfo.supportGain += p;
 			}
 			hvStat.storage.characterStatus.save();
-// 			_profs.save();
 		}
 		if (hvStat.settings.isRememberScan) {
 			if (logHTML.indexOf("Scanning") >= 0) {
@@ -6077,8 +6008,6 @@ function saveSettings() {
 	hvStat.storage.settings.save();
 }
 function reminderAndSaveSettings() {
-// 	loadProfsObject();
-	// !isProfTotalsRecorded()
 	if (!hvStat.characterStatus.areProficienciesCaptured && $("input[name=isShowSidebarProfs]").get(0).checked) {
 		alert('Please visit the Character Stats page at least once\nwith either the "Use Downloable Fonts" or "Custom\nLocal Font" setting enabled, to allow STAT to record\nyour current proficiencies. STAT cannot record this\ndata while HentaiVerse Font Engine is enabled.');
 	}
@@ -6113,11 +6042,6 @@ function captureShrine() {
 	}
 	_shrine.save();
 }
-// function loadProfsObject() {
-// 	if (_profs !== null) return;
-// 	_profs = new HVCacheProf();
-// 	_profs.load();
-// }
 function loadRewardsObject() {
 	if (_rewards !== null) return;
 	_rewards = new HVCacheRewards();
@@ -6163,7 +6087,7 @@ function HVMasterReset() {
 		"HVLoadTimeCounters",	// obsolete
 		"HVMonsterDatabase",	// old monster data
 		"HVOverview",
-		"HVProf",
+		"HVProf",				// obsolete
 		"HVRewards",
 		"HVRound",
 		"HVSettings",
@@ -6182,8 +6106,8 @@ function HVMasterReset() {
 	}
 	for (var key in localStorage) {
 		if (key.indexOf("hvStat.") === 0) {
-//			console.debug("Remove from localStorage: " + key);
-//			localStorage.removeItem(key);
+			console.debug("Remove from localStorage: " + key);
+			localStorage.removeItem(key);
 		}
 	}
 }
@@ -6204,22 +6128,6 @@ function loadFromStorage(c, b) {
 }
 function saveToStorage(b, a) { localStorage.setItem(a, JSON.stringify(b)); }
 function deleteFromStorage(a) { localStorage.removeItem(a); }
-function HVCacheProf() {
-	this.load = function () { loadFromStorage(this, HV_PROF); };
-	this.save = function () { saveToStorage(this, HV_PROF); };
-	this.reset = function () { deleteFromStorage(HV_PROF); };
-	this.cloneFrom = clone;
-	this.elemTotal = 0;
-	this.divineTotal = 0;
-	this.forbidTotal = 0;
-	this.spiritTotal = 0; //spiritTotal added by Ilirith
-	this.depTotal = 0;
-	this.supportTotal = 0;
-	this.curativeTotal = 0;
-	this.weapProfTotals = [0, 0, 0, 0];
-	this.armorProfTotals = [0, 0, 0];
-	this.isLoaded = false;
-}
 function HVCacheRewards() {
 	this.load = function () { loadFromStorage(this, HV_REWARDS); };
 	this.save = function () {
@@ -6758,18 +6666,17 @@ hvStat.startup = {
 		console.debug(hv);
 		hvStat.setup();
 		console.debug(hvStat);
-// 		console.debug(hvStat.storage.proficiencies.value);
 // 		console.debug(hvStat.storage.overview.value);
 // 		console.debug(hvStat.storage.stats.value);
-// 		console.debug(hvStat.storage.arenaRewards.value);
-// 		console.debug(hvStat.storage.shrine.value);
-// 		console.debug(hvStat.storage.itemDrops.value);
-// 		console.debug(hvStat.storage.equipmentTags.value);
 // 		console.debug(hvStat.storage.statsBackup1.value);
 // 		console.debug(hvStat.storage.statsBackup2.value);
 // 		console.debug(hvStat.storage.statsBackup3.value);
 // 		console.debug(hvStat.storage.statsBackup4.value);
 // 		console.debug(hvStat.storage.statsBackup5.value);
+// 		console.debug(hvStat.storage.itemDrops.value);
+// 		console.debug(hvStat.storage.arenaRewards.value);
+// 		console.debug(hvStat.storage.shrine.value);
+// 		console.debug(hvStat.storage.equipmentTags.value);
 		if (hvStat.settings.isChangePageTitle) {
 			document.title = hvStat.settings.customPageTitle;
 		}
