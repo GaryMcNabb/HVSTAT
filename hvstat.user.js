@@ -299,7 +299,7 @@ var hv = {
 };
 
 //------------------------------------
-// HV STAT features
+// HV STAT object
 //------------------------------------
 var hvStat = {
 	version: "5.5.1",
@@ -316,15 +316,15 @@ var hvStat = {
 		];
 		browser.extension.addStyleFromResource("css/", "hvstat.css", imageResouces);
 	},
-	// shortcut
+	// Shortcuts
 	get settings() {
 		return hvStat.storage.settings.value;
 	},
 	get characterStatus() {
 		return hvStat.storage.characterStatus.value;
 	},
-	get roundInfo() {
-		return hvStat.storage.roundInfo.value;
+	get proficiencies() {
+		return hvStat.storage.proficiencies.value;
 	},
 	get overview() {
 		return hvStat.storage.overview.value;
@@ -332,8 +332,26 @@ var hvStat = {
 	get stats() {
 		return hvStat.storage.stats.value;
 	},
+	get itemDrops() {
+		return hvStat.storage.itemDrops.value;
+	},
+	get arenaRewards() {
+		return hvStat.storage.arenaRewards.value;
+	},
+	get shrine() {
+		return hvStat.storage.shrine.value;
+	},
+	get roundInfo() {
+		return hvStat.storage.roundInfo.value;
+	},
+	get equipmentTags() {
+		return hvStat.storage.equipmentTags.value;
+	},
 };
 
+//------------------------------------
+// Utilities
+//------------------------------------
 hvStat.util = {
 	percent: function (value, digits) {
 		var v = value * 100;
@@ -419,7 +437,11 @@ hvStat.util = {
 	},
 };
 
+//------------------------------------
+// Storage objects
+//------------------------------------
 hvStat.storage = {
+	// Static functions
 	getItem: function (key) {
 		var item = localStorage.getItem(key);
 		if (item) {
@@ -434,11 +456,12 @@ hvStat.storage = {
 	removeItem: function (key) {
 		localStorage.removeItem(key);
 	},
-	//------------------------------------
-	// Settings
-	//------------------------------------
-	_settings: null,
-	_settingsDefault: {
+};
+
+// Initial values
+hvStat.storage.initialValue = {
+	// Settings object
+	settings: {
 		// General
 		isChangePageTitle: false,
 		customPageTitle: "HV",
@@ -548,35 +571,232 @@ hvStat.storage = {
 		monsterPopupDelay: 0,
 		isMonsterPopupPlacement: false,
 	},
-	get settings() {
-		if (!this._settings) {
-			this._settings = new hvStat.storage.Item("HVSettings", this._settingsDefault);
-		}
-		return this._settings;
-	},
-	//------------------------------------
-	// Character Status
-	//------------------------------------
-	_characterStatus: null,
-	_characterStatusDefault: {
+	// Character Status object
+	characterStatus: {
 		difficulty: {
 			name: "",
 			index: 0,
 		},
 		equippedSet: 0,
+		areProficienciesCaptured: false,
+		proficiencies: {
+			oneHanded: 0,
+			twoHanded: 0,
+			dualWielding: 0,
+			staff: 0,
+			clothArmor: 0,
+			lightArmor: 0,
+			heavyArmor: 0,
+			elemental: 0,
+			divine: 0,
+			forbidden: 0,
+			spiritual: 0,
+			deprecating: 0,
+			supportive: 0,
+		},
 		overcharge: 100,
 	},
-	get characterStatus() {
-		if (!this._characterStatus) {
-			this._characterStatus = new hvStat.storage.Item("hvStat.characterStatus", this._characterStatusDefault);
-		}
-		return this._characterStatus;
+	// Proficiencies object
+	proficiencies: {
+		elemTotal: 0,
+		divineTotal: 0,
+		forbidTotal: 0,
+		spiritTotal: 0,
+		depTotal: 0,
+		supportTotal: 0,
+		curativeTotal: 0,
+		weapProfTotals: [0, 0, 0, 0],
+		armorProfTotals: [0, 0, 0],
 	},
-	//------------------------------------
-	// Round Information
-	//------------------------------------
-	_roundInfo: null,
-	_roundInfoDefault: {
+	// Overview object
+	overview: {
+		startTime: 0,
+		lastHourlyTime: 0,
+		exp: 0,
+		credits: 0,
+		lastEquipTime: 0,
+		lastEquipName: "",
+		equips: 0,
+		lastArtTime: 0,
+		lastArtName: "",
+		artifacts: 0,
+		roundArray: [0, 0, 0, 0],
+		expbyBT: [0, 0, 0, 0],
+		creditsbyBT: [0, 0, 0, 0],
+	},
+	// Statistics object
+	stats: {
+		rounds: 0,
+		kills: 0,
+		aAttempts: 0,
+		aHits: [0, 0],
+		aOffhands: [0, 0, 0, 0],
+		sAttempts: 0,
+		aDomino: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+		aCounters: [0, 0, 0, 0],
+		dDealt: [0, 0, 0],
+		sHits: [0, 0],
+		sResists: 0,
+		dDealtSp: [0, 0],
+		absArry: [0, 0, 0],
+		mAttempts: 0,
+		dTaken: [0, 0],
+		mHits: [0, 0],
+		pDodges: 0,
+		pEvades: 0,
+		pParries: 0,
+		pBlocks: 0,
+		pResists: 0,
+		mSpells: 0,
+		overStrikes: 0,
+		coalesce: 0,
+		eTheft: 0,
+		channel: 0,
+		cureTotals: [0, 0, 0],
+		cureCounts: [0, 0, 0],
+		elemEffects: [0, 0, 0],
+		effectPoison: [0, 0],
+		elemSpells: [0, 0, 0, 0],
+		divineSpells: [0, 0, 0, 0],
+		forbidSpells: [0, 0, 0, 0],
+		depSpells: [0, 0],
+		supportSpells: 0,
+		curativeSpells: 0,
+		elemGain: 0,
+		divineGain: 0,
+		forbidGain: 0,
+		depGain: 0,
+		supportGain: 0,
+		weapProfGain: [0, 0, 0, 0],
+		armorProfGain: [0, 0, 0],
+		weaponprocs: [0, 0, 0, 0, 0, 0, 0, 0],
+		pskills: [0, 0, 0, 0, 0, 0, 0],
+		datestart: 0,
+	},
+	// Item Drops object
+	itemDrops: {
+		dropChances: 0,
+		itemArry: [
+			"[Lesser Health Potion]", "[Scroll of Swiftness]",
+			"[Average Health Potion]", "[Scroll of Shielding]",
+			"[Greater Health Potion]", "[Scroll of Warding]",
+			"[Superior Health Potion]", "[Scroll of the Avatar]",
+			"[Godly Health Potion]", "[Scroll of Absorption]",
+			"[Health Elixir]", "[Scroll of Shadows]",
+			"[Lesser Mana Potion]", "[Scroll of Life]",
+			"[Average Mana Potion]", "[Scroll of the Gods]",
+			"[Greater Mana Potion]", "[Infusion of Flames]",
+			"[Superior Mana Potion]", "[Infusion of Frost]",
+			"[Godly Mana Potion]", "[Infusion of Lightning]",
+			"[Mana Elixir]", "[Infusion of Storms]",
+			"[Lesser Spirit Potion]", "[Infusion of Divinity]",
+			"[Average Spirit Potion]", "[Infusion of Darkness]",
+			"[Greater Spirit Potion]", "[Infusion of Gaia]",
+			"[Superior Spirit Potion]", "[Soul Stone]",
+			"[Godly Spirit Potion]", "[Flower Vase]",
+			"[Spirit Elixir]", "[Last Elixir]",
+			"[Token of Blood]", "[Bubble-Gum]",
+			"[Token of Healing]", "[Crystal of Flames]",
+			"[Chaos Token]", "[Crystal of Frost]",
+			"[Crystal of Vigor]", "[Crystal of Lightning]",
+			"[Crystal of Finesse]", "[Crystal of Tempest]",
+			"[Crystal of Swiftness]", "[Crystal of Devotion]",
+			"[Crystal of Fortitude]", "[Crystal of Corruption]",
+			"[Crystal of Cunning]", "[Crystal of Quintessence]",
+			"[Crystal of Knowledge]", " ",
+			"[Voidseeker Shard]", " ",
+			"[Aether Shard]", " ",
+			"[Featherweight Shard]", " ",
+			"[Amnesia Shard]", " "
+		],
+		itemQtyArry: [],
+		itemDrop: 0,
+		eqArray: [],
+		eqDrop: 0,
+		artArry: [],
+		artQtyArry: [],
+		artDrop: 0,
+		eqDropbyBT: [0, 0, 0, 0, 0],
+		artDropbyBT: [0, 0, 0, 0, 0],
+		itemDropbyBT: [0, 0, 0, 0, 0],
+		crysDropbyBT: [0, 0, 0, 0, 0],
+		dropChancesbyBT: [0, 0, 0, 0, 0],
+	},
+	// Arena Rewards object
+	arenaRewards: {
+		eqRwrd: 0,
+		eqRwrdArry: [],
+		itemsRwrd: 0,
+		itemRwrdArry: [],
+		itemRwrdQtyArry: [],
+		artRwrd: 0,
+		artRwrdArry: [],
+		artRwrdQtyArry: [],
+		tokenDrops: [0, 0, 0],
+	},
+	// Shrine object
+	shrine: {
+		artifactsTraded: 0,
+		artifactStat: 0,
+		artifactAP: 0,
+		artifactHath: 0,
+		artifactHathTotal: 0,
+		artifactCrystal: 0,
+		artifactItem: 0,
+		trophyArray: [],
+	},
+	// Statistics Backup object
+	statsBackup: {
+		rounds: 0,
+		kills: 0,
+		aAttempts: 0,
+		aHits: [0, 0],
+		aOffhands: [0, 0, 0, 0],
+		sAttempts: 0,
+		aDomino: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+		aCounters: [0, 0, 0, 0],
+		dDealt: [0, 0, 0],
+		sHits: [0, 0],
+		sResists: 0,
+		dDealtSp: [0, 0],
+		absArry: [0, 0, 0],
+		mAttempts: 0,
+		dTaken: [0, 0],
+		mHits: [0, 0],
+		pDodges: 0,
+		pEvades: 0,
+		pParries: 0,
+		pBlocks: 0,
+		pResists: 0,
+		mSpells: 0,
+		overStrikes: 0,
+		coalesce: 0,
+		eTheft: 0,
+		channel: 0,
+		cureTotals: [0, 0, 0],
+		cureCounts: [0, 0, 0],
+		elemEffects: [0, 0, 0],
+		effectPoison: [0, 0],
+		elemSpells: [0, 0, 0, 0],
+		divineSpells: [0, 0, 0, 0],
+		forbidSpells: [0, 0, 0, 0],
+		depSpells: [0, 0],
+		supportSpells: 0,
+		curativeSpells: 0,
+		elemGain: 0,
+		divineGain: 0,
+		forbidGain: 0,
+		depGain: 0,
+		supportGain: 0,
+		weapProfGain: [0, 0, 0, 0],
+		armorProfGain: [0, 0, 0],
+		weaponprocs: [0, 0, 0, 0, 0, 0, 0, 0],
+		pskills: [0, 0, 0, 0, 0, 0, 0],
+		datestart: 0,
+		datesave: 0,
+	},
+	// Round Information object
+	roundInfo: {
 		monsters: [],
 		currRound: 0,
 		maxRound: 0,
@@ -629,103 +849,38 @@ hvStat.storage = {
 		weaponprocs: [0, 0, 0, 0, 0, 0, 0, 0],	// stats
 		pskills: [0, 0, 0, 0, 0, 0, 0],	// stats
 	},
-	get roundInfo() {
-		if (!this._roundInfo) {
-			this._roundInfo = new hvStat.storage.Item("hvStat.roundInfo", this._roundInfoDefault);
-		}
-		return this._roundInfo;
+	// Equipment Tags object
+	equipmentTags: {
+		OneHandedIDs: [],
+		OneHandedTAGs: [],
+		TwoHandedIDs: [],
+		TwoHandedTAGs: [],
+		StaffsIDs: [],
+		StaffsTAGs: [],
+		ShieldIDs: [],
+		ShieldTAGs: [],
+		ClothIDs: [],
+		ClothTAGs: [],
+		LightIDs: [],
+		LightTAGs: [],
+		HeavyIDs: [],
+		HeavyTAGs: [],
 	},
-	//------------------------------------
-	// Overview
-	//------------------------------------
-	_overview: null,
-	_overviewDefault: {
-		startTime: 0,
-		lastHourlyTime: 0,
-		exp: 0,
-		credits: 0,
-		lastEquipTime: 0,
-		lastEquipName: "",
-		equips: 0,
-		lastArtTime: 0,
-		lastArtName: "",
-		artifacts: 0,
-		roundArray: [0, 0, 0, 0],
-		totalRounds: 0,
-		expbyBT: [0, 0, 0, 0],
-		creditsbyBT: [0, 0, 0, 0],
-	},
-	get overview() {
-		if (!this._overview) {
-			this._overview = new hvStat.storage.Item("HVOverview", this._overviewDefault);
-		}
-		this._overview.value.totalRounds =
-			this._overview.value.roundArray[0] +
-			this._overview.value.roundArray[1] +
-			this._overview.value.roundArray[2] +
-			this._overview.value.roundArray[3];
-		return this._overview;
-	},
-	//------------------------------------
-	// Statistics
-	//------------------------------------
-	_stats: null,
-	_statsDefault: {
-		rounds: 0,
-		kills: 0,
-		aAttempts: 0,
-		aHits: [0, 0],
-		aOffhands: [0, 0, 0, 0],
-		sAttempts: 0,
-		aDomino: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-		aCounters: [0, 0, 0, 0],
-		dDealt: [0, 0, 0],
-		sHits: [0, 0],
-		sResists: 0,
-		dDealtSp: [0, 0],
-		absArry: [0, 0, 0],
-		mAttempts: 0,
-		dTaken: [0, 0],
-		mHits: [0, 0],
-		pDodges: 0,
-		pEvades: 0,
-		pParries: 0,
-		pBlocks: 0,
-		pResists: 0,
-		mSpells: 0,
-		overStrikes: 0,
-		coalesce: 0,
-		eTheft: 0,
-		channel: 0,
-		cureTotals: [0, 0, 0],
-		cureCounts: [0, 0, 0],
-		elemEffects: [0, 0, 0],
-		effectPoison: [0, 0],
-		elemSpells: [0, 0, 0, 0],
-		divineSpells: [0, 0, 0, 0],
-		forbidSpells: [0, 0, 0, 0],
-		depSpells: [0, 0],
-		supportSpells: 0,
-		curativeSpells: 0,
-		elemGain: 0,
-		divineGain: 0,
-		forbidGain: 0,
-		depGain: 0,
-		supportGain: 0,
-		weapProfGain: [0, 0, 0, 0],
-		armorProfGain: [0, 0, 0],
-		weaponprocs: [0, 0, 0, 0, 0, 0, 0, 0],
-		pskills: [0, 0, 0, 0, 0, 0, 0],
-		datestart: 0,
-	},
-	get stats() {
-		if (!this._stats) {
-			this._stats = new hvStat.storage.Item("HVStats", this._statsDefault);
-		}
-		return this._stats;
+	// Old Monster Database object
+	oldMonsterDatabase: {
+		mclass: [],
+		mpl: [],
+		mattack: [],
+		mweak: [],
+		mresist: [],
+		mimperv: [],
+		mskilltype: [],
+		mskillspell: [],
+		datescan: [],
 	},
 };
 
+// Generic Item constructor
 hvStat.storage.Item = function (key, defaultValue) {
 	this._key = key;
 	this._defaultValue = defaultValue;
@@ -733,24 +888,23 @@ hvStat.storage.Item = function (key, defaultValue) {
 };
 hvStat.storage.Item.prototype = {
 	get value() {
+		return this.getValue();
+	},
+	getValue: function () {
 		if (!this._value) {
 			this._value = hvStat.storage.getItem(this._key);
 			if (!this._value) {
 				this._value = util.clone(this._defaultValue);
 			} else {
-				// copy newly added properties from default
+				// Copy newly added properties from default
 				hvStat.util.forEachProperty(this._value, this._defaultValue, function (storedValue, defaultValue, key) {
 					if (storedValue[key] === undefined) {
-						//console.debug(storedValue);
-						//console.debug(defaultValue);
-						//console.debug(key);
 						storedValue[key] = util.clone(defaultValue[key]);
 					}
 				});
-				// remove disused properties
+				// Remove disused properties
 				hvStat.util.forEachProperty(this._defaultValue, this._value, function (defaultValue, storedValue, key) {
 					if (defaultValue[key] === undefined) {
-						//console.debug(String(key));
 						delete storedValue[key];
 					}
 				});
@@ -770,31 +924,144 @@ hvStat.storage.Item.prototype = {
 	},
 };
 
+// Settings object
+hvStat.storage.settings = new hvStat.storage.Item("HVSettings", hvStat.storage.initialValue.settings);
+
+// Character Status object
+hvStat.storage.characterStatus = new hvStat.storage.Item("hvStat.characterStatus", hvStat.storage.initialValue.characterStatus);
+
+// Proficiencies object
+hvStat.storage.proficiencies = new hvStat.storage.Item("HVProf", hvStat.storage.initialValue.proficiencies);
+
+// Overview constructor inherits Item
+hvStat.storage.Overview = function (key, defaultValue) {
+	hvStat.storage.Item.apply(this, [key, defaultValue]);
+};
+hvStat.storage.Overview.prototype = Object.create(hvStat.storage.Item.prototype);
+hvStat.storage.Overview.prototype.constructor = hvStat.storage.Overview;
+hvStat.storage.Overview.prototype.getValue = function () {
+	var v = hvStat.storage.Item.prototype.getValue.apply(this);
+	Object.defineProperty(v, "totalRounds", {
+		get: function () {
+			return this.roundArray[0] + this.roundArray[1] + this.roundArray[2] + this.roundArray[3];
+		},
+		enumerable: true,
+		configurable: true
+	});
+	return v;
+};
+
+// Overview object
+hvStat.storage.overview = new hvStat.storage.Overview("HVOverview", hvStat.storage.initialValue.overview);
+
+// Statistics object
+hvStat.storage.stats = new hvStat.storage.Item("HVStats", hvStat.storage.initialValue.stats);
+
+// Arena Rewards constructor inherits Item
+hvStat.storage.ArenaRewards = function (key, defaultValue) {
+	hvStat.storage.Item.apply(this, [key, defaultValue]);
+};
+hvStat.storage.ArenaRewards.prototype = Object.create(hvStat.storage.Item.prototype);
+hvStat.storage.ArenaRewards.prototype.constructor = hvStat.storage.ArenaRewards;
+hvStat.storage.ArenaRewards.prototype.getValue = function () {
+	var v = hvStat.storage.Item.prototype.getValue.apply(this);
+	Object.defineProperty(v, "totalRewards", {
+		get: function () {
+			return this.artRwrd + this.eqRwrd + this.itemsRwrd;
+		},
+		enumerable: true,
+		configurable: true
+	});
+	return v;
+};
+
+// Item Drops object
+hvStat.storage.itemDrops = new hvStat.storage.Item("HVDrops", hvStat.storage.initialValue.itemDrops);
+
+// Arena Rewards object
+hvStat.storage.arenaRewards = new hvStat.storage.ArenaRewards("HVRewards", hvStat.storage.initialValue.arenaRewards);
+
+// Shrine constructor inherits Item
+hvStat.storage.Shrine = function (key, defaultValue) {
+	hvStat.storage.Item.apply(this, [key, defaultValue]);
+};
+hvStat.storage.Shrine.prototype = Object.create(hvStat.storage.Item.prototype);
+hvStat.storage.Shrine.prototype.constructor = hvStat.storage.Shrine;
+hvStat.storage.Shrine.prototype.getValue = function () {
+	var v = hvStat.storage.Item.prototype.getValue.apply(this);
+	Object.defineProperty(v, "totalRewards", {
+		get: function () {
+			return this.trophyArray.length + this.artifactsTraded;
+		},
+		enumerable: true,
+		configurable: true
+	});
+	return v;
+};
+
+// Shrine object
+hvStat.storage.shrine = new hvStat.storage.Shrine("HVShrine", hvStat.storage.initialValue.shrine);
+
+// Statistics Backup objects
+hvStat.storage.statsBackup1 = new hvStat.storage.Item("HVBackup1", hvStat.storage.initialValue.statsBackup);
+hvStat.storage.statsBackup2 = new hvStat.storage.Item("HVBackup2", hvStat.storage.initialValue.statsBackup);
+hvStat.storage.statsBackup3 = new hvStat.storage.Item("HVBackup3", hvStat.storage.initialValue.statsBackup);
+hvStat.storage.statsBackup4 = new hvStat.storage.Item("HVBackup4", hvStat.storage.initialValue.statsBackup);
+hvStat.storage.statsBackup5 = new hvStat.storage.Item("HVBackup5", hvStat.storage.initialValue.statsBackup);
+
+// Round Information object
+hvStat.storage.roundInfo = new hvStat.storage.Item("hvStat.roundInfo", hvStat.storage.initialValue.roundInfo);
+
+// Equipment Tags object
+hvStat.storage.equipmentTags = new hvStat.storage.Item("HVTags", hvStat.storage.initialValue.equipmentTags);
+
+// Old Monster Database object
+hvStat.storage.oldMonsterDatabase = new hvStat.storage.Item("HVDatabase", hvStat.storage.initialValue.oldMonsterDatabase);
+
+
+//------------------------------------
+// Gadgets
+//------------------------------------
 hvStat.gadget = {};
 
 hvStat.gadget.proficiencyPopupIcon = {
 	popup: null,
 	create: function () {
-		loadProfsObject();
-		if (!isProfTotalsRecorded()) return;
-
+		if (!hvStat.characterStatus.areProficienciesCaptured) {
+			return;
+		}
+//		loadProfsObject();
+//		if (!isProfTotalsRecorded()) return;
 		this.popup = document.createElement("div");
 		this.popup.id = "hvstat-proficiency-popup";
 		this.popup.innerHTML = browser.extension.getResourceText("html/", "proficiency-table.html");
 		var tableData = this.popup.querySelectorAll('td');
-		tableData[ 0].textContent = _profs.weapProfTotals[0].toFixed(2);
-		tableData[ 2].textContent = _profs.weapProfTotals[1].toFixed(2);
-		tableData[ 4].textContent = _profs.weapProfTotals[2].toFixed(2);
-		tableData[ 6].textContent = _profs.weapProfTotals[3].toFixed(2);
-		tableData[ 8].textContent = _profs.armorProfTotals[0].toFixed(2);
-		tableData[10].textContent = _profs.armorProfTotals[1].toFixed(2);
-		tableData[12].textContent = _profs.armorProfTotals[2].toFixed(2);
-		tableData[ 1].textContent = _profs.elemTotal.toFixed(2);
-		tableData[ 3].textContent = _profs.divineTotal.toFixed(2);
-		tableData[ 5].textContent = _profs.forbidTotal.toFixed(2);
-		tableData[ 7].textContent = _profs.spiritTotal.toFixed(2);
-		tableData[ 9].textContent = _profs.depTotal.toFixed(2);
-		tableData[11].textContent = _profs.supportTotal.toFixed(2);
+// 		tableData[ 0].textContent = _profs.weapProfTotals[0].toFixed(2);
+// 		tableData[ 2].textContent = _profs.weapProfTotals[1].toFixed(2);
+// 		tableData[ 4].textContent = _profs.weapProfTotals[2].toFixed(2);
+// 		tableData[ 6].textContent = _profs.weapProfTotals[3].toFixed(2);
+// 		tableData[ 8].textContent = _profs.armorProfTotals[0].toFixed(2);
+// 		tableData[10].textContent = _profs.armorProfTotals[1].toFixed(2);
+// 		tableData[12].textContent = _profs.armorProfTotals[2].toFixed(2);
+// 		tableData[ 1].textContent = _profs.elemTotal.toFixed(2);
+// 		tableData[ 3].textContent = _profs.divineTotal.toFixed(2);
+// 		tableData[ 5].textContent = _profs.forbidTotal.toFixed(2);
+// 		tableData[ 7].textContent = _profs.spiritTotal.toFixed(2);
+// 		tableData[ 9].textContent = _profs.depTotal.toFixed(2);
+// 		tableData[11].textContent = _profs.supportTotal.toFixed(2);
+		tableData[ 0].textContent = hvStat.characterStatus.proficiencies.oneHanded.toFixed(2);
+		tableData[ 2].textContent = hvStat.characterStatus.proficiencies.twoHanded.toFixed(2);
+		tableData[ 4].textContent = hvStat.characterStatus.proficiencies.dualWielding.toFixed(2);
+		tableData[ 6].textContent = hvStat.characterStatus.proficiencies.staff.toFixed(2);
+		tableData[ 8].textContent = hvStat.characterStatus.proficiencies.clothArmor.toFixed(2);
+		tableData[10].textContent = hvStat.characterStatus.proficiencies.lightArmor.toFixed(2);
+		tableData[12].textContent = hvStat.characterStatus.proficiencies.heavyArmor.toFixed(2);
+		tableData[ 1].textContent = hvStat.characterStatus.proficiencies.elemental.toFixed(2);
+		tableData[ 3].textContent = hvStat.characterStatus.proficiencies.divine.toFixed(2);
+		tableData[ 5].textContent = hvStat.characterStatus.proficiencies.forbidden.toFixed(2);
+		tableData[ 7].textContent = hvStat.characterStatus.proficiencies.spiritual.toFixed(2);
+		tableData[ 9].textContent = hvStat.characterStatus.proficiencies.deprecating.toFixed(2);
+		tableData[11].textContent = hvStat.characterStatus.proficiencies.supportive.toFixed(2);
 		var icon = document.createElement("div");
 		icon.id = "hvstat-proficiency-popup-icon";
 		icon.className = "ui-corner-all";
@@ -813,6 +1080,9 @@ hvStat.gadget.proficiencyPopupIcon = {
 	},
 };
 
+//------------------------------------
+// Keyboard
+//------------------------------------
 hvStat.keyboard = {
 	scrollable: {
 		targets: [
@@ -952,6 +1222,9 @@ hvStat.keyboard.KeyCombination.prototype = {
 	},
 };
 
+//------------------------------------
+// Battle
+//------------------------------------
 hvStat.battle = {
 	constant: {
 		rInfoPaneParameters: /battle\.set_infopane_(?:spell|skill|item|effect)\('((?:[^'\\]|\\.)*)'\s*,\s*'(?:[^'\\]|\\.)*'\s*,\s*(.+)\)/,
@@ -3782,7 +4055,7 @@ HOURLY = 0;
 ARENA = 1;
 GRINDFEST = 2;
 ITEM_WORLD = 3;
-_profs = null;
+// _profs = null;
 _rewards = null;
 _shrine = null;
 _drops = null;
@@ -3894,27 +4167,42 @@ function collectCurrentProfsData() {
 	if (!hv.location.isCharacter || hv.settings.useHVFontEngine) {
 		return;
 	}
-	loadProfsObject();
+// 	loadProfsObject();
 	var proficiencyTableElements = document.getElementById("leftpane").children[1].querySelectorAll("div.fd12");
-	_profs.weapProfTotals[0] = Number(util.innerText(proficiencyTableElements[2]));
-	_profs.weapProfTotals[1] = Number(util.innerText(proficiencyTableElements[4]));
-	_profs.weapProfTotals[2] = Number(util.innerText(proficiencyTableElements[6]));
-	_profs.weapProfTotals[3] = Number(util.innerText(proficiencyTableElements[8]));
-	_profs.armorProfTotals[0] = Number(util.innerText(proficiencyTableElements[10]));
-	_profs.armorProfTotals[1] = Number(util.innerText(proficiencyTableElements[12]));
-	_profs.armorProfTotals[2] = Number(util.innerText(proficiencyTableElements[14]));
-	_profs.elemTotal = Number(util.innerText(proficiencyTableElements[17]));
-	_profs.divineTotal = Number(util.innerText(proficiencyTableElements[19]));
-	_profs.forbidTotal = Number(util.innerText(proficiencyTableElements[21]));
-	_profs.spiritTotal = Number(util.innerText(proficiencyTableElements[23]));
-	_profs.depTotal = Number(util.innerText(proficiencyTableElements[25]));
-	_profs.supportTotal = Number(util.innerText(proficiencyTableElements[27]));
-	_profs.save();
+// 	_profs.weapProfTotals[0] = Number(util.innerText(proficiencyTableElements[2]));
+// 	_profs.weapProfTotals[1] = Number(util.innerText(proficiencyTableElements[4]));
+// 	_profs.weapProfTotals[2] = Number(util.innerText(proficiencyTableElements[6]));
+// 	_profs.weapProfTotals[3] = Number(util.innerText(proficiencyTableElements[8]));
+// 	_profs.armorProfTotals[0] = Number(util.innerText(proficiencyTableElements[10]));
+// 	_profs.armorProfTotals[1] = Number(util.innerText(proficiencyTableElements[12]));
+// 	_profs.armorProfTotals[2] = Number(util.innerText(proficiencyTableElements[14]));
+// 	_profs.elemTotal = Number(util.innerText(proficiencyTableElements[17]));
+// 	_profs.divineTotal = Number(util.innerText(proficiencyTableElements[19]));
+// 	_profs.forbidTotal = Number(util.innerText(proficiencyTableElements[21]));
+// 	_profs.spiritTotal = Number(util.innerText(proficiencyTableElements[23]));
+// 	_profs.depTotal = Number(util.innerText(proficiencyTableElements[25]));
+// 	_profs.supportTotal = Number(util.innerText(proficiencyTableElements[27]));
+// 	_profs.save();
+	hvStat.characterStatus.proficiencies.oneHanded = Number(util.innerText(proficiencyTableElements[2]));
+	hvStat.characterStatus.proficiencies.twoHanded = Number(util.innerText(proficiencyTableElements[4]));
+	hvStat.characterStatus.proficiencies.dualWielding = Number(util.innerText(proficiencyTableElements[6]));
+	hvStat.characterStatus.proficiencies.staff = Number(util.innerText(proficiencyTableElements[8]));
+	hvStat.characterStatus.proficiencies.clothArmor = Number(util.innerText(proficiencyTableElements[10]));
+	hvStat.characterStatus.proficiencies.lightArmor = Number(util.innerText(proficiencyTableElements[12]));
+	hvStat.characterStatus.proficiencies.heavyArmor = Number(util.innerText(proficiencyTableElements[14]));
+	hvStat.characterStatus.proficiencies.elemental = Number(util.innerText(proficiencyTableElements[17]));
+	hvStat.characterStatus.proficiencies.divine = Number(util.innerText(proficiencyTableElements[19]));
+	hvStat.characterStatus.proficiencies.forbidden = Number(util.innerText(proficiencyTableElements[21]));
+	hvStat.characterStatus.proficiencies.spiritual = Number(util.innerText(proficiencyTableElements[23]));
+	hvStat.characterStatus.proficiencies.deprecating = Number(util.innerText(proficiencyTableElements[25]));
+	hvStat.characterStatus.proficiencies.supportive = Number(util.innerText(proficiencyTableElements[27]));
+	hvStat.characterStatus.areProficienciesCaptured = true;
+	hvStat.storage.characterStatus.save();
 }
-function isProfTotalsRecorded() {
-	loadProfsObject();
-	return _profs.weapProfTotals.length > 0;
-}
+// function isProfTotalsRecorded() {
+// 	loadProfsObject();
+// 	return _profs.weapProfTotals.length > 0;
+// }
 function inventoryWarning() {
 	var d = 4;
 	var rectObject = document.querySelector("div.stuffbox").getBoundingClientRect();
@@ -4017,47 +4305,62 @@ function collectRoundInfo() {
 		if ((hvStat.settings.isShowSidebarProfs || hvStat.settings.isTrackStats) && logHTML.match(/0.0(\d+) points of (.*?) proficiency/ig)) {
 			var p = (RegExp.$1) / 100;
 			var r = RegExp.$2;
-			loadProfsObject();
+// 			loadProfsObject();
 			if (r.match(/one-handed weapon/)) {
-				_profs.weapProfTotals[0] += p;
+				hvStat.characterStatus.proficiencies.oneHanded += p;
+// 				_profs.weapProfTotals[0] += p;
 				hvStat.roundInfo.weapProfGain[0] += p;
 			} else if (r.match(/two-handed weapon/)) {
-				_profs.weapProfTotals[1] += p;
+				hvStat.characterStatus.proficiencies.twoHanded += p;
+// 				_profs.weapProfTotals[1] += p;
 				hvStat.roundInfo.weapProfGain[1] += p;
 			} else if (r.match(/dual wielding/)) {
-				_profs.weapProfTotals[2] += p;
+				hvStat.characterStatus.proficiencies.dualWielding += p;
+// 				_profs.weapProfTotals[2] += p;
 				hvStat.roundInfo.weapProfGain[2] += p;
 			} else if (r.match(/staff/)) {
-				_profs.weapProfTotals[3] += p;
+				hvStat.characterStatus.proficiencies.staff += p;
+// 				_profs.weapProfTotals[3] += p;
 				hvStat.roundInfo.weapProfGain[3] += p;
 			} else if (r.match(/cloth armor/)) {
-				_profs.armorProfTotals[0] += p;
+				hvStat.characterStatus.proficiencies.clothArmor += p;
+// 				_profs.armorProfTotals[0] += p;
 				hvStat.roundInfo.armorProfGain[0] += p;
 			} else if (r.match(/light armor/)) {
-				_profs.armorProfTotals[1] += p;
+				hvStat.characterStatus.proficiencies.lightArmor += p;
+// 				_profs.armorProfTotals[1] += p;
 				hvStat.roundInfo.armorProfGain[1] += p;
 			} else if (r.match(/heavy armor/)) {
-				_profs.armorProfTotals[2] += p;
+				hvStat.characterStatus.proficiencies.heavyArmor += p;
+// 				_profs.armorProfTotals[2] += p;
 				hvStat.roundInfo.armorProfGain[2] += p;
 			} else if (r.match(/elemental magic/)) {
-				_profs.elemTotal += p;
+				hvStat.characterStatus.proficiencies.elemental += p;
+// 				_profs.elemTotal += p;
 				hvStat.roundInfo.elemGain += p;
 			} else if (r.match(/divine magic/)) {
-				_profs.divineTotal += p;
-				_profs.spiritTotal = (_profs.divineTotal+_profs.forbidTotal) / 2;
+				hvStat.characterStatus.proficiencies.divine += p;
+				hvStat.characterStatus.proficiencies.spiritual = (hvStat.characterStatus.proficiencies.divine + hvStat.characterStatus.proficiencies.forbidden) / 2;
+// 				_profs.divineTotal += p;
+// 				_profs.spiritTotal = (_profs.divineTotal+_profs.forbidTotal) / 2;
 				hvStat.roundInfo.divineGain += p;
 			} else if (r.match(/forbidden magic/)) {
-				_profs.forbidTotal += p;
-				_profs.spiritTotal = (_profs.divineTotal+_profs.forbidTotal) / 2;
+				hvStat.characterStatus.proficiencies.forbidden += p;
+				hvStat.characterStatus.proficiencies.spiritual = (hvStat.characterStatus.proficiencies.divine + hvStat.characterStatus.proficiencies.forbidden) / 2;
+// 				_profs.forbidTotal += p;
+// 				_profs.spiritTotal = (_profs.divineTotal+_profs.forbidTotal) / 2;
 				hvStat.roundInfo.forbidGain += p;
 			} else if (r.match(/deprecating magic/)) {
-				_profs.depTotal += p;
+				hvStat.characterStatus.proficiencies.deprecating += p;
+// 				_profs.depTotal += p;
 				hvStat.roundInfo.depGain += p;
 			} else if (r.match(/supportive magic/)) {
-				_profs.supportTotal += p;
+				hvStat.characterStatus.proficiencies.supportive += p;
+// 				_profs.supportTotal += p;
 				hvStat.roundInfo.supportGain += p;
 			}
-			_profs.save();
+			hvStat.storage.characterStatus.save();
+// 			_profs.save();
 		}
 		if (hvStat.settings.isRememberScan) {
 			if (logHTML.indexOf("Scanning") >= 0) {
@@ -4789,7 +5092,7 @@ function getReportOverviewHtml() {
 			+ '<td style="padding-left:10px;width:34%">Overcharge Alert: ' + (hvStat.settings.isAlertOverchargeFull ? a : w) + '</td>'
 			+ '<td></td>'
 		+ '</tr></table>';
-	if (hvStat.overview.isLoaded && hvStat.overview.totalRounds > 0)
+	if (hvStat.overview.totalRounds > 0)
 		x += '<table class="_UI" cellspacing="0" cellpadding="2" style="width:100%"><tr><td align="right" colspan="3"><input type="button" class="_resetOverview" value="Reset Overview" /></td></tr></table>'
 	return x;
 }
@@ -5774,9 +6077,11 @@ function saveSettings() {
 	hvStat.storage.settings.save();
 }
 function reminderAndSaveSettings() {
-	loadProfsObject();
-	if (!isProfTotalsRecorded() && $("input[name=isShowSidebarProfs]").get(0).checked)
+// 	loadProfsObject();
+	// !isProfTotalsRecorded()
+	if (!hvStat.characterStatus.areProficienciesCaptured && $("input[name=isShowSidebarProfs]").get(0).checked) {
 		alert('Please visit the Character Stats page at least once\nwith either the "Use Downloable Fonts" or "Custom\nLocal Font" setting enabled, to allow STAT to record\nyour current proficiencies. STAT cannot record this\ndata while HentaiVerse Font Engine is enabled.');
+	}
 	saveSettings();
 }
 function captureShrine() {
@@ -5808,11 +6113,11 @@ function captureShrine() {
 	}
 	_shrine.save();
 }
-function loadProfsObject() {
-	if (_profs !== null) return;
-	_profs = new HVCacheProf();
-	_profs.load();
-}
+// function loadProfsObject() {
+// 	if (_profs !== null) return;
+// 	_profs = new HVCacheProf();
+// 	_profs.load();
+// }
 function loadRewardsObject() {
 	if (_rewards !== null) return;
 	_rewards = new HVCacheRewards();
@@ -6450,10 +6755,21 @@ hvStat.startup = {
 			document.onkeydown = null;
 		}
 		hv.setup();
-//		console.debug(hv);
+		console.debug(hv);
 		hvStat.setup();
-//		console.debug(hvStat);
-//		console.debug(hvStat.stats);
+		console.debug(hvStat);
+// 		console.debug(hvStat.storage.proficiencies.value);
+// 		console.debug(hvStat.storage.overview.value);
+// 		console.debug(hvStat.storage.stats.value);
+// 		console.debug(hvStat.storage.arenaRewards.value);
+// 		console.debug(hvStat.storage.shrine.value);
+// 		console.debug(hvStat.storage.itemDrops.value);
+// 		console.debug(hvStat.storage.equipmentTags.value);
+// 		console.debug(hvStat.storage.statsBackup1.value);
+// 		console.debug(hvStat.storage.statsBackup2.value);
+// 		console.debug(hvStat.storage.statsBackup3.value);
+// 		console.debug(hvStat.storage.statsBackup4.value);
+// 		console.debug(hvStat.storage.statsBackup5.value);
 		if (hvStat.settings.isChangePageTitle) {
 			document.title = hvStat.settings.customPageTitle;
 		}
