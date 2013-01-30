@@ -922,15 +922,17 @@ hvStat.storage.Overview = function (key, defaultValue) {
 hvStat.storage.Overview.prototype = Object.create(hvStat.storage.Item.prototype);
 hvStat.storage.Overview.prototype.constructor = hvStat.storage.Overview;
 hvStat.storage.Overview.prototype.getValue = function () {
-	var v = hvStat.storage.Item.prototype.getValue.apply(this);
-	Object.defineProperty(v, "totalRounds", {
-		get: function () {
-			return this.roundArray[0] + this.roundArray[1] + this.roundArray[2] + this.roundArray[3];
-		},
-		enumerable: true,
-		configurable: true
-	});
-	return v;
+	var obj = hvStat.storage.Item.prototype.getValue.apply(this);
+	if (!Object.getOwnPropertyDescriptor(obj, "totalRounds")) {
+		Object.defineProperty(obj, "totalRounds", {
+			get: function () {
+				return this.roundArray[0] + this.roundArray[1] + this.roundArray[2] + this.roundArray[3];
+			},
+			enumerable: false,
+			configurable: false
+		});
+	}
+	return obj;
 };
 
 // Overview object
@@ -946,13 +948,13 @@ hvStat.storage.Drops = function (key, defaultValue) {
 hvStat.storage.Drops.prototype = Object.create(hvStat.storage.Item.prototype);
 hvStat.storage.Drops.prototype.constructor = hvStat.storage.Drops;
 hvStat.storage.Drops.prototype.getValue = function () {
-	var v = hvStat.storage.Item.prototype.getValue.apply(this);
-	for (var i = 0; i < v.itemArry.length; i++) {
-		if (isNaN(parseFloat(v.itemQtyArry[i]))) {
-			v.itemQtyArry[i] = 0;
+	var obj = hvStat.storage.Item.prototype.getValue.apply(this);
+	for (var i = 0; i < obj.itemArry.length; i++) {
+		if (isNaN(parseFloat(obj.itemQtyArry[i]))) {
+			obj.itemQtyArry[i] = 0;
 		}
 	}
-	return v;
+	return obj;
 };
 
 // Drops object
@@ -965,15 +967,17 @@ hvStat.storage.ArenaRewards = function (key, defaultValue) {
 hvStat.storage.ArenaRewards.prototype = Object.create(hvStat.storage.Item.prototype);
 hvStat.storage.ArenaRewards.prototype.constructor = hvStat.storage.ArenaRewards;
 hvStat.storage.ArenaRewards.prototype.getValue = function () {
-	var v = hvStat.storage.Item.prototype.getValue.apply(this);
-	Object.defineProperty(v, "totalRewards", {
-		get: function () {
-			return this.artRwrd + this.eqRwrd + this.itemsRwrd;
-		},
-		enumerable: true,
-		configurable: true
-	});
-	return v;
+	var obj = hvStat.storage.Item.prototype.getValue.apply(this);
+	if (!Object.getOwnPropertyDescriptor(obj, "totalRwrds")) {
+		Object.defineProperty(obj, "totalRwrds", {
+			get: function () {
+				return this.artRwrd + this.eqRwrd + this.itemsRwrd;
+			},
+			enumerable: false,
+			configurable: false
+		});
+	}
+	return obj;
 };
 
 // Arena Rewards object
@@ -986,15 +990,17 @@ hvStat.storage.Shrine = function (key, defaultValue) {
 hvStat.storage.Shrine.prototype = Object.create(hvStat.storage.Item.prototype);
 hvStat.storage.Shrine.prototype.constructor = hvStat.storage.Shrine;
 hvStat.storage.Shrine.prototype.getValue = function () {
-	var v = hvStat.storage.Item.prototype.getValue.apply(this);
-	Object.defineProperty(v, "totalRewards", {
-		get: function () {
-			return this.trophyArray.length + this.artifactsTraded;
-		},
-		enumerable: true,
-		configurable: true
-	});
-	return v;
+	var obj = hvStat.storage.Item.prototype.getValue.apply(this);
+	if (!Object.getOwnPropertyDescriptor(obj, "totalRewards")) {
+		Object.defineProperty(obj, "totalRewards", {
+			get: function () {
+				return this.trophyArray.length + this.artifactsTraded;
+			},
+			enumerable: false,
+			configurable: false
+		});
+	}
+	return obj;
 };
 
 // Shrine object
@@ -1832,7 +1838,7 @@ hvStat.ui = {
 			title: "[STAT] HentaiVerse Statistics, Tracking, and Analysis Tool v." + hvStat.version,
 		});
 		$('#hvstat-tabs').tabs();
-		loadRewardsObject();
+//		loadRewardsObject();
 		loadShrineObject();
 		initOverviewPane();
 		initBattleStatsPane();
@@ -4023,7 +4029,7 @@ HVStat.migration.deleteOldDatabase = function () {
 //------------------------------------
 
 /* ========== GLOBAL VARIABLES ========== */
-HV_REWARDS = "HVRewards";
+//HV_REWARDS = "HVRewards";
 HV_SHRINE = "HVShrine";
 HV_DROPS = "HVDrops";
 HV_ROUND = "HVRound";
@@ -4034,7 +4040,7 @@ HOURLY = 0;
 ARENA = 1;
 GRINDFEST = 2;
 ITEM_WORLD = 3;
-_rewards = null;
+//_rewards = null;
 _shrine = null;
 _backup = [null, null, null, null, null, null];
 _database = null;
@@ -4191,8 +4197,8 @@ function collectRoundInfo() {
  			HVStat.monsters[i].setFromValueObject(hvStat.roundInfo.monsters[i]);
  		}
 	}
-	if (hvStat.settings.isTrackRewards)
-		loadRewardsObject();
+// 	if (hvStat.settings.isTrackRewards)
+// 		loadRewardsObject();
 	var monsterIndex = 0;
 	var turnLog = new HVStat.TurnLog();
 	var joinedLogStringOfCurrentTurn = turnLog.texts.join("\n");
@@ -4570,48 +4576,48 @@ function collectRoundInfo() {
 			var s = logHTML.match(l)[0];
 			_lastEquipName = s;
 			if (hvStat.settings.isTrackRewards) {
-				_rewards.eqRwrd++;
-				_rewards.eqRwrdArry.push(s);
+				hvStat.arenaRewards.eqRwrd++;
+				hvStat.arenaRewards.eqRwrdArry.push(s);
 			}
 		} else if (logHTML.match(/(clear bonus).*?color:.*?blue.*?\[.*?\]/ig)) {
 			_artifacts++;
 			itemToAdd = logHTML.match(l)[0];
 			_lastArtName = itemToAdd;
 			if (hvStat.settings.isTrackRewards) {
-				_rewards.artRwrd++;
+				hvStat.arenaRewards.artRwrd++;
 				n = true;
-				var j = _rewards.artRwrdArry.length;
+				var j = hvStat.arenaRewards.artRwrdArry.length;
 				while (j--) {
-					if (itemToAdd === _rewards.artRwrdArry[j]) {
-						_rewards.artRwrdQtyArry[j]++;
+					if (itemToAdd === hvStat.arenaRewards.artRwrdArry[j]) {
+						hvStat.arenaRewards.artRwrdQtyArry[j]++;
 						n = false;
 						break;
 					}
 				}
 				if (n) {
-					_rewards.artRwrdQtyArry.push(1);
-					_rewards.artRwrdArry.push(itemToAdd);
+					hvStat.arenaRewards.artRwrdQtyArry.push(1);
+					hvStat.arenaRewards.artRwrdArry.push(itemToAdd);
 				}
 			}
 		} else if (hvStat.settings.isTrackRewards && (logHTML.match(/(clear bonus).*?color:.*?green.*?\[.*?\]/ig) || logHTML.match(/(clear bonus).*?token/ig))) {
-			_rewards.itemsRwrd++;
+			hvStat.arenaRewards.itemsRwrd++;
 			itemToAdd = logHTML.match(l)[0];
 			if (itemToAdd.match(/(\d)x Crystal/ig)) {
 				t = parseInt("0" + RegExp.$1, 10);
 				itemToAdd = itemToAdd.replace(/\dx /, "");
 			}
 			n = true;
-			var j = _rewards.itemRwrdArry.length;
+			var j = hvStat.arenaRewards.itemRwrdArry.length;
 			while (j--) {
-				if (itemToAdd === _rewards.itemRwrdArry[j]) {
-					_rewards.itemRwrdQtyArry[j] += t;
+				if (itemToAdd === hvStat.arenaRewards.itemRwrdArry[j]) {
+					hvStat.arenaRewards.itemRwrdQtyArry[j] += t;
 					n = false;
 					break;
 				}
 			}
 			if (n) {
-				_rewards.itemRwrdQtyArry.push(1);
-				_rewards.itemRwrdArry.push(itemToAdd);
+				hvStat.arenaRewards.itemRwrdQtyArry.push(1);
+				hvStat.arenaRewards.itemRwrdArry.push(itemToAdd);
 			}
 		} else if (hvStat.settings.isTrackRewards && (logHTML.match(/(token bonus).*?\[.*?\]/ig))) {
 			if (logHTML.match(/token of blood/ig)) {
@@ -4649,7 +4655,7 @@ function RoundSave() {
 }
 
 function saveStats() {
-	loadRewardsObject();
+//	loadRewardsObject();
 	var d = 0;
 	var c = 0;
 	var elements = document.querySelectorAll("#togpane_log td:last-child");
@@ -4796,12 +4802,13 @@ function saveStats() {
 		hvStat.stats.pskills[6] += hvStat.roundInfo.pskills[6];
 		if (hvStat.stats.datestart === 0) hvStat.stats.datestart = (new Date()).getTime();
 	}
-	_rewards.tokenDrops[0] += _tokenDrops[0];
-	_rewards.tokenDrops[1] += _tokenDrops[1];
-	_rewards.tokenDrops[2] += _tokenDrops[2];
+	hvStat.arenaRewards.tokenDrops[0] += _tokenDrops[0];
+	hvStat.arenaRewards.tokenDrops[1] += _tokenDrops[1];
+	hvStat.arenaRewards.tokenDrops[2] += _tokenDrops[2];
 	hvStat.storage.overview.save();
 	hvStat.storage.stats.save();
-	_rewards.save();
+//	_rewards.save();
+	hvStat.storage.arenaRewards.save();
 	hvStat.storage.drops.save();
 }
 function getBattleEndStatsHtml() {
@@ -4900,7 +4907,7 @@ function getReportOverviewHtml() {
 	y += hvStat.settings.isShowMonsterDuration ? '<span style="color:green"><b>Duration</b></span>' : I;
 	B = hvStat.settings.isTrackStats ? a : hvStat.stats.rounds > 0 ? q : w;
 	A = hvStat.settings.isTrackItems ? a : hvStat.drops.dropChances > 0 ? q : w;
-	l = hvStat.settings.isTrackRewards ? a : _rewards.isLoaded && _rewards.totalRwrds > 0 ? q : w;
+	l = hvStat.settings.isTrackRewards ? a : hvStat.arenaRewards.totalRwrds > 0 ? q : w;
 	Shrine = hvStat.settings.isTrackShrine ? a : _shrine.isLoaded && _shrine.totalRewards > 0 ? q : w;
 	u = hvStat.settings.isWarnSparkTrigger ? '<span style="color:green"><b>Trig</b></span>' : I;
 	u += N;
@@ -5290,85 +5297,89 @@ function initItemPane() {
 }
 function initRewardsPane() {
 	var innerHTML;
-	if (_rewards.totalRwrds === 0) {
+	if (hvStat.arenaRewards.totalRwrds === 0) {
 		innerHTML = "No data found. Complete an arena to begin tracking.";
 	} else {
 		innerHTML = browser.extension.getResourceText("html/", "arena-rewards-pane.html");
 	}
 	$('#hvstat-arena-rewards-pane').html(innerHTML);
-	if (_rewards.totalRwrds > 0) {
+	if (hvStat.arenaRewards.totalRwrds > 0) {
 		if (!hvStat.settings.isTrackRewards) {
 			$('#hvstat-arena-rewards-pane .hvstat-tracking-paused').show();
 		}
 		// Total Rewards
-		$('#hvstat-arena-rewards-total-number').text(_rewards.totalRwrds);
+		$('#hvstat-arena-rewards-total-number').text(hvStat.arenaRewards.totalRwrds);
 		var tdTotalArtifact = $('#hvstat-arena-rewards-total-artifact td');
 		var tdTotalEquipment = $('#hvstat-arena-rewards-total-equipment td');
 		var tdTotalItem = $('#hvstat-arena-rewards-total-item td');
 		var tdTotalTotal = $('#hvstat-arena-rewards-total-total td');
-		$(tdTotalArtifact[0]).text(_rewards.artRwrd);
-		$(tdTotalArtifact[1]).text(hvStat.util.percentRatio(_rewards.artRwrd, _rewards.totalRwrds, 2) + "%");
-		$(tdTotalEquipment[0]).text(_rewards.eqRwrd);
-		$(tdTotalEquipment[1]).text(hvStat.util.percentRatio(_rewards.eqRwrd, _rewards.totalRwrds, 2) + "%");
-		$(tdTotalItem[0]).text(_rewards.itemsRwrd);
-		$(tdTotalItem[1]).text(hvStat.util.percentRatio(_rewards.itemsRwrd, _rewards.totalRwrds, 2) + "%");
-		$(tdTotalTotal[0]).text(_rewards.totalRwrds);
+		$(tdTotalArtifact[0]).text(hvStat.arenaRewards.artRwrd);
+		$(tdTotalArtifact[1]).text(hvStat.util.percentRatio(hvStat.arenaRewards.artRwrd, hvStat.arenaRewards.totalRwrds, 2) + "%");
+		$(tdTotalEquipment[0]).text(hvStat.arenaRewards.eqRwrd);
+		$(tdTotalEquipment[1]).text(hvStat.util.percentRatio(hvStat.arenaRewards.eqRwrd, hvStat.arenaRewards.totalRwrds, 2) + "%");
+		$(tdTotalItem[0]).text(hvStat.arenaRewards.itemsRwrd);
+		$(tdTotalItem[1]).text(hvStat.util.percentRatio(hvStat.arenaRewards.itemsRwrd, hvStat.arenaRewards.totalRwrds, 2) + "%");
+		$(tdTotalTotal[0]).text(hvStat.arenaRewards.totalRwrds);
 		// Token Bonuses
-		var totalTokenDrops = _rewards.tokenDrops[0] + _rewards.tokenDrops[2];
+		var totalTokenDrops = hvStat.arenaRewards.tokenDrops[0] + hvStat.arenaRewards.tokenDrops[2];
 		$('#hvstat-arena-rewards-token-bonuses-number').text(totalTokenDrops);
 		var tdTokenBlood = $('#hvstat-arena-rewards-token-bonuses-blood td');
 		var tdTokenChaos = $('#hvstat-arena-rewards-token-bonuses-chaos td');
 		var tdTokenTotal = $('#hvstat-arena-rewards-token-bonuses-total td');
-		$(tdTokenBlood[0]).text(_rewards.tokenDrops[0]);
-		$(tdTokenBlood[1]).text(hvStat.util.percentRatio(_rewards.tokenDrops[0], totalTokenDrops, 2) + "%");
-		$(tdTokenChaos[0]).text(_rewards.tokenDrops[2]);
-		$(tdTokenChaos[1]).text(hvStat.util.percentRatio(_rewards.tokenDrops[2], totalTokenDrops, 2) + "%");
-		$(tdTokenTotal[0]).text(_rewards.tokenDrops[0] + _rewards.tokenDrops[2]);
+		$(tdTokenBlood[0]).text(hvStat.arenaRewards.tokenDrops[0]);
+		$(tdTokenBlood[1]).text(hvStat.util.percentRatio(hvStat.arenaRewards.tokenDrops[0], totalTokenDrops, 2) + "%");
+		$(tdTokenChaos[0]).text(hvStat.arenaRewards.tokenDrops[2]);
+		$(tdTokenChaos[1]).text(hvStat.util.percentRatio(hvStat.arenaRewards.tokenDrops[2], totalTokenDrops, 2) + "%");
+		$(tdTokenTotal[0]).text(hvStat.arenaRewards.tokenDrops[0] + hvStat.arenaRewards.tokenDrops[2]);
 		// Artifacts
-		var i = _rewards.artRwrdArry.length;
+		var i = hvStat.arenaRewards.artRwrdArry.length;
 		var artifactsHTML = "";
 		while (i--) {
-			artifactsHTML += '<li>' + _rewards.artRwrdArry[i] + ' x ' + _rewards.artRwrdQtyArry[i] + '</li>';
+			artifactsHTML += '<li>' + hvStat.arenaRewards.artRwrdArry[i] + ' x ' + hvStat.arenaRewards.artRwrdQtyArry[i] + '</li>';
 		}
 		$('#hvstat-arena-rewards-artifacts').html(artifactsHTML);
 		// Equipments
-		i = _rewards.eqRwrdArry.length;
+		i = hvStat.arenaRewards.eqRwrdArry.length;
 		var equipmentsHTML = "";
 		while (i--) {
-			equipmentsHTML += '<li>' + _rewards.eqRwrdArry[i] + '</li>';
+			equipmentsHTML += '<li>' + hvStat.arenaRewards.eqRwrdArry[i] + '</li>';
 		}
 		$('#hvstat-arena-rewards-equipments').html(equipmentsHTML);
 		// Items
-		i = _rewards.itemRwrdArry.length;
+		i = hvStat.arenaRewards.itemRwrdArry.length;
 		var itemsHTML = "";
 		while (i--) {
-			itemsHTML += '<li>' + _rewards.itemRwrdArry[i] + ' x ' + _rewards.itemRwrdQtyArry[i] + '</li>';
+			itemsHTML += '<li>' + hvStat.arenaRewards.itemRwrdArry[i] + ' x ' + hvStat.arenaRewards.itemRwrdQtyArry[i] + '</li>';
 		}
 		$('#hvstat-arena-rewards-items').html(itemsHTML);
 		// Buttons
 		$('#hvstat-arena-rewards-artifacts-clear').click(function () {
 			if (confirm("Clear Artifact list?")) {
-				_rewards.artRwrdArry = [];
-				_rewards.artRwrdQtyArry = [];
-				_rewards.save();
+				hvStat.arenaRewards.artRwrdArry = [];
+				hvStat.arenaRewards.artRwrdQtyArry = [];
+//				_rewards.save();
+				hvStat.storage.arenaRewards.save();
 			}
 		});
 		$('#hvstat-arena-rewards-equipments-clear').click(function () {
 			if (confirm("Clear Equipment list?")) {
-				_rewards.eqRwrdArry = [];
-				_rewards.save();
+				hvStat.arenaRewards.eqRwrdArry = [];
+//				_rewards.save();
+				hvStat.storage.arenaRewards.save();
 			}
 		});
 		$('#hvstat-arena-rewards-items-clear').click(function () {
 			if (confirm("Clear Item list?")) {
-				_rewards.itemRwrdArry = [];
-				_rewards.itemRwrdQtyArry = [];
-				_rewards.save();
+				hvStat.arenaRewards.itemRwrdArry = [];
+				hvStat.arenaRewards.itemRwrdQtyArry = [];
+//				_rewards.save();
+				hvStat.storage.arenaRewards.save();
 			}
 		});
 		$('#hvstat-arena-rewards-reset').click(function () {
 			if (confirm("Reset Arena Rewards tab?")) {
-				_rewards.reset();
+//				_rewards.reset();
+				hvStat.storage.arenaRewards.reset();
 			}
 		});
 	}
@@ -6051,11 +6062,11 @@ function captureShrine() {
 	}
 	_shrine.save();
 }
-function loadRewardsObject() {
-	if (_rewards !== null) return;
-	_rewards = new HVCacheRewards();
-	_rewards.load();
-}
+// function loadRewardsObject() {
+// 	if (_rewards !== null) return;
+// 	_rewards = new HVCacheRewards();
+// 	_rewards.load();
+// }
 function loadShrineObject() {
 	if (_shrine !== null) return;
 	_shrine = new HVCacheShrine();
@@ -6075,7 +6086,8 @@ function getRelativeTime(b) {
 function HVResetTracking() {
 	hvStat.storage.overview.reset();
 	hvStat.storage.stats.reset();
-	_rewards.reset();
+//	_rewards.reset();
+	hvStat.storage.arenaRewards.reset();
 	_shrine.reset();
 	hvStat.storage.drops.reset();
 }
@@ -6133,26 +6145,26 @@ function loadFromStorage(c, b) {
 }
 function saveToStorage(b, a) { localStorage.setItem(a, JSON.stringify(b)); }
 function deleteFromStorage(a) { localStorage.removeItem(a); }
-function HVCacheRewards() {
-	this.load = function () { loadFromStorage(this, HV_REWARDS); };
-	this.save = function () {
-		this.totalRwrds = this.artRwrd + this.eqRwrd + this.itemsRwrd;
-		saveToStorage(this, HV_REWARDS);
-	};
-	this.reset = function () { deleteFromStorage(HV_REWARDS); };
-	this.cloneFrom = clone;
-	this.eqRwrd = 0;
-	this.eqRwrdArry = [];
-	this.itemsRwrd = 0;
-	this.itemRwrdArry = [];
-	this.itemRwrdQtyArry = [];
-	this.artRwrd = 0;
-	this.artRwrdArry = [];
-	this.artRwrdQtyArry = [];
-	this.tokenDrops = [0, 0, 0];
-	this.totalRwrds = 0;
-	this.isLoaded = false;
-}
+// function HVCacheRewards() {
+// 	this.load = function () { loadFromStorage(this, HV_REWARDS); };
+// 	this.save = function () {
+// 		this.totalRwrds = this.artRwrd + this.eqRwrd + this.itemsRwrd;
+// 		saveToStorage(this, HV_REWARDS);
+// 	};
+// 	this.reset = function () { deleteFromStorage(HV_REWARDS); };
+// 	this.cloneFrom = clone;
+// 	this.eqRwrd = 0;
+// 	this.eqRwrdArry = [];
+// 	this.itemsRwrd = 0;
+// 	this.itemRwrdArry = [];
+// 	this.itemRwrdQtyArry = [];
+// 	this.artRwrd = 0;
+// 	this.artRwrdArry = [];
+// 	this.artRwrdQtyArry = [];
+// 	this.tokenDrops = [0, 0, 0];
+// 	this.totalRwrds = 0;
+// 	this.isLoaded = false;
+// }
 function HVCacheShrine() {
 	this.load = function () { loadFromStorage(this, HV_SHRINE); };
 	this.save = function () {
@@ -6617,13 +6629,9 @@ hvStat.startup = {
 		console.debug(hvStat);
 // 		console.debug(hvStat.storage.overview.value);
 // 		console.debug(hvStat.storage.stats.value);
-// 		console.debug(hvStat.storage.statsBackup1.value);
-// 		console.debug(hvStat.storage.statsBackup2.value);
-// 		console.debug(hvStat.storage.statsBackup3.value);
-// 		console.debug(hvStat.storage.statsBackup4.value);
-// 		console.debug(hvStat.storage.statsBackup5.value);
 // 		console.debug(hvStat.storage.drops.value);
 // 		console.debug(hvStat.storage.arenaRewards.value);
+		console.debug(hvStat.arenaRewards.totalRwrds);
 // 		console.debug(hvStat.storage.shrine.value);
 // 		console.debug(hvStat.storage.equipmentTags.value);
 		if (hvStat.settings.isChangePageTitle) {
