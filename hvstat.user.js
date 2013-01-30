@@ -329,8 +329,8 @@ var hvStat = {
 	get stats() {
 		return hvStat.storage.stats.value;
 	},
-	get itemDrops() {
-		return hvStat.storage.itemDrops.value;
+	get drops() {
+		return hvStat.storage.drops.value;
 	},
 	get arenaRewards() {
 		return hvStat.storage.arenaRewards.value;
@@ -658,8 +658,8 @@ hvStat.storage.initialValue = {
 		pskills: [0, 0, 0, 0, 0, 0, 0],
 		datestart: 0,
 	},
-	// Item Drops object
-	itemDrops: {
+	// Drops object
+	drops: {
 		dropChances: 0,
 		itemArry: [
 			"[Lesser Health Potion]", "[Scroll of Swiftness]",
@@ -939,6 +939,25 @@ hvStat.storage.overview = new hvStat.storage.Overview("HVOverview", hvStat.stora
 // Statistics object
 hvStat.storage.stats = new hvStat.storage.Item("HVStats", hvStat.storage.initialValue.stats);
 
+// Drops constructor inherits Item
+hvStat.storage.Drops = function (key, defaultValue) {
+	hvStat.storage.Item.apply(this, [key, defaultValue]);
+};
+hvStat.storage.Drops.prototype = Object.create(hvStat.storage.Item.prototype);
+hvStat.storage.Drops.prototype.constructor = hvStat.storage.Drops;
+hvStat.storage.Drops.prototype.getValue = function () {
+	var v = hvStat.storage.Item.prototype.getValue.apply(this);
+	for (var i = 0; i < v.itemArry.length; i++) {
+		if (isNaN(parseFloat(v.itemQtyArry[i]))) {
+			v.itemQtyArry[i] = 0;
+		}
+	}
+	return v;
+};
+
+// Drops object
+hvStat.storage.drops = new hvStat.storage.Drops("HVDrops", hvStat.storage.initialValue.drops);
+
 // Arena Rewards constructor inherits Item
 hvStat.storage.ArenaRewards = function (key, defaultValue) {
 	hvStat.storage.Item.apply(this, [key, defaultValue]);
@@ -956,9 +975,6 @@ hvStat.storage.ArenaRewards.prototype.getValue = function () {
 	});
 	return v;
 };
-
-// Item Drops object
-hvStat.storage.itemDrops = new hvStat.storage.Item("HVDrops", hvStat.storage.initialValue.itemDrops);
 
 // Arena Rewards object
 hvStat.storage.arenaRewards = new hvStat.storage.ArenaRewards("HVRewards", hvStat.storage.initialValue.arenaRewards);
@@ -1816,7 +1832,7 @@ hvStat.ui = {
 			title: "[STAT] HentaiVerse Statistics, Tracking, and Analysis Tool v." + hvStat.version,
 		});
 		$('#hvstat-tabs').tabs();
-		loadDropsObject();
+// 		loadDropsObject();
 		loadRewardsObject();
 		loadShrineObject();
 		initOverviewPane();
@@ -4014,8 +4030,6 @@ HV_DROPS = "HVDrops";
 HV_ROUND = "HVRound";
 HV_EQUIP = "inventoryAlert";
 HV_DBASE = "HVMonsterDatabase";
-HV_COLL = "HVCollectData";
-HV_CHSS = "HVCharacterSettingsandStats";
 HV_TAGS = "HVTags";
 HOURLY = 0;
 ARENA = 1;
@@ -4023,12 +4037,10 @@ GRINDFEST = 2;
 ITEM_WORLD = 3;
 _rewards = null;
 _shrine = null;
-_drops = null;
-_round = null;
+// _drops = null;
 _backup = [null, null, null, null, null, null];
 _database = null;
 _tags = null;
-_isMenuInitComplete = false;
 _equips = 0;
 _lastEquipName = "";
 _artifacts = 0;
@@ -4147,7 +4159,7 @@ function collectCurrentProfsData() {
 	prof.spiritual = Number(util.innerText(proficiencyTable[23]));
 	prof.deprecating = Number(util.innerText(proficiencyTable[25]));
 	prof.supportive = Number(util.innerText(proficiencyTable[27]));
-	areProficienciesCaptured = true;
+	hvStat.characterStatus.areProficienciesCaptured = true;
 	hvStat.storage.characterStatus.save();
 }
 function inventoryWarning() {
@@ -4181,8 +4193,8 @@ function collectRoundInfo() {
  			HVStat.monsters[i].setFromValueObject(hvStat.roundInfo.monsters[i]);
  		}
 	}
-	if (hvStat.settings.isTrackItems)
-		loadDropsObject();
+// 	if (hvStat.settings.isTrackItems)
+// 		loadDropsObject();
 	if (hvStat.settings.isTrackRewards)
 		loadRewardsObject();
 	var monsterIndex = 0;
@@ -4509,29 +4521,29 @@ function collectRoundInfo() {
 			var q = logHTML.match(l)[0];
 			_lastEquipName = q;
 			if (hvStat.settings.isTrackItems) {
-				_drops.eqDrop++;
-				_drops.eqArray.push(q);
-				_drops.eqDropbyBT[hvStat.roundInfo.battleType]++;
+				hvStat.drops.eqDrop++;
+				hvStat.drops.eqArray.push(q);
+				hvStat.drops.eqDropbyBT[hvStat.roundInfo.battleType]++;
 			}
 		} else if (logHTML.match(/dropped.*?color:.*?blue.*?\[.*?\]/ig)) {
 			_artifacts++;
 			itemToAdd = logHTML.match(l)[0];
 			_lastArtName = itemToAdd;
 			if (hvStat.settings.isTrackItems) {
-				_drops.artDrop++;
-				_drops.artDropbyBT[hvStat.roundInfo.battleType]++;
+				hvStat.drops.artDrop++;
+				hvStat.drops.artDropbyBT[hvStat.roundInfo.battleType]++;
 				n = true;
-				var j = _drops.artArry.length;
+				var j = hvStat.drops.artArry.length;
 				while (j--) {
-					if (itemToAdd === _drops.artArry[j]) {
-						_drops.artQtyArry[j]++;
+					if (itemToAdd === hvStat.drops.artArry[j]) {
+						hvStat.drops.artQtyArry[j]++;
 						n = false;
 						break;
 					}
 				}
 				if (n) {
-					_drops.artQtyArry.push(1);
-					_drops.artArry.push(itemToAdd);
+					hvStat.drops.artQtyArry.push(1);
+					hvStat.drops.artArry.push(itemToAdd);
 				}
 			}
 		} else if (hvStat.settings.isTrackItems && (logHTML.match(/dropped.*?color:.*?green.*?\[.*?\]/ig) || logHTML.match(/dropped.*?token/ig))) {
@@ -4542,20 +4554,20 @@ function collectRoundInfo() {
 					t = 1;
 				}
 				itemToAdd = itemToAdd.replace(/(\d){1,2}.?x?.?/, "");
-				_drops.crysDropbyBT[hvStat.roundInfo.battleType]++;
+				hvStat.drops.crysDropbyBT[hvStat.roundInfo.battleType]++;
 			}
-			var j = _drops.itemArry.length;
+			var j = hvStat.drops.itemArry.length;
 			while (j--) {
-				if (itemToAdd === _drops.itemArry[j]) {
-					_drops.itemQtyArry[j] += t;
-					_drops.itemDrop++;
-					_drops.itemDropbyBT[hvStat.roundInfo.battleType]++;
+				if (itemToAdd === hvStat.drops.itemArry[j]) {
+					hvStat.drops.itemQtyArry[j] += t;
+					hvStat.drops.itemDrop++;
+					hvStat.drops.itemDropbyBT[hvStat.roundInfo.battleType]++;
 					break;
 				}
 			}
 		} else if (hvStat.settings.isTrackItems && logHTML.match(/dropped.*?color:.*?\#461B7E.*?\[.*?\]/ig)) {
-			_drops.dropChances--;
-			_drops.dropChancesbyBT[hvStat.roundInfo.battleType]--;
+			hvStat.drops.dropChances--;
+			hvStat.drops.dropChancesbyBT[hvStat.roundInfo.battleType]--;
 		}
 		if (logHTML.match(/(clear bonus).*?color:.*?red.*?\[.*?\]/ig)) {
 			_equips++;
@@ -4642,7 +4654,7 @@ function RoundSave() {
 
 function saveStats() {
 	loadRewardsObject();
-	loadDropsObject();
+// 	loadDropsObject();
 	var d = 0;
 	var c = 0;
 	var elements = document.querySelectorAll("#togpane_log td:last-child");
@@ -4679,8 +4691,8 @@ function saveStats() {
 	}
 	if (d > 0) {
 		hvStat.overview.roundArray[hvStat.roundInfo.battleType]++;
-		_drops.dropChancesbyBT[hvStat.roundInfo.battleType] += hvStat.roundInfo.dropChances;
-		_drops.dropChances += hvStat.roundInfo.dropChances;
+		hvStat.drops.dropChancesbyBT[hvStat.roundInfo.battleType] += hvStat.roundInfo.dropChances;
+		hvStat.drops.dropChances += hvStat.roundInfo.dropChances;
 	}
 	if (hvStat.settings.isTrackStats) {
 		hvStat.stats.kills += hvStat.roundInfo.kills;
@@ -4795,7 +4807,7 @@ function saveStats() {
 	hvStat.storage.overview.save();
 	hvStat.storage.stats.save();
 	_rewards.save();
-	_drops.save();
+	hvStat.storage.drops.save();
 }
 function getBattleEndStatsHtml() {
 	function formatProbability(numerator, denominator, digits) {
@@ -4892,7 +4904,7 @@ function getReportOverviewHtml() {
 	y += N;
 	y += hvStat.settings.isShowMonsterDuration ? '<span style="color:green"><b>Duration</b></span>' : I;
 	B = hvStat.settings.isTrackStats ? a : hvStat.stats.rounds > 0 ? q : w;
-	A = hvStat.settings.isTrackItems ? a : _drops.isLoaded && _drops.dropChances > 0 ? q : w;
+	A = hvStat.settings.isTrackItems ? a : hvStat.drops.dropChances > 0 ? q : w;
 	l = hvStat.settings.isTrackRewards ? a : _rewards.isLoaded && _rewards.totalRwrds > 0 ? q : w;
 	Shrine = hvStat.settings.isTrackShrine ? a : _shrine.isLoaded && _shrine.totalRewards > 0 ? q : w;
 	u = hvStat.settings.isWarnSparkTrigger ? '<span style="color:green"><b>Trig</b></span>' : I;
@@ -5029,58 +5041,58 @@ function getReportOverviewHtml() {
 }
 function getReportItemHtml() {
 	var e = "Tracking disabled.";
-	if (hvStat.settings.isTrackItems && _drops.dropChances === 0)
+	if (hvStat.settings.isTrackItems && hvStat.drops.dropChances === 0)
 		e = "No data found. Complete a round to begin tracking.";
-	else if (hvStat.settings.isTrackItems && _drops.isLoaded && _drops.dropChances > 0)
+	else if (hvStat.settings.isTrackItems && hvStat.drops.dropChances > 0)
 		e = '<table class="_UI" cellspacing="0" cellpadding="1" style="width:100%">';
-	else if (!hvStat.settings.isTrackItems && _drops.isLoaded && _drops.dropChances > 0)
+	else if (!hvStat.settings.isTrackItems && hvStat.drops.dropChances > 0)
 		e = '<table class="_UI" cellspacing="0" cellpadding="1" style="width:100%"><tr><td align="center" colspan="4"><div align="center" class="ui-state-error ui-corner-all" style="padding:4px;margin:4px"><span class="ui-icon ui-icon-pause"></span><b>TRACKING PAUSED</b></div></td></tr>';
-	if (_drops.isLoaded && _drops.dropChances > 0) {
-		var b = _drops.artDrop + _drops.eqDrop + _drops.itemDrop;
-		var b0 = _drops.artDropbyBT[0] + _drops.eqDropbyBT[0] + _drops.itemDropbyBT[0];
-		var b1 = _drops.artDropbyBT[1] + _drops.eqDropbyBT[1] + _drops.itemDropbyBT[1];
-		var b2 = _drops.artDropbyBT[2] + _drops.eqDropbyBT[2] + _drops.itemDropbyBT[2];
-		var b3 = _drops.artDropbyBT[3] + _drops.eqDropbyBT[3] + _drops.itemDropbyBT[3];
-		var b4 = _drops.artDropbyBT[4] + _drops.eqDropbyBT[4] + _drops.itemDropbyBT[4];
+	if (hvStat.drops.dropChances > 0) {
+		var b = hvStat.drops.artDrop + hvStat.drops.eqDrop + hvStat.drops.itemDrop;
+		var b0 = hvStat.drops.artDropbyBT[0] + hvStat.drops.eqDropbyBT[0] + hvStat.drops.itemDropbyBT[0];
+		var b1 = hvStat.drops.artDropbyBT[1] + hvStat.drops.eqDropbyBT[1] + hvStat.drops.itemDropbyBT[1];
+		var b2 = hvStat.drops.artDropbyBT[2] + hvStat.drops.eqDropbyBT[2] + hvStat.drops.itemDropbyBT[2];
+		var b3 = hvStat.drops.artDropbyBT[3] + hvStat.drops.eqDropbyBT[3] + hvStat.drops.itemDropbyBT[3];
+		var b4 = hvStat.drops.artDropbyBT[4] + hvStat.drops.eqDropbyBT[4] + hvStat.drops.itemDropbyBT[4];
 		var d = b / 100;
-		var a = _drops.dropChances / 100;
-		e += '<tr><td colspan="4"><b>Total Item Drops:</b> ' + b + " from " + _drops.dropChances + " monsters (" + (b / a).toFixed(2) + '% total drop chance)</td></tr>'
-			+ '<tr><td colspan="4" style="padding-left:20px">Items: ' + _drops.itemDrop + " (" + (d === 0 ? 0 : (_drops.itemDrop / d).toFixed(2)) + "% of drops, " + (_drops.itemDrop / a).toFixed(2) + '% drop chance)</td></tr>'
-			+ '<tr><td colspan="4" style="padding-left:20px">Equipment: ' + _drops.eqDrop + " (" + (d === 0 ? 0 : (_drops.eqDrop / d).toFixed(2)) + "% of drops, " + (_drops.eqDrop / a).toFixed(2) + '% drop chance)</td></tr>'
-			+ '<tr><td colspan="4" style="padding-left:20px">Artifacts: ' + _drops.artDrop + " (" + (d === 0 ? 0 : (_drops.artDrop / d).toFixed(2)) + "% of drops, " + (_drops.artDrop / a).toFixed(2) + '% drop chance)</td></tr>'
-			+ '<tr><td colspan="4" style="padding-left:10px"><b>In hourly encounters:</b> ' + b0 + " from " + _drops.dropChancesbyBT[0] + " monsters (" + (b0*100 / _drops.dropChancesbyBT[0]).toFixed(2) + '% total drop chance)</td></tr>'
-			+ '<tr><td colspan="4" style="padding-left:20px">Items: ' + _drops.itemDropbyBT[0] + " (" + (b0 === 0 ? 0 : (_drops.itemDropbyBT[0]*100 / b0).toFixed(2)) + "% of drops, " + (_drops.itemDropbyBT[0]*100/_drops.dropChancesbyBT[0]).toFixed(2) + '% drop chance)</td></tr>'
-			+ '<tr><td colspan="4" style="padding-left:30px">Crystals: ' + _drops.crysDropbyBT[0] + " (" + (b0 === 0 ? 0 : (_drops.crysDropbyBT[0]*100 / b0).toFixed(2)) + "% of drops, " + (_drops.crysDropbyBT[0]*100/_drops.dropChancesbyBT[0]).toFixed(2) + '% drop chance)</td></tr>'
-			+ '<tr><td colspan="4" style="padding-left:20px">Equipment: ' + _drops.eqDropbyBT[0] + " (" + (b0 === 0 ? 0 : (_drops.eqDropbyBT[0]*100 / b0).toFixed(2)) + "% of drops, " + (_drops.eqDropbyBT[0]*100/_drops.dropChancesbyBT[0]).toFixed(2) + '% drop chance)</td></tr>'
-			+ '<tr><td colspan="4" style="padding-left:20px">Artifacts: ' + _drops.artDropbyBT[0] + " (" + (b0 === 0 ? 0 : (_drops.artDropbyBT[0]*100 / b0).toFixed(2)) + "% of drops, " + (_drops.artDropbyBT[0]*100/_drops.dropChancesbyBT[0]).toFixed(2) + '% drop chance)</td></tr>'
-			+ '<tr><td colspan="4" style="padding-left:10px"><b>In Arenas:</b> ' + b1 + " from " + _drops.dropChancesbyBT[1] + " monsters (" + (b1*100 / _drops.dropChancesbyBT[1]).toFixed(2) + '% total drop chance)</td></tr>'
-			+ '<tr><td colspan="4" style="padding-left:20px">Items: ' + _drops.itemDropbyBT[1] + " (" + (b1 === 0 ? 0 : (_drops.itemDropbyBT[1]*100 / b1).toFixed(2)) + "% of drops, " + (_drops.itemDropbyBT[1]*100/_drops.dropChancesbyBT[1]).toFixed(2) + '% drop chance)</td></tr>'
-			+ '<tr><td colspan="4" style="padding-left:30px">Crystals: ' + _drops.crysDropbyBT[1] + " (" + (b1 === 0 ? 0 : (_drops.crysDropbyBT[1]*100 / b1).toFixed(2)) + "% of drops, " + (_drops.crysDropbyBT[1]*100/_drops.dropChancesbyBT[1]).toFixed(2) + '% drop chance)</td></tr>'
-			+ '<tr><td colspan="4" style="padding-left:20px">Equipment: ' + _drops.eqDropbyBT[1] + " (" + (b1 === 0 ? 0 : (_drops.eqDropbyBT[1]*100 / b1).toFixed(2)) + "% of drops, " + (_drops.eqDropbyBT[1]*100/_drops.dropChancesbyBT[1]).toFixed(2) + '% drop chance)</td></tr>'
-			+ '<tr><td colspan="4" style="padding-left:20px">Artifacts: ' + _drops.artDropbyBT[1] + " (" + (b1 === 0 ? 0 : (_drops.artDropbyBT[1]*100 / b1).toFixed(2)) + "% of drops, " + (_drops.artDropbyBT[1]*100/_drops.dropChancesbyBT[1]).toFixed(2) + '% drop chance)</td></tr>'
-			+ '<tr><td colspan="4" style="padding-left:10px"><b>In GrindFests:</b> ' + b2 + " from " + _drops.dropChancesbyBT[2] + " monsters (" + (b2*100 / _drops.dropChancesbyBT[2]).toFixed(2) + '% total drop chance)</td></tr>'
-			+ '<tr><td colspan="4" style="padding-left:20px">Items: ' + _drops.itemDropbyBT[2] + " (" + (b2 === 0 ? 0 : (_drops.itemDropbyBT[2]*100 / b2).toFixed(2)) + "% of drops, " + (_drops.itemDropbyBT[2]*100/_drops.dropChancesbyBT[2]).toFixed(2) + '% drop chance)</td></tr>'
-			+ '<tr><td colspan="4" style="padding-left:30px">Crystals: ' + _drops.crysDropbyBT[2] + " (" + (b2 === 0 ? 0 : (_drops.crysDropbyBT[2]*100 / b2).toFixed(2)) + "% of drops, " + (_drops.crysDropbyBT[2]*100/_drops.dropChancesbyBT[2]).toFixed(2) + '% drop chance)</td></tr>'
-			+ '<tr><td colspan="4" style="padding-left:20px">Equipment: ' + _drops.eqDropbyBT[2] + " (" + (b2 === 0 ? 0 : (_drops.eqDropbyBT[2]*100 / b2).toFixed(2)) + "% of drops, " + (_drops.eqDropbyBT[2]*100/_drops.dropChancesbyBT[2]).toFixed(2) + '% drop chance)</td></tr>'
-			+ '<tr><td colspan="4" style="padding-left:20px">Artifacts: ' + _drops.artDropbyBT[2] + " (" + (b2 === 0 ? 0 : (_drops.artDropbyBT[2]*100 / b2).toFixed(2)) + "% of drops, " + (_drops.artDropbyBT[2]*100/_drops.dropChancesbyBT[2]).toFixed(2) + '% drop chance)</td></tr>'
-			+ '<tr><td colspan="4" style="padding-left:10px"><b>In Item Worlds:</b> ' + b3 + " from " + _drops.dropChancesbyBT[3] + " monsters (" + (b3*100 / _drops.dropChancesbyBT[3]).toFixed(2) + '% total drop chance)</td></tr>'
-			+ '<tr><td colspan="4" style="padding-left:20px">Items: ' + _drops.itemDropbyBT[3] + " (" + (b3 === 0 ? 0 : (_drops.itemDropbyBT[3]*100 / b3).toFixed(2)) + "% of drops, " + (_drops.itemDropbyBT[3]*100/_drops.dropChancesbyBT[3]).toFixed(2) + '% drop chance)</td></tr>'
-			+ '<tr><td colspan="4" style="padding-left:30px">Crystals: ' + _drops.crysDropbyBT[3] + " (" + (b3 === 0 ? 0 : (_drops.crysDropbyBT[3]*100 / b3).toFixed(2)) + "% of drops, " + (_drops.crysDropbyBT[3]*100/_drops.dropChancesbyBT[3]).toFixed(2) + '% drop chance)</td></tr>'
-			+ '<tr><td colspan="4" style="padding-left:20px">Equipment: ' + _drops.eqDropbyBT[3] + " (" + (b3 === 0 ? 0 : (_drops.eqDropbyBT[3]*100 / b3).toFixed(2)) + "% of drops, " + (_drops.eqDropbyBT[3]*100/_drops.dropChancesbyBT[3]).toFixed(2) + '% drop chance)</td></tr>'
-			+ '<tr><td colspan="4" style="padding-left:20px">Artifacts: ' + _drops.artDropbyBT[3] + " (" + (b3 === 0 ? 0 : (_drops.artDropbyBT[3]*100 / b3).toFixed(2)) + "% of drops, " + (_drops.artDropbyBT[3]*100/_drops.dropChancesbyBT[3]).toFixed(2) + '% drop chance)</td></tr>'
+		var a = hvStat.drops.dropChances / 100;
+		e += '<tr><td colspan="4"><b>Total Item Drops:</b> ' + b + " from " + hvStat.drops.dropChances + " monsters (" + (b / a).toFixed(2) + '% total drop chance)</td></tr>'
+			+ '<tr><td colspan="4" style="padding-left:20px">Items: ' + hvStat.drops.itemDrop + " (" + (d === 0 ? 0 : (hvStat.drops.itemDrop / d).toFixed(2)) + "% of drops, " + (hvStat.drops.itemDrop / a).toFixed(2) + '% drop chance)</td></tr>'
+			+ '<tr><td colspan="4" style="padding-left:20px">Equipment: ' + hvStat.drops.eqDrop + " (" + (d === 0 ? 0 : (hvStat.drops.eqDrop / d).toFixed(2)) + "% of drops, " + (hvStat.drops.eqDrop / a).toFixed(2) + '% drop chance)</td></tr>'
+			+ '<tr><td colspan="4" style="padding-left:20px">Artifacts: ' + hvStat.drops.artDrop + " (" + (d === 0 ? 0 : (hvStat.drops.artDrop / d).toFixed(2)) + "% of drops, " + (hvStat.drops.artDrop / a).toFixed(2) + '% drop chance)</td></tr>'
+			+ '<tr><td colspan="4" style="padding-left:10px"><b>In hourly encounters:</b> ' + b0 + " from " + hvStat.drops.dropChancesbyBT[0] + " monsters (" + (b0*100 / hvStat.drops.dropChancesbyBT[0]).toFixed(2) + '% total drop chance)</td></tr>'
+			+ '<tr><td colspan="4" style="padding-left:20px">Items: ' + hvStat.drops.itemDropbyBT[0] + " (" + (b0 === 0 ? 0 : (hvStat.drops.itemDropbyBT[0]*100 / b0).toFixed(2)) + "% of drops, " + (hvStat.drops.itemDropbyBT[0]*100/hvStat.drops.dropChancesbyBT[0]).toFixed(2) + '% drop chance)</td></tr>'
+			+ '<tr><td colspan="4" style="padding-left:30px">Crystals: ' + hvStat.drops.crysDropbyBT[0] + " (" + (b0 === 0 ? 0 : (hvStat.drops.crysDropbyBT[0]*100 / b0).toFixed(2)) + "% of drops, " + (hvStat.drops.crysDropbyBT[0]*100/hvStat.drops.dropChancesbyBT[0]).toFixed(2) + '% drop chance)</td></tr>'
+			+ '<tr><td colspan="4" style="padding-left:20px">Equipment: ' + hvStat.drops.eqDropbyBT[0] + " (" + (b0 === 0 ? 0 : (hvStat.drops.eqDropbyBT[0]*100 / b0).toFixed(2)) + "% of drops, " + (hvStat.drops.eqDropbyBT[0]*100/hvStat.drops.dropChancesbyBT[0]).toFixed(2) + '% drop chance)</td></tr>'
+			+ '<tr><td colspan="4" style="padding-left:20px">Artifacts: ' + hvStat.drops.artDropbyBT[0] + " (" + (b0 === 0 ? 0 : (hvStat.drops.artDropbyBT[0]*100 / b0).toFixed(2)) + "% of drops, " + (hvStat.drops.artDropbyBT[0]*100/hvStat.drops.dropChancesbyBT[0]).toFixed(2) + '% drop chance)</td></tr>'
+			+ '<tr><td colspan="4" style="padding-left:10px"><b>In Arenas:</b> ' + b1 + " from " + hvStat.drops.dropChancesbyBT[1] + " monsters (" + (b1*100 / hvStat.drops.dropChancesbyBT[1]).toFixed(2) + '% total drop chance)</td></tr>'
+			+ '<tr><td colspan="4" style="padding-left:20px">Items: ' + hvStat.drops.itemDropbyBT[1] + " (" + (b1 === 0 ? 0 : (hvStat.drops.itemDropbyBT[1]*100 / b1).toFixed(2)) + "% of drops, " + (hvStat.drops.itemDropbyBT[1]*100/hvStat.drops.dropChancesbyBT[1]).toFixed(2) + '% drop chance)</td></tr>'
+			+ '<tr><td colspan="4" style="padding-left:30px">Crystals: ' + hvStat.drops.crysDropbyBT[1] + " (" + (b1 === 0 ? 0 : (hvStat.drops.crysDropbyBT[1]*100 / b1).toFixed(2)) + "% of drops, " + (hvStat.drops.crysDropbyBT[1]*100/hvStat.drops.dropChancesbyBT[1]).toFixed(2) + '% drop chance)</td></tr>'
+			+ '<tr><td colspan="4" style="padding-left:20px">Equipment: ' + hvStat.drops.eqDropbyBT[1] + " (" + (b1 === 0 ? 0 : (hvStat.drops.eqDropbyBT[1]*100 / b1).toFixed(2)) + "% of drops, " + (hvStat.drops.eqDropbyBT[1]*100/hvStat.drops.dropChancesbyBT[1]).toFixed(2) + '% drop chance)</td></tr>'
+			+ '<tr><td colspan="4" style="padding-left:20px">Artifacts: ' + hvStat.drops.artDropbyBT[1] + " (" + (b1 === 0 ? 0 : (hvStat.drops.artDropbyBT[1]*100 / b1).toFixed(2)) + "% of drops, " + (hvStat.drops.artDropbyBT[1]*100/hvStat.drops.dropChancesbyBT[1]).toFixed(2) + '% drop chance)</td></tr>'
+			+ '<tr><td colspan="4" style="padding-left:10px"><b>In GrindFests:</b> ' + b2 + " from " + hvStat.drops.dropChancesbyBT[2] + " monsters (" + (b2*100 / hvStat.drops.dropChancesbyBT[2]).toFixed(2) + '% total drop chance)</td></tr>'
+			+ '<tr><td colspan="4" style="padding-left:20px">Items: ' + hvStat.drops.itemDropbyBT[2] + " (" + (b2 === 0 ? 0 : (hvStat.drops.itemDropbyBT[2]*100 / b2).toFixed(2)) + "% of drops, " + (hvStat.drops.itemDropbyBT[2]*100/hvStat.drops.dropChancesbyBT[2]).toFixed(2) + '% drop chance)</td></tr>'
+			+ '<tr><td colspan="4" style="padding-left:30px">Crystals: ' + hvStat.drops.crysDropbyBT[2] + " (" + (b2 === 0 ? 0 : (hvStat.drops.crysDropbyBT[2]*100 / b2).toFixed(2)) + "% of drops, " + (hvStat.drops.crysDropbyBT[2]*100/hvStat.drops.dropChancesbyBT[2]).toFixed(2) + '% drop chance)</td></tr>'
+			+ '<tr><td colspan="4" style="padding-left:20px">Equipment: ' + hvStat.drops.eqDropbyBT[2] + " (" + (b2 === 0 ? 0 : (hvStat.drops.eqDropbyBT[2]*100 / b2).toFixed(2)) + "% of drops, " + (hvStat.drops.eqDropbyBT[2]*100/hvStat.drops.dropChancesbyBT[2]).toFixed(2) + '% drop chance)</td></tr>'
+			+ '<tr><td colspan="4" style="padding-left:20px">Artifacts: ' + hvStat.drops.artDropbyBT[2] + " (" + (b2 === 0 ? 0 : (hvStat.drops.artDropbyBT[2]*100 / b2).toFixed(2)) + "% of drops, " + (hvStat.drops.artDropbyBT[2]*100/hvStat.drops.dropChancesbyBT[2]).toFixed(2) + '% drop chance)</td></tr>'
+			+ '<tr><td colspan="4" style="padding-left:10px"><b>In Item Worlds:</b> ' + b3 + " from " + hvStat.drops.dropChancesbyBT[3] + " monsters (" + (b3*100 / hvStat.drops.dropChancesbyBT[3]).toFixed(2) + '% total drop chance)</td></tr>'
+			+ '<tr><td colspan="4" style="padding-left:20px">Items: ' + hvStat.drops.itemDropbyBT[3] + " (" + (b3 === 0 ? 0 : (hvStat.drops.itemDropbyBT[3]*100 / b3).toFixed(2)) + "% of drops, " + (hvStat.drops.itemDropbyBT[3]*100/hvStat.drops.dropChancesbyBT[3]).toFixed(2) + '% drop chance)</td></tr>'
+			+ '<tr><td colspan="4" style="padding-left:30px">Crystals: ' + hvStat.drops.crysDropbyBT[3] + " (" + (b3 === 0 ? 0 : (hvStat.drops.crysDropbyBT[3]*100 / b3).toFixed(2)) + "% of drops, " + (hvStat.drops.crysDropbyBT[3]*100/hvStat.drops.dropChancesbyBT[3]).toFixed(2) + '% drop chance)</td></tr>'
+			+ '<tr><td colspan="4" style="padding-left:20px">Equipment: ' + hvStat.drops.eqDropbyBT[3] + " (" + (b3 === 0 ? 0 : (hvStat.drops.eqDropbyBT[3]*100 / b3).toFixed(2)) + "% of drops, " + (hvStat.drops.eqDropbyBT[3]*100/hvStat.drops.dropChancesbyBT[3]).toFixed(2) + '% drop chance)</td></tr>'
+			+ '<tr><td colspan="4" style="padding-left:20px">Artifacts: ' + hvStat.drops.artDropbyBT[3] + " (" + (b3 === 0 ? 0 : (hvStat.drops.artDropbyBT[3]*100 / b3).toFixed(2)) + "% of drops, " + (hvStat.drops.artDropbyBT[3]*100/hvStat.drops.dropChancesbyBT[3]).toFixed(2) + '% drop chance)</td></tr>'
 			+ '<tr><td colspan="4"><b>Item:</b></td></tr>';
-		for (var c = 0; c < _drops.itemArry.length; c = c + 2) {
-			e += "<tr><td style='width:25%;padding-left:10px'>" + _drops.itemArry[c] + "</td><td style='width:25%'>x " + _drops.itemQtyArry[c] + " (" + (_drops.itemDrop === 0 ? 0 : ((_drops.itemQtyArry[c] / _drops.itemDrop) * 100).toFixed(2)) + "%)</td>";
-			if (_drops.itemArry[c + 1] !== " ")
-				e += "<td style='width:25%;padding-left:10px'>" + _drops.itemArry[c + 1] + "</td><td style='width:25%'>x " + _drops.itemQtyArry[c + 1] + " (" + (_drops.itemDrop === 0 ? 0 : ((_drops.itemQtyArry[c + 1] / _drops.itemDrop) * 100).toFixed(2)) + "%)</td></tr>";
+		for (var c = 0; c < hvStat.drops.itemArry.length; c = c + 2) {
+			e += "<tr><td style='width:25%;padding-left:10px'>" + hvStat.drops.itemArry[c] + "</td><td style='width:25%'>x " + hvStat.drops.itemQtyArry[c] + " (" + (hvStat.drops.itemDrop === 0 ? 0 : ((hvStat.drops.itemQtyArry[c] / hvStat.drops.itemDrop) * 100).toFixed(2)) + "%)</td>";
+			if (hvStat.drops.itemArry[c + 1] !== " ")
+				e += "<td style='width:25%;padding-left:10px'>" + hvStat.drops.itemArry[c + 1] + "</td><td style='width:25%'>x " + hvStat.drops.itemQtyArry[c + 1] + " (" + (hvStat.drops.itemDrop === 0 ? 0 : ((hvStat.drops.itemQtyArry[c + 1] / hvStat.drops.itemDrop) * 100).toFixed(2)) + "%)</td></tr>";
 			else e += "<td></td><td></td></tr>";
 		}
 		e += '<tr><td colspan="4"><b>Equipment:</b></td></tr>';
-		var c = _drops.eqArray.length;
-		while (c--) e += '<tr><td colspan="4" style="padding-left:10px">' + _drops.eqArray[c] + "</td></tr>";
+		var c = hvStat.drops.eqArray.length;
+		while (c--) e += '<tr><td colspan="4" style="padding-left:10px">' + hvStat.drops.eqArray[c] + "</td></tr>";
 		e += '<tr><td colspan="4"><b>Artifact:</b></td></tr>';
-		c = _drops.artArry.length;
-		while (c--) e += '<tr><td colspan="4" style="padding-left:10px">' + _drops.artArry[c] + " x " + _drops.artQtyArry[c] + "</td></tr>";
+		c = hvStat.drops.artArry.length;
+		while (c--) e += '<tr><td colspan="4" style="padding-left:10px">' + hvStat.drops.artArry[c] + " x " + hvStat.drops.artQtyArry[c] + "</td></tr>";
 		e += '<tr><td align="right" colspan="4"><input type="button" class="_resetItems" value="Reset Drops" /></td></tr>';
 	}
 	e += "</table>";
@@ -5276,7 +5288,9 @@ function initBattleStatsPane() {
 function initItemPane() {
 	$("#pane3").html(getReportItemHtml());
 	$("._resetItems").click(function () {
-		if (confirm("Reset Item Drops tab?")) _drops.reset();
+		if (confirm("Reset Drops tab?")) {
+			hvStat.storage.drops.reset();
+		}
 	});
 }
 function initRewardsPane() {
@@ -6052,11 +6066,11 @@ function loadShrineObject() {
 	_shrine = new HVCacheShrine();
 	_shrine.load();
 }
-function loadDropsObject() {
-	if (_drops !== null) return;
-	_drops = new HVCacheDrops();
-	_drops.load();
-}
+// function loadDropsObject() {
+// 	if (_drops !== null) return;
+// 	_drops = new HVCacheDrops();
+// 	_drops.load();
+// }
 function getRelativeTime(b) {
 	var a = (arguments.length > 1) ? arguments[1] : new Date();
 	var c = parseInt((a.getTime() - b) / 1000);
@@ -6073,7 +6087,7 @@ function HVResetTracking() {
 	hvStat.storage.stats.reset();
 	_rewards.reset();
 	_shrine.reset();
-	_drops.reset();
+	hvStat.storage.drops.reset();
 }
 function HVMasterReset() {
 	var keys = [
@@ -6082,7 +6096,8 @@ function HVMasterReset() {
 		"HVBackup3",
 		"HVBackup4",
 		"HVBackup5",
-		"HVCollectData",
+		"HVCharacterSettingsandStats",	// Obsolete
+		"HVCollectData",		// Obsolete
 		"HVDrops",
 		"HVLoadTimeCounters",	// Obsolete
 		"HVMonsterDatabase",	// Old monster data
@@ -6167,62 +6182,62 @@ function HVCacheShrine() {
 	this.totalRewards = 0;
 	this.isLoaded = false
 }
-function HVCacheDrops() {
-	this.load = function () { loadFromStorage(this, HV_DROPS); };
-	this.save = function () { saveToStorage(this, HV_DROPS); };
-	this.reset = function () { deleteFromStorage(HV_DROPS); };
-	this.cloneFrom = clone;
-	this.dropChances = 0;
-	this.itemArry = [
-		"[Lesser Health Potion]", "[Scroll of Swiftness]",
-		"[Average Health Potion]", "[Scroll of Shielding]",
-		"[Greater Health Potion]", "[Scroll of Warding]",
-		"[Superior Health Potion]", "[Scroll of the Avatar]",
-		"[Godly Health Potion]", "[Scroll of Absorption]",
-		"[Health Elixir]", "[Scroll of Shadows]",
-		"[Lesser Mana Potion]", "[Scroll of Life]",
-		"[Average Mana Potion]", "[Scroll of the Gods]",
-		"[Greater Mana Potion]", "[Infusion of Flames]",
-		"[Superior Mana Potion]", "[Infusion of Frost]",
-		"[Godly Mana Potion]", "[Infusion of Lightning]",
-		"[Mana Elixir]", "[Infusion of Storms]",
-		"[Lesser Spirit Potion]", "[Infusion of Divinity]",
-		"[Average Spirit Potion]", "[Infusion of Darkness]",
-		"[Greater Spirit Potion]", "[Infusion of Gaia]",
-		"[Superior Spirit Potion]", "[Soul Stone]",
-		"[Godly Spirit Potion]", "[Flower Vase]",
-		"[Spirit Elixir]", "[Last Elixir]",
-		"[Token of Blood]", "[Bubble-Gum]",
-		"[Token of Healing]", "[Crystal of Flames]",
-		"[Chaos Token]", "[Crystal of Frost]",
-		"[Crystal of Vigor]", "[Crystal of Lightning]",
-		"[Crystal of Finesse]", "[Crystal of Tempest]",
-		"[Crystal of Swiftness]", "[Crystal of Devotion]",
-		"[Crystal of Fortitude]", "[Crystal of Corruption]",
-		"[Crystal of Cunning]", "[Crystal of Quintessence]",
-		"[Crystal of Knowledge]", " ",
-		"[Voidseeker Shard]", " ",
-		"[Aether Shard]", " ",
-		"[Featherweight Shard]", " ",
-		"[Amnesia Shard]", " "
-	];
-	this.itemQtyArry = new Array(this.itemArry.length);
-	i = this.itemArry.length;
-	while (i--)
-		this.itemQtyArry[i] = 0;
-	this.itemDrop = 0;
-	this.eqArray = [];
-	this.eqDrop = 0;
-	this.artArry = [];
-	this.artQtyArry = [];
-	this.artDrop = 0;
-	this.eqDropbyBT = [0, 0, 0, 0, 0];
-	this.artDropbyBT = [0, 0, 0, 0, 0];
-	this.itemDropbyBT = [0, 0, 0, 0, 0];
-	this.crysDropbyBT = [0, 0, 0, 0, 0];
-	this.dropChancesbyBT = [0, 0, 0, 0, 0];
-	this.isLoaded = false;
-}
+// function HVCacheDrops() {
+// 	this.load = function () { loadFromStorage(this, HV_DROPS); };
+// 	this.save = function () { saveToStorage(this, HV_DROPS); };
+// 	this.reset = function () { deleteFromStorage(HV_DROPS); };
+// 	this.cloneFrom = clone;
+// 	this.dropChances = 0;
+// 	this.itemArry = [
+// 		"[Lesser Health Potion]", "[Scroll of Swiftness]",
+// 		"[Average Health Potion]", "[Scroll of Shielding]",
+// 		"[Greater Health Potion]", "[Scroll of Warding]",
+// 		"[Superior Health Potion]", "[Scroll of the Avatar]",
+// 		"[Godly Health Potion]", "[Scroll of Absorption]",
+// 		"[Health Elixir]", "[Scroll of Shadows]",
+// 		"[Lesser Mana Potion]", "[Scroll of Life]",
+// 		"[Average Mana Potion]", "[Scroll of the Gods]",
+// 		"[Greater Mana Potion]", "[Infusion of Flames]",
+// 		"[Superior Mana Potion]", "[Infusion of Frost]",
+// 		"[Godly Mana Potion]", "[Infusion of Lightning]",
+// 		"[Mana Elixir]", "[Infusion of Storms]",
+// 		"[Lesser Spirit Potion]", "[Infusion of Divinity]",
+// 		"[Average Spirit Potion]", "[Infusion of Darkness]",
+// 		"[Greater Spirit Potion]", "[Infusion of Gaia]",
+// 		"[Superior Spirit Potion]", "[Soul Stone]",
+// 		"[Godly Spirit Potion]", "[Flower Vase]",
+// 		"[Spirit Elixir]", "[Last Elixir]",
+// 		"[Token of Blood]", "[Bubble-Gum]",
+// 		"[Token of Healing]", "[Crystal of Flames]",
+// 		"[Chaos Token]", "[Crystal of Frost]",
+// 		"[Crystal of Vigor]", "[Crystal of Lightning]",
+// 		"[Crystal of Finesse]", "[Crystal of Tempest]",
+// 		"[Crystal of Swiftness]", "[Crystal of Devotion]",
+// 		"[Crystal of Fortitude]", "[Crystal of Corruption]",
+// 		"[Crystal of Cunning]", "[Crystal of Quintessence]",
+// 		"[Crystal of Knowledge]", " ",
+// 		"[Voidseeker Shard]", " ",
+// 		"[Aether Shard]", " ",
+// 		"[Featherweight Shard]", " ",
+// 		"[Amnesia Shard]", " "
+// 	];
+// 	this.itemQtyArry = new Array(this.itemArry.length);
+// 	i = this.itemArry.length;
+// 	while (i--)
+// 		this.itemQtyArry[i] = 0;
+// 	this.itemDrop = 0;
+// 	this.eqArray = [];
+// 	this.eqDrop = 0;
+// 	this.artArry = [];
+// 	this.artQtyArry = [];
+// 	this.artDrop = 0;
+// 	this.eqDropbyBT = [0, 0, 0, 0, 0];
+// 	this.artDropbyBT = [0, 0, 0, 0, 0];
+// 	this.itemDropbyBT = [0, 0, 0, 0, 0];
+// 	this.crysDropbyBT = [0, 0, 0, 0, 0];
+// 	this.dropChancesbyBT = [0, 0, 0, 0, 0];
+// 	this.isLoaded = false;
+// }
 function saveStatsBackup(back) {
 	var ba = 0;
 	ba = _backup[back];
@@ -6673,7 +6688,7 @@ hvStat.startup = {
 // 		console.debug(hvStat.storage.statsBackup3.value);
 // 		console.debug(hvStat.storage.statsBackup4.value);
 // 		console.debug(hvStat.storage.statsBackup5.value);
-// 		console.debug(hvStat.storage.itemDrops.value);
+// 		console.debug(hvStat.storage.drops.value);
 // 		console.debug(hvStat.storage.arenaRewards.value);
 // 		console.debug(hvStat.storage.shrine.value);
 // 		console.debug(hvStat.storage.equipmentTags.value);
