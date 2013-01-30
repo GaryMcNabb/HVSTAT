@@ -1832,7 +1832,6 @@ hvStat.ui = {
 			title: "[STAT] HentaiVerse Statistics, Tracking, and Analysis Tool v." + hvStat.version,
 		});
 		$('#hvstat-tabs').tabs();
-// 		loadDropsObject();
 		loadRewardsObject();
 		loadShrineObject();
 		initOverviewPane();
@@ -4037,7 +4036,6 @@ GRINDFEST = 2;
 ITEM_WORLD = 3;
 _rewards = null;
 _shrine = null;
-// _drops = null;
 _backup = [null, null, null, null, null, null];
 _database = null;
 _tags = null;
@@ -4193,8 +4191,6 @@ function collectRoundInfo() {
  			HVStat.monsters[i].setFromValueObject(hvStat.roundInfo.monsters[i]);
  		}
 	}
-// 	if (hvStat.settings.isTrackItems)
-// 		loadDropsObject();
 	if (hvStat.settings.isTrackRewards)
 		loadRewardsObject();
 	var monsterIndex = 0;
@@ -4654,7 +4650,6 @@ function RoundSave() {
 
 function saveStats() {
 	loadRewardsObject();
-// 	loadDropsObject();
 	var d = 0;
 	var c = 0;
 	var elements = document.querySelectorAll("#togpane_log td:last-child");
@@ -6066,11 +6061,6 @@ function loadShrineObject() {
 	_shrine = new HVCacheShrine();
 	_shrine.load();
 }
-// function loadDropsObject() {
-// 	if (_drops !== null) return;
-// 	_drops = new HVCacheDrops();
-// 	_drops.load();
-// }
 function getRelativeTime(b) {
 	var a = (arguments.length > 1) ? arguments[1] : new Date();
 	var c = parseInt((a.getTime() - b) / 1000);
@@ -6182,62 +6172,6 @@ function HVCacheShrine() {
 	this.totalRewards = 0;
 	this.isLoaded = false
 }
-// function HVCacheDrops() {
-// 	this.load = function () { loadFromStorage(this, HV_DROPS); };
-// 	this.save = function () { saveToStorage(this, HV_DROPS); };
-// 	this.reset = function () { deleteFromStorage(HV_DROPS); };
-// 	this.cloneFrom = clone;
-// 	this.dropChances = 0;
-// 	this.itemArry = [
-// 		"[Lesser Health Potion]", "[Scroll of Swiftness]",
-// 		"[Average Health Potion]", "[Scroll of Shielding]",
-// 		"[Greater Health Potion]", "[Scroll of Warding]",
-// 		"[Superior Health Potion]", "[Scroll of the Avatar]",
-// 		"[Godly Health Potion]", "[Scroll of Absorption]",
-// 		"[Health Elixir]", "[Scroll of Shadows]",
-// 		"[Lesser Mana Potion]", "[Scroll of Life]",
-// 		"[Average Mana Potion]", "[Scroll of the Gods]",
-// 		"[Greater Mana Potion]", "[Infusion of Flames]",
-// 		"[Superior Mana Potion]", "[Infusion of Frost]",
-// 		"[Godly Mana Potion]", "[Infusion of Lightning]",
-// 		"[Mana Elixir]", "[Infusion of Storms]",
-// 		"[Lesser Spirit Potion]", "[Infusion of Divinity]",
-// 		"[Average Spirit Potion]", "[Infusion of Darkness]",
-// 		"[Greater Spirit Potion]", "[Infusion of Gaia]",
-// 		"[Superior Spirit Potion]", "[Soul Stone]",
-// 		"[Godly Spirit Potion]", "[Flower Vase]",
-// 		"[Spirit Elixir]", "[Last Elixir]",
-// 		"[Token of Blood]", "[Bubble-Gum]",
-// 		"[Token of Healing]", "[Crystal of Flames]",
-// 		"[Chaos Token]", "[Crystal of Frost]",
-// 		"[Crystal of Vigor]", "[Crystal of Lightning]",
-// 		"[Crystal of Finesse]", "[Crystal of Tempest]",
-// 		"[Crystal of Swiftness]", "[Crystal of Devotion]",
-// 		"[Crystal of Fortitude]", "[Crystal of Corruption]",
-// 		"[Crystal of Cunning]", "[Crystal of Quintessence]",
-// 		"[Crystal of Knowledge]", " ",
-// 		"[Voidseeker Shard]", " ",
-// 		"[Aether Shard]", " ",
-// 		"[Featherweight Shard]", " ",
-// 		"[Amnesia Shard]", " "
-// 	];
-// 	this.itemQtyArry = new Array(this.itemArry.length);
-// 	i = this.itemArry.length;
-// 	while (i--)
-// 		this.itemQtyArry[i] = 0;
-// 	this.itemDrop = 0;
-// 	this.eqArray = [];
-// 	this.eqDrop = 0;
-// 	this.artArry = [];
-// 	this.artQtyArry = [];
-// 	this.artDrop = 0;
-// 	this.eqDropbyBT = [0, 0, 0, 0, 0];
-// 	this.artDropbyBT = [0, 0, 0, 0, 0];
-// 	this.itemDropbyBT = [0, 0, 0, 0, 0];
-// 	this.crysDropbyBT = [0, 0, 0, 0, 0];
-// 	this.dropChancesbyBT = [0, 0, 0, 0, 0];
-// 	this.isLoaded = false;
-// }
 function saveStatsBackup(back) {
 	var ba = 0;
 	ba = _backup[back];
