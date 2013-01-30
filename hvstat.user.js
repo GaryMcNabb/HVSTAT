@@ -36,7 +36,7 @@
 // ==/UserScript==
 
 //------------------------------------
-// remove vendor prefix
+// Remove vendor prefix
 //------------------------------------
 window.indexedDB = window.indexedDB || window.webkitIndexedDB || window.mozIndexedDB;
 window.IDBTransaction = window.IDBTransaction || window.webkitIDBTransaction;
@@ -44,7 +44,7 @@ window.IDBKeyRange = window.IDBKeyRange|| window.webkitIDBKeyRange;
 window.IDBCursor = window.IDBCursor || window.webkitIDBCursor;
 
 //------------------------------------
-// generic utilities
+// Generic utilities
 //------------------------------------
 var util = {
 	clone: function (item) {
@@ -128,7 +128,7 @@ util.CallbackQueue.prototype = {
 };
 
 //------------------------------------
-// browser utilities
+// Browser utilities
 //------------------------------------
 var browser = {
 	isChrome: navigator.userAgent.indexOf("Chrome") >= 0,
@@ -174,7 +174,7 @@ browser.extension = {
 	addStyleFromResource: function (styleResourcePath, styleResouceName, imageResouceInfoArray) {
 		var styleText = browser.extension.getResourceText(styleResourcePath, styleResouceName);
 		if (imageResouceInfoArray instanceof Array) {
-			// replace image URLs
+			// Replace image URLs
 			for (var i = 0; i < imageResouceInfoArray.length; i++) {
 				var imageResourceName = imageResouceInfoArray[i].name;
 				var imageOriginalPath = imageResouceInfoArray[i].originalPath;
@@ -1435,7 +1435,7 @@ hvStat.battle.command.Command = function (spec) {
 	this.element = this.elementId && document.getElementById(this.elementId) || null;
 	this.menus = [];
 
-	// build menus
+	// Build menus
 	for (var i = 0; i < this.menuElementIds.length; i++) {
 		this.menus[i] = new hvStat.battle.command.SubMenu({ parent: this, elementId: this.menuElementIds[i] });
 	}
@@ -1796,7 +1796,7 @@ hvStat.ui = {
 	},
 	// jQuery and jQuery UI must not be used except on the dialog panel for performance reason.
 	createDialog: function () {
-		// load jQuery and jQuery UI
+		// Load jQuery and jQuery UI
 		browser.extension.loadScript("scripts/", "jquery-1.8.3.min.js");
 		browser.extension.loadScript("scripts/", "jquery-ui-1.9.2.custom.min.js");
 
@@ -1842,7 +1842,7 @@ var HVStat = {	// -> refactor
 	reMonsterSkillsTSV: /^(\d+?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)$/gm,
 	monsterGaugeMaxWidth: 120,
 
-	// temporary localStorage keys (attach the prefix "hvStat" to avoid conflicts with other scripts)
+	// Temporary localStorage keys (attach the prefix "hvStat" to avoid conflicts with other scripts)
 	key_hpAlertAlreadyShown: "hvStat.healthAlertShown",
 	key_mpAlertAlreadyShown: "hvStat.magicAlertShown",
 	key_spAlertAlreadyShown: "hvStat.spiritAlertShown",
@@ -1853,22 +1853,22 @@ var HVStat = {	// -> refactor
 	transaction: null,
 	idbAccessQueue: null,
 
-	// monster database import/export
+	// Monster database import/export
 	dataURIMonsterScanResults: null,
 	dataURIMonsterSkills: null,
 	nRowsMonsterScanResultsTSV: 0,
 	nRowsMonsterSkillsTSV: 0,
 
-	// battle states
+	// Battle states
 	monsters: [],	// instances of HVStat.Monster
 	alertQueue: [],
 
-	// keyboard enhancement
+	// Keyboard enhancement
 	selectedSkillIndex: -1	// -1: not selected, 0-2: selected
 };
 
 //------------------------------------
-// basic classes
+// Basic classes
 //------------------------------------
 
 HVStat.Keyword = function (id, name, abbrNames) {
@@ -1888,7 +1888,7 @@ HVStat.Keyword = function (id, name, abbrNames) {
 		get id() { return _id; },
 		get name() { return _name; },
 		toString: function (abbrLevel) {
-			// if abbrLevel is not set or 0 then return name else return abbreviated name
+			// If abbrLevel is not set or 0 then return name else return abbreviated name
 			abbrLevel = Number(abbrLevel);
 			if (isNaN(abbrLevel) || abbrLevel < 0) {
 				abbrLevel = 0;
@@ -2040,7 +2040,7 @@ HVStat.Debuff = (function () {
 HVStat.delimiter = new HVStat.Keyword("DELIMITER", ", ", [","]);
 
 //------------------------------------
-// value objects
+// Value objects
 //------------------------------------
 
 HVStat.DefenceLevelVO = function () {
@@ -2185,7 +2185,7 @@ HVStat.MonsterSkillVO = function (spec) {
 HVStat.MonsterSkillVO.prototype.createKey = function () {
 	this.key = [
 		this.id,
-		(this.name !== null) ? this.name : "",	// must not be null
+		(this.name !== null) ? this.name : "",	// Must not be null
 		this.skillType,
 		this.attackType,
 		this.damageType
@@ -2205,12 +2205,12 @@ HVStat.MonsterVO = function () {
 };
 
 //------------------------------------
-// utility functions
+// Utility functions
 //------------------------------------
 
 HVStat.getDateTimeString = function (date) {
 	if (browser.isChrome) {
-		// see http://code.google.com/p/chromium/issues/detail?id=3607
+		// See http://code.google.com/p/chromium/issues/detail?id=3607
 		return date.toLocaleDateString() + " " + date.toLocaleTimeString();
 	} else {
 		return date.toDateString() + " " + date.toTimeString();
@@ -2266,7 +2266,7 @@ HVStat.AlertAllFromQueue = function () {
 }
 
 //------------------------------------
-// classes
+// Classes
 //------------------------------------
 HVStat.TurnLog = function (specifiedTurn) {
 	this.turn = -1;
@@ -2297,7 +2297,7 @@ HVStat.TurnLog = function (specifiedTurn) {
 };
 
 HVStat.MonsterSkill = (function () {
-	// constructor
+	// Constructor
 	function MonsterSkill(vo) {
 		var _id = vo.id || null;
 		var _name = vo.name || null;
@@ -2330,7 +2330,7 @@ HVStat.MonsterSkill = (function () {
 		};
 	};
 
-	// public static method
+	// Public static method
 	MonsterSkill.fetchSkillLog = function (logUsed, logDamaged, skillType) {
 		var vo = new HVStat.MonsterSkillVO();
 		var r = / (uses|casts) ([^\.]+)/.exec(logUsed);
@@ -2363,7 +2363,7 @@ HVStat.MonsterSkill = (function () {
 }());
 
 HVStat.MonsterScanResults = (function () {
-	// private static variable
+	// Private static variable
 	var _mappingToSettingsHideSpecificDamageType = [
 		HVStat.DamageType.CRUSHING,
 		HVStat.DamageType.SLASHING,
@@ -2407,7 +2407,7 @@ HVStat.MonsterScanResults = (function () {
 		}
 	})();
 
-	// constructor
+	// Constructor
 	function MonsterScanResults(vo) {
 		var _id;
 		var _lastScanDate;
@@ -2451,7 +2451,7 @@ HVStat.MonsterScanResults = (function () {
 			_debuffsAffected.push(HVStat.Debuff[vo.debuffsAffected[i]]);
 		}
 
-		// private instance method
+		// Private instance method
 		var _hideDamageTypes = function (source) {
 			var i, j;
 			var damageTypes = source.concat();
@@ -2563,7 +2563,7 @@ HVStat.MonsterScanResults = (function () {
 		};
 	};
 
-	// public static method
+	// Public static method
 	MonsterScanResults.fetchScanningLog = function (index, text) {
 		var reScan = /Scanning (.*)\.\.\.\s+HP: [^\s]+\/([^\s]+)\s+MP: [^\s]+\/[^\s]+(?:\s+SP: [^\s]+\/[^\s]+)? Monster Class: (.+?)(?:, Power Level (\d+))? Monster Trainer:(?: (.+))? Melee Attack: (.+) Weak against: (.+) Resistant to: (.+) Impervious to: (.+)/;
 		var vo = new HVStat.MonsterScanResultsVO();
@@ -2765,7 +2765,7 @@ HVStat.Monster = (function () {
 							statsHtml = '[<span class="hvstat-monster-status-unknown">NEW</span>]';
 //						}
 					} else {
-						// class and power level
+						// Class and power level
 						if (hvStat.settings.showMonsterClassFromDB || hvStat.settings.showMonsterPowerLevelFromDB) {
 							statsHtml += '{';
 						}
@@ -2785,7 +2785,7 @@ HVStat.Monster = (function () {
 						if (hvStat.settings.showMonsterClassFromDB || hvStat.settings.showMonsterPowerLevelFromDB) {
 							statsHtml += '}';
 						}
-						// weaknesses and resistances
+						// Weaknesses and resistances
 						if (hvStat.settings.showMonsterWeaknessesFromDB || hvStat.settings.showMonsterResistancesFromDB) {
 							statsHtml += '[';
 						}
@@ -2811,7 +2811,7 @@ HVStat.Monster = (function () {
 							statsHtml += "]";
 						}
 					}
-					// melee attack and skills
+					// Melee attack and skills
 					if (hvStat.settings.showMonsterAttackTypeFromDB) {
 						var meleeAttackExists = _scanResult && _scanResult.meleeAttack;
 						var manaSkills = _getManaSkills();
@@ -2820,13 +2820,13 @@ HVStat.Monster = (function () {
 						if (meleeAttackExists || manaSkillsExist || spiritSkill) {
 							statsHtml += '(';
 						}
-						// melee attack
+						// Melee attack
 						if (meleeAttackExists) {
 							statsHtml += '<span class="hvstat-monster-status-melee-attack-type">';
 							statsHtml += _scanResult.meleeAttack.toString(abbrLevel > 0 ? abbrLevel : 1);
 							statsHtml += '</span>';
 						}
-						// mana skills
+						// Mana skills
 						if (manaSkillsExist) {
 							if (meleeAttackExists) {
 								statsHtml += ';';
@@ -2857,7 +2857,7 @@ HVStat.Monster = (function () {
 							}
 							statsHtml += '</span>';
 						}
-						// spirit skill
+						// Spirit skill
 						if (spiritSkill) {
 							if (!manaSkillsExist) {
 								statsHtml += ';';
@@ -2873,35 +2873,35 @@ HVStat.Monster = (function () {
 						}
 					}
 					if (hv.settings.useHVFontEngine) {
-						nameOuterFrameElement.style.width = "auto"; // tweak for Firefox
-						nameInnerFrameElement.style.width = "auto"; // tweak for Firefox
+						nameOuterFrameElement.style.width = "auto"; // Tweak for Firefox
+						nameInnerFrameElement.style.width = "auto"; // Tweak for Firefox
 						div = document.createElement("div");
 						div.className ="hvstat-monster-status-on-hv-font";
 						div.innerHTML = statsHtml;
 						nameInnerFrameElement.parentNode.insertBefore(div, nameInnerFrameElement.nextSibling);
 						//console.log("scrollWidth = " + div.prop("scrollWidth"));
-						if (Number(nameOuterFrameElement.scrollWidth) <= maxStatsWidth) {	// does not work with Firefox without tweak
+						if (Number(nameOuterFrameElement.scrollWidth) <= maxStatsWidth) {	// Does not work with Firefox without tweak
 							break;
 						} else if (abbrLevel < maxAbbrLevel - 1) {
-							// revert
+							// Revert
 							nameInnerFrameElement.parentNode.removeChild(div);
 						}
 					} else {
 						html = '<div class="hvstat-monster-status-on-custom-font">' + statsHtml + "</div>";
 						var nameElement = nameInnerFrameElement.children[0];
 						var name = nameElement.innerHTML;
-						nameOuterFrameElement.style.width = "auto"; // tweak for Firefox
-						nameInnerFrameElement.style.width = "auto"; // tweak for Firefox
+						nameOuterFrameElement.style.width = "auto"; // Tweak for Firefox
+						nameInnerFrameElement.style.width = "auto"; // Tweak for Firefox
 						nameElement.innerHTML = name + html;
 						nameElement.style.whiteSpace = "nowrap";
 						//console.log("scrollWidth = " + nameElement.prop("scrollWidth"));
-						if (Number(nameElement.scrollWidth) <= maxStatsWidth) {	// does not work with Firefox without tweak
+						if (Number(nameElement.scrollWidth) <= maxStatsWidth) {	// Does not work with Firefox without tweak
 							break;
 						} else if (hvStat.settings.ResizeMonsterInfo) {
-							// revert
+							// Revert
 							nameElement.innerHTML = name;
 							if (abbrLevel >= maxAbbrLevel - 1) {
-								// reduce name length
+								// Reduce name length
 								for (var len = name.length - 2; len >= 6; len--) {
 									var reducedName = name.substring(0, len) + "...";
 									nameElement.innerHTML = reducedName + html;
@@ -3014,7 +3014,7 @@ HVStat.Monster = (function () {
 			set name(name) { _name = name; },
 			set maxHp(maxHp) { _maxHp = maxHp; },
 
-			// public instance methods
+			// Public instance methods
 			fetchStartingLog: function (html) {
 				var r;
 				r = /MID=(\d+)\s/.exec(html);
@@ -3042,8 +3042,8 @@ HVStat.Monster = (function () {
 				var skillType = (_prevSpRate <= _currSpRate) ? HVStat.SkillType.MANA : HVStat.SkillType.SPIRIT;
 				var skill = HVStat.MonsterSkill.fetchSkillLog(used, damaged, skillType);
 				if (skillType === HVStat.SkillType.SPIRIT) {
-					// spirit skill
-					// overwrite if exists
+					// Spirit skill
+					// Overwrite if exists
 					for (i = 0; i < _skills.length; i++) {
 						if (_skills[i].skillType ===  HVStat.SkillType.SPIRIT) {
 							break;
@@ -3051,8 +3051,8 @@ HVStat.Monster = (function () {
 					}
 					_skills[i] = skill;
 				} else {
-					// mana skill
-					// overwrite if same name or name is null
+					// Mana skill
+					// Overwrite if same name or name is null
 					for (i = 0; i < _skills.length; i++) {
 						if (_skills[i].skillType ===  HVStat.SkillType.MANA
 								&& (_skills[i].name === skill.name
@@ -3154,7 +3154,7 @@ HVStat.Monster = (function () {
 				if (!_id) {
 					return;
 				}
-				// put after delete
+				// Put after delete
 				var skillsStore = transaction.objectStore("MonsterSkills");
 				var range = IDBKeyRange.bound(_id, _id);
 				var reqOpen = skillsStore.openCursor(range, "next");
@@ -3164,11 +3164,11 @@ HVStat.Monster = (function () {
 					var reqPut;
 					var cursor = this.result;
 					if (cursor) {
-						// delete
+						// Delete
 						cursor.delete();
 						cursor.continue();
 					} else {
-						// put
+						// Put
 						for (i = 0; i < _skills.length; i++) {
 							vo = _skills[i].valueObject;
 							vo.id = _id;
@@ -3244,7 +3244,7 @@ HVStat.Monster = (function () {
 		};
 	};
 
-	// public static method
+	// Public static method
 	Monster.getDomElementId = function (index) {
 		if (isNaN(index) || index < 0 || _domElementIds.length <= index) {
 			alert("Monster.getDomElementId: invalid index");
@@ -3261,11 +3261,11 @@ HVStat.Monster = (function () {
 //------------------------------------
 
 HVStat.deleteIndexedDB = function () {
-	// close connection
+	// Close connection
 	HVStat.transaction = null;
 	HVStat.idb = null;
 
-	// delete database
+	// Delete database
 	var reqDelete = indexedDB.deleteDatabase("HVStat");
 	reqDelete.onsuccess = function (event) {
 		alert("Your database has been deleted.");
@@ -3338,29 +3338,29 @@ HVStat.maintainObjectStores = function (event) {
 HVStat.openIndexedDB = function (callback) {
 	var errorMessage;
 
-	var idbVersion = 1; // must be an integer
+	var idbVersion = 1; // Must be an integer
 	var reqOpen = indexedDB.open("HVStat", idbVersion);
 	reqOpen.onerror = function (event) {
 		errorMessage = "Database open error: " + event.target.errorCode;
 		alert(errorMessage);
 		console.log(errorMessage);
 	};
-	// latest W3C draft (Firefox and Chrome 23 or later)
+	// Latest W3C draft (Firefox and Chrome 23 or later)
 	reqOpen.onupgradeneeded = function (event) {
 		console.log("onupgradeneeded");
 		HVStat.idb = reqOpen.result;
 		HVStat.maintainObjectStores(event);
-		// subsequently onsuccess event handler is called automatically
+		// Subsequently onsuccess event handler is called automatically
 	};
 	reqOpen.onsuccess = function (event) {
 		var idb = HVStat.idb = reqOpen.result;
 		if (Number(idb.version) === idbVersion) {
-			// always come here if Firefox and Chrome 23 or later
+			// Always come here if Firefox and Chrome 23 or later
 			if (callback instanceof Function) {
 				callback(event);
 			}
 		} else {
-			// obsolete Chrome style (Chrome 22 or earlier)
+			// Obsolete Chrome style (Chrome 22 or earlier)
 			console.debug("came setVersion route");
 			var reqVersion = idb.setVersion(idbVersion);
 			reqVersion.onerror = function (event) {
@@ -3382,7 +3382,7 @@ HVStat.openIndexedDB = function (callback) {
 HVStat.deleteAllObjectsInMonsterScanResults = function () {
 	var tx = HVStat.idb.transaction(["MonsterScanResults"], "readwrite");
 	var store = tx.objectStore("MonsterScanResults");
-	var range = null; // select all
+	var range = null; // Select all
 	var count = 0;
 
 	var req = store.openCursor(range, "next");
@@ -3405,7 +3405,7 @@ HVStat.deleteAllObjectsInMonsterScanResults = function () {
 HVStat.deleteAllObjectsInMonsterSkills = function () {
 	var tx = HVStat.idb.transaction(["MonsterSkills"], "readwrite");
 	var store = tx.objectStore("MonsterSkills");
-	var range = null; // select all
+	var range = null; // Select all
 	var count = 0;
 
 	var req = store.openCursor(range, "next");
@@ -3428,7 +3428,7 @@ HVStat.deleteAllObjectsInMonsterSkills = function () {
 HVStat.exportMonsterScanResults = function (callback) {
 	var tx = HVStat.idb.transaction(["MonsterScanResults"], "readonly");
 	var store = tx.objectStore("MonsterScanResults");
-	var range = null; // select all
+	var range = null; // Select all
 	var count = 0;
 	var texts = [];
 	var tab = "%09";
@@ -3498,7 +3498,7 @@ HVStat.exportMonsterScanResults = function (callback) {
 HVStat.exportMonsterSkills = function (callback) {
 	var tx = HVStat.idb.transaction(["MonsterSkills"], "readonly");
 	var store = tx.objectStore("MonsterSkills");
-	var range = null; // select all
+	var range = null; // Select all
 	var count = 0;
 	var texts = [];
 	var tab = "%09";
@@ -3558,14 +3558,14 @@ HVStat.importMonsterScanResults = function (file, callback) {
 			}
 		}
 
-		// prescan
+		// Prescan
 		HVStat.reMonsterScanResultsTSV.lastIndex = 0;
 		rowCount = 0;
 		while ((result = HVStat.reMonsterScanResultsTSV.exec(contents)) !== null) {
 			rowCount++;
 		}
 
-		// import
+		// Import
 		procCount = 0;
 		HVStat.reMonsterScanResultsTSV.lastIndex = 0;
 		while ((result = HVStat.reMonsterScanResultsTSV.exec(contents)) !== null) {
@@ -3657,14 +3657,14 @@ HVStat.importMonsterSkills = function (file, callback) {
 			}
 		}
 
-		// prescan
+		// Prescan
 		HVStat.reMonsterSkillsTSV.lastIndex = 0;
 		rowCount = 0;
 		while ((result = HVStat.reMonsterSkillsTSV.exec(contents)) !== null) {
 			rowCount++;
 		}
 
-		// import
+		// Import
 		procCount = 0;
 		HVStat.reMonsterSkillsTSV.lastIndex = 0;
 		while ((result = HVStat.reMonsterSkillsTSV.exec(contents)) !== null) {
@@ -3725,9 +3725,9 @@ HVStat.importMonsterSkills = function (file, callback) {
 }
 
 //------------------------------------
-// migration functions
+// Migration functions
 //------------------------------------
-// finally to be obsolete
+// Finally to be obsolete
 
 HVStat.migration = {};
 HVStat.migration.monsterClassFromCode = function (code) {
@@ -6084,10 +6084,10 @@ function HVMasterReset() {
 		"HVBackup5",
 		"HVCollectData",
 		"HVDrops",
-		"HVLoadTimeCounters",	// obsolete
-		"HVMonsterDatabase",	// old monster data
+		"HVLoadTimeCounters",	// Obsolete
+		"HVMonsterDatabase",	// Old monster data
 		"HVOverview",
-		"HVProf",				// obsolete
+		"HVProf",				// Obsolete
 		"HVRewards",
 		"HVRound",
 		"HVSettings",
@@ -6477,7 +6477,7 @@ function AlertEffectsSelf() {
 		var i;
 		for (i = 0; i < effectNames.length; i++) {
 			if (hvStat.settings.isEffectsAlertSelf[i]
-					&& (effectName + " ").indexOf(effectNames[i] + " ") >= 0	// to match "Regen" and "Regen II", not "Regeneration"
+					&& (effectName + " ").indexOf(effectNames[i] + " ") >= 0	// To match "Regen" and "Regen II", not "Regeneration"
 					&& String(hvStat.settings.EffectsAlertSelfRounds[i]) === duration) {
 				alert(effectName + " is expiring");
 			}
@@ -6515,8 +6515,8 @@ function AlertEffectsMonsters() {
 	});
 }
 function TaggingItems(clean) {
-	// can clean tag data when visited the Inventory page
-	// because all equipments which is owned are listed.
+	// Can clean tag data when visited the Inventory page.
+	// Because all equipments which is owned are listed.
 	loadTagsObject();
 	var equipTagArrayTable = [
 		{id: _tags.OneHandedIDs,	value: _tags.OneHandedTAGs,	idClean: [], valueClean: []},
@@ -6640,7 +6640,7 @@ function TaggingItems(clean) {
 }
 
 //------------------------------------
-// start-up
+// Start-up
 //------------------------------------
 hvStat.startup = {
 	phase1: function () {
@@ -6697,7 +6697,7 @@ hvStat.startup = {
 			if (hvStat.settings.isShowStatsPopup) {
 				registerEventHandlersForMonsterPopup();
 			}
-			// show warnings
+			// Show warnings
 			HVStat.AlertAllFromQueue();
 			if (!hv.battle.round.finished) {
 				if (hvStat.settings.warnMode[hvStat.roundInfo.battleType]) {
@@ -6731,7 +6731,7 @@ hvStat.startup = {
 			if (hvStat.settings.enableScrollHotkey) {
 				hvStat.keyboard.scrollable.setup();
 			}
-			// equipment tag
+			// Equipment tag
 			if (hv.location.isEquipment && hvStat.settings.isShowTags[0]) {
 				TaggingItems(false);
 			}
