@@ -4151,9 +4151,6 @@ HVStat.resetHealthWarningStates = function () {
 }
 
 function collectCurrentProfsData() {
-	if (!hv.location.isCharacter || hv.settings.useHVFontEngine) {
-		return;
-	}
 	var proficiencyTable = document.getElementById("leftpane").children[1].querySelectorAll("div.fd12");
 	var prof = hvStat.characterStatus.proficiencies;
 	prof.oneHanded = Number(util.innerText(proficiencyTable[2]));
@@ -6338,7 +6335,7 @@ function StartBattleAlerts () {
 	}
 }
 
-function FindSettingsStats() {
+function captureCharacterStatuses() {
 	var difficulties = ["", "Easy", "Normal", "Hard", "Heroic", "Nightmare", "Hell", "Nintendo", "Battletoads", "IWBTH"];
 	var difficulty = hv.settings.difficulty;
 	if (difficulty) {
@@ -6347,7 +6344,7 @@ function FindSettingsStats() {
 	}
 	elements = document.querySelectorAll("#setform img");
 	var result;
-	for (i = 0; i < elements.length; i++) {
+	for (var i = 0; i < elements.length; i++) {
 		result = /set(\d)_on/.exec(elements[i].getAttribute("src"));
 		if (result && result.length >= 2) {
 			hvStat.characterStatus.equippedSet = Number(result[1]);
@@ -6610,7 +6607,7 @@ hvStat.startup = {
 		} else {
 			hvStat.storage.roundInfo.remove();
 			if ((hvStat.settings.isStartAlert || hvStat.settings.isShowEquippedSet) && !hv.settings.useHVFontEngine) {
-				FindSettingsStats();
+				captureCharacterStatuses();
 			}
 			if (!hv.location.isRiddle) {
 				HVStat.resetHealthWarningStates();
@@ -6646,7 +6643,7 @@ hvStat.startup = {
 					document.onkeypress = null;
 				}
 			}
-			if (hv.location.isCharacter) {
+			if (hv.location.isCharacter && !hv.settings.useHVFontEngine) {
 				collectCurrentProfsData();
 			}
 			if (hv.location.isShrine) {
