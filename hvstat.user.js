@@ -1509,6 +1509,26 @@ hvStat.battle.command.Command.prototype = {
 
 hvStat.battle.enhancement = {};
 
+hvStat.battle.enhancement.roundCounter = {
+	// Adds a Round counter to the Battle screen.
+	create: function () {
+		var doc = document,
+			curRound = hvStat.roundInfo.currRound,
+			maxRound = hvStat.roundInfo.maxRound,
+			dispRound = maxRound > 0 ? curRound + "/" + maxRound : "#" + curRound,
+			div = doc.createElement('div');
+
+		div.className = "hvstat-round-counter";
+		div.textContent = dispRound;
+		if (curRound === maxRound - 1) {
+			div.className += " hvstat-round-counter-second-last";
+		} else if (curRound === maxRound) {
+			div.className += " hvstat-round-counter-last";
+		}
+		doc.getElementById('battleform').children[0].appendChild(div);
+	},
+};
+
 hvStat.battle.enhancement.effectDurationBadge = {
 	create: function (effectIcon) {
 		var result = hvStat.battle.constant.rInfoPaneParameters.exec(effectIcon.getAttribute("onmouseover"));
@@ -4057,27 +4077,6 @@ _artifacts = 0;
 _lastArtName = "";
 _tokenDrops = [0, 0, 0];
 
-/* =====
- showRoundCounter
- Adds a Round counter to the Battle screen.
-===== */
-function showRoundCounter() {
-	var doc = document,
-		curRound = hvStat.roundInfo.currRound,
-		maxRound = hvStat.roundInfo.maxRound,
-		dispRound = maxRound > 0 ? curRound + "/" + maxRound : "#" + curRound,
-		div = doc.createElement('div');
-	
-	div.className = "hvstat-round-counter";
-	div.textContent = dispRound;
-	if (curRound === maxRound - 1) {
-		div.className += " hvstat-round-counter-second-last";
-	} else if (curRound === maxRound) {
-		div.className += " hvstat-round-counter-last";
-	}
-	doc.getElementById('battleform').children[0].appendChild(div);
-}
-
 function showMonsterHealth() {
 	for (var i = 0; i < hv.battle.elementCache.monsters.length; i++) {
 		HVStat.monsters[i].renderHealth();
@@ -6360,11 +6359,11 @@ function AlertEffectsSelf() {
 		"Flame Spikes", "Frost Spikes", "Lightning Spikes", "Storm Spikes",
 		"Chain 1", "Chain 2",
 	];
-	var elements = document.querySelectorAll("#battleform div.btps > img");
+	var elements = hv.battle.elementCache.characterEffectIcons;
 	Array.prototype.forEach.call(elements, function (element) {
 		var onmouseover = element.getAttribute("onmouseover").toString();
 		var result = hvStat.battle.constant.rInfoPaneParameters.exec(onmouseover);
-		if (!result || result.length < 3) return;
+		if (!result) return;
 		var effectName = result[1];
 		var duration = result[2];
 		var i;
@@ -6387,7 +6386,7 @@ function AlertEffectsMonsters() {
 	Array.prototype.forEach.call(elements, function (element) {
 		var onmouseover = element.getAttribute("onmouseover").toString();
 		var result = hvStat.battle.constant.rInfoPaneParameters.exec(onmouseover);
-		if (!result || result.length < 3) return;
+		if (!result) return;
 		var effectName = result[1];
 		var duration = result[2];
 		var i, base, monsterNumber;
@@ -6568,7 +6567,7 @@ hvStat.startup = {
 			hvStat.battle.setup();
 			collectRoundInfo();
 			if (hvStat.roundInfo.currRound > 0 && hvStat.settings.isShowRoundCounter) {
-				showRoundCounter();
+				hvStat.battle.enhancement.roundCounter.create();
 			}
 			showMonsterHealth();
 			if (!HVStat.loadingMonsterInfoFromDB) {
