@@ -1655,13 +1655,13 @@ hvStat.battle.enhancement.scanButton = {
 			if (monsters[i].innerHTML.indexOf("bardead") >= 0) {
 				continue;
 			}
-			var button = new this.ScanButton(monsters[i]);
+			var button = this.create(monsters[i]);
 			if (button) {
 				monsters[i].insertBefore(button, null);
 			}
 		}
 	},
-	ScanButton: function (monster) {
+	create: function (monster) {
 		var button = document.createElement("div");
 		button.className = "hvstat-scan-button";
 		button.textContent = "Scan";
@@ -1716,14 +1716,14 @@ hvStat.battle.enhancement.skillButton = {
 				continue;
 			}
 			for (j = 0; j < skills.length; j++) {
-				var button = new this.SkillButton(monsters[i], skills[j], j + 1);
+				var button = this.create(monsters[i], skills[j], j + 1);
 				if (button) {
 					monsters[i].insertBefore(button, null);
 				}
 			}
 		}
 	},
-	SkillButton: function (monster, skill, skillNumber) {
+	create: function (monster, skill, skillNumber) {
 		var button = document.createElement("div");
 		button.className = "hvstat-skill-button hvstat-skill" + skillNumber + "-button";
 		button.textContent = hvStat.battle.enhancement.skillButton.getLabelById(skill.id);
