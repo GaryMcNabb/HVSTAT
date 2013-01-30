@@ -329,6 +329,16 @@ var hvStat = {
 	get stats() {
 		return hvStat.storage.stats.value;
 	},
+	get statsBackups() {
+		return [
+			null,
+			hvStat.storage.statsBackups[1].value,
+			hvStat.storage.statsBackups[2].value,
+			hvStat.storage.statsBackups[3].value,
+			hvStat.storage.statsBackups[4].value,
+			hvStat.storage.statsBackups[5].value,
+		];
+	},
 	get drops() {
 		return hvStat.storage.drops.value;
 	},
@@ -941,6 +951,16 @@ hvStat.storage.overview = new hvStat.storage.Overview("HVOverview", hvStat.stora
 // Statistics object
 hvStat.storage.stats = new hvStat.storage.Item("HVStats", hvStat.storage.initialValue.stats);
 
+// Statistics Backup objects
+hvStat.storage.statsBackups = [
+	null,
+	new hvStat.storage.Item("HVBackup1", hvStat.storage.initialValue.statsBackup),
+	new hvStat.storage.Item("HVBackup2", hvStat.storage.initialValue.statsBackup),
+	new hvStat.storage.Item("HVBackup3", hvStat.storage.initialValue.statsBackup),
+	new hvStat.storage.Item("HVBackup4", hvStat.storage.initialValue.statsBackup),
+	new hvStat.storage.Item("HVBackup5", hvStat.storage.initialValue.statsBackup),
+];
+
 // Drops constructor inherits Item
 hvStat.storage.Drops = function (key, defaultValue) {
 	hvStat.storage.Item.apply(this, [key, defaultValue]);
@@ -1005,13 +1025,6 @@ hvStat.storage.Shrine.prototype.getValue = function () {
 
 // Shrine object
 hvStat.storage.shrine = new hvStat.storage.Shrine("HVShrine", hvStat.storage.initialValue.shrine);
-
-// Statistics Backup objects
-hvStat.storage.statsBackup1 = new hvStat.storage.Item("HVBackup1", hvStat.storage.initialValue.statsBackup);
-hvStat.storage.statsBackup2 = new hvStat.storage.Item("HVBackup2", hvStat.storage.initialValue.statsBackup);
-hvStat.storage.statsBackup3 = new hvStat.storage.Item("HVBackup3", hvStat.storage.initialValue.statsBackup);
-hvStat.storage.statsBackup4 = new hvStat.storage.Item("HVBackup4", hvStat.storage.initialValue.statsBackup);
-hvStat.storage.statsBackup5 = new hvStat.storage.Item("HVBackup5", hvStat.storage.initialValue.statsBackup);
 
 // Round Information object
 hvStat.storage.roundInfo = new hvStat.storage.Item("hvStat.roundInfo", hvStat.storage.initialValue.roundInfo);
@@ -1810,6 +1823,10 @@ hvStat.battle.enhancement.monsterLabel = {
 		}
 	},
 };
+
+hvStat.battle.monster = {};
+
+hvStat.battle.warningSystem = {};
 
 hvStat.ui = {
 	setup: function () {
@@ -2814,7 +2831,7 @@ HVStat.Monster = (function () {
 				for (abbrLevel = 0; abbrLevel < maxAbbrLevel; abbrLevel++) {
 					statsHtml = '';
 					if (!_scanResult || !_scanResult.monsterClass) {
-//						if (hvStat.settings.showNewIfMonsterNotScanned) {
+//						if (hvStat.settings.showLabelForUnknownMonster) {
 							statsHtml = '[<span class="hvstat-monster-status-unknown">NEW</span>]';
 //						}
 					} else {
@@ -5213,51 +5230,44 @@ function initBattleStatsPane() {
 		if (confirm("Reset Stats tab?")) hvStat.storage.stats.reset();
 	});
 	$("._checkBackups").click(function () {
-		loadBackupObject(1);
-		loadBackupObject(2);
-		loadBackupObject(3);
-		loadBackupObject(4);
-		loadBackupObject(5);
 		var ds = [];
 		var d = [];
 		ds[1] = ds[2] = ds[3] = ds[4] = ds[5] = "None yet";
 		d[1] = d[2] = d[3] = d[4] = d[5] = "Never";
 		var nd = new Date();
 		for (var i = 1; i <= 5; i++) {
-			if (_backup[i].datesave !== 0) {
-				nd.setTime( _backup[i].datesave);
+			if (hvStat.statsBackups[i].datesave !== 0) {
+				nd.setTime( hvStat.statsBackups[i].datesave);
 				ds[i] = nd.toLocaleString();
 				if (browser.isChrome) ds[i] = nd.toLocaleDateString() + " " + nd.toLocaleTimeString();
 			}
-			if (_backup[i].datestart !== 0) {
-				nd.setTime( _backup[i].datestart);
+			if (hvStat.statsBackups[i].datestart !== 0) {
+				nd.setTime( hvStat.statsBackups[i].datestart);
 				d[i] = nd.toLocaleString();
 				if (browser.isChrome) d[i] = nd.toLocaleDateString() + " " + nd.toLocaleTimeString();
 			}
 			
 		}
-		alert( "Backup 1:\nLast save date: " + ds[1] + "\nStats tracked since: " + d[1] + "\nNumber of rounds tracked: " + _backup[1].rounds
-			+ "\n\nBackup 2\nLast save date: " + ds[2] + "\nStats tracked since: " + d[2] + "\nNumber of rounds tracked: " + _backup[2].rounds
-			+ "\n\nBackup 3\nLast save date: " + ds[3] + "\nStats tracked since: " + d[3] + "\nNumber of rounds tracked: " + _backup[3].rounds
-			+ "\n\nBackup 4\nLast save date: " + ds[4] + "\nStats tracked since: " + d[4] + "\nNumber of rounds tracked: " + _backup[4].rounds
-			+ "\n\nBackup 5\nLast save date: " + ds[5] + "\nStats tracked since: " + d[5] + "\nNumber of rounds tracked: " + _backup[5].rounds);
+		alert( "Backup 1:\nLast save date: " + ds[1] + "\nStats tracked since: " + d[1] + "\nNumber of rounds tracked: " + hvStat.statsBackups[1].rounds
+			+ "\n\nBackup 2\nLast save date: " + ds[2] + "\nStats tracked since: " + d[2] + "\nNumber of rounds tracked: " + hvStat.statsBackups[2].rounds
+			+ "\n\nBackup 3\nLast save date: " + ds[3] + "\nStats tracked since: " + d[3] + "\nNumber of rounds tracked: " + hvStat.statsBackups[3].rounds
+			+ "\n\nBackup 4\nLast save date: " + ds[4] + "\nStats tracked since: " + d[4] + "\nNumber of rounds tracked: " + hvStat.statsBackups[4].rounds
+			+ "\n\nBackup 5\nLast save date: " + ds[5] + "\nStats tracked since: " + d[5] + "\nNumber of rounds tracked: " + hvStat.statsBackups[5].rounds);
 	});
 	
 	$("._backupFunc").click(function () {
 		var backupID = Number(document.getElementById("BackupNumber").options[document.getElementById("BackupNumber").selectedIndex].value);
-		var ba = 0;
-		if ( backupID < 1 || backupID > 5 ) {
+		if (backupID < 1 || backupID > 5) {
 			alert ("'" + backupID + "'" + " is not correct number: " + "Choose beetwen 1-5");
 			return;
 		}
-		loadBackupObject(backupID);
-		ba = _backup[backupID];
+		var ba = hvStat.storage.statsBackups[backupID];
 		
 		switch ($(this).attr("value")) {
 		case "Save Backup":
 			if (confirm("Save stats to backup " + backupID + "?")) {
 				saveStatsBackup(backupID);
-				ba.datesave = (new Date()).getTime();
+				ba.value.datesave = (new Date()).getTime();
 				ba.save();
 			}
 			break;
@@ -5270,7 +5280,7 @@ function initBattleStatsPane() {
 		case "AddTo Backup":
 			if (confirm("Add stats to backup " + backupID + "?")) {
 				addtoStatsBackup(backupID);
-				ba.datesave = (new Date()).getTime();
+				ba.value.datesave = (new Date()).getTime();
 				ba.save();
 			}
 			break;
@@ -5281,7 +5291,9 @@ function initBattleStatsPane() {
 			}
 			break;
 		case "Remove Backup":
-			if (confirm("Remove stats from backup " + backupID + "?")) ba.reset();
+			if (confirm("Remove stats from backup " + backupID + "?")) {
+				ba.reset();
+			}
 		}
 	});
 }
@@ -6088,7 +6100,7 @@ function HVMasterReset() {
 		"HVOverview",
 		"HVProf",				// Obsolete
 		"HVRewards",
-		"HVRound",
+		"HVRound",				// Obsolete
 		"HVSettings",
 		"HVShrine",
 		"HVStats",
@@ -6128,30 +6140,22 @@ function loadFromStorage(c, b) {
 function saveToStorage(b, a) { localStorage.setItem(a, JSON.stringify(b)); }
 function deleteFromStorage(a) { localStorage.removeItem(a); }
 function saveStatsBackup(back) {
-	var ba = 0;
-	ba = _backup[back];
-	loadBackupObject(back);
+	var ba = hvStat.statsBackups[back];
 	hvStat.util.copyEachProperty(ba, hvStat.stats);
-	ba.save();
+	hvStat.storage.statsBackups[back].save();
 }
 function addtoStatsBackup(back) {
-	var ba = 0;
-	ba = _backup[back];
-	loadBackupObject(back);
+	var ba = hvStat.statsBackups[back];
 	hvStat.util.addEachPropertyValue(ba, hvStat.stats);
-	ba.save();
+	hvStat.storage.statsBackups[back].save();
 }
 function loadStatsBackup(back) {
-	var ba = 0;
-	ba = _backup[back];
-	loadBackupObject(back);
+	var ba = hvStat.statsBackups[back];
 	hvStat.util.copyEachProperty(hvStat.stats, ba);
 	hvStat.storage.stats.save();
 }
 function addfromStatsBackup(back) {
-	var ba = 0;
-	ba = _backup[back];
-	loadBackupObject(back);
+	var ba = hvStat.statsBackups[back];
 	hvStat.util.addEachPropertyValue(hvStat.stats, ba);
 	hvStat.storage.stats.save();
 }
@@ -6180,66 +6184,6 @@ function loadTagsObject() {
 	if (_tags !== null) return;
 	_tags = new HVTags();
 	_tags.load();
-}
-function HVCacheBackup(ID) {
-	var backupID = "HVBackup"+ID;
-	this.load = function () { loadFromStorage(this, backupID); };
-	this.save = function () { saveToStorage(this, backupID); };
-	this.reset = function () { deleteFromStorage(backupID); };
-	this.cloneFrom = clone;
-	this.rounds = 0;
-	this.kills = 0;
-	this.aAttempts = 0;
-	this.aHits = [0, 0];
-	this.aOffhands = [0, 0, 0, 0];
-	this.sAttempts = 0;
-	this.aDomino = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-	this.aCounters = [0, 0, 0, 0];
-	this.dDealt = [0, 0, 0];
-	this.sHits = [0, 0];
-	this.sResists = 0;
-	this.dDealtSp = [0, 0];
-	this.absArry = [0, 0, 0];
-	this.mAttempts = 0;
-	this.dTaken = [0, 0];
-	this.mHits = [0, 0];
-	this.pDodges = 0;
-	this.pEvades = 0;
-	this.pParries = 0;
-	this.pBlocks = 0;
-	this.pResists = 0;
-	this.mSpells = 0;
-	this.overStrikes = 0;
-	this.coalesce = 0;
-	this.eTheft = 0;
-	this.channel = 0;
-	this.cureTotals = [0, 0, 0];
-	this.cureCounts = [0, 0, 0];
-	this.elemEffects = [0, 0, 0];
-	this.effectPoison = [0, 0];
-	this.elemSpells = [0, 0, 0, 0];
-	this.divineSpells = [0, 0, 0, 0];
-	this.forbidSpells = [0, 0, 0, 0];
-	this.depSpells = [0, 0];
-	this.supportSpells = 0;
-	this.curativeSpells = 0;
-	this.elemGain = 0;
-	this.divineGain = 0;
-	this.forbidGain = 0;
-	this.depGain = 0;
-	this.supportGain = 0;
-	this.weapProfGain = [0, 0, 0, 0];
-	this.armorProfGain = [0, 0, 0];
-	this.weaponprocs = [0, 0, 0, 0, 0, 0, 0, 0];
-	this.pskills = [0, 0, 0, 0, 0, 0, 0];
-	this.datestart = 0;
-	this.datesave = 0;
-	this.isLoaded = false;
-}
-function loadBackupObject(ID) {
-	if (_backup[ID] !== null) return;
-	_backup[ID] = new HVCacheBackup(ID);
-	_backup[ID].load();
 }
 function loadDatabaseObject() {
 	if (_database !== null) return;
