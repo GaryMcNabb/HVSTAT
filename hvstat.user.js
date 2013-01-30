@@ -1838,7 +1838,6 @@ hvStat.ui = {
 			title: "[STAT] HentaiVerse Statistics, Tracking, and Analysis Tool v." + hvStat.version,
 		});
 		$('#hvstat-tabs').tabs();
-//		loadRewardsObject();
 		loadShrineObject();
 		initOverviewPane();
 		initBattleStatsPane();
@@ -4029,7 +4028,6 @@ HVStat.migration.deleteOldDatabase = function () {
 //------------------------------------
 
 /* ========== GLOBAL VARIABLES ========== */
-//HV_REWARDS = "HVRewards";
 HV_SHRINE = "HVShrine";
 HV_DROPS = "HVDrops";
 HV_ROUND = "HVRound";
@@ -4040,7 +4038,6 @@ HOURLY = 0;
 ARENA = 1;
 GRINDFEST = 2;
 ITEM_WORLD = 3;
-//_rewards = null;
 _shrine = null;
 _backup = [null, null, null, null, null, null];
 _database = null;
@@ -4197,8 +4194,6 @@ function collectRoundInfo() {
  			HVStat.monsters[i].setFromValueObject(hvStat.roundInfo.monsters[i]);
  		}
 	}
-// 	if (hvStat.settings.isTrackRewards)
-// 		loadRewardsObject();
 	var monsterIndex = 0;
 	var turnLog = new HVStat.TurnLog();
 	var joinedLogStringOfCurrentTurn = turnLog.texts.join("\n");
@@ -4655,7 +4650,6 @@ function RoundSave() {
 }
 
 function saveStats() {
-//	loadRewardsObject();
 	var d = 0;
 	var c = 0;
 	var elements = document.querySelectorAll("#togpane_log td:last-child");
@@ -4807,7 +4801,6 @@ function saveStats() {
 	hvStat.arenaRewards.tokenDrops[2] += _tokenDrops[2];
 	hvStat.storage.overview.save();
 	hvStat.storage.stats.save();
-//	_rewards.save();
 	hvStat.storage.arenaRewards.save();
 	hvStat.storage.drops.save();
 }
@@ -5357,14 +5350,12 @@ function initRewardsPane() {
 			if (confirm("Clear Artifact list?")) {
 				hvStat.arenaRewards.artRwrdArry = [];
 				hvStat.arenaRewards.artRwrdQtyArry = [];
-//				_rewards.save();
 				hvStat.storage.arenaRewards.save();
 			}
 		});
 		$('#hvstat-arena-rewards-equipments-clear').click(function () {
 			if (confirm("Clear Equipment list?")) {
 				hvStat.arenaRewards.eqRwrdArry = [];
-//				_rewards.save();
 				hvStat.storage.arenaRewards.save();
 			}
 		});
@@ -5372,13 +5363,11 @@ function initRewardsPane() {
 			if (confirm("Clear Item list?")) {
 				hvStat.arenaRewards.itemRwrdArry = [];
 				hvStat.arenaRewards.itemRwrdQtyArry = [];
-//				_rewards.save();
 				hvStat.storage.arenaRewards.save();
 			}
 		});
 		$('#hvstat-arena-rewards-reset').click(function () {
 			if (confirm("Reset Arena Rewards tab?")) {
-//				_rewards.reset();
 				hvStat.storage.arenaRewards.reset();
 			}
 		});
@@ -6062,11 +6051,6 @@ function captureShrine() {
 	}
 	_shrine.save();
 }
-// function loadRewardsObject() {
-// 	if (_rewards !== null) return;
-// 	_rewards = new HVCacheRewards();
-// 	_rewards.load();
-// }
 function loadShrineObject() {
 	if (_shrine !== null) return;
 	_shrine = new HVCacheShrine();
@@ -6086,7 +6070,6 @@ function getRelativeTime(b) {
 function HVResetTracking() {
 	hvStat.storage.overview.reset();
 	hvStat.storage.stats.reset();
-//	_rewards.reset();
 	hvStat.storage.arenaRewards.reset();
 	_shrine.reset();
 	hvStat.storage.drops.reset();
@@ -6145,26 +6128,6 @@ function loadFromStorage(c, b) {
 }
 function saveToStorage(b, a) { localStorage.setItem(a, JSON.stringify(b)); }
 function deleteFromStorage(a) { localStorage.removeItem(a); }
-// function HVCacheRewards() {
-// 	this.load = function () { loadFromStorage(this, HV_REWARDS); };
-// 	this.save = function () {
-// 		this.totalRwrds = this.artRwrd + this.eqRwrd + this.itemsRwrd;
-// 		saveToStorage(this, HV_REWARDS);
-// 	};
-// 	this.reset = function () { deleteFromStorage(HV_REWARDS); };
-// 	this.cloneFrom = clone;
-// 	this.eqRwrd = 0;
-// 	this.eqRwrdArry = [];
-// 	this.itemsRwrd = 0;
-// 	this.itemRwrdArry = [];
-// 	this.itemRwrdQtyArry = [];
-// 	this.artRwrd = 0;
-// 	this.artRwrdArry = [];
-// 	this.artRwrdQtyArry = [];
-// 	this.tokenDrops = [0, 0, 0];
-// 	this.totalRwrds = 0;
-// 	this.isLoaded = false;
-// }
 function HVCacheShrine() {
 	this.load = function () { loadFromStorage(this, HV_SHRINE); };
 	this.save = function () {
@@ -6627,11 +6590,6 @@ hvStat.startup = {
 		console.debug(hv);
 		hvStat.setup();
 		console.debug(hvStat);
-// 		console.debug(hvStat.storage.overview.value);
-// 		console.debug(hvStat.storage.stats.value);
-// 		console.debug(hvStat.storage.drops.value);
-// 		console.debug(hvStat.storage.arenaRewards.value);
-		console.debug(hvStat.arenaRewards.totalRwrds);
 // 		console.debug(hvStat.storage.shrine.value);
 // 		console.debug(hvStat.storage.equipmentTags.value);
 		if (hvStat.settings.isChangePageTitle) {
