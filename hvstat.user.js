@@ -1838,7 +1838,7 @@ hvStat.ui = {
 			title: "[STAT] HentaiVerse Statistics, Tracking, and Analysis Tool v." + hvStat.version,
 		});
 		$('#hvstat-tabs').tabs();
-		loadShrineObject();
+//		loadShrineObject();
 		initOverviewPane();
 		initBattleStatsPane();
 		initItemPane();
@@ -4028,9 +4028,7 @@ HVStat.migration.deleteOldDatabase = function () {
 //------------------------------------
 
 /* ========== GLOBAL VARIABLES ========== */
-HV_SHRINE = "HVShrine";
-HV_DROPS = "HVDrops";
-HV_ROUND = "HVRound";
+//HV_SHRINE = "HVShrine";
 HV_EQUIP = "inventoryAlert";
 HV_DBASE = "HVMonsterDatabase";
 HV_TAGS = "HVTags";
@@ -4038,7 +4036,7 @@ HOURLY = 0;
 ARENA = 1;
 GRINDFEST = 2;
 ITEM_WORLD = 3;
-_shrine = null;
+//_shrine = null;
 _backup = [null, null, null, null, null, null];
 _database = null;
 _tags = null;
@@ -4901,7 +4899,7 @@ function getReportOverviewHtml() {
 	B = hvStat.settings.isTrackStats ? a : hvStat.stats.rounds > 0 ? q : w;
 	A = hvStat.settings.isTrackItems ? a : hvStat.drops.dropChances > 0 ? q : w;
 	l = hvStat.settings.isTrackRewards ? a : hvStat.arenaRewards.totalRwrds > 0 ? q : w;
-	Shrine = hvStat.settings.isTrackShrine ? a : _shrine.isLoaded && _shrine.totalRewards > 0 ? q : w;
+	Shrine = hvStat.settings.isTrackShrine ? a : hvStat.shrine.totalRewards > 0 ? q : w;
 	u = hvStat.settings.isWarnSparkTrigger ? '<span style="color:green"><b>Trig</b></span>' : I;
 	u += N;
 	u += hvStat.settings.isWarnSparkExpire ? '<span style="color:green"><b>Exp</b></span>' : I;
@@ -5375,13 +5373,13 @@ function initRewardsPane() {
 }
 function initShrinePane() {
 	var innerHTML;
-	if (_shrine.totalRewards === 0) {
+	if (hvStat.shrine.totalRewards === 0) {
 		innerHTML = "No data found. Make an offering at Snowflake's Shrine to begin tracking.";
 	} else {
 		innerHTML = browser.extension.getResourceText("html/", "shrine-pane.html");
 	}
 	$('#hvstat-shrine-pane').html(innerHTML);
-	if (_shrine.totalRewards > 0) {
+	if (hvStat.shrine.totalRewards > 0) {
 		if (!hvStat.settings.isTrackShrine) {
 			$('#hvstat-shrine-pane .hvstat-tracking-paused').show();
 		}
@@ -5391,34 +5389,36 @@ function initShrinePane() {
 		var tdCrystals = $('#hvstat-shrine-artifact-crystals td');
 		var tdEnergyDrinks = $('#hvstat-shrine-artifact-energy-drinks td');
 		var tdTotal = $('#hvstat-shrine-artifact-total td');
-		$(tdAbilityPoints[0]).text(_shrine.artifactAP);
-		$(tdAbilityPoints[1]).text(hvStat.util.percentRatio(_shrine.artifactAP, _shrine.artifactsTraded, 2) + "%");
-		$(tdAttributes[0]).text(_shrine.artifactStat);
-		$(tdAttributes[1]).text(hvStat.util.percentRatio(_shrine.artifactStat, _shrine.artifactsTraded, 2) + "%");
-		$(tdHath[0]).text(_shrine.artifactHath);
-		$(tdHath[1]).text(hvStat.util.percentRatio(_shrine.artifactHath, _shrine.artifactsTraded, 2) + "%");
-		$(tdHath[2]).text("(" + hvStat.util.ratio(_shrine.artifactHathTotal, _shrine.artifactsTraded).toFixed(2) + " Hath per Artifact)");
-		$(tdCrystals[0]).text(_shrine.artifactCrystal);
-		$(tdCrystals[1]).text(hvStat.util.percentRatio(_shrine.artifactCrystal, _shrine.artifactsTraded, 2) + "%");
-		$(tdEnergyDrinks[0]).text(_shrine.artifactItem);
-		$(tdEnergyDrinks[1]).text(hvStat.util.percentRatio(_shrine.artifactItem, _shrine.artifactsTraded, 2) + "%");
-		$(tdTotal[0]).text(_shrine.artifactsTraded);
+		$(tdAbilityPoints[0]).text(hvStat.shrine.artifactAP);
+		$(tdAbilityPoints[1]).text(hvStat.util.percentRatio(hvStat.shrine.artifactAP, hvStat.shrine.artifactsTraded, 2) + "%");
+		$(tdAttributes[0]).text(hvStat.shrine.artifactStat);
+		$(tdAttributes[1]).text(hvStat.util.percentRatio(hvStat.shrine.artifactStat, hvStat.shrine.artifactsTraded, 2) + "%");
+		$(tdHath[0]).text(hvStat.shrine.artifactHath);
+		$(tdHath[1]).text(hvStat.util.percentRatio(hvStat.shrine.artifactHath, hvStat.shrine.artifactsTraded, 2) + "%");
+		$(tdHath[2]).text("(" + hvStat.util.ratio(hvStat.shrine.artifactHathTotal, hvStat.shrine.artifactsTraded).toFixed(2) + " Hath per Artifact)");
+		$(tdCrystals[0]).text(hvStat.shrine.artifactCrystal);
+		$(tdCrystals[1]).text(hvStat.util.percentRatio(hvStat.shrine.artifactCrystal, hvStat.shrine.artifactsTraded, 2) + "%");
+		$(tdEnergyDrinks[0]).text(hvStat.shrine.artifactItem);
+		$(tdEnergyDrinks[1]).text(hvStat.util.percentRatio(hvStat.shrine.artifactItem, hvStat.shrine.artifactsTraded, 2) + "%");
+		$(tdTotal[0]).text(hvStat.shrine.artifactsTraded);
 
-		var i = _shrine.trophyArray.length;
+		var i = hvStat.shrine.trophyArray.length;
 		var trophiesHTML = "";
 		while (i--) {
-			trophiesHTML += '<li>' + _shrine.trophyArray[i] + '</li>';
+			trophiesHTML += '<li>' + hvStat.shrine.trophyArray[i] + '</li>';
 		}
 		$('#hvstat-shrine-trophies').html(trophiesHTML);
 		$('#hvstat-shrine-clear-trophies').click(function () {
 			if (confirm("Clear Trophy list?")) {
-				_shrine.trophyArray = [];
-				_shrine.save();
+				hvStat.shrine.trophyArray = [];
+//				_shrine.save();
+				hvStat.storage.shrine.save();
 			}
 		});
 		$('#hvstat-shrine-reset').click(function () {
 			if (confirm("Reset Shrine tab?")) {
-				_shrine.reset();
+//				_shrine.reset();
+				hvStat.storage.shrine.reset();
 			}
 		});
 	}
@@ -6027,35 +6027,36 @@ function captureShrine() {
 	if (!messageBoxElement) {
 		return;
 	}
-	loadShrineObject();
+//	loadShrineObject();
 	var messageElements = messageBoxElement.querySelectorAll("div.cmb6");
 	var message0 = util.innerText(messageElements[0]);
 	if (message0.match(/power/i)) {
-		_shrine.artifactsTraded++;
+		hvStat.shrine.artifactsTraded++;
 		var message2 = util.innerText(messageElements[2]);
 		if (message2.match(/ability point/i)) {
-			_shrine.artifactAP++;
+			hvStat.shrine.artifactAP++;
 		} else if (message2.match(/crystal/i)) {
-			_shrine.artifactCrystal++;
+			hvStat.shrine.artifactCrystal++;
 		} else if (message2.match(/increased/i)) {
-			_shrine.artifactStat++;
+			hvStat.shrine.artifactStat++;
 		} else if (message2.match(/(\d) hath/i)) {
-			_shrine.artifactHath++;
-			_shrine.artifactHathTotal += Number(RegExp.$1);
+			hvStat.shrine.artifactHath++;
+			hvStat.shrine.artifactHathTotal += Number(RegExp.$1);
 		} else if (message2.match(/energy drink/i)) {
-			_shrine.artifactItem++;
+			hvStat.shrine.artifactItem++;
 		}
 	} else if (message0.match(/item/i)) {
 		var message3 = util.innerText(messageElements[3]);
-		_shrine.trophyArray.push(message3);
+		hvStat.shrine.trophyArray.push(message3);
 	}
-	_shrine.save();
+//	_shrine.save();
+	hvStat.storage.shrine.save();
 }
-function loadShrineObject() {
-	if (_shrine !== null) return;
-	_shrine = new HVCacheShrine();
-	_shrine.load();
-}
+// function loadShrineObject() {
+// 	if (_shrine !== null) return;
+// 	_shrine = new HVCacheShrine();
+// 	_shrine.load();
+// }
 function getRelativeTime(b) {
 	var a = (arguments.length > 1) ? arguments[1] : new Date();
 	var c = parseInt((a.getTime() - b) / 1000);
@@ -6071,7 +6072,8 @@ function HVResetTracking() {
 	hvStat.storage.overview.reset();
 	hvStat.storage.stats.reset();
 	hvStat.storage.arenaRewards.reset();
-	_shrine.reset();
+//	_shrine.reset();
+	hvStat.storage.shrine.reset();
 	hvStat.storage.drops.reset();
 }
 function HVMasterReset() {
@@ -6128,25 +6130,25 @@ function loadFromStorage(c, b) {
 }
 function saveToStorage(b, a) { localStorage.setItem(a, JSON.stringify(b)); }
 function deleteFromStorage(a) { localStorage.removeItem(a); }
-function HVCacheShrine() {
-	this.load = function () { loadFromStorage(this, HV_SHRINE); };
-	this.save = function () {
-		this.totalRewards = this.trophyArray.length + this.artifactsTraded;
-		saveToStorage(this, HV_SHRINE);
-	};
-	this.reset = function () { deleteFromStorage(HV_SHRINE); };
-	this.cloneFrom = clone;
-	this.artifactsTraded = 0;
-	this.artifactStat = 0;
-	this.artifactAP = 0;
-	this.artifactHath = 0;
-	this.artifactHathTotal = 0;
-	this.artifactCrystal = 0;
-	this.artifactItem = 0;
-	this.trophyArray = [];
-	this.totalRewards = 0;
-	this.isLoaded = false
-}
+// function HVCacheShrine() {
+// 	this.load = function () { loadFromStorage(this, HV_SHRINE); };
+// 	this.save = function () {
+// 		this.totalRewards = this.trophyArray.length + this.artifactsTraded;
+// 		saveToStorage(this, HV_SHRINE);
+// 	};
+// 	this.reset = function () { deleteFromStorage(HV_SHRINE); };
+// 	this.cloneFrom = clone;
+// 	this.artifactsTraded = 0;
+// 	this.artifactStat = 0;
+// 	this.artifactAP = 0;
+// 	this.artifactHath = 0;
+// 	this.artifactHathTotal = 0;
+// 	this.artifactCrystal = 0;
+// 	this.artifactItem = 0;
+// 	this.trophyArray = [];
+// 	this.totalRewards = 0;
+// 	this.isLoaded = false
+// }
 function saveStatsBackup(back) {
 	var ba = 0;
 	ba = _backup[back];
