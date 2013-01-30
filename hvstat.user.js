@@ -1027,6 +1027,20 @@ hvStat.storage.oldMonsterDatabase = new hvStat.storage.Item("HVDatabase", hvStat
 //------------------------------------
 hvStat.gadget = {};
 
+hvStat.gadget.equippedSet = {
+	create: function () {
+		var leftBar = document.querySelector('div.clb');
+		var cssText = leftBar.querySelector('table.cit td > div > div').style.cssText;
+		var table = document.createElement("table");
+		table.className = "cit";
+		table.innerHTML ='<tbody><tr><td><div class="fd12"><div id="hvstat-equipped-set"></div></div></td></tr></tbody>';
+		leftBar.insertBefore(table, null);
+		var equippedSet = document.getElementById("hvstat-equipped-set");
+		equippedSet.style.cssText = cssText;
+		equippedSet.textContent = "Equipped set: " + hvStat.characterStatus.equippedSet;
+	},
+};
+
 hvStat.gadget.proficiencyPopupIcon = {
 	popup: null,
 	create: function () {
@@ -1838,7 +1852,6 @@ hvStat.ui = {
 			title: "[STAT] HentaiVerse Statistics, Tracking, and Analysis Tool v." + hvStat.version,
 		});
 		$('#hvstat-tabs').tabs();
-//		loadShrineObject();
 		initOverviewPane();
 		initBattleStatsPane();
 		initItemPane();
@@ -1857,7 +1870,7 @@ hvStat.ui = {
 	},
 };
 
-var HVStat = {	// -> refactor
+var HVStat = {	// TODO: To be refactored
 	reMonsterScanResultsTSV: /^(\d+?)\t(.*?)\t(.*?)\t(.*?)\t(\d*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)$/gm,
 	reMonsterSkillsTSV: /^(\d+?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)$/gm,
 	monsterGaugeMaxWidth: 120,
@@ -1880,7 +1893,7 @@ var HVStat = {	// -> refactor
 	nRowsMonsterSkillsTSV: 0,
 
 	// Battle states
-	monsters: [],	// instances of HVStat.Monster
+	monsters: [],	// Instances of HVStat.Monster
 	alertQueue: [],
 
 	// Keyboard enhancement
@@ -4028,7 +4041,6 @@ HVStat.migration.deleteOldDatabase = function () {
 //------------------------------------
 
 /* ========== GLOBAL VARIABLES ========== */
-//HV_SHRINE = "HVShrine";
 HV_EQUIP = "inventoryAlert";
 HV_DBASE = "HVMonsterDatabase";
 HV_TAGS = "HVTags";
@@ -4036,7 +4048,6 @@ HOURLY = 0;
 ARENA = 1;
 GRINDFEST = 2;
 ITEM_WORLD = 3;
-//_shrine = null;
 _backup = [null, null, null, null, null, null];
 _database = null;
 _tags = null;
@@ -5411,13 +5422,11 @@ function initShrinePane() {
 		$('#hvstat-shrine-clear-trophies').click(function () {
 			if (confirm("Clear Trophy list?")) {
 				hvStat.shrine.trophyArray = [];
-//				_shrine.save();
 				hvStat.storage.shrine.save();
 			}
 		});
 		$('#hvstat-shrine-reset').click(function () {
 			if (confirm("Reset Shrine tab?")) {
-//				_shrine.reset();
 				hvStat.storage.shrine.reset();
 			}
 		});
@@ -6027,7 +6036,6 @@ function captureShrine() {
 	if (!messageBoxElement) {
 		return;
 	}
-//	loadShrineObject();
 	var messageElements = messageBoxElement.querySelectorAll("div.cmb6");
 	var message0 = util.innerText(messageElements[0]);
 	if (message0.match(/power/i)) {
@@ -6049,14 +6057,8 @@ function captureShrine() {
 		var message3 = util.innerText(messageElements[3]);
 		hvStat.shrine.trophyArray.push(message3);
 	}
-//	_shrine.save();
 	hvStat.storage.shrine.save();
 }
-// function loadShrineObject() {
-// 	if (_shrine !== null) return;
-// 	_shrine = new HVCacheShrine();
-// 	_shrine.load();
-// }
 function getRelativeTime(b) {
 	var a = (arguments.length > 1) ? arguments[1] : new Date();
 	var c = parseInt((a.getTime() - b) / 1000);
@@ -6072,7 +6074,6 @@ function HVResetTracking() {
 	hvStat.storage.overview.reset();
 	hvStat.storage.stats.reset();
 	hvStat.storage.arenaRewards.reset();
-//	_shrine.reset();
 	hvStat.storage.shrine.reset();
 	hvStat.storage.drops.reset();
 }
@@ -6130,25 +6131,6 @@ function loadFromStorage(c, b) {
 }
 function saveToStorage(b, a) { localStorage.setItem(a, JSON.stringify(b)); }
 function deleteFromStorage(a) { localStorage.removeItem(a); }
-// function HVCacheShrine() {
-// 	this.load = function () { loadFromStorage(this, HV_SHRINE); };
-// 	this.save = function () {
-// 		this.totalRewards = this.trophyArray.length + this.artifactsTraded;
-// 		saveToStorage(this, HV_SHRINE);
-// 	};
-// 	this.reset = function () { deleteFromStorage(HV_SHRINE); };
-// 	this.cloneFrom = clone;
-// 	this.artifactsTraded = 0;
-// 	this.artifactStat = 0;
-// 	this.artifactAP = 0;
-// 	this.artifactHath = 0;
-// 	this.artifactHathTotal = 0;
-// 	this.artifactCrystal = 0;
-// 	this.artifactItem = 0;
-// 	this.trophyArray = [];
-// 	this.totalRewards = 0;
-// 	this.isLoaded = false
-// }
 function saveStatsBackup(back) {
 	var ba = 0;
 	ba = _backup[back];
@@ -6355,18 +6337,6 @@ function StartBattleAlerts () {
 		element.setAttribute("onclick", newOnClick);
 	}
 }
-
-HVStat.showEquippedSet = function () {
-	var leftBar = document.querySelector("div.clb");
-	var cssText = leftBar.querySelector("table.cit td > div > div").style.cssText;
-	var table = document.createElement("table");
-	table.className = "cit";
-	table.innerHTML ='<tbody><tr><td><div class="fd12"><div id="hvstat-equipped-set"></div></div></td></tr></tbody>';
-	leftBar.insertBefore(table, null);
-	var equippedSet = document.getElementById("hvstat-equipped-set");
-	equippedSet.style.cssText = cssText;
-	equippedSet.textContent = "Equipped set: " + hvStat.characterStatus.equippedSet;
-};
 
 function FindSettingsStats() {
 	var difficulties = ["", "Easy", "Normal", "Hard", "Heroic", "Nightmare", "Hell", "Nintendo", "Battletoads", "IWBTH"];
@@ -6684,7 +6654,7 @@ hvStat.startup = {
 					captureShrine();
 				}
 				if (browser.isChrome && hvStat.settings.enableShrineKeyPatch) {
-					document.onkeydown = null;	// workaround to make enable SPACE key
+					document.onkeydown = null;	// Workaround to make enable SPACE key
 				}
 			}
 			if (hvStat.settings.isStartAlert && !hv.settings.useHVFontEngine) {
@@ -6692,9 +6662,9 @@ hvStat.startup = {
 			}
 		}
 		if (!hv.settings.useHVFontEngine && hvStat.settings.isShowEquippedSet) {
-			HVStat.showEquippedSet();
+			hvStat.gadget.equippedSet.create();
 		}
-		if (hvStat.settings.isShowSidebarProfs) {
+		if (hvStat.settings.isShowSidebarProfs) {	// TODO: Disable if useHVFontEngine
 			hvStat.gadget.proficiencyPopupIcon.create();
 		}
 		var invAlert = localStorage.getItem(HV_EQUIP);
