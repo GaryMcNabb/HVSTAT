@@ -549,6 +549,7 @@ hvStat.storage.initialValue = {
 		isWarnAbsorbTrigger: false,
 		isWarnSparkTrigger: true,
 		isWarnSparkExpire: true,
+		alertWhenChannelingIsGained: false,
 		// - Effects Expiring Warnings
 		isMainEffectsAlertSelf: false,
 		isEffectsAlertSelf: [false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false],
@@ -2831,7 +2832,7 @@ HVStat.Monster = (function () {
 				for (abbrLevel = 0; abbrLevel < maxAbbrLevel; abbrLevel++) {
 					statsHtml = '';
 					if (!_scanResult || !_scanResult.monsterClass) {
-//						if (hvStat.settings.showLabelForUnknownMonster) {
+//						if (hvStat.settings.showNewLabelForUnknownMonster) {
 							statsHtml = '[<span class="hvstat-monster-status-unknown">NEW</span>]';
 //						}
 					} else {
@@ -4280,6 +4281,9 @@ function collectRoundInfo() {
 		if (hvStat.settings.isWarnSparkExpire && logHTML.match(/spark of life.*expired/ig)) {
 			HVStat.enqueueAlert("Spark of Life has expired!!");
 		}
+		if (hvStat.settings.alertWhenChannelingIsGained && logText.indexOf("You gain the effect Channeling") >= 0) {
+			HVStat.enqueueAlert("You gained the effect Channeling.");
+		}
 		if ((hvStat.settings.isShowSidebarProfs || hvStat.settings.isTrackStats) && logHTML.match(/0.0(\d+) points of (.*?) proficiency/ig)) {
 			var p = (RegExp.$1) / 100;
 			var r = RegExp.$2;
@@ -5623,6 +5627,7 @@ function initSettingsPane() {
 	if (hvStat.settings.isWarnAbsorbTrigger) $("input[name=isWarnAbsorbTrigger]").attr("checked", "checked");
 	if (hvStat.settings.isWarnSparkTrigger) $("input[name=isWarnSparkTrigger]").attr("checked", "checked");
 	if (hvStat.settings.isWarnSparkExpire) $("input[name=isWarnSparkExpire]").attr("checked", "checked");
+	if (hvStat.settings.alertWhenChannelingIsGained) $("input[name=alertWhenChannelingIsGained]").attr("checked", "checked");
 	// - Effects Expiring Warnings
 	if (hvStat.settings.isMainEffectsAlertSelf) $("input[name=isMainEffectsAlertSelf]").attr("checked", "checked");
 	if (hvStat.settings.isEffectsAlertSelf[0]) $("input[name=isEffectsAlertSelf0]").attr("checked", "checked");
@@ -5800,6 +5805,7 @@ function initSettingsPane() {
 	$("input[name=isWarnAbsorbTrigger]").click(saveSettings);
 	$("input[name=isWarnSparkTrigger]").click(saveSettings);
 	$("input[name=isWarnSparkExpire]").click(saveSettings);
+	$("input[name=alertWhenChannelingIsGained]").click(saveSettings);
 	// - Effects Expiring Warnings
 	$("input[name=isMainEffectsAlertSelf]").click(saveSettings);
 	$("input[name^=isEffectsAlertSelf]").click(saveSettings);
@@ -5941,6 +5947,7 @@ function saveSettings() {
 	hvStat.settings.isWarnAbsorbTrigger = $("input[name=isWarnAbsorbTrigger]").get(0).checked;
 	hvStat.settings.isWarnSparkTrigger = $("input[name=isWarnSparkTrigger]").get(0).checked;
 	hvStat.settings.isWarnSparkExpire = $("input[name=isWarnSparkExpire]").get(0).checked;
+	hvStat.settings.alertWhenChannelingIsGained = $("input[name=alertWhenChannelingIsGained]").get(0).checked;
 	// - Effects Expiring Warnings
 	hvStat.settings.isMainEffectsAlertSelf = $("input[name=isMainEffectsAlertSelf]").get(0).checked;
 	hvStat.settings.isEffectsAlertSelf[0] = $("input[name=isEffectsAlertSelf0]").get(0).checked;
