@@ -425,8 +425,11 @@ hvStat.util = {
 			}
 		});
 	},
-	addEachPropertyValue: function (to, from) {
+	addEachPropertyValue: function (to, from, ignoreList) {
 		this.forEachProperty(to, from, function (to, from, key) {
+			if (Array.isArray(ignoreList) && ignoreList.indexOf(key) >= 0) {
+				return;
+			}
 			if (from[key] instanceof Array) {
 				for (var i = 0; i < from[key].length; i++) {
 					if (to[key][i] === undefined) {
@@ -6150,7 +6153,7 @@ function saveStatsBackup(back) {
 }
 function addtoStatsBackup(back) {
 	var ba = hvStat.statsBackups[back];
-	hvStat.util.addEachPropertyValue(ba, hvStat.stats);
+	hvStat.util.addEachPropertyValue(ba, hvStat.stats, ["datestart", "datesave"]);
 	hvStat.storage.statsBackups[back].save();
 }
 function loadStatsBackup(back) {
@@ -6160,7 +6163,7 @@ function loadStatsBackup(back) {
 }
 function addfromStatsBackup(back) {
 	var ba = hvStat.statsBackups[back];
-	hvStat.util.addEachPropertyValue(hvStat.stats, ba);
+	hvStat.util.addEachPropertyValue(hvStat.stats, ba, ["datestart", "datesave"]);
 	hvStat.storage.stats.save();
 }
 function loadDatabaseObject() {
