@@ -1,4 +1,4 @@
-/* icon */
+/* Icon */
 #hvstat-icon {
 	position: absolute;
 	top: 4px;
@@ -9,7 +9,7 @@
 	margin: 3px;
 }
 
-/* proficiency popup icon */
+/* Proficiency popup icon */
 #hvstat-proficiency-popup-icon {
 	position: absolute;
 	top: 671px;
@@ -23,7 +23,7 @@
 	cursor: default;
 }
 
-/* proficiency popup */
+/* Proficiency popup */
 #hvstat-proficiency-popup {
 	visibility: hidden;
 	position: absolute;
@@ -60,28 +60,45 @@
 	text-align: right;
 }
 
-/* duration badge */
+/* Duration badge */
 .hvstat-duration-badge {
 	width: 30px;
 	display: inline-block;
-	text-align: center;
+	text-align: left;
 	position: relative;
 	margin-left: -30px;
+	top: -22px;
+	opacity: 0.75;
 }
 .hvstat-duration-badge > div {
-	background: #EFEEDC;
-	border: 1px solid #5C0D11;
-	padding: 0px 2px;
+	color: Black;
+	background: White;
+	padding: 0px 1px;
 	display: inline-block;
-	min-width: 15px;
 	font-weight: bold;
 }
-.hvstat-duration-badge-character { top: 2px; }
-.hvstat-duration-badge-monster { top: -25px; }
 .hvstat-duration-badge-yellow-alert > div { background-color: orange; }
 .hvstat-duration-badge-red-alert > div { background-color: red; }
 
-/* powerup box */
+/* Effect stack level badge */
+.hvstat-effect-stack-level-badge {
+	width: 30px;
+	display: inline-block;
+	text-align: right;
+	position: relative;
+	margin-left: -30px;
+	top: -4px;
+	opacity: 0.75;
+}
+.hvstat-effect-stack-level-badge > div {
+	color: white;
+	background: Purple;
+	padding: 0px 1px;
+	display: inline-block;
+	font-weight: bold;
+}
+
+/* Powerup box */
 .hvstat-powerup-box {
 	position: absolute;
 	top: 7px;
@@ -104,7 +121,7 @@
 .hvstat-powerup-box-mana { background-image: url(images/manapot.png); cursor: pointer; }
 .hvstat-powerup-box-spirit { background-image: url(images/spiritpot.png); cursor: pointer; }
 
-/* quickcast highlight */
+/* Quickcast highlight */
 .hvstat-health-yellow-alert { background-color: orange; }
 .hvstat-health-red-alert { background-color: red; }
 .hvstat-magic-yellow-alert { background-color: blue; }
@@ -112,10 +129,10 @@
 .hvstat-spirit-yellow-alert { background-color: lime; }
 .hvstat-spirit-red-alert { background-color: green; }
 
-/* battle log turn divider */
+/* Battle log turn divider */
 .hvstat-turn-divider { border-bottom: 1px solid #5c0d11; padding-bottom: 3px; }
 
-/* round counter */
+/* Round counter */
 .hvstat-round-counter {
 	font-size: 18px;
 	font-weight: bold;
@@ -127,7 +144,7 @@
 .hvstat-round-counter-second-last { color: orange; }
 .hvstat-round-counter-last { color: red; }
 
-/* scan/skill button */
+/* Scan button */
 .hvstat-scan-button {
 	top: -2px;
 	left: -32px;
@@ -141,6 +158,8 @@
 	text-align: center;
 	cursor: pointer;
 }
+
+/* Skill button */
 .hvstat-skill-button {
 	left: -32px;
 	position: absolute;
@@ -157,7 +176,7 @@
 .hvstat-skill2-button { top: 26px; }
 .hvstat-skill3-button { top: 40px; }
 
-/* monster */
+/* Monster */
 .hvstat-monster-number { display: none; }
 .hvstat-monster-number + div {
 	position: relative;
@@ -183,24 +202,6 @@
 	margin-bottom: 2px;
 	color: rgb(193,0,19);
 	text-shadow: -1px -1px 5px #000,1px -1px 5px #000,-1px 1px 5px #000,1px 1px 5px #000;
-}
-
-.hvstat-proc-stack-level-badge {
-	width: 30px;
-	display: inline-block;
-	text-align: right;
-	position: relative;
-	margin-left: -30px;
-	top: -4px;
-	opacity: 0.75;
-}
-.hvstat-proc-stack-level-badge > div {
-	color: white;
-	background: Purple;
-	border: 0px solid #5C0D11;
-	padding: 0px 2px;
-	display: inline-block;
-	font-weight: bold;
 }
 
 div.hvstat-monster-health {
@@ -235,7 +236,7 @@ div.hvstat-monster-spirit {
 }
 
 .hvstat-monster-status-on-hv-font {
-	font-family: arial;
+	font-family: Arial;
 	font-size: 7pt;
 	font-weight: bold;
 	padding: 0 1px;
@@ -244,7 +245,7 @@ div.hvstat-monster-spirit {
 .hvstat-monster-status-on-custom-font {
 	display: inline;
 	margin-left: 1px;
-	font-family: arial;
+	font-family: Arial;
 	font-size: 7pt;
 	font-weight: bold;
 	padding: 0 1px;
@@ -260,19 +261,20 @@ div.hvstat-monster-spirit {
 .hvstat-monster-status-magic-skill-attack-type { color: blue; }
 .hvstat-monster-status-spirit-skill-attack-type { color: red; }
 
-/* monster popup */
+/* Monster popup */
 
-/* battle round stats */
+/* Battle round stats */
 .hvstat-battle-round-stats {
 }
 
-/* equipment tag */
+/* Equipment tag */
 input.hvstat-equipment-tag {
 	position: absolute;
-	left: 330px;
-	bottom: -21px;
+	left: 332px;
 	opacity: 0.8;
 	font-size: 8pt;
+	padding: 0px 0px;
+	margin: 1px 0px;
 }
 input.hvstat-equipment-tag-new {
 	color: Red;
@@ -311,12 +313,15 @@ input.hvstat-equipment-tag-new {
 	font-style: italic;
 }
 
-#hvstat-arena-rewards-pane ul {
+#hvstat-arena-rewards-pane ul,
+#hvstat-shrine-pane ul {
 	list-style-type: none;
 }
 
 #hvstat-arena-rewards-pane ul,
-#hvstat-arena-rewards-pane li {
+#hvstat-arena-rewards-pane li,
+#hvstat-shrine-pane ul,
+#hvstat-shrine-pane li {
 	margin: 0px;
 	padding: 0px;
 }
