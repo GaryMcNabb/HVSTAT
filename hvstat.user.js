@@ -4081,14 +4081,11 @@ HVStat.migration.deleteOldDatabase = function () {
 /* ========== GLOBAL VARIABLES ========== */
 HV_EQUIP = "inventoryAlert";
 HV_DBASE = "HVMonsterDatabase";
-HV_TAGS = "HVTags";
 HOURLY = 0;
 ARENA = 1;
 GRINDFEST = 2;
 ITEM_WORLD = 3;
-_backup = [null, null, null, null, null, null];
 _database = null;
-_tags = null;
 _equips = 0;
 _lastEquipName = "";
 _artifacts = 0;
@@ -6166,32 +6163,6 @@ function addfromStatsBackup(back) {
 	hvStat.util.addEachPropertyValue(hvStat.stats, ba);
 	hvStat.storage.stats.save();
 }
-function HVTags() {
-	this.load = function () { loadFromStorage(this, HV_TAGS); };
-	this.save = function () { saveToStorage(this, HV_TAGS); };
-	this.reset = function () { deleteFromStorage(HV_TAGS); };
-	this.cloneFrom = clone;
-	this.OneHandedIDs = [];
-	this.OneHandedTAGs = [];
-	this.TwoHandedIDs = [];
-	this.TwoHandedTAGs = [];
-	this.StaffsIDs = [];
-	this.StaffsTAGs = [];
-	this.ShieldIDs =[];
-	this.ShieldTAGs =[];
-	this.ClothIDs = [];
-	this.ClothTAGs = [];
-	this.LightIDs = [];
-	this.LightTAGs = [];
-	this.HeavyIDs = [];
-	this.HeavyTAGs = [];
-	this.isLoaded = false;
-}
-function loadTagsObject() {
-	if (_tags !== null) return;
-	_tags = new HVTags();
-	_tags.load();
-}
 function loadDatabaseObject() {
 	if (_database !== null) return;
 	_database = new HVMonsterDatabase();
@@ -6360,15 +6331,14 @@ function AlertEffectsMonsters() {
 function TaggingItems(clean) {
 	// Can clean tag data when visited the Inventory page.
 	// Because all equipments which is owned are listed.
-	loadTagsObject();
 	var equipTagArrayTable = [
-		{id: _tags.OneHandedIDs,	value: _tags.OneHandedTAGs,	idClean: [], valueClean: []},
-		{id: _tags.TwoHandedIDs,	value: _tags.TwoHandedTAGs,	idClean: [], valueClean: []},
-		{id: _tags.StaffsIDs,		value: _tags.StaffsTAGs,	idClean: [], valueClean: []},
-		{id: _tags.ShieldIDs,		value: _tags.ShieldTAGs,	idClean: [], valueClean: []},
-		{id: _tags.ClothIDs,		value: _tags.ClothTAGs,		idClean: [], valueClean: []},
-		{id: _tags.LightIDs,		value: _tags.LightTAGs,		idClean: [], valueClean: []},
-		{id: _tags.HeavyIDs,		value: _tags.HeavyTAGs,		idClean: [], valueClean: []}
+		{id: hvStat.equipmentTags.OneHandedIDs,	value: hvStat.equipmentTags.OneHandedTAGs,	idClean: [], valueClean: []},
+		{id: hvStat.equipmentTags.TwoHandedIDs,	value: hvStat.equipmentTags.TwoHandedTAGs,	idClean: [], valueClean: []},
+		{id: hvStat.equipmentTags.StaffsIDs,	value: hvStat.equipmentTags.StaffsTAGs,		idClean: [], valueClean: []},
+		{id: hvStat.equipmentTags.ShieldIDs,	value: hvStat.equipmentTags.ShieldTAGs,		idClean: [], valueClean: []},
+		{id: hvStat.equipmentTags.ClothIDs,		value: hvStat.equipmentTags.ClothTAGs,		idClean: [], valueClean: []},
+		{id: hvStat.equipmentTags.LightIDs,		value: hvStat.equipmentTags.LightTAGs,		idClean: [], valueClean: []},
+		{id: hvStat.equipmentTags.HeavyIDs,		value: hvStat.equipmentTags.HeavyTAGs,		idClean: [], valueClean: []}
 	];
 	var elements = document.querySelectorAll("#inv_equip div.eqdp, #item_pane div.eqdp, #equip div.eqdp, #equip_pane div.eqdp");
 	Array.prototype.forEach.call(elements, function (element) {
@@ -6433,7 +6403,7 @@ function TaggingItems(clean) {
 				valueArray.push(tagValue);
 			}
 			target.className = target.className.replace(" hvstat-equipment-tag-new", "");
-			_tags.save();
+			hvStat.storage.equipmentTags.save();
 		});
 	});
 	if (clean) {
@@ -6445,39 +6415,39 @@ function TaggingItems(clean) {
 				valueCleanArray = equipTagArrayTable[i].valueClean;
 				switch (i) {
 				case 0:
-					_tags.OneHandedIDs = idCleanArray;
-					_tags.OneHandedTAGs = valueCleanArray;
+					hvStat.equipmentTags.OneHandedIDs = idCleanArray;
+					hvStat.equipmentTags.OneHandedTAGs = valueCleanArray;
 					break;
 				case 1:
-					_tags.TwoHandedIDs = idCleanArray;
-					_tags.TwoHandedTAGs = valueCleanArray;
+					hvStat.equipmentTags.TwoHandedIDs = idCleanArray;
+					hvStat.equipmentTags.TwoHandedTAGs = valueCleanArray;
 					break;
 				case 2:
-					_tags.StaffsIDs = idCleanArray;
-					_tags.StaffsTAGs = valueCleanArray;
+					hvStat.equipmentTags.StaffsIDs = idCleanArray;
+					hvStat.equipmentTags.StaffsTAGs = valueCleanArray;
 					break;
 				case 3:
-					_tags.ShieldIDs = idCleanArray;
-					_tags.ShieldTAGs = valueCleanArray;
+					hvStat.equipmentTags.ShieldIDs = idCleanArray;
+					hvStat.equipmentTags.ShieldTAGs = valueCleanArray;
 					break;
 				case 4:
-					_tags.ClothIDs = idCleanArray;
-					_tags.ClothTAGs = valueCleanArray;
+					hvStat.equipmentTags.ClothIDs = idCleanArray;
+					hvStat.equipmentTags.ClothTAGs = valueCleanArray;
 					break;
 				case 5:
-					_tags.LightIDs = idCleanArray;
-					_tags.LightTAGs = valueCleanArray;
+					hvStat.equipmentTags.LightIDs = idCleanArray;
+					hvStat.equipmentTags.LightTAGs = valueCleanArray;
 					break;
 				case 6:
-					_tags.HeavyIDs = idCleanArray;
-					_tags.HeavyTAGs = valueCleanArray;
+					hvStat.equipmentTags.HeavyIDs = idCleanArray;
+					hvStat.equipmentTags.HeavyTAGs = valueCleanArray;
 					break;
 				}
 				cleaned = true;
 			}
 		}
 		if (cleaned) {
-			_tags.save();
+			hvStat.storage.equipmentTags.save();
 		}
 	}
 }
@@ -6506,11 +6476,9 @@ hvStat.startup = {
 			document.onkeydown = null;
 		}
 		hv.setup();
-		console.debug(hv);
+//		console.debug(hv);
 		hvStat.setup();
-		console.debug(hvStat);
-// 		console.debug(hvStat.storage.shrine.value);
-// 		console.debug(hvStat.storage.equipmentTags.value);
+//		console.debug(hvStat);
 		if (hvStat.settings.isChangePageTitle) {
 			document.title = hvStat.settings.customPageTitle;
 		}
