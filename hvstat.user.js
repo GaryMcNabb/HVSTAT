@@ -115,7 +115,7 @@ util.CallbackQueue.prototype = {
 			this.closures.push(fn);
 		}
 	},
-	execute: function(context) {
+	execute: function (context) {
 		if (this.executed) {
 			return;
 		}
@@ -131,7 +131,9 @@ util.CallbackQueue.prototype = {
 // Browser utilities
 //------------------------------------
 var browser = {
-	isChrome: navigator.userAgent.indexOf("Chrome") >= 0,
+	get isChrome() {
+		return navigator.userAgent.indexOf("Chrome") >= 0;
+	},
 };
 
 browser.extension = {
@@ -1338,7 +1340,7 @@ hvStat.battle.command = {
 			};
 			if (this._subMenuItemMap["Scan"]) {
 				this._subMenuItemMap["Scan"].bindKeys([
-				new hvStat.keyboard.KeyCombination({ keyCode: 46 }),		// Delete
+					new hvStat.keyboard.KeyCombination({ keyCode: 46 }),	// Delete
 					new hvStat.keyboard.KeyCombination({ keyCode: 110 })	// Numpad . Del
 				]);
 			}
@@ -5954,7 +5956,7 @@ function saveSettings() {
 	hvStat.settings.isEffectsAlertSelf[1] = $("input[name=isEffectsAlertSelf1]").get(0).checked;
 	hvStat.settings.isEffectsAlertSelf[2] = $("input[name=isEffectsAlertSelf2]").get(0).checked;
 	hvStat.settings.isEffectsAlertSelf[3] = $("input[name=isEffectsAlertSelf3]").get(0).checked;
-	hvStat.settings.isEffectsAlertSelf[4] = false; // absorb is obsolete
+	hvStat.settings.isEffectsAlertSelf[4] = false; // Absorb no longer has duration
 	hvStat.settings.isEffectsAlertSelf[5] = $("input[name=isEffectsAlertSelf5]").get(0).checked;
 	hvStat.settings.isEffectsAlertSelf[6] = $("input[name=isEffectsAlertSelf6]").get(0).checked;
 	hvStat.settings.isEffectsAlertSelf[7] = $("input[name=isEffectsAlertSelf7]").get(0).checked;
@@ -6573,6 +6575,7 @@ hvStat.startup = {
 				}
 				if (browser.isChrome && hvStat.settings.enableShrineKeyPatch) {
 					document.onkeydown = null;	// Workaround to make enable SPACE key
+					hvStat.onkeydown = null;
 				}
 			}
 			if (hvStat.settings.isStartAlert && !hv.settings.useHVFontEngine) {
