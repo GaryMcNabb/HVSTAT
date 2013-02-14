@@ -1259,7 +1259,7 @@ hvStat.battle = {
 			hvStat.battle.enhancement.effectStackLevelBadge.showForCharacter();
 		}
 		if (hvStat.settings.isShowPowerupBox) {
-			hvStat.battle.enhancement.powerupBox.show();
+			hvStat.battle.enhancement.powerupBox.create();
 		}
 		if (hvStat.settings.isHighlightQC) {
 			hvStat.battle.enhancement.quickcast.highlight();
@@ -1636,7 +1636,7 @@ hvStat.battle.enhancement.effectStackLevelBadge = {
 hvStat.battle.enhancement.powerupBox = {
 	// Adds a Powerup box to the Battle screen.
 	// Creates a shortcut to the powerup if one is available.
-	show: function () {
+	create: function () {
 		var battleMenu = document.getElementsByClassName("btp"),
 			powerBox = document.createElement("div");
 			powerup = document.getElementById("ikey_p");
@@ -1840,6 +1840,9 @@ hvStat.battle.monster = {};
 
 hvStat.battle.warningSystem = {};
 
+//------------------------------------
+// UI
+//------------------------------------
 hvStat.ui = {
 	setup: function () {
 		this.addStyle();
