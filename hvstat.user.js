@@ -2361,7 +2361,7 @@ HVStat.MonsterScanResultsVO = function (spec) {
 		if (spec.debuffsAffected) {
 			debuffs = spec.debuffsAffected.replace(" ", "").split(", ");
 			for (i = 0; i < debuffs.length; i++) {
-				debuff = HVStat.Debuff[debuffs[i].toUpperCase()];
+				debuff = hvStat.constant.debuff[debuffs[i].toUpperCase()];
 				if (debuff) {
 					this.debuffsAffected.push(debuff.id);
 				}
@@ -2520,9 +2520,9 @@ HVStat.MonsterSkill = (function () {
 		var _id = vo.id || null;
 		var _name = vo.name || null;
 		var _lastUsedDate = vo.lastUsedDate ? new Date(vo.lastUsedDate) : null;
-		var _skillType = HVStat.SkillType[vo.skillType] || null;
-		var _attackType = HVStat.AttackType[vo.attackType] || null;
-		var _damageType = HVStat.DamageType[vo.damageType] || null;
+		var _skillType = hvStat.constant.skillType[vo.skillType] || null;
+		var _attackType = hvStat.constant.attackType[vo.attackType] || null;
+		var _damageType = hvStat.constant.damageType[vo.damageType] || null;
 
 		return {
 			get name() { return _name; },
@@ -2559,10 +2559,10 @@ HVStat.MonsterSkill = (function () {
 		vo.skillType = skillType.id;
 		switch (r[1]) {
 		case "uses":
-			vo.attackType = HVStat.AttackType.PHYSICAL.id;
+			vo.attackType = hvStat.constant.attackType.PHYSICAL.id;
 			break;
 		case "casts":
-			vo.attackType = HVStat.AttackType.MAGICAL.id;
+			vo.attackType = hvStat.constant.attackType.MAGICAL.id;
 			break;
 		default:
 			vo.attackType = null;
@@ -2571,7 +2571,7 @@ HVStat.MonsterSkill = (function () {
 		if (!r || r.length < 2) {
 			return null;
 		}
-		var dt = HVStat.DamageType[r[1].toUpperCase()];
+		var dt = hvStat.constant.damageType[r[1].toUpperCase()];
 		vo.damageType = dt ? dt.id : null;
 		vo.lastUsedDate = new Date();
 		return new MonsterSkill(vo);
@@ -2583,34 +2583,34 @@ HVStat.MonsterSkill = (function () {
 HVStat.MonsterScanResults = (function () {
 	// Private static variable
 	var _mappingToSettingsHideSpecificDamageType = [
-		HVStat.DamageType.CRUSHING,
-		HVStat.DamageType.SLASHING,
-		HVStat.DamageType.PIERCING,
-		HVStat.DamageType.FIRE,
-		HVStat.DamageType.COLD,
-		HVStat.DamageType.ELEC,
-		HVStat.DamageType.WIND,
-		HVStat.DamageType.HOLY,
-		HVStat.DamageType.DARK,
-		HVStat.DamageType.SOUL,
-		HVStat.DamageType.VOID
+		hvStat.constant.damageType.CRUSHING,
+		hvStat.constant.damageType.SLASHING,
+		hvStat.constant.damageType.PIERCING,
+		hvStat.constant.damageType.FIRE,
+		hvStat.constant.damageType.COLD,
+		hvStat.constant.damageType.ELEC,
+		hvStat.constant.damageType.WIND,
+		hvStat.constant.damageType.HOLY,
+		hvStat.constant.damageType.DARK,
+		hvStat.constant.damageType.SOUL,
+		hvStat.constant.damageType.VOID
 	];
 	var _damageTypeGeneralizingTable = [
 		{
-			generic: HVStat.GenericDamageType.PHYSICAL,
+			generic: hvStat.constant.genericDamageType.PHYSICAL,
 			elements: [
-				HVStat.DamageType.CRUSHING,
-				HVStat.DamageType.SLASHING,
-				HVStat.DamageType.PIERCING
+				hvStat.constant.damageType.CRUSHING,
+				hvStat.constant.damageType.SLASHING,
+				hvStat.constant.damageType.PIERCING
 			]
 		},
 		{
-			generic: HVStat.GenericDamageType.ELEMENTAL,
+			generic: hvStat.constant.genericDamageType.ELEMENTAL,
 			elements: [
-				HVStat.DamageType.FIRE,
-				HVStat.DamageType.COLD,
-				HVStat.DamageType.ELEC,
-				HVStat.DamageType.WIND
+				hvStat.constant.damageType.FIRE,
+				hvStat.constant.damageType.COLD,
+				hvStat.constant.damageType.ELEC,
+				hvStat.constant.damageType.WIND
 			]
 		}
 	];
@@ -2644,29 +2644,29 @@ HVStat.MonsterScanResults = (function () {
 		_id = vo.id || null;
 		_lastScanDate = vo.lastScanDate ? new Date(vo.lastScanDate) : null;
 		_name = vo.name || null;
-		_monsterClass = HVStat.MonsterClass[vo.monsterClass] || null;
+		_monsterClass = hvStat.constant.monsterClass[vo.monsterClass] || null;
 		_powerLevel = vo.powerLevel || null;
 		_trainer = vo.trainer || null;
-		_meleeAttack = HVStat.DamageType[vo.meleeAttack] || null;
+		_meleeAttack = hvStat.constant.damageType[vo.meleeAttack] || null;
 
-		for (damageTypeId in HVStat.DamageType) {
+		for (damageTypeId in hvStat.constant.damageType) {
 			_defenceLevel[damageTypeId] = HVStat.DefenceLevel[vo.defenceLevel[damageTypeId]] || null;
 		}
 		for (damageTypeId in _defenceLevel) {
 			switch (_defenceLevel[damageTypeId]) {
 			case HVStat.DefenceLevel.WEAK:
-				_defWeak.push(HVStat.DamageType[damageTypeId]);
+				_defWeak.push(hvStat.constant.damageType[damageTypeId]);
 				break;
 			case HVStat.DefenceLevel.RESISTANT:
-				_defResistant.push(HVStat.DamageType[damageTypeId]);
+				_defResistant.push(hvStat.constant.damageType[damageTypeId]);
 				break;
 			case HVStat.DefenceLevel.IMPERVIOUS:
-				_defImpervious.push(HVStat.DamageType[damageTypeId]);
+				_defImpervious.push(hvStat.constant.damageType[damageTypeId]);
 				break;
 			}
 		}
 		for (var i in vo.debuffsAffected) {
-			_debuffsAffected.push(HVStat.Debuff[vo.debuffsAffected[i]]);
+			_debuffsAffected.push(hvStat.constant.debuff[vo.debuffsAffected[i]]);
 		}
 
 		// Private instance method
@@ -2723,7 +2723,7 @@ HVStat.MonsterScanResults = (function () {
 
 		var _StringifyDamageTypes = function (damageTypes, abbrLevel) {
 			var damageTypeStrings = [];
-			var delimiter = HVStat.delimiter.toString(abbrLevel);
+			var delimiter = hvStat.constant.delimiter.toString(abbrLevel);
 			for (i = 0; i < damageTypes.length; i++) {
 				damageTypeStrings[i] = damageTypes[i].toString(abbrLevel);
 			}
@@ -2828,8 +2828,8 @@ HVStat.MonsterScanResults = (function () {
 		debuffElements = document.querySelectorAll("#" + HVStat.Monster.getDomElementId(index) + " div.btm6 > img");
 		for (i = 0; i < debuffElements.length; i++) {
 			debuffInfo = debuffElements[i].getAttribute("onmouseover");
-			for (debuffId in HVStat.Debuff) {
-				if (debuffInfo.indexOf(HVStat.Debuff[debuffId].name) >= 0) {
+			for (debuffId in hvStat.constant.debuff) {
+				if (debuffInfo.indexOf(hvStat.constant.debuff[debuffId].name) >= 0) {
 					vo.debuffsAffected.push(debuffId);
 				}
 			}
@@ -2908,7 +2908,7 @@ HVStat.Monster = (function () {
 			var len = _skills.length
 			for (i = 0; i < len; i++) {
 				skill = _skills[i];
-				if (skill.skillType === HVStat.SkillType.MANA) {
+				if (skill.skillType === hvStat.constant.skillType.MANA) {
 					manaSkills.push(skill);
 				}
 			}
@@ -2949,7 +2949,7 @@ HVStat.Monster = (function () {
 			var len = _skills.length
 			for (i = 0; i < len; i++) {
 				skill = _skills[i];
-				if (skill.skillType === HVStat.SkillType.SPIRIT) {
+				if (skill.skillType === hvStat.constant.skillType.SPIRIT) {
 					return skill;
 				}
 			}
@@ -2994,7 +2994,7 @@ HVStat.Monster = (function () {
 						}
 						if (hvStat.settings.showMonsterPowerLevelFromDB && _scanResult.powerLevel) {
 							if (hvStat.settings.showMonsterClassFromDB) {
-								statsHtml += HVStat.delimiter.toString(abbrLevel);
+								statsHtml += hvStat.constant.delimiter.toString(abbrLevel);
 							}
 							statsHtml += '<span class="hvstat-monster-status-power-level">';
 							statsHtml += _scanResult.powerLevel + '+';
@@ -3062,11 +3062,11 @@ HVStat.Monster = (function () {
 									for (damageType in skillTable[attackType].damageTable) {
 										if (skillTable[attackType].damageTable[damageType]) {
 											if (damageTypeCount === 0) {
-												statsHtml += HVStat.AttackType[attackType].toString(abbrLevel > 0 ? abbrLevel : 1) + '-';
+												statsHtml += hvStat.constant.attackType[attackType].toString(abbrLevel > 0 ? abbrLevel : 1) + '-';
 											} else {
-												statsHtml += HVStat.delimiter.toString(abbrLevel);
+												statsHtml += hvStat.constant.delimiter.toString(abbrLevel);
 											}
-											statsHtml += HVStat.DamageType[damageType].toString(abbrLevel > 0 ? abbrLevel : 1);
+											statsHtml += hvStat.constant.damageType[damageType].toString(abbrLevel > 0 ? abbrLevel : 1);
 											damageTypeCount++;
 										}
 									}
@@ -3168,7 +3168,7 @@ HVStat.Monster = (function () {
 								if (skillCount > 0) {
 									html += '<br/>';
 								}
-								html += HVStat.AttackType[attackType].name + '-' + HVStat.DamageType[damageType].name;
+								html += hvStat.constant.attackType[attackType].name + '-' + hvStat.constant.damageType[damageType].name;
 								skillCount++;
 							}
 						}
@@ -3257,13 +3257,13 @@ HVStat.Monster = (function () {
 			fetchSkillLog: function (used, damaged, transaction) {
 				var i;
 				var spiritSkillFound;
-				var skillType = (_prevSpRate <= _currSpRate) ? HVStat.SkillType.MANA : HVStat.SkillType.SPIRIT;
+				var skillType = (_prevSpRate <= _currSpRate) ? hvStat.constant.skillType.MANA : hvStat.constant.skillType.SPIRIT;
 				var skill = HVStat.MonsterSkill.fetchSkillLog(used, damaged, skillType);
-				if (skillType === HVStat.SkillType.SPIRIT) {
+				if (skillType === hvStat.constant.skillType.SPIRIT) {
 					// Spirit skill
 					// Overwrite if exists
 					for (i = 0; i < _skills.length; i++) {
-						if (_skills[i].skillType ===  HVStat.SkillType.SPIRIT) {
+						if (_skills[i].skillType ===  hvStat.constant.skillType.SPIRIT) {
 							break;
 						}
 					}
@@ -3272,7 +3272,7 @@ HVStat.Monster = (function () {
 					// Mana skill
 					// Overwrite if same name or name is null
 					for (i = 0; i < _skills.length; i++) {
-						if (_skills[i].skillType ===  HVStat.SkillType.MANA
+						if (_skills[i].skillType ===  hvStat.constant.skillType.MANA
 								&& (_skills[i].name === skill.name
 									|| (_skills[i].name === null && _skills[i].attackType === skill.attackType && _skills[i].damageType === skill.damageType))) {
 							break;
@@ -3978,7 +3978,7 @@ HVStat.migration.monsterClassFromCode = function (code) {
 		}
 	}
 	if (found) {
-		return HVStat.MonsterClass[key];
+		return hvStat.constant.monsterClass[key];
 	} else {
 		return null;
 	}
@@ -3986,7 +3986,7 @@ HVStat.migration.monsterClassFromCode = function (code) {
 
 HVStat.migration.skillTypeFromCode = function (code) {
 	code = String(code);
-	var st = HVStat.SkillType;
+	var st = hvStat.constant.skillType;
 	switch (code) {
 	case "1":
 	case "2":
@@ -4001,7 +4001,7 @@ HVStat.migration.skillTypeFromCode = function (code) {
 
 HVStat.migration.attackTypeFromCode = function (code) {
 	code = String(code);
-	var at = HVStat.AttackType;
+	var at = hvStat.constant.attackType;
 	switch (code) {
 	case "1":
 	case "3":
@@ -4040,7 +4040,7 @@ HVStat.migration.damageTypeFromCode = function (code) {
 			}
 		}
 		if (found) {
-			array.push(HVStat.DamageType[key]);
+			array.push(hvStat.constant.damageType[key]);
 		}
 	}
 	return array;
