@@ -914,7 +914,7 @@ hvStat.storage.Item.prototype = {
 		return this._value;
 	},
 	save: function () {
-		hvStat.storage.setItem(this._key, this._value);
+		hvStat.storage.setItem(this._key, this.value);
 	},
 	reset: function () {
 		this._value = this._defaultValue;
