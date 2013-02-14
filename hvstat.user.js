@@ -6568,9 +6568,9 @@ hvStat.startup = {
 			}
 			if (hv.location.isForge && hvStat.settings.isShowTags[4]) {
 				TaggingItems(false);
-				if (hvStat.settings.isDisableForgeHotKeys) {
-					document.onkeypress = null;
-				}
+			}
+			if (hv.location.isForge && hvStat.settings.isDisableForgeHotKeys) {
+				document.onkeypress = null;
 			}
 			if (hv.location.isCharacter && !hv.settings.useHVFontEngine) {
 				collectCurrentProfsData();
