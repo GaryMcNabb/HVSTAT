@@ -5,7 +5,7 @@
 // @include         http://hentaiverse.org/*
 // @exclude         http://hentaiverse.org/pages/showequip*
 // @author          Various (http://forums.e-hentai.org/index.php?showtopic=79552)
-// @version         5.5.2
+// @version         5.5.2.1
 // @resource        battle-log-type0.css                        css/battle-log-type0.css
 // @resource        battle-log-type1.css                        css/battle-log-type1.css
 // @resource        hvstat.css                                  css/hvstat.css
@@ -115,7 +115,7 @@ util.CallbackQueue.prototype = {
 			this.closures.push(fn);
 		}
 	},
-	execute: function(context) {
+	execute: function (context) {
 		if (this.executed) {
 			return;
 		}
@@ -131,7 +131,9 @@ util.CallbackQueue.prototype = {
 // Browser utilities
 //------------------------------------
 var browser = {
-	isChrome: navigator.userAgent.indexOf("Chrome") >= 0,
+	get isChrome() {
+		return navigator.userAgent.indexOf("Chrome") >= 0;
+	},
 };
 
 browser.extension = {
@@ -302,7 +304,7 @@ var hv = {
 // HV STAT object
 //------------------------------------
 var hvStat = {
-	version: "5.5.2",
+	version: "5.5.2.1",
 	setup: function () {
 		this.addStyle();
 	},
@@ -912,7 +914,7 @@ hvStat.storage.Item.prototype = {
 		return this._value;
 	},
 	save: function () {
-		hvStat.storage.setItem(this._key, this._value);
+		hvStat.storage.setItem(this._key, this.value);
 	},
 	reset: function () {
 		this._value = this._defaultValue;
@@ -1338,7 +1340,7 @@ hvStat.battle.command = {
 			};
 			if (this._subMenuItemMap["Scan"]) {
 				this._subMenuItemMap["Scan"].bindKeys([
-				new hvStat.keyboard.KeyCombination({ keyCode: 46 }),		// Delete
+					new hvStat.keyboard.KeyCombination({ keyCode: 46 }),	// Delete
 					new hvStat.keyboard.KeyCombination({ keyCode: 110 })	// Numpad . Del
 				]);
 			}
@@ -1576,6 +1578,9 @@ hvStat.battle.enhancement.effectDurationBadge = {
 		var effectIcons = hv.battle.elementCache.characterEffectIcons;
 		for (var i = 0; i < effectIcons.length; i++) {
 			var badge = this.create(effectIcons[i]);
+			if (badge) {
+				badge.className += " hvstat-duration-badge-character";
+			}
 		}
 	},
 	showForMonsters: function () {
@@ -1584,6 +1589,9 @@ hvStat.battle.enhancement.effectDurationBadge = {
 			var effectIcons = monster.querySelectorAll('img[onmouseover^="battle.set_infopane_effect"]');
 			for (var j = 0; j < effectIcons.length; j++) {
 				var badge = this.create(effectIcons[j]);
+				if (badge) {
+					badge.className += " hvstat-duration-badge-monster";
+				}
 			}
 		}
 	}
@@ -4381,7 +4389,7 @@ function collectRoundInfo() {
 					hvStat.roundInfo.effectPoison[1] += o;
 					hvStat.roundInfo.effectPoison[0]++;
 				} else {
-					if (logHTML.match(/(searing skin|freezing limbs|deep burns|turbulent air|burning soul|breached defence|blunted attack) (hits|blasts|explodes)/i) && !logHTML.match(/(hits you |crits you )/i)) {
+					if (logHTML.match(/(searing skin|freezing limbs|deep burns|turbulent air|burning soul|breached defense|blunted attack) (hits|blasts|explodes)/i) && !logHTML.match(/(hits you |crits you )/i)) {
 						hvStat.roundInfo.elemEffects[1]++;
 						hvStat.roundInfo.elemEffects[2] += o;
 					} else if (logHTML.match(/(fireball|inferno|flare|meteor|nova|flames of loki|icestrike|snowstorm|freeze|blizzard|cryostasis|fimbulvetr|lighting|thunderstorm|ball lighting|chain lighting|shockblast|wrath of thor|windblast|cyclone|gale|hurricane|downburst|storms of njord) (hits|blasts|explodes)/i) && !logHTML.match(/(hits you |crits you )/i)) {
@@ -4502,7 +4510,7 @@ function collectRoundInfo() {
 				} else if (logHTML.match(/gain the effect Channeling/i)) {
 					hvStat.roundInfo.channel++;
 				} else {
-					if (logHTML.match(/gains the effect (searing skin|freezing limbs|deep burns|turbulent air|breached defence|blunted attack|burning soul|rippened soul)/i)) {
+					if (logHTML.match(/gains the effect (searing skin|freezing limbs|deep burns|turbulent air|breached defense|blunted attack|burning soul|rippened soul)/i)) {
 						hvStat.roundInfo.elemEffects[0]++;
 					} else if (logHTML.match(/gains the effect (spreading poison|slowed|weakened|sleep|confused|imperiled|blinded|silenced|nerfed|magically snared|lifestream)/i)) {
 						hvStat.roundInfo.depSpells[1]++;
@@ -5954,7 +5962,7 @@ function saveSettings() {
 	hvStat.settings.isEffectsAlertSelf[1] = $("input[name=isEffectsAlertSelf1]").get(0).checked;
 	hvStat.settings.isEffectsAlertSelf[2] = $("input[name=isEffectsAlertSelf2]").get(0).checked;
 	hvStat.settings.isEffectsAlertSelf[3] = $("input[name=isEffectsAlertSelf3]").get(0).checked;
-	hvStat.settings.isEffectsAlertSelf[4] = false; // absorb is obsolete
+	hvStat.settings.isEffectsAlertSelf[4] = false; // Absorb no longer has duration
 	hvStat.settings.isEffectsAlertSelf[5] = $("input[name=isEffectsAlertSelf5]").get(0).checked;
 	hvStat.settings.isEffectsAlertSelf[6] = $("input[name=isEffectsAlertSelf6]").get(0).checked;
 	hvStat.settings.isEffectsAlertSelf[7] = $("input[name=isEffectsAlertSelf7]").get(0).checked;
@@ -6560,9 +6568,9 @@ hvStat.startup = {
 			}
 			if (hv.location.isForge && hvStat.settings.isShowTags[4]) {
 				TaggingItems(false);
-				if (hvStat.settings.isDisableForgeHotKeys) {
-					document.onkeypress = null;
-				}
+			}
+			if (hv.location.isForge && hvStat.settings.isDisableForgeHotKeys) {
+				document.onkeypress = null;
 			}
 			if (hv.location.isCharacter && !hv.settings.useHVFontEngine) {
 				collectCurrentProfsData();
@@ -6573,6 +6581,7 @@ hvStat.startup = {
 				}
 				if (browser.isChrome && hvStat.settings.enableShrineKeyPatch) {
 					document.onkeydown = null;	// Workaround to make enable SPACE key
+					hvStat.onkeydown = null;
 				}
 			}
 			if (hvStat.settings.isStartAlert && !hv.settings.useHVFontEngine) {

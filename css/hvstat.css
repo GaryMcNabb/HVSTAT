@@ -64,19 +64,20 @@
 .hvstat-duration-badge {
 	width: 30px;
 	display: inline-block;
-	text-align: left;
+	text-align: center;
 	position: relative;
 	margin-left: -30px;
-	top: -22px;
-	opacity: 0.75;
 }
 .hvstat-duration-badge > div {
-	color: Black;
-	background: White;
+	background: #EFEEDC;
+	border: 1px solid #5C0D11;
 	padding: 0px 1px;
 	display: inline-block;
+	min-width: 12px;
 	font-weight: bold;
 }
+.hvstat-duration-badge-character { top: 2px; }
+.hvstat-duration-badge-monster { top: -25px; }
 .hvstat-duration-badge-yellow-alert > div { background-color: orange; }
 .hvstat-duration-badge-red-alert > div { background-color: red; }
 
@@ -313,6 +314,10 @@ input.hvstat-equipment-tag-new {
 	font-style: italic;
 }
 
+#hvstat-overview-pane h2 + div {
+	/*margin-top: -15px;*/
+}
+
 #hvstat-arena-rewards-pane ul,
 #hvstat-shrine-pane ul {
 	list-style-type: none;
@@ -326,16 +331,20 @@ input.hvstat-equipment-tag-new {
 	padding: 0px;
 }
 
+#hvstat-overview-pane table,
 #hvstat-arena-rewards-pane table,
 #hvstat-shrine-artifact-trade {
 	border-collapse: collapse;
 }
 
+#hvstat-overview-pane thead th,
 #hvstat-arena-rewards-pane thead th,
 #hvstat-shrine-artifact-trade thead th {
 	border-bottom: 1px solid #5C0D11;
 }
 
+#hvstat-overview-pane th,
+#hvstat-overview-pane td,
 #hvstat-arena-rewards-pane th,
 #hvstat-arena-rewards-pane td,
 #hvstat-shrine-artifact-trade th,
@@ -343,6 +352,10 @@ input.hvstat-equipment-tag-new {
 	text-align: right;
 	padding: 1px 3px;
 	white-space: nowrap;
+}
+
+#hvstat-overview-reporting-period td {
+	text-align: left;
 }
 
 #hvstat-settings-pane .hvstat-vertical-top {
