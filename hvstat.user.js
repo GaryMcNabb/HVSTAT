@@ -1173,20 +1173,20 @@ hvStat.keyboard = {
 				}
 			}
 			if (hvStat.settings.isEnableSkillHotkey && miSkill1) {
-				var avilableSkillMaxIndex = -1;
+				var availableSkillMaxIndex = -1;
 				for (i = 0; i < miSkills.length; i++) {
 					if (miSkills[i] && miSkills[i].available) {
-						avilableSkillMaxIndex = i;
+						availableSkillMaxIndex = i;
 					}
 				}
 				boundKeys = miSkill1.boundKeys;
 				for (i = 0; i < boundKeys.length; i++) {
 					if (boundKeys[i].matches(event)) {
-						if (HVStat.selectedSkillIndex >= avilableSkillMaxIndex) {
+						if (HVStat.selectedSkillIndex >= availableSkillMaxIndex) {
 							hvStat.battle.command.commandMap["Skills"].close();
 							HVStat.selectedSkillIndex = -1;
 						} else {
-							for (j = HVStat.selectedSkillIndex + 1; j <= avilableSkillMaxIndex; j++) {
+							for (j = HVStat.selectedSkillIndex + 1; j <= availableSkillMaxIndex; j++) {
 								if (miSkills[j] && miSkills[j].available) {
 									miSkills[j].select();
 									HVStat.selectedSkillIndex = j;
@@ -6487,9 +6487,9 @@ hvStat.startup = {
 			document.onkeydown = null;
 		}
 		hv.setup();
-//		console.debug(hv);
+		console.debug(hv);
 		hvStat.setup();
-//		console.debug(hvStat);
+		console.debug(hvStat);
 		if (hvStat.settings.isChangePageTitle) {
 			document.title = hvStat.settings.customPageTitle;
 		}
