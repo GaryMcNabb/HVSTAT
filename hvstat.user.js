@@ -4389,7 +4389,7 @@ function collectRoundInfo() {
 					hvStat.roundInfo.effectPoison[1] += o;
 					hvStat.roundInfo.effectPoison[0]++;
 				} else {
-					if (logHTML.match(/(searing skin|freezing limbs|deep burns|turbulent air|burning soul|breached defence|blunted attack) (hits|blasts|explodes)/i) && !logHTML.match(/(hits you |crits you )/i)) {
+					if (logHTML.match(/(searing skin|freezing limbs|deep burns|turbulent air|burning soul|breached defense|blunted attack) (hits|blasts|explodes)/i) && !logHTML.match(/(hits you |crits you )/i)) {
 						hvStat.roundInfo.elemEffects[1]++;
 						hvStat.roundInfo.elemEffects[2] += o;
 					} else if (logHTML.match(/(fireball|inferno|flare|meteor|nova|flames of loki|icestrike|snowstorm|freeze|blizzard|cryostasis|fimbulvetr|lighting|thunderstorm|ball lighting|chain lighting|shockblast|wrath of thor|windblast|cyclone|gale|hurricane|downburst|storms of njord) (hits|blasts|explodes)/i) && !logHTML.match(/(hits you |crits you )/i)) {
@@ -4510,7 +4510,7 @@ function collectRoundInfo() {
 				} else if (logHTML.match(/gain the effect Channeling/i)) {
 					hvStat.roundInfo.channel++;
 				} else {
-					if (logHTML.match(/gains the effect (searing skin|freezing limbs|deep burns|turbulent air|breached defence|blunted attack|burning soul|rippened soul)/i)) {
+					if (logHTML.match(/gains the effect (searing skin|freezing limbs|deep burns|turbulent air|breached defense|blunted attack|burning soul|rippened soul)/i)) {
 						hvStat.roundInfo.elemEffects[0]++;
 					} else if (logHTML.match(/gains the effect (spreading poison|slowed|weakened|sleep|confused|imperiled|blinded|silenced|nerfed|magically snared|lifestream)/i)) {
 						hvStat.roundInfo.depSpells[1]++;
