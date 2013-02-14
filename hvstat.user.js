@@ -450,6 +450,139 @@ hvStat.util = {
 };
 
 //------------------------------------
+// Constants
+//------------------------------------
+hvStat.constant = {
+	factory: function (keywords) {
+		var singleton = {};
+		var i, keyword, len = keywords.length;
+		for (i = 0; i < len; i++) {
+			keyword = keywords[i];
+			singleton[keyword.id] = keyword;
+		}
+		return singleton;
+	},
+};
+hvStat.constant.Keyword = function (id, name, abbrNames) {
+	this._id = String(id);
+	this._name = String(name);
+	this._abbrNames = [];
+	var i;
+	if (!Array.isArray(abbrNames)) {
+		this._abbrNames[0] = String(abbrNames);
+	} else {
+		for (i = 0; i < abbrNames.length; i++) {
+			this._abbrNames[i] = String(abbrNames[i]);
+		}
+	}
+};
+hvStat.constant.Keyword.prototype = {
+	get id() { return this._id; },
+	get name() { return this._name; },
+	toString: function (abbrLevel) {
+		// If abbrLevel is not set or 0 then return name else return abbreviated name
+		abbrLevel = Number(abbrLevel);
+		if (isNaN(abbrLevel) || abbrLevel < 0) {
+			abbrLevel = 0;
+		} else if (abbrLevel >= this._abbrNames.length) {
+			abbrLevel = this._abbrNames.length;
+		}
+		return (abbrLevel === 0) ? this._name : this._abbrNames[abbrLevel - 1];
+	},
+}
+
+hvStat.C = hvStat.constant.Keyword;	// Shortcut
+
+hvStat.constant.difficulty = hvStat.constant.factory([
+	new hvStat.C("EASY", "Easy"),
+	new hvStat.C("NORMAL", "Normal"),
+	new hvStat.C("HARD", "Hard"),
+	new hvStat.C("HEROIC", "Heroic"),
+	new hvStat.C("NIGHTMARE", "Nightmare"),
+	new hvStat.C("HELL", "Hell"),
+	new hvStat.C("NINTENDO", "Nintendo"),
+	new hvStat.C("BATTLETOADS", "Battletoads"),
+	new hvStat.C("IWBTH", "IWBTH"),
+]);
+
+hvStat.constant.battleMode = hvStat.constant.factory([
+	new hvStat.C("HOURLY_ENCOUNTER", "Hourly Encounter"),
+	new hvStat.C("ARENA", "Arena"),
+	new hvStat.C("RING_OF_BLOOD", "Ring of Blood"),
+	new hvStat.C("GRINDFEST", "GrindFest"),
+	new hvStat.C("ITEM_WORLD", "Item World"),
+]);
+
+hvStat.constant.monsterClass = hvStat.constant.factory([
+	new hvStat.C("ARTHROPOD", "Arthropod", ["Arth", "Art"]),
+	new hvStat.C("AVION", "Avion", ["Avio", "Avi"]),
+	new hvStat.C("BEAST", "Beast", ["Beas", "Bea"]),
+	new hvStat.C("CELESTIAL", "Celestial", ["Cele", "Cel"]),
+	new hvStat.C("DAIMON", "Daimon", ["Daim", "Dai"]),
+	new hvStat.C("DRAGONKIN", "Dragonkin", ["Drag", "Dra"]),
+	new hvStat.C("ELEMENTAL", "Elemental", ["Elem", "Ele"]),
+	new hvStat.C("GIANT", "Giant", ["Gian", "Gia"]),
+	new hvStat.C("HUMANOID", "Humanoid", ["Huma", "Hum"]),
+	new hvStat.C("MECHANOID", "Mechanoid", ["Mech", "Mec"]),
+	new hvStat.C("REPTILIAN", "Reptilian", ["Rept", "Rep"]),
+	new hvStat.C("SPRITE", "Sprite", ["Spri", "Spr"]),
+	new hvStat.C("UNDEAD", "Undead", ["Unde", "Und"]),
+	new hvStat.C("COMMON", "Common", ["Comm", "Com"]),
+	new hvStat.C("UNCOMMON", "Uncommon", ["Unco", "Unc"]),
+	new hvStat.C("RARE", "Rare", ["Rare", "Rar"]),
+	new hvStat.C("LEGENDARY", "Legendary", ["Lege", "Leg"]),
+	new hvStat.C("ULTIMATE", "Ultimate", ["Ulti", "Ult"]),
+]);
+
+hvStat.constant.skillType = hvStat.constant.factory([
+	new hvStat.C("MANA", "Mana", [""]),
+	new hvStat.C("SPIRIT", "Spirit", ["Spirit", "S"]),
+]);
+
+hvStat.constant.attackType = hvStat.constant.factory([
+	new hvStat.C("PHYSICAL", "Physical", ["Phys", "Ph", "P"]),
+	new hvStat.C("MAGICAL", "Magical", ["Mag", "Ma", "M"]),
+]);
+
+hvStat.constant.damageType = hvStat.constant.factory([
+	new hvStat.C("CRUSHING", "Crushing", ["Crush", "Cr"]),
+	new hvStat.C("SLASHING", "Slashing", ["Slash", "Sl"]),
+	new hvStat.C("PIERCING", "Piercing", ["Pierc", "Pi"]),
+	new hvStat.C("FIRE", "Fire", ["Fire", "Fir", "Fi", "F"]),
+	new hvStat.C("COLD", "Cold", ["Cold", "Col", "Co", "C"]),
+	new hvStat.C("ELEC", "Elec", ["Elec", "Elc", "El", "E"]),
+	new hvStat.C("WIND", "Wind", ["Wind", "Win", "Wi", "W"]),
+	new hvStat.C("HOLY", "Holy", ["Holy", "Hol", "Ho", "H"]),
+	new hvStat.C("DARK", "Dark", ["Dark", "Dar", "Da", "D"]),
+	new hvStat.C("SOUL", "Soul", ["Soul", "Sou", "So", "S"]),
+	new hvStat.C("VOID", "Void", ["Void", "Voi", "Vo", "V"]),
+]);
+
+hvStat.constant.genericDamageType = hvStat.constant.factory([
+	new hvStat.C("PHYSICAL", "Physical", ["Phys", "Ph"]),
+	new hvStat.C("ELEMENTAL", "Elemental", ["Elem", "El"]),
+]);
+
+hvStat.constant.defenseLevel = hvStat.constant.factory([
+	new hvStat.C("WEAK", "Weak"),
+	new hvStat.C("AVERAGE", "Average"),
+	new hvStat.C("RESISTANT", "Resistant"),
+	new hvStat.C("IMPERVIOUS", "Impervious"),
+]);
+
+hvStat.constant.debuff = hvStat.constant.factory([
+	new hvStat.C("IMPERILED", "Imperiled"),
+	new hvStat.C("DEEP_BURNS", "Deep Burns"),
+	new hvStat.C("TURBULENT_AIR", "Turbulent Air"),
+	new hvStat.C("FREEZING_LIMBS", "Freezing Limbs"),
+	new hvStat.C("SEARING_SKIN", "Searing Skin"),
+	new hvStat.C("BREACHED_DEFENSE", "Breached Defense"),
+	new hvStat.C("BLUNTED_ATTACK", "Blunted Attack"),
+]);
+
+hvStat.constant.delimiter = new hvStat.C("DELIMITER", ", ", [","]);
+
+//------------------------------------
 // Storage objects
 //------------------------------------
 hvStat.storage = {
