@@ -1578,6 +1578,9 @@ hvStat.battle.enhancement.effectDurationBadge = {
 		var effectIcons = hv.battle.elementCache.characterEffectIcons;
 		for (var i = 0; i < effectIcons.length; i++) {
 			var badge = this.create(effectIcons[i]);
+			if (badge) {
+				badge.className += " hvstat-duration-badge-character";
+			}
 		}
 	},
 	showForMonsters: function () {
@@ -1586,6 +1589,9 @@ hvStat.battle.enhancement.effectDurationBadge = {
 			var effectIcons = monster.querySelectorAll('img[onmouseover^="battle.set_infopane_effect"]');
 			for (var j = 0; j < effectIcons.length; j++) {
 				var badge = this.create(effectIcons[j]);
+				if (badge) {
+					badge.className += " hvstat-duration-badge-monster";
+				}
 			}
 		}
 	}
