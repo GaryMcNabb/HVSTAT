@@ -4217,9 +4217,9 @@ function collectRoundInfo() {
 		HVStat.transaction = HVStat.idb.transaction(["MonsterScanResults", "MonsterSkills"], "readwrite");
 	});
 
-	var a = 0;
-	var ac = 0;
-	var d = 0;
+	var meleeHitCount = 0;
+	var counterHitCount = 0;
+	var healedPoints = 0;
 	var b = false;
 	// create monster objects
 	for (var i = 0; i < hv.battle.elementCache.monsters.length; i++) {
@@ -4260,7 +4260,10 @@ function collectRoundInfo() {
 					hvStat.roundInfo.maxRound = parseInt(m[3]);
 				}
 			}
-			if (hvStat.settings.isShowRoundReminder && (hvStat.roundInfo.maxRound >= hvStat.settings.reminderMinRounds) && (hvStat.roundInfo.currRound === hvStat.roundInfo.maxRound - hvStat.settings.reminderBeforeEnd) && !b) {
+			if (hvStat.settings.isShowRoundReminder &&
+					(hvStat.roundInfo.maxRound >= hvStat.settings.reminderMinRounds) &&
+					(hvStat.roundInfo.currRound === hvStat.roundInfo.maxRound - hvStat.settings.reminderBeforeEnd) &&
+					!b) {
 				if (hvStat.settings.reminderBeforeEnd === 0) {
 					alert("This is final round");
 				} else {
@@ -4376,7 +4379,7 @@ function collectRoundInfo() {
 				hvStat.roundInfo.dDealt[2] += o;
 			} else if (logHTML.match(/(you hit)|(you crit)/i)) {
 				hvStat.roundInfo.aAttempts++;
-				a++;
+				meleeHitCount++;
 				hvStat.roundInfo.aHits[logHTML.match(/you crit/i) ? 1 : 0]++;
 				hvStat.roundInfo.dDealt[logHTML.match(/you crit/i) ? 1 : 0] += o;
 			} else if (logHTML.match(/your offhand (hits|crits)/i)) {
@@ -4385,7 +4388,7 @@ function collectRoundInfo() {
 			} else if (logHTML.match(/you counter/i)) {
 				hvStat.roundInfo.aCounters[0]++;
 				hvStat.roundInfo.aCounters[1] += o;
-				ac++;
+				counterHitCount++;
 				hvStat.roundInfo.dDealt[0] += o;
 			} else if (logHTML.match(/hits|blasts|explodes/i) && !logHTML.match(/hits you /i)) {
 				if (logHTML.match(/spreading poison hits /i) && !logHTML.match(/(hits you |crits you )/i)) {
@@ -4489,9 +4492,9 @@ function collectRoundInfo() {
 						hvStat.roundInfo.curativeSpells++
 						if (logHTML.match(/cure/i)) {
 							if (joinedLogStringOfCurrentTurn.match(/You are healed for (\d+) Health Points/)) {
-								d = parseFloat(RegExp.$1);
+								healedPoints = parseFloat(RegExp.$1);
 							}
-							hvStat.roundInfo.cureTotals[logHTML.match(/cure\./i) ? 0 : logHTML.match(/cure ii\./i) ? 1 : 2] += d;
+							hvStat.roundInfo.cureTotals[logHTML.match(/cure\./i) ? 0 : logHTML.match(/cure ii\./i) ? 1 : 2] += healedPoints;
 							hvStat.roundInfo.cureCounts[logHTML.match(/cure\./i) ? 0 : logHTML.match(/cure ii\./i) ? 1 : 2]++
 						}
 					}
@@ -4664,13 +4667,13 @@ function collectRoundInfo() {
 			localStorage.setItem(HV_EQUIP, "true");
 		}
 	}
-	if (a > 1) {
+	if (meleeHitCount > 1) {
 		hvStat.roundInfo.aDomino[0]++;
-		hvStat.roundInfo.aDomino[1] += a;
-		hvStat.roundInfo.aDomino[a]++
+		hvStat.roundInfo.aDomino[1] += meleeHitCount;
+		hvStat.roundInfo.aDomino[meleeHitCount]++
 	}
-	if (ac > 1) {
-		hvStat.roundInfo.aCounters[ac]++;
+	if (counterHitCount > 1) {
+		hvStat.roundInfo.aCounters[counterHitCount]++;
 	}
 	if (hvStat.roundInfo.lastTurn < turnLog.lastTurn) {
 		hvStat.roundInfo.lastTurn = turnLog.lastTurn;
