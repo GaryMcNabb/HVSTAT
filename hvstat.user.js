@@ -2086,182 +2086,10 @@ var HVStat = {	// TODO: To be refactored
 };
 
 //------------------------------------
-// Basic classes
-//------------------------------------
-
-HVStat.Keyword = function (id, name, abbrNames) {
-	var _id = String(id);
-	var _name = String(name);
-	var i, _abbrNames = [];
-	if (abbrNames !== undefined) {
-		if (abbrNames instanceof Array) {
-			for (i = 0; i < abbrNames.length; i++) {
-				_abbrNames[i] = String(abbrNames[i]);
-			}
-		} else {
-			_abbrNames[0] = String(abbrNames);
-		}
-	}
-	return {
-		get id() { return _id; },
-		get name() { return _name; },
-		toString: function (abbrLevel) {
-			// If abbrLevel is not set or 0 then return name else return abbreviated name
-			abbrLevel = Number(abbrLevel);
-			if (isNaN(abbrLevel) || abbrLevel < 0) {
-				abbrLevel = 0;
-			} else if (abbrLevel >= _abbrNames.length) {
-				abbrLevel = _abbrNames.length;
-			}
-			return (abbrLevel === 0) ? _name : _abbrNames[abbrLevel - 1];
-		}
-	};
-}
-
-HVStat.MonsterClass = (function () {
-	var MonsterClass = {};
-	var kw = HVStat.Keyword;
-	var keywords = [
-		new kw("ARTHROPOD", "Arthropod", ["Arth", "Art"]),
-		new kw("AVION", "Avion", ["Avio", "Avi"]),
-		new kw("BEAST", "Beast", ["Beas", "Bea"]),
-		new kw("CELESTIAL", "Celestial", ["Cele", "Cel"]),
-		new kw("DAIMON", "Daimon", ["Daim", "Dai"]),
-		new kw("DRAGONKIN", "Dragonkin", ["Drag", "Dra"]),
-		new kw("ELEMENTAL", "Elemental", ["Elem", "Ele"]),
-		new kw("GIANT", "Giant", ["Gian", "Gia"]),
-		new kw("HUMANOID", "Humanoid", ["Huma", "Hum"]),
-		new kw("MECHANOID", "Mechanoid", ["Mech", "Mec"]),
-		new kw("REPTILIAN", "Reptilian", ["Rept", "Rep"]),
-		new kw("SPRITE", "Sprite", ["Spri", "Spr"]),
-		new kw("UNDEAD", "Undead", ["Unde", "Und"]),
-		new kw("COMMON", "Common", ["Comm", "Com"]),
-		new kw("UNCOMMON", "Uncommon", ["Unco", "Unc"]),
-		new kw("RARE", "Rare", ["Rare", "Rar"]),
-		new kw("LEGENDARY", "Legendary", ["Lege", "Leg"]),
-		new kw("ULTIMATE", "Ultimate", ["Ulti", "Ult"])
-	];
-	var i, keyword, len = keywords.length;
-	for (i = 0; i < len; i++) {
-		keyword = keywords[i];
-		MonsterClass[keyword.id] = keyword;
-	}
-	return MonsterClass;
-}());
-
-HVStat.SkillType = (function () {
-	var SkillType = {};
-	var kw = HVStat.Keyword;
-	var keywords = [
-		new kw("MANA", "Mana", [""]),
-		new kw("SPIRIT", "Spirit", ["Spirit", "S"])
-	];
-	var i, keyword, len = keywords.length;
-	for (i = 0; i < len; i++) {
-		keyword = keywords[i];
-		SkillType[keyword.id] = keyword;
-	}
-	return SkillType;
-}());
-
-HVStat.AttackType = (function () {
-	var AttackType = {};
-	var kw = HVStat.Keyword;
-	var keywords = [
-		new kw("PHYSICAL", "Physical", ["Phys", "Ph", "P"]),
-		new kw("MAGICAL", "Magical", ["Mag", "Ma", "M"])
-	];
-	var i, keyword, len = keywords.length;
-	for (i = 0; i < len; i++) {
-		keyword = keywords[i];
-		AttackType[keyword.id] = keyword;
-	}
-	return AttackType;
-}());
-
-HVStat.DamageType = (function () {
-	var DamageType = {};
-	var kw = HVStat.Keyword;
-	var keywords = [
-		new kw("CRUSHING", "Crushing", ["Crush", "Cr"]),
-		new kw("SLASHING", "Slashing", ["Slash", "Sl"]),
-		new kw("PIERCING", "Piercing", ["Pierc", "Pi"]),
-		new kw("FIRE", "Fire", ["Fire", "Fir", "Fi", "F"]),
-		new kw("COLD", "Cold", ["Cold", "Col", "Co", "C"]),
-		new kw("ELEC", "Elec", ["Elec", "Elc", "El", "E"]),
-		new kw("WIND", "Wind", ["Wind", "Win", "Wi", "W"]),
-		new kw("HOLY", "Holy", ["Holy", "Hol", "Ho", "H"]),
-		new kw("DARK", "Dark", ["Dark", "Dar", "Da", "D"]),
-		new kw("SOUL", "Soul", ["Soul", "Sou", "So", "S"]),
-		new kw("VOID", "Void", ["Void", "Voi", "Vo", "V"])
-	];
-	var i, keyword, len = keywords.length;
-	for (i = 0; i < len; i++) {
-		keyword = keywords[i];
-		DamageType[keyword.id] = keyword;
-	}
-	return DamageType;
-}());
-
-HVStat.GenericDamageType = (function () {
-	var GenericDamageType = {};
-	var kw = HVStat.Keyword;
-	var keywords = [
-		new kw("PHYSICAL", "Physical", ["Phys", "Ph"]),
-		new kw("ELEMENTAL", "Elemental", ["Elem", "El"])
-	];
-	var i, keyword, len = keywords.length;
-	for (i = 0; i < len; i++) {
-		keyword = keywords[i];
-		GenericDamageType[keyword.id] = keyword;
-	}
-	return GenericDamageType;
-}());
-
-HVStat.DefenceLevel = (function () {
-	var DefenceLevel = {};
-	var kw = HVStat.Keyword;
-	var keywords = [
-		new kw("WEAK", "Weak"),
-		new kw("AVERAGE", "Average"),
-		new kw("RESISTANT", "Resistant"),
-		new kw("IMPERVIOUS", "Impervious")
-	];
-	var i, keyword, len = keywords.length;
-	for (i = 0; i < len; i++) {
-		keyword = keywords[i];
-		DefenceLevel[keyword.id] = keyword;
-	}
-	return DefenceLevel;
-}());
-
-HVStat.Debuff = (function () {
-	var Debuff = {};
-	var kw = HVStat.Keyword;
-	var keywords = [
-		new kw("IMPERILED", "Imperiled"),
-		new kw("DEEP_BURNS", "Deep Burns"),
-		new kw("TURBULENT_AIR", "Turbulent Air"),
-		new kw("FREEZING_LIMBS", "Freezing Limbs"),
-		new kw("SEARING_SKIN", "Searing Skin"),
-		new kw("BREACHED_DEFENSE", "Breached Defense"),
-		new kw("BLUNTED_ATTACK", "Blunted Attack")
-	];
-	var i, keyword, len = keywords.length;
-	for (i = 0; i < len; i++) {
-		keyword = keywords[i];
-		Debuff[keyword.id] = keyword;
-	}
-	return Debuff;
-}());
-
-HVStat.delimiter = new HVStat.Keyword("DELIMITER", ", ", [","]);
-
-//------------------------------------
 // Value objects
 //------------------------------------
 
-HVStat.DefenceLevelVO = function () {
+HVStat.DefenseLevelVO = function () {
 	var v = "AVERAGE";
 	return {
 		CRUSHING: v,
@@ -2286,7 +2114,7 @@ HVStat.MonsterScanResultsVO = function (spec) {
 	this.powerLevel = null;
 	this.trainer = null;
 	this.meleeAttack = null;
-	this.defenceLevel = new HVStat.DefenceLevelVO();
+	this.defenseLevel = new HVStat.DefenseLevelVO();
 	this.debuffsAffected = [];
 
 	var dl;
@@ -2314,49 +2142,49 @@ HVStat.MonsterScanResultsVO = function (spec) {
 		if (spec.meleeAttack) {
 			this.meleeAttack = spec.meleeAttack.toUpperCase();
 		}
-		dl = HVStat.DefenceLevel[spec.defCrushing.toUpperCase()];
+		dl = hvStat.constant.defenseLevel[spec.defCrushing.toUpperCase()];
 		if (dl) {
-			this.defenceLevel.CRUSHING = dl.id;
+			this.defenseLevel.CRUSHING = dl.id;
 		}
-		dl = HVStat.DefenceLevel[spec.defSlashing.toUpperCase()];
+		dl = hvStat.constant.defenseLevel[spec.defSlashing.toUpperCase()];
 		if (dl) {
-			this.defenceLevel.SLASHING = dl.id;
+			this.defenseLevel.SLASHING = dl.id;
 		}
-		dl = HVStat.DefenceLevel[spec.defPiercing.toUpperCase()];
+		dl = hvStat.constant.defenseLevel[spec.defPiercing.toUpperCase()];
 		if (dl) {
-			this.defenceLevel.PIERCING = dl.id;
+			this.defenseLevel.PIERCING = dl.id;
 		}
-		dl = HVStat.DefenceLevel[spec.defFire.toUpperCase()];
+		dl = hvStat.constant.defenseLevel[spec.defFire.toUpperCase()];
 		if (dl) {
-			this.defenceLevel.FIRE = dl.id;
+			this.defenseLevel.FIRE = dl.id;
 		}
-		dl = HVStat.DefenceLevel[spec.defCold.toUpperCase()];
+		dl = hvStat.constant.defenseLevel[spec.defCold.toUpperCase()];
 		if (dl) {
-			this.defenceLevel.COLD = dl.id;
+			this.defenseLevel.COLD = dl.id;
 		}
-		dl = HVStat.DefenceLevel[spec.defElec.toUpperCase()];
+		dl = hvStat.constant.defenseLevel[spec.defElec.toUpperCase()];
 		if (dl) {
-			this.defenceLevel.ELEC = dl.id;
+			this.defenseLevel.ELEC = dl.id;
 		}
-		dl = HVStat.DefenceLevel[spec.defWind.toUpperCase()];
+		dl = hvStat.constant.defenseLevel[spec.defWind.toUpperCase()];
 		if (dl) {
-			this.defenceLevel.WIND = dl.id;
+			this.defenseLevel.WIND = dl.id;
 		}
-		dl = HVStat.DefenceLevel[spec.defHoly.toUpperCase()];
+		dl = hvStat.constant.defenseLevel[spec.defHoly.toUpperCase()];
 		if (dl) {
-			this.defenceLevel.HOLY = dl.id;
+			this.defenseLevel.HOLY = dl.id;
 		}
-		dl = HVStat.DefenceLevel[spec.defDark.toUpperCase()];
+		dl = hvStat.constant.defenseLevel[spec.defDark.toUpperCase()];
 		if (dl) {
-			this.defenceLevel.DARK = dl.id;
+			this.defenseLevel.DARK = dl.id;
 		}
-		dl = HVStat.DefenceLevel[spec.defSoul.toUpperCase()];
+		dl = hvStat.constant.defenseLevel[spec.defSoul.toUpperCase()];
 		if (dl) {
-			this.defenceLevel.SOUL = dl.id;
+			this.defenseLevel.SOUL = dl.id;
 		}
-		dl = HVStat.DefenceLevel[spec.defVoid.toUpperCase()];
+		dl = hvStat.constant.defenseLevel[spec.defVoid.toUpperCase()];
 		if (dl) {
-			this.defenceLevel.VOID = dl.id;
+			this.defenseLevel.VOID = dl.id;
 		}
 		if (spec.debuffsAffected) {
 			debuffs = spec.debuffsAffected.replace(" ", "").split(", ");
@@ -2634,7 +2462,7 @@ HVStat.MonsterScanResults = (function () {
 		var _powerLevel;
 		var _trainer;
 		var _meleeAttack;
-		var _defenceLevel = {};
+		var _defenseLevel = {};
 		var _debuffsAffected = [];
 		var _defWeak = [];
 		var _defResistant = [];
@@ -2650,17 +2478,17 @@ HVStat.MonsterScanResults = (function () {
 		_meleeAttack = hvStat.constant.damageType[vo.meleeAttack] || null;
 
 		for (damageTypeId in hvStat.constant.damageType) {
-			_defenceLevel[damageTypeId] = HVStat.DefenceLevel[vo.defenceLevel[damageTypeId]] || null;
+			_defenseLevel[damageTypeId] = hvStat.constant.defenseLevel[(vo.defenseLevel || vo.defenceLevel)[damageTypeId]] || null;
 		}
-		for (damageTypeId in _defenceLevel) {
-			switch (_defenceLevel[damageTypeId]) {
-			case HVStat.DefenceLevel.WEAK:
+		for (damageTypeId in _defenseLevel) {
+			switch (_defenseLevel[damageTypeId]) {
+			case hvStat.constant.defenseLevel.WEAK:
 				_defWeak.push(hvStat.constant.damageType[damageTypeId]);
 				break;
-			case HVStat.DefenceLevel.RESISTANT:
+			case hvStat.constant.defenseLevel.RESISTANT:
 				_defResistant.push(hvStat.constant.damageType[damageTypeId]);
 				break;
-			case HVStat.DefenceLevel.IMPERVIOUS:
+			case hvStat.constant.defenseLevel.IMPERVIOUS:
 				_defImpervious.push(hvStat.constant.damageType[damageTypeId]);
 				break;
 			}
@@ -2736,10 +2564,10 @@ HVStat.MonsterScanResults = (function () {
 			get powerLevel() { return _powerLevel; },
 			get trainer() { return _trainer; },
 			get meleeAttack() { return _meleeAttack; },
-			get defenceLevel() {
+			get defenseLevel() {
 				var i, dl = {};
-				for (i in _defenceLevel) {
-					dl[i] = _defenceLevel[i];
+				for (i in _defenseLevel) {
+					dl[i] = _defenseLevel[i];
 				}
 				return dl;
 			},
@@ -2757,8 +2585,8 @@ HVStat.MonsterScanResults = (function () {
 				vo.powerLevel = _powerLevel;
 				vo.trainer = _trainer;
 				vo.meleeAttack = _meleeAttack ? _meleeAttack.id : null;
-				for (i in _defenceLevel) {
-					vo.defenceLevel[i] = _defenceLevel[i].id;
+				for (i in _defenseLevel) {
+					vo.defenseLevel[i] = _defenseLevel[i].id;
 				}
 				len = _debuffsAffected.length;
 				for (i = 0; i < len; i++) {
@@ -2801,7 +2629,7 @@ HVStat.MonsterScanResults = (function () {
 			array = defWeak.toUpperCase().split(", ");
 			array.forEach(function (element, index, array) {
 				if (element !== "NOTHING") {
-					vo.defenceLevel[element] = HVStat.DefenceLevel.WEAK.id;
+					vo.defenseLevel[element] = hvStat.constant.defenseLevel.WEAK.id;
 				}
 			});
 		}
@@ -2810,7 +2638,7 @@ HVStat.MonsterScanResults = (function () {
 			array = defResistant.toUpperCase().split(", ");
 			array.forEach(function (element, index, array) {
 				if (element !== "NOTHING") {
-					vo.defenceLevel[element] = HVStat.DefenceLevel.RESISTANT.id;
+					vo.defenseLevel[element] = hvStat.constant.defenseLevel.RESISTANT.id;
 				}
 			});
 		}
@@ -2819,7 +2647,7 @@ HVStat.MonsterScanResults = (function () {
 			array = defImpervious.toUpperCase().split(", ");
 			array.forEach(function (element, index, array) {
 				if (element !== "NOTHING") {
-					vo.defenceLevel[element] = HVStat.DefenceLevel.IMPERVIOUS.id;
+					vo.defenseLevel[element] = hvStat.constant.defenseLevel.IMPERVIOUS.id;
 				}
 			});
 		}
@@ -3679,6 +3507,7 @@ HVStat.exportMonsterScanResults = function (callback) {
 		if (cursor) {
 			vo = cursor.value;
 			count++;
+			vo.defenseLevel = vo.defenseLevel || vo.defenceLevel;	// Patch
 			texts[count] = vo.id
 				+ tab + (vo.lastScanDate !== null ? vo.lastScanDate : "")
 				+ tab + (vo.name !== null ? vo.name : "")
@@ -3686,17 +3515,17 @@ HVStat.exportMonsterScanResults = function (callback) {
 				+ tab + (vo.powerLevel !== null ? vo.powerLevel : "")
 				+ tab + (vo.trainer !== null ? vo.trainer : "")
 				+ tab + (vo.meleeAttack !== null ? vo.meleeAttack : "")
-				+ tab + (vo.defenceLevel && vo.defenceLevel.CRUSHING ? vo.defenceLevel.CRUSHING : "")
-				+ tab + (vo.defenceLevel && vo.defenceLevel.SLASHING ? vo.defenceLevel.SLASHING : "")
-				+ tab + (vo.defenceLevel && vo.defenceLevel.PIERCING ? vo.defenceLevel.PIERCING : "")
-				+ tab + (vo.defenceLevel && vo.defenceLevel.FIRE ? vo.defenceLevel.FIRE : "")
-				+ tab + (vo.defenceLevel && vo.defenceLevel.COLD ? vo.defenceLevel.COLD : "")
-				+ tab + (vo.defenceLevel && vo.defenceLevel.ELEC ? vo.defenceLevel.ELEC : "")
-				+ tab + (vo.defenceLevel && vo.defenceLevel.WIND ? vo.defenceLevel.WIND : "")
-				+ tab + (vo.defenceLevel && vo.defenceLevel.HOLY ? vo.defenceLevel.HOLY : "")
-				+ tab + (vo.defenceLevel && vo.defenceLevel.DARK ? vo.defenceLevel.DARK : "")
-				+ tab + (vo.defenceLevel && vo.defenceLevel.SOUL ? vo.defenceLevel.SOUL : "")
-				+ tab + (vo.defenceLevel && vo.defenceLevel.VOID ? vo.defenceLevel.VOID : "")
+				+ tab + (vo.defenseLevel && vo.defenseLevel.CRUSHING ? vo.defenseLevel.CRUSHING : "")
+				+ tab + (vo.defenseLevel && vo.defenseLevel.SLASHING ? vo.defenseLevel.SLASHING : "")
+				+ tab + (vo.defenseLevel && vo.defenseLevel.PIERCING ? vo.defenseLevel.PIERCING : "")
+				+ tab + (vo.defenseLevel && vo.defenseLevel.FIRE ? vo.defenseLevel.FIRE : "")
+				+ tab + (vo.defenseLevel && vo.defenseLevel.COLD ? vo.defenseLevel.COLD : "")
+				+ tab + (vo.defenseLevel && vo.defenseLevel.ELEC ? vo.defenseLevel.ELEC : "")
+				+ tab + (vo.defenseLevel && vo.defenseLevel.WIND ? vo.defenseLevel.WIND : "")
+				+ tab + (vo.defenseLevel && vo.defenseLevel.HOLY ? vo.defenseLevel.HOLY : "")
+				+ tab + (vo.defenseLevel && vo.defenseLevel.DARK ? vo.defenseLevel.DARK : "")
+				+ tab + (vo.defenseLevel && vo.defenseLevel.SOUL ? vo.defenseLevel.SOUL : "")
+				+ tab + (vo.defenseLevel && vo.defenseLevel.VOID ? vo.defenseLevel.VOID : "")
 				+ tab + (vo.debuffsAffected ? vo.debuffsAffected.join(", ") : "");
 			cursor.continue();
 		} else {
@@ -4070,22 +3899,22 @@ HVStat.migration.createMonsterScanResultsVOFromOldDB = function (oldDB, index) {
 	// meleeAttack
 	v = HVStat.migration.damageTypeFromCode(oldDB.mattack[index]);
 	vo.meleeAttack = v[0] ? v[0].id : null;
-	// defenceLevel
-	vo.defenceLevel = new HVStat.DefenceLevelVO();
+	// defenseLevel
+	vo.defenseLevel = new HVStat.DefenseLevelVO();
 	v = HVStat.migration.damageTypeFromCode(oldDB.mweak[index]);
 	len = v.length;
 	for (i = 0; i < len; i++) {
-		vo.defenceLevel[v[i].id] = HVStat.DefenceLevel.WEAK.id;
+		vo.defenseLevel[v[i].id] = hvStat.constant.defenseLevel.WEAK.id;
 	}
 	v = HVStat.migration.damageTypeFromCode(oldDB.mresist[index]);
 	len = v.length;
 	for (i = 0; i < len; i++) {
-		vo.defenceLevel[v[i].id] = HVStat.DefenceLevel.RESISTANT.id;
+		vo.defenseLevel[v[i].id] = hvStat.constant.defenseLevel.RESISTANT.id;
 	}
 	v = HVStat.migration.damageTypeFromCode(oldDB.mimperv[index]);
 	len = v.length;
 	for (i = 0; i < len; i++) {
-		vo.defenceLevel[v[i].id] = HVStat.DefenceLevel.IMPERVIOUS.id;
+		vo.defenseLevel[v[i].id] = hvStat.constant.defenseLevel.IMPERVIOUS.id;
 	}
 	// debuffsAffected
 	vo.debuffsAffected = [];
