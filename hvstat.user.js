@@ -285,10 +285,16 @@ var hv = {
 				finished: !!battle.elementCache.dialog,
 			};
 			battle.finished = false;
-			if (battle.elementCache.dialogButton) {
-				var dialogButton_onclick = battle.elementCache.dialogButton.getAttribute("onclick");
-				if (dialogButton_onclick.indexOf("battle.battle_continue") === -1) {
+			if (battle.round.finished) {
+				if (!battle.elementCache.dialogButton) {
+					// Hourly Encounter
 					battle.finished = true;
+				} else {
+					// The others
+					var dialogButton_onclick = battle.elementCache.dialogButton.getAttribute("onclick");
+					if (dialogButton_onclick.indexOf("battle.battle_continue") === -1) {
+						battle.finished = true;
+					}
 				}
 			}
 		}
@@ -6350,15 +6356,13 @@ function TaggingItems(clean) {
 		var valueArray = equipTagArrayTable[equipTypeIdx].value;
 		var idCleanArray = equipTagArrayTable[equipTypeIdx].idClean;
 		var valueCleanArray = equipTagArrayTable[equipTypeIdx].valueClean;
-		var index = idArray.indexOf(id);
 		var inputElement = document.createElement("input");
 		inputElement.type = "text";
 		inputElement.className = "hvstat-equipment-tag";
 		inputElement.name = "tagid_" + String(id);
 		inputElement.size = 5;
 		inputElement.maxLength = 6;
-		inputElement.value = tagValue;
-		var tagValue = "";
+		var index = idArray.indexOf(id);
 		if (index < 0) {
 			inputElement.className += " hvstat-equipment-tag-new";
 			inputElement.value = "*NEW*";
@@ -6366,7 +6370,7 @@ function TaggingItems(clean) {
 			inputElement.value = valueArray[index];
 			if (clean) {
 				idCleanArray.push(id);
-				valueCleanArray.push(tagValue);
+				valueCleanArray.push(valueArray[index]);
 			}
 		}
 		element.parentNode.insertBefore(inputElement, null);
