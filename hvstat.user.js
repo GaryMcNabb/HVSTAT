@@ -137,11 +137,6 @@ var browser = {
 };
 
 browser.extension = {
-	ImageResourceInfo: function (originalPath, name, resourcePath) {
-		this.originalPath = originalPath;
-		this.name = name;
-		this.resourcePath = resourcePath;
-	},
 	getResourceURL: function (resourcePath, resourceName) {
 		var resourceURL;
 		if (browser.isChrome) {
@@ -164,18 +159,27 @@ browser.extension = {
 		}
 		return resourceText;
 	},
-	addStyle: function (styleText) {
-		if (browser.isChrome) {
-			var styleElement = document.createElement("style");
-			styleElement.textContent = styleText;
-			document.documentElement.insertBefore(styleElement, null);
-		} else {
+	loadScript: function (scriptPath, scriptName) {
+		eval.call(window, browser.extension.getResourceText(scriptPath, scriptName));
+	}
+}
+
+browser.extension.style = {
+	element: null,
+	add: function (styleText) {
+		if (!browser.isChrome) {
 			GM_addStyle(styleText);
+		} else {
+			if (!this.element) {
+				this.element = document.createElement("style");
+				(document.head || document.documentElement).insertBefore(this.element, null);
+			}
+			this.element.textContent += "\n" + styleText;
 		}
 	},
-	addStyleFromResource: function (styleResourcePath, styleResouceName, imageResouceInfoArray) {
+	addFromResource: function (styleResourcePath, styleResouceName, imageResouceInfoArray) {
 		var styleText = browser.extension.getResourceText(styleResourcePath, styleResouceName);
-		if (imageResouceInfoArray instanceof Array) {
+		if (Array.isArray(imageResouceInfoArray)) {
 			// Replace image URLs
 			for (var i = 0; i < imageResouceInfoArray.length; i++) {
 				var imageResourceName = imageResouceInfoArray[i].name;
@@ -186,12 +190,14 @@ browser.extension = {
 				styleText = styleText.replace(regex, imageResourceURL);
 			}
 		}
-		browser.extension.addStyle(styleText);
+		this.add(styleText);
 	},
-	loadScript: function (scriptPath, scriptName) {
-		eval.call(window, browser.extension.getResourceText(scriptPath, scriptName));
-	}
-}
+	ImageResourceInfo: function (originalPath, name, resourcePath) {
+		this.originalPath = originalPath;
+		this.name = name;
+		this.resourcePath = resourcePath;
+	},
+};
 
 //------------------------------------
 // HV utility object
@@ -315,14 +321,14 @@ var hvStat = {
 		this.addStyle();
 	},
 	addStyle: function () {
-		var C = browser.extension.ImageResourceInfo;
+		var C = browser.extension.style.ImageResourceInfo;
 		var imageResouces = [
 			new C("images/", "channeling.png", "css/images/"),
 			new C("images/", "healthpot.png", "css/images/"),
 			new C("images/", "manapot.png", "css/images/"),
 			new C("images/", "spiritpot.png", "css/images/"),
 		];
-		browser.extension.addStyleFromResource("css/", "hvstat.css", imageResouces);
+		browser.extension.style.addFromResource("css/", "hvstat.css", imageResouces);
 	},
 	// Shortcuts
 	get settings() {
@@ -1838,7 +1844,7 @@ hvStat.battle.enhancement.log = {
 		} else {
 			styleName = "battle-log-type0.css";
 		}
-		browser.extension.addStyleFromResource("css/", styleName);
+		browser.extension.style.addFromResource("css/", styleName);
 	},
 	highlight: function () {
 		// Copies the text of each Battle Log entry into a title element.
@@ -1988,7 +1994,7 @@ hvStat.ui = {
 		this.createIcon();
 	},
 	addStyle: function () {
-		var C = browser.extension.ImageResourceInfo;
+		var C = browser.extension.style.ImageResourceInfo;
 		var imageResouces = [
 			new C("images/", "ui-bg_flat_0_aaaaaa_40x100.png", "css/images/"),
 			new C("images/", "ui-bg_flat_55_fbf9ee_40x100.png", "css/images/"),
@@ -2000,7 +2006,7 @@ hvStat.ui = {
 			new C("images/", "ui-icons_5c0d11_256x240.png", "css/images/"),
 			new C("images/", "ui-icons_cd0a0a_256x240.png", "css/images/"),
 		];
-		browser.extension.addStyleFromResource("css/", "jquery-ui-1.9.2.custom.min.css", imageResouces);
+		browser.extension.style.addFromResource("css/", "jquery-ui-1.9.2.custom.min.css", imageResouces);
 	},
 	createIcon: function () {
 		var stuffBox = document.querySelector("div.stuffbox");
