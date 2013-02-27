@@ -635,6 +635,7 @@ hvStat.storage.initialValue = {
 		adjustKeyEventHandling: false,
 		isEnableScanHotkey: false,
 		isEnableSkillHotkey: false,
+		reverseSkillHotkeyTraversalOrder: false,
 		enableOFCHotkey: false,
 		enableScrollHotkey: false,
 		isDisableForgeHotKeys: false,
@@ -1280,6 +1281,7 @@ hvStat.keyboard = {
 			}
 		},
 	},
+	selectedSkillIndex: -1,	// -1: not selected, 0-2: selected
 	documentKeydown: function (event) {
 		var scrollTarget;
 		if (hvStat.settings.enableScrollHotkey &&
@@ -1327,14 +1329,29 @@ hvStat.keyboard = {
 				boundKeys = miSkill1.boundKeys;
 				for (i = 0; i < boundKeys.length; i++) {
 					if (boundKeys[i].matches(event)) {
-						if (HVStat.selectedSkillIndex >= availableSkillMaxIndex) {
+						var traversalFinished = !hvStat.settings.reverseSkillHotkeyTraversalOrder && hvStat.keyboard.selectedSkillIndex >= availableSkillMaxIndex ||
+							hvStat.settings.reverseSkillHotkeyTraversalOrder && hvStat.keyboard.selectedSkillIndex === 0;
+						if (traversalFinished) {
 							hvStat.battle.command.commandMap["Skills"].close();
-							HVStat.selectedSkillIndex = -1;
+							hvStat.keyboard.selectedSkillIndex = -1;
 						} else {
-							for (j = HVStat.selectedSkillIndex + 1; j <= availableSkillMaxIndex; j++) {
+							var startIndex = hvStat.keyboard.selectedSkillIndex;
+							var increment;
+							if (!hvStat.settings.reverseSkillHotkeyTraversalOrder) {
+								increment = 1;
+							} else {
+								if (startIndex === -1) {
+									startIndex = 3;
+								}
+								increment = -1;
+							}
+							for (j = startIndex + increment;
+									hvStat.settings.reverseSkillHotkeyTraversalOrder && 0 <= j ||
+									!hvStat.settings.reverseSkillHotkeyTraversalOrder && j <= availableSkillMaxIndex;
+									j += increment) {
 								if (miSkills[j] && miSkills[j].available) {
 									miSkills[j].select();
-									HVStat.selectedSkillIndex = j;
+									hvStat.keyboard.selectedSkillIndex = j;
 									break;
 								}
 							}
@@ -2092,9 +2109,6 @@ var HVStat = {	// TODO: To be refactored
 	// Battle states
 	monsters: [],	// Instances of HVStat.Monster
 	alertQueue: [],
-
-	// Keyboard enhancement
-	selectedSkillIndex: -1	// -1: not selected, 0-2: selected
 };
 
 //------------------------------------
@@ -5542,6 +5556,7 @@ function initSettingsPane() {
 	if (hvStat.settings.adjustKeyEventHandling) $("input[name=adjustKeyEventHandling]").attr("checked", "checked");
 	if (hvStat.settings.isEnableScanHotkey) $("input[name=isEnableScanHotkey]").attr("checked", "checked");
 	if (hvStat.settings.isEnableSkillHotkey) $("input[name=isEnableSkillHotkey]").attr("checked", "checked");
+	if (hvStat.settings.reverseSkillHotkeyTraversalOrder) $("input[name=reverseSkillHotkeyTraversalOrder]").attr("checked", "checked");
 	if (hvStat.settings.enableOFCHotkey) $("input[name=enableOFCHotkey]").attr("checked", "checked");
 	if (hvStat.settings.enableScrollHotkey) $("input[name=enableScrollHotkey]").attr("checked", "checked");
 	if (hvStat.settings.isDisableForgeHotKeys) $("input[name=isDisableForgeHotKeys]").attr("checked", "checked");
@@ -5725,6 +5740,7 @@ function initSettingsPane() {
 	$("input[name=adjustKeyEventHandling]").click(saveSettings);
 	$("input[name=isEnableScanHotkey]").click(saveSettings);
 	$("input[name=isEnableSkillHotkey]").click(saveSettings);
+	$("input[name=reverseSkillHotkeyTraversalOrder]").click(saveSettings);
 	$("input[name=enableOFCHotkey]").click(saveSettings);
 	$("input[name=enableScrollHotkey]").click(saveSettings);
 	$("input[name=isDisableForgeHotKeys]").click(saveSettings);
@@ -5868,6 +5884,7 @@ function saveSettings() {
 	hvStat.settings.adjustKeyEventHandling = $("input[name=adjustKeyEventHandling]").get(0).checked;
 	hvStat.settings.isEnableScanHotkey = $("input[name=isEnableScanHotkey]").get(0).checked;
 	hvStat.settings.isEnableSkillHotkey = $("input[name=isEnableSkillHotkey]").get(0).checked;
+	hvStat.settings.reverseSkillHotkeyTraversalOrder = $("input[name=reverseSkillHotkeyTraversalOrder]").get(0).checked;
 	hvStat.settings.enableOFCHotkey = $("input[name=enableOFCHotkey]").get(0).checked;
 	hvStat.settings.enableScrollHotkey = $("input[name=enableScrollHotkey]").get(0).checked;
 	hvStat.settings.isDisableForgeHotKeys = $("input[name=isDisableForgeHotKeys]").get(0).checked;
