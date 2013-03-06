@@ -5112,7 +5112,7 @@ function initOverviewPane() {
 	$(spanDropsEquipmentLastFound[0]).text(lastFoundName);
 	$(spanDropsEquipmentLastFound[1]).text(lastFoundTime);
 
-	if (hvStat.overview.equips === 0) {
+	if (hvStat.overview.artifacts === 0) {
 		lastFoundName = "None yet!";
 		lastFoundTime = "N/A";
 	} else {
