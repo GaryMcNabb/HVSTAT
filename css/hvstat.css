@@ -355,14 +355,14 @@ input.hvstat-equipment-tag-new {
 }
 
 #hvstat-overview-rounds > h2,
-#hvstat-overview-experience-points > h2,
+#hvstat-overview-exp > h2,
 #hvstat-overview-credits > h2,
 #hvstat-overview-drops > h2 {
 	margin-top: 12px;
 }
 
 #hvstat-overview-rounds > h2 + table,
-#hvstat-overview-experience-points > h2 + table,
+#hvstat-overview-exp > h2 + table,
 #hvstat-overview-credits > h2 + table,
 #hvstat-overview-drops > h2 + table {
 	margin-top: -35px;
