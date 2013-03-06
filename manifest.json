@@ -1,6 +1,6 @@
 {
 	"name": "HV Statistics, Tracking, and Analysis Tool",
-	"version": "5.5.2.1",
+	"version": "5.5.3",
 	"manifest_version": 2,
 	"description": "Collects data, analyzes statistics, and enhances the interface of the HentaiVerse",
 	"icons": {
@@ -36,6 +36,7 @@
 		"html/battle-stats-pane.html",
 		"html/main.html",
 		"html/monster-database-pane.html",
+		"html/overview-pane.html",
 		"html/proficiency-table.html",
 		"html/settings-pane.html",
 		"html/shrine-pane.html",
