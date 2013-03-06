@@ -1320,31 +1320,35 @@ hvStat.keyboard = {
 				}
 			}
 			if (hvStat.settings.isEnableSkillHotkey && miSkill1) {
+				var availableSkillMinIndex = -1;
 				var availableSkillMaxIndex = -1;
 				for (i = 0; i < miSkills.length; i++) {
 					if (miSkills[i] && miSkills[i].available) {
+						if (availableSkillMinIndex === -1) {
+							availableSkillMinIndex = i;
+						}
 						availableSkillMaxIndex = i;
 					}
 				}
+				var startIndex = hvStat.keyboard.selectedSkillIndex;
+				var increment;
+				if (!hvStat.settings.reverseSkillHotkeyTraversalOrder) {
+					increment = 1;
+				} else {
+					if (startIndex === -1) {
+						startIndex = 3;
+					}
+					increment = -1;
+				}
+				var traversalFinished = !hvStat.settings.reverseSkillHotkeyTraversalOrder && startIndex >= availableSkillMaxIndex ||
+						hvStat.settings.reverseSkillHotkeyTraversalOrder && startIndex <= availableSkillMinIndex;
 				boundKeys = miSkill1.boundKeys;
 				for (i = 0; i < boundKeys.length; i++) {
 					if (boundKeys[i].matches(event)) {
-						var traversalFinished = !hvStat.settings.reverseSkillHotkeyTraversalOrder && hvStat.keyboard.selectedSkillIndex >= availableSkillMaxIndex ||
-							hvStat.settings.reverseSkillHotkeyTraversalOrder && hvStat.keyboard.selectedSkillIndex === 0;
 						if (traversalFinished) {
 							hvStat.battle.command.commandMap["Skills"].close();
 							hvStat.keyboard.selectedSkillIndex = -1;
 						} else {
-							var startIndex = hvStat.keyboard.selectedSkillIndex;
-							var increment;
-							if (!hvStat.settings.reverseSkillHotkeyTraversalOrder) {
-								increment = 1;
-							} else {
-								if (startIndex === -1) {
-									startIndex = 3;
-								}
-								increment = -1;
-							}
 							for (j = startIndex + increment;
 									hvStat.settings.reverseSkillHotkeyTraversalOrder && 0 <= j ||
 									!hvStat.settings.reverseSkillHotkeyTraversalOrder && j <= availableSkillMaxIndex;
