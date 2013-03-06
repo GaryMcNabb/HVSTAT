@@ -27,6 +27,7 @@
 // @resource        battle-stats-pane.html                      html/battle-stats-pane.html
 // @resource        main.html                                   html/main.html
 // @resource        monster-database-pane.html                  html/monster-database-pane.html
+// @resource        overview-pane.html                          html/overview-pane.html
 // @resource        proficiency-table.html                      html/proficiency-table.html
 // @resource        settings-pane.html                          html/settings-pane.html
 // @resource        shrine-pane.html                            html/shrine-pane.html
@@ -390,6 +391,10 @@ hvStat.util = {
 	},
 	percentRatio: function (numerator, denominator, digits) {
 		return this.percent(this.ratio(numerator, denominator), digits);
+	},
+	numberWithCommas: function (n) {
+		var parts = n.toString().split(".");
+		return parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",") + (parts[1] ? "." + parts[1] : "");
 	},
 	forEachProperty: function (target, base, callback) {
 		var primitives = [ "boolean", "number", "string", "undefined" ];
@@ -4902,170 +4907,6 @@ function getBattleEndStatsHtml() {
 	return a;
 }
 
-function getReportOverviewHtml() {
-	var a = '<span style="color:green"><b>ON</b></span>';
-	var w = '<span style="color:red"><b>OFF</b></span>';
-	var q = '<span style="color:orange"><b>PAUSED</b></span>';
-	var N = "<b> | </b>";
-	var I = '<span style="color:red"><b>--</b></span>';
-	var B = a;
-	var l = w;
-	var A = w;
-	var u = "";
-	var i = "";
-	var C = "";
-	var j = "";
-	var y = "";
-	var b = hvStat.settings.isShowSidebarProfs ? a : w;
-	var o = hvStat.settings.isShowRoundReminder ? a : w;
-	var h = hvStat.settings.isShowHighlight ? a : w;
-	var n = hvStat.settings.isShowDivider ? a : w;
-	var D = hvStat.settings.isShowSelfDuration ? a : w;
-	var G = hvStat.settings.isShowEndStats ? a : w;
-	var J = hvStat.settings.isAlertGem ? a : w;
-	y = hvStat.settings.showMonsterHP ? '<span style="color:green"><b>HP</b></span>' : I;
-	y += N;
-	y += hvStat.settings.showMonsterMP ? '<span style="color:green"><b>MP</b></span>' : I;
-	y += N;
-	y += hvStat.settings.showMonsterSP ? '<span style="color:green"><b>SP</b></span>' : I;
-	y += N;
-	y += hvStat.settings.isShowMonsterDuration ? '<span style="color:green"><b>Duration</b></span>' : I;
-	B = hvStat.settings.isTrackStats ? a : hvStat.stats.rounds > 0 ? q : w;
-	A = hvStat.settings.isTrackItems ? a : hvStat.drops.dropChances > 0 ? q : w;
-	l = hvStat.settings.isTrackRewards ? a : hvStat.arenaRewards.totalRwrds > 0 ? q : w;
-	Shrine = hvStat.settings.isTrackShrine ? a : hvStat.shrine.totalRewards > 0 ? q : w;
-	u = hvStat.settings.isWarnSparkTrigger ? '<span style="color:green"><b>Trig</b></span>' : I;
-	u += N;
-	u += hvStat.settings.isWarnSparkExpire ? '<span style="color:green"><b>Exp</b></span>' : I;
-	if (hvStat.settings.isHighlightQC)
-		C = '<span style="color:Orange"><b>'
-			+ hvStat.settings.warnOrangeLevel + '% HP</span>; <span style="color:Red">'
-			+ hvStat.settings.warnRedLevel + '% HP</span>;\n <span style="color:blue">'
-			+ hvStat.settings.warnOrangeLevelMP + '% MP</span>; <span style="color:darkblue">'
-			+ hvStat.settings.warnRedLevelMP + '% MP</span>;\n <span style="color:lime">'
-			+ hvStat.settings.warnOrangeLevelSP + '% SP</span>; <span style="color:green">'
-			+ hvStat.settings.warnRedLevelSP + "% SP</b></span>";
-	else C = w;
-	if (hvStat.settings.isShowPopup)
-		j = '<span style="color:green"><b>'
-			+ hvStat.settings.warnAlertLevel + "% HP</b></span>" + (hvStat.settings.isNagHP ? " <b>(Nag)</b>" : "") + '; \n<span style="color:green"><b>'
-			+ hvStat.settings.warnAlertLevelMP + "% MP</b></span>" + (hvStat.settings.isNagMP ? " <b>(Nag)</b>" : "") + '; \n<span style="color:green"><b>'
-			+ hvStat.settings.warnAlertLevelSP + "% SP</b></span>" + (hvStat.settings.isNagSP ? " <b>(Nag)</b>" : "");
-	else j = w;
-	i = hvStat.settings.warnMode[0] ? '<span style="color:green"><b>Ho</b></span>' : I;
-	i += N;
-	i += hvStat.settings.warnMode[1] ? '<span style="color:green"><b>Ar</b></span>' : I;
-	i += N;
-	i += hvStat.settings.warnMode[2] ? '<span style="color:green"><b>GF</b></span>' : I;
-	i += N;
-	i += hvStat.settings.warnMode[3] ? '<span style="color:green"><b>IW</b></span>' : I;
-	var x = '<table class="_UI" cellspacing="0" cellpadding="2" style="width:100%"><tr><td colspan="3">No data found. Complete a round to begin tracking.</td></tr></table>';
-	if (hvStat.overview.totalRounds > 0) {
-		var f = new Date();
-		f.setTime(hvStat.overview.startTime);
-		var r = new Date();
-		var k = r.getTime();
-		var d = ((k - hvStat.overview.startTime) / (60 * 60 * 1000));
-		var E = "";
-		var v = (60 * d).toFixed();
-		var K = Math.floor(v / (60 * 24));
-		var M = v / (60 * 24);
-		if (d < 1) E = v + " mins";
-		else if (d < 24) E = Math.floor(v / 60) + " hours, " + (v % 60).toFixed() + " mins";
-		else E = K + " days, " + Math.floor((v / 60) - (K * 24)) + " hours, " + (v % 60).toFixed() + " mins";
-		var e = f.toLocaleString();
-		var z = r.toLocaleString();
-		if (browser.isChrome) {
-			e = f.toLocaleDateString() + " " + f.toLocaleTimeString();
-			z = r.toLocaleDateString() + " " + r.toLocaleTimeString();
-		}
-		var c;
-		if (hvStat.overview.lastHourlyTime === 0) c = "Never";
-		else {
-			c = new Date();
-			c.setTime(hvStat.overview.lastHourlyTime);
-			c = c.toLocaleTimeString();
-		}
-		var F = 0;
-		var g = "none yet!";
-		var L = "N/A";
-		if (hvStat.overview.equips > 0) {
-			F = (hvStat.overview.totalRounds / hvStat.overview.equips).toFixed();
-			g = hvStat.overview.lastEquipName;
-			L = getRelativeTime(hvStat.overview.lastEquipTime);
-		}
-		var t = 0;
-		var s = "none yet!";
-		var H = "N/A";
-		if (hvStat.overview.artifacts > 0) {
-			t = (hvStat.overview.totalRounds / hvStat.overview.artifacts).toFixed(1);
-			s = hvStat.overview.lastArtName;
-			H = getRelativeTime(hvStat.overview.lastArtTime);
-		}
-		x = '<table class="_UI" cellspacing="0" cellpadding="2" style="width:100%">'
-			+ '<tr><td colspan="2"><b>Reporting period:</b> ' + e + " to " + z + '</td></tr>'
-			+ '<tr><td colspan="2" style="padding-left:10px">Total time: ' + E + '</td></tr>'
-			+ '<tr><td colspan="2"><b>Rounds completed:</b> ' + hvStat.overview.totalRounds + " (" + (M === 0 ? 0 : (hvStat.overview.totalRounds / M).toFixed()) + ' rounds per day)</td></tr>'
-			+ '<tr><td colspan="2" style="padding-left:10px">Hourly encounters: ' + hvStat.overview.roundArray[0] + ' (' + (hvStat.overview.roundArray[0] / hvStat.overview.totalRounds * 100).toFixed(2) + '% of total; ' + (M === 0 ? 0 : (hvStat.overview.roundArray[0] / M).toFixed()) + ' rounds per day); Last Hourly: ' + c + '</td></tr>'
-			+ '<tr><td colspan="2" style="padding-left:10px">Arena: ' + hvStat.overview.roundArray[1] + ' (' + (hvStat.overview.roundArray[1] / hvStat.overview.totalRounds * 100).toFixed(2) + '% of total)</td></tr>'
-			+ '<tr><td colspan="2" style="padding-left:10px">Grindfest: ' + hvStat.overview.roundArray[2] + ' (' + (hvStat.overview.roundArray[2] / hvStat.overview.totalRounds * 100).toFixed(2) + '% of total; ' + (M === 0 ? 0 : (hvStat.overview.roundArray[2] / M).toFixed()) + ' rounds per day)</td></tr>'
-			+ '<tr><td colspan="2" style="padding-left:10px">Item World: ' + hvStat.overview.roundArray[3] + ' (' + (hvStat.overview.roundArray[3] / hvStat.overview.totalRounds * 100).toFixed(2) + '% of total; ' + (M === 0 ? 0 : (hvStat.overview.roundArray[3] / M).toFixed()) + ' rounds per day)</td></tr>'
-			+ '<tr><td><b>Total EXP gained:</b> ' + hvStat.overview.exp.toFixed() + '</td><td><b>Total Credits gained:</b> ' + (hvStat.overview.credits).toFixed() + '</td></tr>'
-			+ '<tr><td style="padding-left:10px">EXP per round: ' + (hvStat.overview.exp / hvStat.overview.totalRounds).toFixed(2) + '</td><td style="padding-left:10px">Credits per round: ' + (hvStat.overview.credits / hvStat.overview.totalRounds).toFixed(2) + '</td></tr>'
-			+ '<tr><td style="padding-left:10px">Ho: ' + (hvStat.overview.expbyBT[0] / hvStat.overview.roundArray[0]).toFixed(2) + '| Ar: ' + (hvStat.overview.expbyBT[1] / hvStat.overview.roundArray[1]).toFixed(2) + '| GF: ' + (hvStat.overview.expbyBT[2] / hvStat.overview.roundArray[2]).toFixed(2) + '| CF: ' + (hvStat.overview.expbyBT[4] / hvStat.overview.roundArray[4]).toFixed(2) + '| IW: ' + (hvStat.overview.expbyBT[3] / hvStat.overview.roundArray[3]).toFixed(2) + '</td><td style="padding-left:10px">Ho: ' + (hvStat.overview.creditsbyBT[0] / hvStat.overview.roundArray[0]).toFixed(2) + '| Ar: ' + (hvStat.overview.creditsbyBT[1] / hvStat.overview.roundArray[1]).toFixed(2) + '| GF: ' + (hvStat.overview.creditsbyBT[2] / hvStat.overview.roundArray[2]).toFixed(2) + '</td></tr>'
-			+ '<tr><td style="padding-left:10px">EXP per hour: ' + (hvStat.overview.exp / d).toFixed(2) + '</td><td style="padding-left:10px">Credits per hour: ' + (hvStat.overview.credits / d).toFixed(2) + '</td></tr>'
-			+ '<tr><td style="padding-left:10px">EXP per day: ' + (M === 0 ? 0 : (hvStat.overview.exp / M).toFixed(2)) + '</td><td style="padding-left:10px">Credits per day: ' + (M === 0 ? 0 : (hvStat.overview.credits / M).toFixed(2)) + '</td></tr>'
-			+ '<tr><td colspan="2"><b>Total Equipment found:</b> ' + hvStat.overview.equips + ' pieces (' + F + ' rounds per equip)</td></tr>'
-			+ '<tr><td colspan="2" style="padding-left:10px">Last found: <span style="color:red">' + g + '</span> (' + L + ')</td></tr>'
-			+ '<tr><td colspan="2"><b>Total Artifacts found:</b> ' + hvStat.overview.artifacts + ' pieces (' + t + ' rounds per artifact)</td></tr>'
-			+ '<tr><td colspan="2" style="padding-left:10px">Last found: <span style="color:blue">' + s + '</span> (' + H + ')</td></tr></table>'
-	}
-	x += '<table class="_UI" cellspacing="0" cellpadding="2" style="width:100%"><tr><td>&nbsp;</td></tr>'
-		+ '<tr>'
-			+ '<td style="width:33%"><b>General Options:</b></td>'
-			+ '<td style="width:34%"><b>Battle Enhancement:</b></td>'
-			+ '<td style="width:33%"><b>Tracking Status:</b></td>'
-		+ '</tr><tr>'
-			+ '<td style="padding-left:10px;width:33%">HP Warning:</td>'
-			+ '<td style="padding-left:10px;width:34%">Log Highlighting: ' + h + '</td>'
-			+ '<td style="padding-left:10px;width:33%">Battle Stats: ' + B + '</td>'
-		+ '</tr><tr>'
-			+ '<td style="padding-left:20px;width:33%">Absorb Warning: ' + (hvStat.settings.isWarnAbsorbTrigger ? a : w) + '</td>'
-			+ '<td style="padding-left:10px;width:34%">Turn Divider: ' + n + '</td>'
-			+ '<td style="padding-left:10px;width:33%">Item Drops: ' + A + '</td>'
-		+ '</tr><tr>'
-			+ '<td style="padding-left:20px;width:33%">Spark Warning: ' + u + '</td>'
-			+ '<td style="padding-left:10px;width:34%">Status Effect Duration: ' + D + '</td>'
-			+ '<td style="padding-left:10px;width:33%">Arena Rewards: ' + l + '</td>'
-		+ '</tr><tr>'
-			+ '<td style="padding-left:20px;width:33%">Highlight QC: ' + C + '</td>'
-			+ '<td style="padding-left:10px;width:34%">Monster Stats:</td>'
-			+ '<td style="padding-left:10px;width:33%">Shrine: ' + Shrine + '</td>'
-		+ '</tr><tr>'
-			+ '<td style="padding-left:20px;width:33%">Popup: ' + j + '</td>'
-			+ '<td style="padding-left:20px;width:34%">' + y + '</td>'
-			+ '<td style="padding-left:10px;width:33%"></td>'
-		+ '</tr><tr>'
-			+ '<td style="padding-left:20px;width:33%">Battle Type: ' + i + '</td>'
-			+ '<td style="padding-left:10px;width:34%">Battle Summary: ' + G + '</td>'
-			+ '<td></td>'
-		+ '</tr><tr>'
-			+ '<td style="padding-left:10px;width:33%">Proficiency Table: ' + b + '</td>'
-			+ '<td style="padding-left:10px;width:34%">Round Reminder: ' + o + '</td>'
-			+ '<td></td>'
-		+ '</tr><tr>'
-			+ '<td></td>'
-			+ '<td style="padding-left:10px;width:34%">Powerup Alerts: ' + J + '</td>'
-			+ '<td></td>'
-		+ '</tr><tr>'
-			+ '<td style="padding-left:10px;width:33%"></td>'
-			+ '<td style="padding-left:10px;width:34%">Overcharge Alert: ' + (hvStat.settings.isAlertOverchargeFull ? a : w) + '</td>'
-			+ '<td></td>'
-		+ '</tr></table>';
-	if (hvStat.overview.totalRounds > 0)
-		x += '<table class="_UI" cellspacing="0" cellpadding="2" style="width:100%"><tr><td align="right" colspan="3"><input type="button" class="_resetOverview" value="Reset Overview" /></td></tr></table>'
-	return x;
-}
 function getReportItemHtml() {
 	var e = "Tracking disabled.";
 	if (hvStat.settings.isTrackItems && hvStat.drops.dropChances === 0)
@@ -5126,9 +4967,165 @@ function getReportItemHtml() {
 	return e;
 }
 function initOverviewPane() {
-	$("#pane1").html(getReportOverviewHtml());
-	$("._resetOverview").click(function () {
-		if (confirm("Reset Overview tab?")) hvStat.storage.overview.reset();
+	var innerHTML;
+	if (hvStat.overview.totalRounds > 0) {
+		innerHTML = browser.extension.getResourceText("html/", "overview-pane.html");
+	} else {
+		innerHTML = "No data found. Complete a round to begin tracking.";
+	}
+ 	$('#hvstat-overview-pane').html(innerHTML);
+	if (hvStat.overview.totalRounds === 0) {
+		return;
+	}
+
+	var start = new Date(hvStat.overview.startTime);
+	var now = new Date();
+	var elapsedMilliseconds = now.getTime() - hvStat.overview.startTime;
+	var elapsedSeconds = elapsedMilliseconds / 1000;
+	var elapsedMinutes = elapsedSeconds / 60;
+	var elapsedHours = elapsedMinutes / 60;
+	var elapsedDays = elapsedHours / 24;
+
+	var tdReportingPeriod = $('#hvstat-overview-reporting-period td');
+	$(tdReportingPeriod[0]).text(start.toLocaleString());
+	$(tdReportingPeriod[1]).text(now.toLocaleString());
+	$(tdReportingPeriod[2]).text(HVStat.getElapsedFrom(start));
+
+ 	var tdRoundsHourlyEncounters = $('#hvstat-overview-rounds-hourly-encounters td');
+ 	var tdRoundsArena = $('#hvstat-overview-rounds-arenas td');
+ 	var tdRoundsGrindfests = $('#hvstat-overview-rounds-grindfests td');
+ 	var tdRoundsItemWorlds = $('#hvstat-overview-rounds-item-worlds td');
+ 	var tdRoundsTotal = $('#hvstat-overview-rounds-total td');
+
+	$(tdRoundsHourlyEncounters[0]).text(hvStat.util.numberWithCommas(hvStat.overview.roundArray[0]));
+	$(tdRoundsHourlyEncounters[1]).text(hvStat.util.percentRatio(hvStat.overview.roundArray[0], hvStat.overview.totalRounds, 2) + "%");
+	$(tdRoundsHourlyEncounters[2]).text(hvStat.util.numberWithCommas(hvStat.util.ratio(hvStat.overview.roundArray[0], elapsedHours).toFixed(2)));
+	$(tdRoundsHourlyEncounters[3]).text(hvStat.util.numberWithCommas(hvStat.util.ratio(hvStat.overview.roundArray[0], elapsedDays).toFixed(2)));
+
+	var lastHourlyEncounter;
+	if (hvStat.overview.lastHourlyTime === 0) {
+		lastHourlyEncounter = "Never";
+	} else {
+		lastHourlyEncounter = (new Date(hvStat.overview.lastHourlyTime)).toLocaleTimeString();
+	}
+	$(tdRoundsHourlyEncounters[4]).children('span').text(lastHourlyEncounter);
+
+	$(tdRoundsArena[0]).text(hvStat.util.numberWithCommas(hvStat.overview.roundArray[1]));
+	$(tdRoundsArena[1]).text(hvStat.util.percentRatio(hvStat.overview.roundArray[1], hvStat.overview.totalRounds, 2) + "%");
+	$(tdRoundsArena[2]).text(hvStat.util.numberWithCommas(hvStat.util.ratio(hvStat.overview.roundArray[1], elapsedHours).toFixed(2)));
+	$(tdRoundsArena[3]).text(hvStat.util.numberWithCommas(hvStat.util.ratio(hvStat.overview.roundArray[1], elapsedDays).toFixed(2)));
+
+	$(tdRoundsGrindfests[0]).text(hvStat.util.numberWithCommas(hvStat.overview.roundArray[2]));
+	$(tdRoundsGrindfests[1]).text(hvStat.util.percentRatio(hvStat.overview.roundArray[2], hvStat.overview.totalRounds, 2) + "%");
+	$(tdRoundsGrindfests[2]).text(hvStat.util.numberWithCommas(hvStat.util.ratio(hvStat.overview.roundArray[2], elapsedHours).toFixed(2)));
+	$(tdRoundsGrindfests[3]).text(hvStat.util.numberWithCommas(hvStat.util.ratio(hvStat.overview.roundArray[2], elapsedDays).toFixed(2)));
+
+	$(tdRoundsItemWorlds[0]).text(hvStat.util.numberWithCommas(hvStat.overview.roundArray[3]));
+	$(tdRoundsItemWorlds[1]).text(hvStat.util.percentRatio(hvStat.overview.roundArray[3], hvStat.overview.totalRounds, 2) + "%");
+	$(tdRoundsItemWorlds[2]).text(hvStat.util.numberWithCommas(hvStat.util.ratio(hvStat.overview.roundArray[3], elapsedHours).toFixed(2)));
+	$(tdRoundsItemWorlds[3]).text(hvStat.util.numberWithCommas(hvStat.util.ratio(hvStat.overview.roundArray[3], elapsedDays).toFixed(2)));
+
+	$(tdRoundsTotal[0]).text(hvStat.util.numberWithCommas(hvStat.overview.totalRounds));
+	$(tdRoundsTotal[2]).text(hvStat.util.numberWithCommas(hvStat.util.ratio(hvStat.overview.totalRounds, elapsedHours).toFixed(2)));
+	$(tdRoundsTotal[3]).text(hvStat.util.numberWithCommas(hvStat.util.ratio(hvStat.overview.totalRounds, elapsedDays).toFixed(2)));
+
+ 	var tdExperiencePointsHourlyEncounters = $('#hvstat-overview-experience-points-hourly-encounters td');
+ 	var tdExperiencePointsArena = $('#hvstat-overview-experience-points-arenas td');
+ 	var tdExperiencePointsGrindfests = $('#hvstat-overview-experience-points-grindfests td');
+ 	var tdExperiencePointsItemWorlds = $('#hvstat-overview-experience-points-item-worlds td');
+ 	var tdExperiencePointsTotal = $('#hvstat-overview-experience-points-total td');
+
+	$(tdExperiencePointsHourlyEncounters[0]).text(hvStat.util.numberWithCommas(hvStat.overview.expbyBT[0]));
+	$(tdExperiencePointsHourlyEncounters[1]).text(hvStat.util.percentRatio(hvStat.overview.expbyBT[0], hvStat.overview.exp, 2) + "%");
+	$(tdExperiencePointsHourlyEncounters[2]).text(hvStat.util.numberWithCommas(hvStat.util.ratio(hvStat.overview.expbyBT[0], hvStat.overview.roundArray[0]).toFixed()));
+	$(tdExperiencePointsHourlyEncounters[3]).text(hvStat.util.numberWithCommas(hvStat.util.ratio(hvStat.overview.expbyBT[0], elapsedHours).toFixed()));
+	$(tdExperiencePointsHourlyEncounters[4]).text(hvStat.util.numberWithCommas(hvStat.util.ratio(hvStat.overview.expbyBT[0], elapsedDays).toFixed()));
+
+	$(tdExperiencePointsArena[0]).text(hvStat.util.numberWithCommas(hvStat.overview.expbyBT[1]));
+	$(tdExperiencePointsArena[1]).text(hvStat.util.percentRatio(hvStat.overview.expbyBT[1], hvStat.overview.exp, 2) + "%");
+	$(tdExperiencePointsArena[2]).text(hvStat.util.numberWithCommas(hvStat.util.ratio(hvStat.overview.expbyBT[1], hvStat.overview.roundArray[1]).toFixed()));
+	$(tdExperiencePointsArena[3]).text(hvStat.util.numberWithCommas(hvStat.util.ratio(hvStat.overview.expbyBT[1], elapsedHours).toFixed()));
+	$(tdExperiencePointsArena[4]).text(hvStat.util.numberWithCommas(hvStat.util.ratio(hvStat.overview.expbyBT[1], elapsedDays).toFixed()));
+
+	$(tdExperiencePointsGrindfests[0]).text(hvStat.util.numberWithCommas(hvStat.overview.expbyBT[2]));
+	$(tdExperiencePointsGrindfests[1]).text(hvStat.util.percentRatio(hvStat.overview.expbyBT[2], hvStat.overview.exp, 2) + "%");
+	$(tdExperiencePointsGrindfests[2]).text(hvStat.util.numberWithCommas(hvStat.util.ratio(hvStat.overview.expbyBT[2], hvStat.overview.roundArray[2]).toFixed()));
+	$(tdExperiencePointsGrindfests[3]).text(hvStat.util.numberWithCommas(hvStat.util.ratio(hvStat.overview.expbyBT[2], elapsedHours).toFixed()));
+	$(tdExperiencePointsGrindfests[4]).text(hvStat.util.numberWithCommas(hvStat.util.ratio(hvStat.overview.expbyBT[2], elapsedDays).toFixed()));
+
+	$(tdExperiencePointsItemWorlds[0]).text(hvStat.util.numberWithCommas(hvStat.overview.expbyBT[3]));
+	$(tdExperiencePointsItemWorlds[1]).text(hvStat.util.percentRatio(hvStat.overview.expbyBT[3], hvStat.overview.exp, 2) + "%");
+	$(tdExperiencePointsItemWorlds[2]).text(hvStat.util.numberWithCommas(hvStat.util.ratio(hvStat.overview.expbyBT[3], hvStat.overview.roundArray[3]).toFixed()));
+	$(tdExperiencePointsItemWorlds[3]).text(hvStat.util.numberWithCommas(hvStat.util.ratio(hvStat.overview.expbyBT[3], elapsedHours).toFixed()));
+	$(tdExperiencePointsItemWorlds[4]).text(hvStat.util.numberWithCommas(hvStat.util.ratio(hvStat.overview.expbyBT[3], elapsedDays).toFixed()));
+
+	$(tdExperiencePointsTotal[0]).text(hvStat.util.numberWithCommas(hvStat.overview.exp));
+	$(tdExperiencePointsTotal[2]).text(hvStat.util.numberWithCommas(hvStat.util.ratio(hvStat.overview.exp, hvStat.overview.totalRounds).toFixed()));
+	$(tdExperiencePointsTotal[3]).text(hvStat.util.numberWithCommas(hvStat.util.ratio(hvStat.overview.exp, elapsedHours).toFixed()));
+	$(tdExperiencePointsTotal[4]).text(hvStat.util.numberWithCommas(hvStat.util.ratio(hvStat.overview.exp, elapsedDays).toFixed()));
+
+	var tdCreditsHourlyEncounters = $('#hvstat-overview-credits-hourly-encounters td');
+	var tdCreditsArena = $('#hvstat-overview-credits-arenas td');
+	var tdCreditsTotal = $('#hvstat-overview-credits-total td');
+
+	$(tdCreditsHourlyEncounters[0]).text(hvStat.util.numberWithCommas(hvStat.overview.creditsbyBT[0]));
+	$(tdCreditsHourlyEncounters[1]).text(hvStat.util.percentRatio(hvStat.overview.creditsbyBT[0], hvStat.overview.credits, 2) + "%");
+	$(tdCreditsHourlyEncounters[2]).text(hvStat.util.numberWithCommas(hvStat.util.ratio(hvStat.overview.creditsbyBT[0], hvStat.overview.roundArray[0]).toFixed()));
+	$(tdCreditsHourlyEncounters[3]).text(hvStat.util.numberWithCommas(hvStat.util.ratio(hvStat.overview.creditsbyBT[0], elapsedHours).toFixed()));
+	$(tdCreditsHourlyEncounters[4]).text(hvStat.util.numberWithCommas(hvStat.util.ratio(hvStat.overview.creditsbyBT[0], elapsedDays).toFixed()));
+
+	$(tdCreditsArena[0]).text(hvStat.util.numberWithCommas(hvStat.overview.creditsbyBT[1]));
+	$(tdCreditsArena[1]).text(hvStat.util.percentRatio(hvStat.overview.creditsbyBT[1], hvStat.overview.credits, 2) + "%");
+	$(tdCreditsArena[2]).text(hvStat.util.numberWithCommas(hvStat.util.ratio(hvStat.overview.creditsbyBT[1], hvStat.overview.roundArray[1]).toFixed()));
+	$(tdCreditsArena[3]).text(hvStat.util.numberWithCommas(hvStat.util.ratio(hvStat.overview.creditsbyBT[1], elapsedHours).toFixed()));
+	$(tdCreditsArena[4]).text(hvStat.util.numberWithCommas(hvStat.util.ratio(hvStat.overview.creditsbyBT[1], elapsedDays).toFixed()));
+
+	$(tdCreditsTotal[0]).text(hvStat.util.numberWithCommas(hvStat.overview.credits));
+	$(tdCreditsTotal[2]).text(hvStat.util.numberWithCommas(hvStat.util.ratio(hvStat.overview.credits, hvStat.overview.roundArray[0] + hvStat.overview.roundArray[1]).toFixed()));
+	$(tdCreditsTotal[3]).text(hvStat.util.numberWithCommas(hvStat.util.ratio(hvStat.overview.credits, elapsedHours).toFixed()));
+	$(tdCreditsTotal[4]).text(hvStat.util.numberWithCommas(hvStat.util.ratio(hvStat.overview.credits, elapsedDays).toFixed()));
+
+	var tdDropsEquipments = $('#hvstat-overview-drops-equipments td');
+	var tdDropsArtifacts = $('#hvstat-overview-drops-artifacts td');
+
+	$(tdDropsEquipments[0]).text(hvStat.util.numberWithCommas(hvStat.overview.equips));
+	$(tdDropsEquipments[1]).text(hvStat.util.numberWithCommas(hvStat.util.ratio(hvStat.overview.equips, elapsedHours).toFixed(2)));
+	$(tdDropsEquipments[2]).text(hvStat.util.numberWithCommas(hvStat.util.ratio(hvStat.overview.equips, elapsedDays).toFixed(2)));
+	$(tdDropsEquipments[3]).text(hvStat.util.numberWithCommas(hvStat.util.ratio(hvStat.overview.totalRounds, hvStat.overview.equips).toFixed(2)));
+
+	$(tdDropsArtifacts[0]).text(hvStat.overview.artifacts);
+	$(tdDropsArtifacts[1]).text(hvStat.util.ratio(hvStat.overview.artifacts, elapsedHours).toFixed(2));
+	$(tdDropsArtifacts[2]).text(hvStat.util.ratio(hvStat.overview.artifacts, elapsedDays).toFixed(2));
+	$(tdDropsArtifacts[3]).text(hvStat.util.ratio(hvStat.overview.totalRounds, hvStat.overview.artifacts).toFixed(2));
+
+	var spanDropsEquipmentLastFound = $('#hvstat-overview-drops-equipments span');
+	var spanDropsArtifactLastFound = $('#hvstat-overview-drops-artifacts span');
+
+	var lastFoundName, lastFoundTime;
+	if (hvStat.overview.equips === 0) {
+		lastFoundName = "None yet!";
+		lastFoundTime = "N/A";
+	} else {
+		lastFoundName = hvStat.overview.lastEquipName;
+		lastFoundTime = getRelativeTime(hvStat.overview.lastEquipTime);
+	}
+	$(spanDropsEquipmentLastFound[0]).text(lastFoundName);
+	$(spanDropsEquipmentLastFound[1]).text(lastFoundTime);
+
+	if (hvStat.overview.equips === 0) {
+		lastFoundName = "None yet!";
+		lastFoundTime = "N/A";
+	} else {
+		lastFoundName = hvStat.overview.lastArtName;
+		lastFoundTime = getRelativeTime(hvStat.overview.lastArtTime);
+	}
+	$(spanDropsArtifactLastFound[0]).text(lastFoundName);
+	$(spanDropsArtifactLastFound[1]).text(lastFoundTime);
+
+	$('#hvstat-overview-reset').click(function () {
+		if (confirm("Reset Overview tab?")) {
+			hvStat.storage.overview.reset();
+		}
 	});
 }
 function initBattleStatsPane() {

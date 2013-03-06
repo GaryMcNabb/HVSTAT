@@ -314,10 +314,6 @@ input.hvstat-equipment-tag-new {
 	font-style: italic;
 }
 
-#hvstat-overview-pane h2 + div {
-	/*margin-top: -15px;*/
-}
-
 #hvstat-arena-rewards-pane ul,
 #hvstat-shrine-pane ul {
 	list-style-type: none;
@@ -350,13 +346,45 @@ input.hvstat-equipment-tag-new {
 #hvstat-shrine-artifact-trade th,
 #hvstat-shrine-artifact-trade td {
 	text-align: right;
-	padding: 1px 3px;
+	padding: 1px 5px;
 	white-space: nowrap;
+}
+
+#hvstat-overview-reporting-period > h2 {
+	margin-top: 0px;
+}
+
+#hvstat-overview-rounds > h2,
+#hvstat-overview-experience-points > h2,
+#hvstat-overview-credits > h2,
+#hvstat-overview-drops > h2 {
+	margin-top: 12px;
+}
+
+#hvstat-overview-rounds > h2 + table,
+#hvstat-overview-experience-points > h2 + table,
+#hvstat-overview-credits > h2 + table,
+#hvstat-overview-drops > h2 + table {
+	margin-top: -35px;
+	margin-left: 15px;
+}
+
+#hvstat-overview-reporting-period > table {
+	margin-top: -32px;
+	margin-left: 140px;
 }
 
 #hvstat-overview-reporting-period td {
 	text-align: left;
 }
+
+#hvstat-overview-drops th:nth-child(6),
+#hvstat-overview-drops td:nth-child(6) {
+	text-align: left;
+}
+
+#hvstat-overview-drops-equipments span:nth-of-type(1) { color: Red; }
+#hvstat-overview-drops-artifacts span:nth-of-type(1) { color: Blue; }
 
 #hvstat-settings-pane .hvstat-vertical-top {
 	vertical-align: top;
