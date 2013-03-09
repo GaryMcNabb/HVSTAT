@@ -4133,23 +4133,23 @@ HVStat.warnHealthStatus = function () {
 	if (!hv.battle.round.finished) {
 		if (hvStat.settings.isShowPopup) {
 			if (hv.character.healthPercent <= hpWarningLevel && (!hpAlertAlreadyShown || hvStat.settings.isNagHP)) {
-				alert("Your health is dangerously low!");
+				HVStat.enqueueAlert("Your health is dangerously low!");
 				hpAlertAlreadyShown = true;
 				localStorage.setItem(HVStat.key_hpAlertAlreadyShown, "true");
 			}
 			if (hv.character.magicPercent <= mpWarningLevel && (!mpAlertAlreadyShown || hvStat.settings.isNagMP)) {
-				alert("Your mana is dangerously low!");
+				HVStat.enqueueAlert("Your mana is dangerously low!");
 				mpAlertAlreadyShown = true;
 				localStorage.setItem(HVStat.key_mpAlertAlreadyShown, "true");
 			}
 			if (hv.character.spiritPercent <= spWarningLevel && (!spAlertAlreadyShown || hvStat.settings.isNagSP)) {
-				alert("Your spirit is dangerously low!");
+				HVStat.enqueueAlert("Your spirit is dangerously low!");
 				spAlertAlreadyShown = true;
 				localStorage.setItem(HVStat.key_spAlertAlreadyShown, "true");
 			}
 		}
 		if (hvStat.settings.isAlertOverchargeFull && hv.character.overchargeRate >= 1.0 && !ocAlertAlreadyShown) {
-			alert("Your overcharge is full.");
+			HVStat.enqueueAlert("Your overcharge is full.");
 			ocAlertAlreadyShown = true;
 			localStorage.setItem(HVStat.key_ocAlertAlreadyShown, "true");
 		}
@@ -4262,9 +4262,9 @@ function collectRoundInfo() {
 					(hvStat.roundInfo.currRound === hvStat.roundInfo.maxRound - hvStat.settings.reminderBeforeEnd) &&
 					!b) {
 				if (hvStat.settings.reminderBeforeEnd === 0) {
-					alert("This is final round");
+					HVStat.enqueueAlert("This is final round");
 				} else {
-					alert("The final round is approaching.");
+					HVStat.enqueueAlert("The final round is approaching.");
 				}
 				b = true;
 			}
@@ -6302,7 +6302,7 @@ function AlertEffectsSelf() {
 			if (hvStat.settings.isEffectsAlertSelf[i]
 					&& (effectName + " ").indexOf(effectNames[i] + " ") >= 0	// To match "Regen" and "Regen II", not "Regeneration"
 					&& String(hvStat.settings.EffectsAlertSelfRounds[i]) === duration) {
-				alert(effectName + " is expiring");
+				HVStat.enqueueAlert(effectName + " is expiring");
 			}
 		}
 	});
@@ -6332,7 +6332,7 @@ function AlertEffectsMonsters() {
 				}
 				if (!base) continue;
 				monsterNumber = base.id.replace("mkey_", "");
-				alert(effectName + '\n on monster number "' + monsterNumber + '" is expiring');
+				HVStat.enqueueAlert(effectName + '\n on monster number "' + monsterNumber + '" is expiring');
 			}
 		}
 	});
@@ -6507,7 +6507,6 @@ hvStat.startup = {
 				registerEventHandlersForMonsterPopup();
 			}
 			// Show warnings
-			HVStat.AlertAllFromQueue();
 			if (!hv.battle.round.finished) {
 				if (hvStat.settings.warnMode[hvStat.roundInfo.battleType]) {
 					HVStat.warnHealthStatus();
@@ -6529,6 +6528,7 @@ hvStat.startup = {
 					hvStat.battle.advanceRound();
 				}
 			}
+			HVStat.AlertAllFromQueue();
 		} else {
 			hvStat.storage.roundInfo.remove();
 			if ((hvStat.settings.isStartAlert || hvStat.settings.isShowEquippedSet) && !hv.settings.useHVFontEngine) {
