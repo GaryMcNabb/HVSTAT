@@ -5456,7 +5456,7 @@ function initMonsterDatabasePane() {
 	}
 	showOldDatabaseSize();
 	$("#importMonsterScanResults").change(function (event) {
-		var file = event.target.files[0]; 
+		var file = event.target.files[0];
 		if (!file) {
 			alert("Failed to load file");
 		} else {
@@ -5466,7 +5466,7 @@ function initMonsterDatabasePane() {
 		}
 	});
 	$("#importMonsterSkills").change(function (event) {
-		var file = event.target.files[0]; 
+		var file = event.target.files[0];
 		if (!file) {
 			alert("Failed to load file");
 		} else {
