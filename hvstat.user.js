@@ -629,6 +629,7 @@ hvStat.storage.initialValue = {
 		customPageTitle: "HV",
 		isShowEquippedSet: false,
 		isShowSidebarProfs: false,
+		condenseAlerts: false,
 		isStartAlert: false,
 		StartAlertHP: 95,
 		StartAlertMP: 95,
@@ -2341,9 +2342,16 @@ HVStat.enqueueAlert = function (message) {
 };
 
 HVStat.AlertAllFromQueue = function () {
-	var i, len = HVStat.alertQueue.length;
-	for (i = 0; i < len; i++) {
-		alert(HVStat.alertQueue.shift());
+	if (hvStat.settings.condenseAlerts) {
+		if (HVStat.alertQueue.length !== 0) {
+			alert(HVStat.alertQueue.join("\n\n"));
+			HVStat.alertQueue.length = 0;
+		}
+	} else {
+		var i, len = HVStat.alertQueue.length;
+		for (i = 0; i < len; i++) {
+			alert(HVStat.alertQueue.shift());
+		}
 	}
 };
 
@@ -4134,23 +4142,23 @@ HVStat.warnHealthStatus = function () {
 	if (!hv.battle.round.finished) {
 		if (hvStat.settings.isShowPopup) {
 			if (hv.character.healthPercent <= hpWarningLevel && (!hpAlertAlreadyShown || hvStat.settings.isNagHP)) {
-				alert("Your health is dangerously low!");
+				HVStat.enqueueAlert("Your health is dangerously low!");
 				hpAlertAlreadyShown = true;
 				localStorage.setItem(HVStat.key_hpAlertAlreadyShown, "true");
 			}
 			if (hv.character.magicPercent <= mpWarningLevel && (!mpAlertAlreadyShown || hvStat.settings.isNagMP)) {
-				alert("Your mana is dangerously low!");
+				HVStat.enqueueAlert("Your mana is dangerously low!");
 				mpAlertAlreadyShown = true;
 				localStorage.setItem(HVStat.key_mpAlertAlreadyShown, "true");
 			}
 			if (hv.character.spiritPercent <= spWarningLevel && (!spAlertAlreadyShown || hvStat.settings.isNagSP)) {
-				alert("Your spirit is dangerously low!");
+				HVStat.enqueueAlert("Your spirit is dangerously low!");
 				spAlertAlreadyShown = true;
 				localStorage.setItem(HVStat.key_spAlertAlreadyShown, "true");
 			}
 		}
 		if (hvStat.settings.isAlertOverchargeFull && hv.character.overchargeRate >= 1.0 && !ocAlertAlreadyShown) {
-			alert("Your overcharge is full.");
+			HVStat.enqueueAlert("Your overcharge is full.");
 			ocAlertAlreadyShown = true;
 			localStorage.setItem(HVStat.key_ocAlertAlreadyShown, "true");
 		}
@@ -4263,9 +4271,9 @@ function collectRoundInfo() {
 					(hvStat.roundInfo.currRound === hvStat.roundInfo.maxRound - hvStat.settings.reminderBeforeEnd) &&
 					!b) {
 				if (hvStat.settings.reminderBeforeEnd === 0) {
-					alert("This is final round");
+					HVStat.enqueueAlert("This is final round");
 				} else {
-					alert("The final round is approaching.");
+					HVStat.enqueueAlert("The final round is approaching.");
 				}
 				b = true;
 			}
@@ -5540,6 +5548,7 @@ function initSettingsPane() {
 	$("input[name=customPageTitle]").attr("value", hvStat.settings.customPageTitle);
 	if (hvStat.settings.isShowEquippedSet) $("input[name=isShowEquippedSet]").attr("checked", "checked");
 	if (hvStat.settings.isShowSidebarProfs) $("input[name=isShowSidebarProfs]").attr("checked", "checked");
+	if (hvStat.settings.condenseAlerts) $("input[name=condenseAlerts]").attr("checked", "checked");
 	if (hvStat.settings.isStartAlert) $("input[name=isStartAlert]").attr("checked", "checked");
 	$("input[name=StartAlertHP]").attr("value", hvStat.settings.StartAlertHP);
 	$("input[name=StartAlertMP]").attr("value", hvStat.settings.StartAlertMP);
@@ -5730,6 +5739,7 @@ function initSettingsPane() {
 	$("input[name=customPageTitle]").change(saveSettings);
 	$("input[name=isShowEquippedSet]").click(saveSettings);
 	$("input[name=isShowSidebarProfs]").click(reminderAndSaveSettings);
+	$("input[name=condenseAlerts]").click(saveSettings);
 	$("input[name=isStartAlert]").click(saveSettings);
 	$("input[name=StartAlertHP]").change(saveSettings);
 	$("input[name=StartAlertMP]").change(saveSettings);
@@ -5869,6 +5879,7 @@ function saveSettings() {
 	hvStat.settings.customPageTitle = $("input[name=customPageTitle]").get(0).value;
 	hvStat.settings.isShowEquippedSet = $("input[name=isShowEquippedSet]").get(0).checked;
 	hvStat.settings.isShowSidebarProfs = $("input[name=isShowSidebarProfs]").get(0).checked;
+	hvStat.settings.condenseAlerts = $("input[name=condenseAlerts]").get(0).checked;
 	hvStat.settings.isStartAlert = $("input[name=isStartAlert]").get(0).checked;
 	hvStat.settings.StartAlertHP = $("input[name=StartAlertHP]").get(0).value;
 	hvStat.settings.StartAlertMP = $("input[name=StartAlertMP]").get(0).value;
@@ -6302,7 +6313,7 @@ function AlertEffectsSelf() {
 			if (hvStat.settings.isEffectsAlertSelf[i]
 					&& (effectName + " ").indexOf(effectNames[i] + " ") >= 0	// To match "Regen" and "Regen II", not "Regeneration"
 					&& String(hvStat.settings.EffectsAlertSelfRounds[i]) === duration) {
-				alert(effectName + " is expiring");
+				HVStat.enqueueAlert(effectName + " is expiring");
 			}
 		}
 	});
@@ -6332,7 +6343,7 @@ function AlertEffectsMonsters() {
 				}
 				if (!base) continue;
 				monsterNumber = base.id.replace("mkey_", "");
-				alert(effectName + '\n on monster number "' + monsterNumber + '" is expiring');
+				HVStat.enqueueAlert(effectName + '\n on monster number "' + monsterNumber + '" is expiring');
 			}
 		}
 	});
@@ -6507,7 +6518,6 @@ hvStat.startup = {
 				registerEventHandlersForMonsterPopup();
 			}
 			// Show warnings
-			HVStat.AlertAllFromQueue();
 			if (!hv.battle.round.finished) {
 				if (hvStat.settings.warnMode[hvStat.roundInfo.battleType]) {
 					HVStat.warnHealthStatus();
@@ -6529,6 +6539,7 @@ hvStat.startup = {
 					hvStat.battle.advanceRound();
 				}
 			}
+			HVStat.AlertAllFromQueue();
 		} else {
 			hvStat.storage.roundInfo.remove();
 			if ((hvStat.settings.isStartAlert || hvStat.settings.isShowEquippedSet) && !hv.settings.useHVFontEngine) {
