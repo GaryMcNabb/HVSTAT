@@ -4318,6 +4318,21 @@ function collectRoundInfo() {
 		if (hvStat.settings.alertWhenChannelingIsGained && logText.indexOf("You gain the effect Channeling") >= 0) {
 			HVStat.enqueueAlert("You gained the effect Channeling.");
 		}
+		if (hvStat.settings.isMainEffectsAlertSelf && logHTML.match(/^The effect (.*)  has expired.$/)) {
+			//TODO: make this globally accessible to keep sync with AlertEffectsSelf
+			var effectNames = [
+				"Protection", "Hastened", "Shadow Veil", "Regen", "Absorbing Ward",
+				"Spark of Life", "Channeling", "Arcane Focus", "Heartseeker", "Spirit Shield",
+				"Flame Spikes", "Frost Spikes", "Lightning Spikes", "Storm Spikes",
+				"Chain 1", "Chain 2",
+			];
+			var effectName=RegExp.$1;
+			if (effectName==="Regen II")
+				effectName="Regen";
+			var i=effectNames.indexOf(effectName);
+			if (i!==-1 && hvStat.settings.isEffectsAlertSelf[i] && hvStat.settings.EffectsAlertSelfRounds[i]==="-1")
+				HVStat.enqueueAlert(effectName+" has expired");
+		}
 		if ((hvStat.settings.isShowSidebarProfs || hvStat.settings.isTrackStats) && logHTML.match(/0.0(\d+) points of (.*?) proficiency/ig)) {
 			var p = (RegExp.$1) / 100;
 			var r = RegExp.$2;
