@@ -2104,6 +2104,7 @@ var HVStat = {	// TODO: To be refactored
 	key_mpAlertAlreadyShown: "hvStat.magicAlertShown",
 	key_spAlertAlreadyShown: "hvStat.spiritAlertShown",
 	key_ocAlertAlreadyShown: "hvStat.overchargeAlertShown",
+	key_queuedAlerts: "hvstat.queuedAlerts",
 
 	// indexedDB
 	idb: null,
@@ -2352,6 +2353,19 @@ HVStat.AlertAllFromQueue = function () {
 			alert(HVStat.alertQueue.shift());
 		}
 	}
+}
+
+HVStat.stashAlerts = function () {
+	hvStat.storage.setItem(HVStat.key_queuedAlerts, HVStat.alertQueue);
+	HVStat.alertQueue.length=0;
+}
+
+HVStat.restoreAlerts = function () {
+	var q=hvStat.storage.getItem(HVStat.key_queuedAlerts);
+	if (q!==null) {
+		HVStat.alertQueue=q;
+	}
+	hvStat.storage.removeItem(HVStat.key_queuedAlerts);
 }
 
 //------------------------------------
@@ -6134,6 +6148,7 @@ function HVMasterReset() {
 		key_mpAlertAlreadyShown,
 		key_spAlertAlreadyShown,
 		key_ocAlertAlreadyShown,
+		key_queuedAlerts,
 	];
 	var i = keys.length;
 	while (i--) {
