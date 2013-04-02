@@ -682,6 +682,7 @@ hvStat.storage.initialValue = {
 		isShowEndProfsWeapon: true,
 		autoAdvanceBattleRound: false,
 		autoAdvanceBattleRoundDelay: 500,
+		delayRoundEndAlerts:false,
 
 		// Warning System
 		// - Self Status
@@ -5627,6 +5628,7 @@ function initSettingsPane() {
 	}
 	if (hvStat.settings.autoAdvanceBattleRound) $("input[name=autoAdvanceBattleRound]").attr("checked", "checked");
 	$("input[name=autoAdvanceBattleRoundDelay]").attr("value", hvStat.settings.autoAdvanceBattleRoundDelay);
+	if (hvStat.settings.delayRoundEndAlerts) $("input[name=delayRoundEndAlerts]").attr("checked", "checked");
 
 	// Warning System
 	// - Self Status
@@ -5806,6 +5808,7 @@ function initSettingsPane() {
 	$("input[name=isShowEndProfsWeapon]").click(saveSettings); //isShowEndProfs added by Ilirith
 	$("input[name=autoAdvanceBattleRound]").click(saveSettings);
 	$("input[name=autoAdvanceBattleRoundDelay]").change(saveSettings);
+	$("input[name=delayRoundEndAlerts]").click(saveSettings);
 
 	// Warning System
 	// - Self Status
@@ -5951,6 +5954,7 @@ function saveSettings() {
 	hvStat.settings.isShowEndProfsWeapon = $("input[name=isShowEndProfsWeapon]").get(0).checked; //isShowEndProfs added by Ilirith
 	hvStat.settings.autoAdvanceBattleRound = $("input[name=autoAdvanceBattleRound]").get(0).checked;
 	hvStat.settings.autoAdvanceBattleRoundDelay = $("input[name=autoAdvanceBattleRoundDelay]").get(0).value;
+	hvStat.settings.delayRoundEndAlerts = $("input[name=delayRoundEndAlerts]").get(0).checked;
 
 	// Warning System
 	// - Self Status
@@ -6517,6 +6521,9 @@ hvStat.startup = {
 		}
 		if (hv.battle.active) {
 			hvStat.battle.setup();
+			if (hvStat.settings.delayRoundEndAlerts) {
+				HVStat.restoreAlerts();
+			}
 			collectRoundInfo();
 			if (hvStat.roundInfo.currRound > 0 && hvStat.settings.isShowRoundCounter) {
 				hvStat.battle.enhancement.roundCounter.create();
@@ -6552,6 +6559,10 @@ hvStat.startup = {
 				hvStat.storage.roundInfo.remove();
 				if (hvStat.settings.autoAdvanceBattleRound) {
 					hvStat.battle.advanceRound();
+				}
+				//Don't stash alerts if the battle's over
+				if (hvStat.settings.delayRoundEndAlerts && !hv.battle.finished) {
+					HVStat.stashAlerts();
 				}
 			}
 			HVStat.AlertAllFromQueue();
