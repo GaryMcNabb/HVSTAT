@@ -629,7 +629,6 @@ hvStat.storage.initialValue = {
 		customPageTitle: "HV",
 		isShowEquippedSet: false,
 		isShowSidebarProfs: false,
-		condenseAlerts: false,
 		isStartAlert: false,
 		StartAlertHP: 95,
 		StartAlertMP: 95,
@@ -5539,7 +5538,6 @@ function initSettingsPane() {
 	$("input[name=customPageTitle]").attr("value", hvStat.settings.customPageTitle);
 	if (hvStat.settings.isShowEquippedSet) $("input[name=isShowEquippedSet]").attr("checked", "checked");
 	if (hvStat.settings.isShowSidebarProfs) $("input[name=isShowSidebarProfs]").attr("checked", "checked");
-	if (hvStat.settings.condenseAlerts) $("input[name=condenseAlerts]").attr("checked", "checked");
 	if (hvStat.settings.isStartAlert) $("input[name=isStartAlert]").attr("checked", "checked");
 	$("input[name=StartAlertHP]").attr("value", hvStat.settings.StartAlertHP);
 	$("input[name=StartAlertMP]").attr("value", hvStat.settings.StartAlertMP);
@@ -5732,7 +5730,6 @@ function initSettingsPane() {
 	$("input[name=customPageTitle]").change(saveSettings);
 	$("input[name=isShowEquippedSet]").click(saveSettings);
 	$("input[name=isShowSidebarProfs]").click(reminderAndSaveSettings);
-	$("input[name=condenseAlerts]").click(saveSettings);
 	$("input[name=isStartAlert]").click(saveSettings);
 	$("input[name=StartAlertHP]").change(saveSettings);
 	$("input[name=StartAlertMP]").change(saveSettings);
@@ -5874,7 +5871,6 @@ function saveSettings() {
 	hvStat.settings.customPageTitle = $("input[name=customPageTitle]").get(0).value;
 	hvStat.settings.isShowEquippedSet = $("input[name=isShowEquippedSet]").get(0).checked;
 	hvStat.settings.isShowSidebarProfs = $("input[name=isShowSidebarProfs]").get(0).checked;
-	hvStat.settings.condenseAlerts = $("input[name=condenseAlerts]").get(0).checked;
 	hvStat.settings.isStartAlert = $("input[name=isStartAlert]").get(0).checked;
 	hvStat.settings.StartAlertHP = $("input[name=StartAlertHP]").get(0).value;
 	hvStat.settings.StartAlertMP = $("input[name=StartAlertMP]").get(0).value;
