@@ -2128,19 +2128,17 @@ var HVStat = {	// TODO: To be refactored
 
 HVStat.DefenseLevelVO = function () {
 	var v = "AVERAGE";
-	return {
-		CRUSHING: v,
-		SLASHING: v,
-		PIERCING: v,
-		FIRE: v,
-		ELEC: v,
-		COLD: v,
-		WIND: v,
-		HOLY: v,
-		DARK: v,
-		SOUL: v,
-		VOID: v
-	};
+	this.CRUSHING = v;
+	this.SLASHING = v;
+	this.PIERCING = v;
+	this.FIRE = v;
+	this.ELEC = v;
+	this.COLD = v;
+	this.WIND = v;
+	this.HOLY = v;
+	this.DARK = v;
+	this.SOUL = v;
+	this.VOID = v;
 };
 
 HVStat.MonsterScanResultsVO = function (spec) {
@@ -2276,15 +2274,13 @@ HVStat.MonsterSkillVO.prototype.createKey = function () {
 };
 
 HVStat.MonsterVO = function () {
-	return {
-		id: null,
-		name: null,
-		maxHp: null,
-		prevMpRate: null,
-		prevSpRate: null,
-		scanResult: null,
-		skills: [],
-	};
+	this.id = null;
+	this.name = null;
+	this.maxHp = null;
+	this.prevMpRate = null;
+	this.prevSpRate = null;
+	this.scanResult = null;
+	this.skills = [];
 };
 
 //------------------------------------
@@ -2386,42 +2382,36 @@ HVStat.TurnLog = function (specifiedTurn) {
 	this.innerHTMLs.reverse();
 };
 
-HVStat.MonsterSkill = (function () {
-	// Constructor
-	function MonsterSkill(vo) {
-		var _id = vo.id || null;
-		var _name = vo.name || null;
-		var _lastUsedDate = vo.lastUsedDate ? new Date(vo.lastUsedDate) : null;
-		var _skillType = hvStat.constant.skillType[vo.skillType] || null;
-		var _attackType = hvStat.constant.attackType[vo.attackType] || null;
-		var _damageType = hvStat.constant.damageType[vo.damageType] || null;
-
-		return {
-			get name() { return _name; },
-			get lastUsedDate() { return _lastUsedDate; },
-			set lastUsedDate(date) { _lastUsedDate = date; },
-			get skillType() { return _skillType; },
-			get attackType() { return _attackType; },
-			get damageType() { return _damageType; },
-			get valueObject() {
-				var vo = new HVStat.MonsterSkillVO();
-				vo.id = _id;
-				vo.name = _name;
-				vo.lastUsedDate = _lastUsedDate ? _lastUsedDate.toISOString() : null;
-				vo.skillType = _skillType ? _skillType.id : null;
-				vo.attackType = _attackType ? _attackType.id : null;
-				vo.damageType = _damageType ? _damageType.id : null;
-				vo.createKey();
-				return vo;
-			},
-			toString: function (abbrLevel) {
-				return _attackType.toString(abbrLevel) + "-" + (_damageType ? _damageType.toString(abbrLevel) : "?");
-			}
-		};
-	};
-
-	// Public static method
-	MonsterSkill.fetchSkillLog = function (logUsed, logDamaged, skillType) {
+HVStat.MonsterSkill = function (vo) {
+	this._id = vo.id || null;
+	this._name = vo.name || null;
+	this._lastUsedDate = vo.lastUsedDate ? new Date(vo.lastUsedDate) : null;
+	this._skillType = hvStat.constant.skillType[vo.skillType] || null;
+	this._attackType = hvStat.constant.attackType[vo.attackType] || null;
+	this._damageType = hvStat.constant.damageType[vo.damageType] || null;
+};
+HVStat.MonsterSkill.prototype = {
+	get name() { return this._name; },
+	get lastUsedDate() { return this._lastUsedDate; },
+	set lastUsedDate(date) { this._lastUsedDate = date; },
+	get skillType() { return this._skillType; },
+	get attackType() { return this._attackType; },
+	get damageType() { return this._damageType; },
+	get valueObject() {
+		var vo = new HVStat.MonsterSkillVO();
+		vo.id = this._id;
+		vo.name = this._name;
+		vo.lastUsedDate = this._lastUsedDate ? this._lastUsedDate.toISOString() : null;
+		vo.skillType = this._skillType ? this._skillType.id : null;
+		vo.attackType = this._attackType ? this._attackType.id : null;
+		vo.damageType = this._damageType ? this._damageType.id : null;
+		vo.createKey();
+		return vo;
+	},
+	toString: function (abbrLevel) {
+		return this._attackType.toString(abbrLevel) + "-" + (this._damageType ? this._damageType.toString(abbrLevel) : "?");
+	},
+	fetchSkillLog: function (logUsed, logDamaged, skillType) {
 		var vo = new HVStat.MonsterSkillVO();
 		var r = / (uses|casts) ([^\.]+)/.exec(logUsed);
 		if (!r || r.length < 3) {
@@ -2446,215 +2436,195 @@ HVStat.MonsterSkill = (function () {
 		var dt = hvStat.constant.damageType[r[1].toUpperCase()];
 		vo.damageType = dt ? dt.id : null;
 		vo.lastUsedDate = new Date();
-		return new MonsterSkill(vo);
-	};
+		return new HVStat.MonsterSkill(vo);
+	},
+};
 
-	return MonsterSkill;
-}());
-
-HVStat.MonsterScanResults = (function () {
-	// Private static variable
-	var _mappingToSettingsHideSpecificDamageType = [
-		hvStat.constant.damageType.CRUSHING,
-		hvStat.constant.damageType.SLASHING,
-		hvStat.constant.damageType.PIERCING,
-		hvStat.constant.damageType.FIRE,
-		hvStat.constant.damageType.COLD,
-		hvStat.constant.damageType.ELEC,
-		hvStat.constant.damageType.WIND,
-		hvStat.constant.damageType.HOLY,
-		hvStat.constant.damageType.DARK,
-		hvStat.constant.damageType.SOUL,
-		hvStat.constant.damageType.VOID
-	];
-	var _damageTypeGeneralizingTable = [
-		{
-			generic: hvStat.constant.genericDamageType.PHYSICAL,
-			elements: [
-				hvStat.constant.damageType.CRUSHING,
-				hvStat.constant.damageType.SLASHING,
-				hvStat.constant.damageType.PIERCING
-			]
-		},
-		{
-			generic: hvStat.constant.genericDamageType.ELEMENTAL,
-			elements: [
-				hvStat.constant.damageType.FIRE,
-				hvStat.constant.damageType.COLD,
-				hvStat.constant.damageType.ELEC,
-				hvStat.constant.damageType.WIND
-			]
+HVStat.MonsterScanResults = function (vo) {
+	this._damageTypesToBeHidden = [];
+	var i, len = this._mappingToSettingsHideSpecificDamageType.length;
+	for (i = 0; i < len; i++) {
+		if (hvStat.settings.hideSpecificDamageType[i]) {
+			this._damageTypesToBeHidden.push(this._mappingToSettingsHideSpecificDamageType[i]);
 		}
-	];
+	}
 
-	var _damageTypesToBeHidden = [];
-	(function () {
-		var i, len = _mappingToSettingsHideSpecificDamageType.length;
+	this._id = vo.id || null;
+	this._lastScanDate = vo.lastScanDate ? new Date(vo.lastScanDate) : null;
+	this._name = vo.name || null;
+	this._monsterClass = hvStat.constant.monsterClass[vo.monsterClass] || null;
+	this._powerLevel = vo.powerLevel || null;
+	this._trainer = vo.trainer || null;
+	this._meleeAttack = hvStat.constant.damageType[vo.meleeAttack] || null;
+	this._defenseLevel = {};
+	this._debuffsAffected = [];
+	this._defWeak = [];
+	this._defResistant = [];
+	this._defImpervious = [];
+
+	var damageTypeId, debuffId;
+	for (damageTypeId in hvStat.constant.damageType) {
+		this._defenseLevel[damageTypeId] = hvStat.constant.defenseLevel[(vo.defenseLevel || vo.defenceLevel)[damageTypeId]] || null;
+	}
+	for (damageTypeId in this._defenseLevel) {
+		switch (this._defenseLevel[damageTypeId]) {
+		case hvStat.constant.defenseLevel.WEAK:
+			this._defWeak.push(hvStat.constant.damageType[damageTypeId]);
+			break;
+		case hvStat.constant.defenseLevel.RESISTANT:
+			this._defResistant.push(hvStat.constant.damageType[damageTypeId]);
+			break;
+		case hvStat.constant.defenseLevel.IMPERVIOUS:
+			this._defImpervious.push(hvStat.constant.damageType[damageTypeId]);
+			break;
+		}
+	}
+	for (var i in vo.debuffsAffected) {
+		this._debuffsAffected.push(hvStat.constant.debuff[vo.debuffsAffected[i]]);
+	}
+};
+HVStat.MonsterScanResults.prototype = {
+	get _mappingToSettingsHideSpecificDamageType() {
+		return [
+			hvStat.constant.damageType.CRUSHING,
+			hvStat.constant.damageType.SLASHING,
+			hvStat.constant.damageType.PIERCING,
+			hvStat.constant.damageType.FIRE,
+			hvStat.constant.damageType.COLD,
+			hvStat.constant.damageType.ELEC,
+			hvStat.constant.damageType.WIND,
+			hvStat.constant.damageType.HOLY,
+			hvStat.constant.damageType.DARK,
+			hvStat.constant.damageType.SOUL,
+			hvStat.constant.damageType.VOID
+		];
+	},
+	get _damageTypeGeneralizingTable() {
+		return [
+			{
+				generic: hvStat.constant.genericDamageType.PHYSICAL,
+				elements: [
+					hvStat.constant.damageType.CRUSHING,
+					hvStat.constant.damageType.SLASHING,
+					hvStat.constant.damageType.PIERCING
+				]
+			},
+			{
+				generic: hvStat.constant.genericDamageType.ELEMENTAL,
+				elements: [
+					hvStat.constant.damageType.FIRE,
+					hvStat.constant.damageType.COLD,
+					hvStat.constant.damageType.ELEC,
+					hvStat.constant.damageType.WIND
+				]
+			},
+		];
+	},
+	_hideDamageTypes: function (source) {
+		var i, j;
+		var damageTypes = source.concat();
+		for (i = 0; i < this._damageTypesToBeHidden.length; i++) {
+			for (j = damageTypes.length - 1; j >= 0; j--) {
+				if (damageTypes[j] === this._damageTypesToBeHidden[i]) {
+					damageTypes.splice(j, 1);
+				}
+			}
+		}
+		return damageTypes;
+	},
+	_generalizeDamageTypes: function (source, damageTypes) {
+		damageTypes = source.concat();
+		var i, lenTable, indices;
+		var j, lenTableElem, index;
+
+		lenTable = this._damageTypeGeneralizingTable.length;
+		for (i = 0; i < this._damageTypeGeneralizingTable.length; i++) {
+			indices = [];
+			lenTableElem = this._damageTypeGeneralizingTable[i].elements.length;
+			for (j = 0; j < lenTableElem; j++) {
+				index = damageTypes.indexOf(this._damageTypeGeneralizingTable[i].elements[j]);
+				if (index >= 0) {
+					indices.push(index);
+				}
+			}
+			if (indices.length === lenTableElem) {
+				for (j = lenTableElem - 1; j >= 0; j--) {
+					if (j > 0) {
+						damageTypes.splice(indices[j], 1);
+					} else {
+						damageTypes[indices[j]] = this._damageTypeGeneralizingTable[i].generic;
+					}
+				}
+			}
+		}
+		return damageTypes;
+	},
+	_filterDamageTypes: function (damageTypes, hiding, generalizing) {
+		if (hiding) {
+			damageTypes = this._hideDamageTypes(damageTypes);
+		}
+		if (generalizing) {
+			damageTypes = this._generalizeDamageTypes(damageTypes);
+		}
+		return damageTypes;
+	},
+	_stringifyDamageTypes: function (damageTypes, abbrLevel) {
+		var damageTypeStrings = [];
+		var delimiter = hvStat.constant.delimiter.toString(abbrLevel);
+		for (i = 0; i < damageTypes.length; i++) {
+			damageTypeStrings[i] = damageTypes[i].toString(abbrLevel);
+		}
+		return damageTypeStrings.join(delimiter);
+	},
+
+	get lastScanDate() { return this._lastScanDate; },
+	get monsterClass() { return this._monsterClass; },
+	get powerLevel() { return this._powerLevel; },
+	get trainer() { return this._trainer; },
+	get meleeAttack() { return this._meleeAttack; },
+	get defenseLevel() {
+		var i, dl = {};
+		for (i in this._defenseLevel) {
+			dl[i] = this._defenseLevel[i];
+		}
+		return dl;
+	},
+	get debuffsAffected() { return this._debuffsAffected.concat(); },
+	get defWeak() { return this._defWeak.concat(); },
+	get defResistant() { return this._defResistant.concat(); },
+	get defImpervious() { return this._defImpervious.concat(); },
+	get valueObject() {
+		var i, len;
+		var vo = new HVStat.MonsterScanResultsVO();
+		vo.id = this._id;
+		vo.lastScanDate = this._lastScanDate ? this._lastScanDate.toISOString() : null;
+		vo.name = this._name;
+		vo.monsterClass = this._monsterClass ? this._monsterClass.id : null;
+		vo.powerLevel = this._powerLevel;
+		vo.trainer = this._trainer;
+		vo.meleeAttack = this._meleeAttack ? this._meleeAttack.id : null;
+		for (i in this._defenseLevel) {
+			vo.defenseLevel[i] = this._defenseLevel[i].id;
+		}
+		len = this._debuffsAffected.length;
 		for (i = 0; i < len; i++) {
-			if (hvStat.settings.hideSpecificDamageType[i]) {
-				_damageTypesToBeHidden.push(_mappingToSettingsHideSpecificDamageType[i]);
-			}
+			vo.debuffsAffected[i] = this._debuffsAffected[i].id;
 		}
-	})();
-
-	// Constructor
-	function MonsterScanResults(vo) {
-		var _id;
-		var _lastScanDate;
-		var _name;
-		var _monsterClass;
-		var _powerLevel;
-		var _trainer;
-		var _meleeAttack;
-		var _defenseLevel = {};
-		var _debuffsAffected = [];
-		var _defWeak = [];
-		var _defResistant = [];
-		var _defImpervious = [];
-		var damageTypeId, debuffId;
-
-		_id = vo.id || null;
-		_lastScanDate = vo.lastScanDate ? new Date(vo.lastScanDate) : null;
-		_name = vo.name || null;
-		_monsterClass = hvStat.constant.monsterClass[vo.monsterClass] || null;
-		_powerLevel = vo.powerLevel || null;
-		_trainer = vo.trainer || null;
-		_meleeAttack = hvStat.constant.damageType[vo.meleeAttack] || null;
-
-		for (damageTypeId in hvStat.constant.damageType) {
-			_defenseLevel[damageTypeId] = hvStat.constant.defenseLevel[(vo.defenseLevel || vo.defenceLevel)[damageTypeId]] || null;
-		}
-		for (damageTypeId in _defenseLevel) {
-			switch (_defenseLevel[damageTypeId]) {
-			case hvStat.constant.defenseLevel.WEAK:
-				_defWeak.push(hvStat.constant.damageType[damageTypeId]);
-				break;
-			case hvStat.constant.defenseLevel.RESISTANT:
-				_defResistant.push(hvStat.constant.damageType[damageTypeId]);
-				break;
-			case hvStat.constant.defenseLevel.IMPERVIOUS:
-				_defImpervious.push(hvStat.constant.damageType[damageTypeId]);
-				break;
-			}
-		}
-		for (var i in vo.debuffsAffected) {
-			_debuffsAffected.push(hvStat.constant.debuff[vo.debuffsAffected[i]]);
-		}
-
-		// Private instance method
-		var _hideDamageTypes = function (source) {
-			var i, j;
-			var damageTypes = source.concat();
-			for (i = 0; i < _damageTypesToBeHidden.length; i++) {
-				for (j = damageTypes.length - 1; j >= 0; j--) {
-					if (damageTypes[j] === _damageTypesToBeHidden[i]) {
-						damageTypes.splice(j, 1);
-					}
-				}
-			}
-			return damageTypes;
-		};
-
-		var _generalizeDamageTypes = function (source, damageTypes) {
-			damageTypes = source.concat();
-			var i, lenTable, indices;
-			var j, lenTableElem, index;
-
-			lenTable = _damageTypeGeneralizingTable.length;
-			for (i = 0; i < _damageTypeGeneralizingTable.length; i++) {
-				indices = [];
-				lenTableElem = _damageTypeGeneralizingTable[i].elements.length;
-				for (j = 0; j < lenTableElem; j++) {
-					index = damageTypes.indexOf(_damageTypeGeneralizingTable[i].elements[j]);
-					if (index >= 0) {
-						indices.push(index);
-					}
-				}
-				if (indices.length === lenTableElem) {
-					for (j = lenTableElem - 1; j >= 0; j--) {
-						if (j > 0) {
-							damageTypes.splice(indices[j], 1);
-						} else {
-							damageTypes[indices[j]] = _damageTypeGeneralizingTable[i].generic;
-						}
-					}
-				}
-			}
-			return damageTypes;
-		};
-
-		var _filterDamageTypes = function (damageTypes, hiding, generalizing) {
-			if (hiding) {
-				damageTypes = _hideDamageTypes(damageTypes);
-			}
-			if (generalizing) {
-				damageTypes = _generalizeDamageTypes(damageTypes);
-			}
-			return damageTypes;
-		};
-
-		var _StringifyDamageTypes = function (damageTypes, abbrLevel) {
-			var damageTypeStrings = [];
-			var delimiter = hvStat.constant.delimiter.toString(abbrLevel);
-			for (i = 0; i < damageTypes.length; i++) {
-				damageTypeStrings[i] = damageTypes[i].toString(abbrLevel);
-			}
-			return damageTypeStrings.join(delimiter);
-		};
-
-		return {
-			get lastScanDate() { return _lastScanDate; },
-			get monsterClass() { return _monsterClass; },
-			get powerLevel() { return _powerLevel; },
-			get trainer() { return _trainer; },
-			get meleeAttack() { return _meleeAttack; },
-			get defenseLevel() {
-				var i, dl = {};
-				for (i in _defenseLevel) {
-					dl[i] = _defenseLevel[i];
-				}
-				return dl;
-			},
-			get debuffsAffected() { return _debuffsAffected.concat(); },
-			get defWeak() { return _defWeak.concat(); },
-			get defResistant() { return _defResistant.concat(); },
-			get defImpervious() { return _defImpervious.concat(); },
-			get valueObject() {
-				var i, len;
-				var vo = new HVStat.MonsterScanResultsVO();
-				vo.id = _id;
-				vo.lastScanDate = _lastScanDate ? _lastScanDate.toISOString() : null;
-				vo.name = _name;
-				vo.monsterClass = _monsterClass ? _monsterClass.id : null;
-				vo.powerLevel = _powerLevel;
-				vo.trainer = _trainer;
-				vo.meleeAttack = _meleeAttack ? _meleeAttack.id : null;
-				for (i in _defenseLevel) {
-					vo.defenseLevel[i] = _defenseLevel[i].id;
-				}
-				len = _debuffsAffected.length;
-				for (i = 0; i < len; i++) {
-					vo.debuffsAffected[i] = _debuffsAffected[i].id;
-				}
-				return vo;
-			},
-			getDefWeakString: function (hiding, generalizing, abbrLevel) {
-				var damageTypes = _filterDamageTypes(_defWeak, hiding, generalizing);
-				return _StringifyDamageTypes(damageTypes, abbrLevel);
-			},
-			getDefResistantString: function (hiding, generalizing, abbrLevel) {
-				var damageTypes = _filterDamageTypes(_defResistant, hiding, generalizing);
-				return _StringifyDamageTypes(damageTypes, abbrLevel);
-			},
-			getDefImperviousString: function (hiding, generalizing, abbrLevel) {
-				var damageTypes = _filterDamageTypes(_defImpervious, hiding, generalizing);
-				return _StringifyDamageTypes(damageTypes, abbrLevel);
-			}
-		};
-	};
-
-	// Public static method
-	MonsterScanResults.fetchScanningLog = function (index, text) {
+		return vo;
+	},
+	getDefWeakString: function (hiding, generalizing, abbrLevel) {
+		var damageTypes = this._filterDamageTypes(this._defWeak, hiding, generalizing);
+		return this._stringifyDamageTypes(damageTypes, abbrLevel);
+	},
+	getDefResistantString: function (hiding, generalizing, abbrLevel) {
+		var damageTypes = this._filterDamageTypes(this._defResistant, hiding, generalizing);
+		return this._stringifyDamageTypes(damageTypes, abbrLevel);
+	},
+	getDefImperviousString: function (hiding, generalizing, abbrLevel) {
+		var damageTypes = this._filterDamageTypes(this._defImpervious, hiding, generalizing);
+		return this._stringifyDamageTypes(damageTypes, abbrLevel);
+	},
+	fetchScanningLog: function (index, text) {
 		var reScan = /Scanning (.*)\.\.\.\s+HP: [^\s]+\/([^\s]+)\s+MP: [^\s]+\/[^\s]+(?:\s+SP: [^\s]+\/[^\s]+)? Monster Class: (.+?)(?:, Power Level (\d+))? Monster Trainer:(?: (.+))? Melee Attack: (.+) Weak against: (.+) Resistant to: (.+) Impervious to: (.+)/;
 		var vo = new HVStat.MonsterScanResultsVO();
 		var result = reScan.exec(text);
@@ -2697,7 +2667,7 @@ HVStat.MonsterScanResults = (function () {
 		}
 		vo.debuffsAffected = [];
 		var i, debuffElements, debuffInfo, debuffId;
-		debuffElements = document.querySelectorAll("#" + HVStat.Monster.getDomElementId(index) + " div.btm6 > img");
+		debuffElements = hv.battle.elementCache.monsters[index].querySelectorAll('div.btm6 > img');
 		for (i = 0; i < debuffElements.length; i++) {
 			debuffInfo = debuffElements[i].getAttribute("onmouseover");
 			for (debuffId in hvStat.constant.debuff) {
@@ -2706,645 +2676,625 @@ HVStat.MonsterScanResults = (function () {
 				}
 			}
 		}
-		return new MonsterScanResults(vo);
-	};
+		return new HVStat.MonsterScanResults(vo);
+	},
+};
 
-	return MonsterScanResults;
-}());
-
-HVStat.Monster = (function () {
-	// private static variable
-	var _domElementIds = [
-		"mkey_1", "mkey_2", "mkey_3", "mkey_4", "mkey_5",
-		"mkey_6", "mkey_7", "mkey_8", "mkey_9", "mkey_0"
-	];
-	var _maxBarWidth = HVStat.monsterGaugeMaxWidth;
-
-	// constructor
-	function Monster(index) {
-		if (isNaN(index) || index < 0 || _domElementIds.length <= index) {
-			alert("invalid index");
-			return null;
+HVStat.Monster = function (index) {
+	this._index = index;
+	this._baseElement = hv.battle.elementCache.monsters[this._index];
+	this._healthBars = this._baseElement.querySelectorAll('div.btm5');
+	this._isDead = this._healthBars[0].querySelectorAll('img.chb2').length === 0;
+	this._waitingForGetResponseOfMonsterScanResults = false;
+	this._waitingForGetResponseOfMonsterSkills = false;
+	this._id = null;
+	this._name = null;
+	this._maxHp = null;
+	this._prevMpRate = null;
+	this._prevSpRate = null;
+	this._scanResult = null;
+	this._skills = [];
+	this._currHpRate = this._currBarRate(0);
+	this._currMpRate = this._currBarRate(1);
+	this._currSpRate = this._currBarRate(2);
+	this._hasSpiritPoint = this._healthBars.length > 2;
+};
+HVStat.Monster.prototype = {
+	_currBarRate: function (barIndex) {
+		if (barIndex >= this._healthBars.length) {
+			return 0;
+		}
+		var v, bar = this._healthBars[barIndex].querySelector("img.chb2");
+		if (!bar) {
+			v = 0;
+		} else {
+			r = /width\s*?:\s*?(\d+?)px/i.exec(bar.style.cssText);
+			if (r) {
+				v = Number(r[1]) / HVStat.monsterGaugeMaxWidth;
+			}
+		}
+		return v;
+	},
+	_currHp: function () {
+		var v = this._currHpRate * this._maxHp;
+		if (!this._isDead && v === 0) {
+			v = 1;
+		}
+		return v;
+	},
+	_waitingForDBResponse: function () {
+		return this._waitingForGetResponseOfMonsterScanResults || this._waitingForGetResponseOfMonsterSkills;
+	},
+	_getManaSkills: function () {
+		var that = this;
+		var manaSkills = [];
+		var i, skill;
+		var len = that._skills.length;
+		for (i = 0; i < len; i++) {
+			skill = that._skills[i];
+			if (skill.skillType === hvStat.constant.skillType.MANA) {
+				manaSkills.push(skill);
+			}
+		}
+		return manaSkills;
+	},
+	_getManaSkillTable: function () {
+		var that = this;
+		var manaSkills = that._getManaSkills();
+		var damageTable = {
+			CRUSHING: false,
+			SLASHING: false,
+			PIERCING: false,
+			FIRE: false,
+			COLD: false,
+			ELEC: false,
+			WIND: false,
+			HOLY: false,
+			DARK: false,
+			SOUL: false,
+			VOID: false
+		};
+		var skillTable = {
+			PHYSICAL: { exists: false, damageTable: {} },
+			MAGICAL: { exists: false, damageTable: {} }
+		};
+		skillTable.PHYSICAL.damageTable = Object.create(damageTable);
+		skillTable.MAGICAL.damageTable = Object.create(damageTable);
+		var skillType, damageType;
+		for (var i = 0; i < manaSkills.length; i++) {
+			attackType = manaSkills[i].attackType.id;
+			damageType = manaSkills[i].damageType.id;
+			skillTable[attackType].exists = true;
+			skillTable[attackType].damageTable[damageType] = true;
+		}
+		return skillTable;
+	},
+	_getSpiritSkill: function () {
+		var that = this;
+		var i, skill;
+		var len = that._skills.length;
+		for (i = 0; i < len; i++) {
+			skill = that._skills[i];
+			if (skill.skillType === hvStat.constant.skillType.SPIRIT) {
+				return skill;
+			}
+		}
+		return null;
+	},
+	_renderStats: function () {
+		var that = this;
+		if (that._isDead) {
+			return;
+		}
+		if (!(hvStat.settings.showMonsterHP
+				|| hvStat.settings.showMonsterMP
+				|| hvStat.settings.showMonsterSP
+				|| hvStat.settings.showMonsterInfoFromDB)) {
+			return;
 		}
 
-		var _index = index;
-		var _baseElement = document.getElementById(_domElementIds[_index]);
-		var _healthBars = _baseElement.querySelectorAll("div.btm5");
-		var _isDead = _healthBars[0].querySelectorAll("img.chb2").length === 0;
-		var _waitingForGetResponseOfMonsterScanResults = false;
-		var _waitingForGetResponseOfMonsterSkills = false;
+		var nameOuterFrameElement = that._baseElement.children[1];
+		var nameInnerFrameElement = that._baseElement.children[1].children[0];
+		var maxAbbrLevel = hvStat.settings.ResizeMonsterInfo ? 5 : 1;
+		var maxStatsWidth = 315;
 
-		var _id;
-		var _name;
-		var _maxHp;
-		var _prevMpRate;
-		var _prevSpRate;
-		var _scanResult;
-		var _skills = [];
+		var html, statsHtml;
+		var div;
+		var abbrLevel;
 
-		var currBarRate = function (barIndex) {
-			if (barIndex >= _healthBars.length) {
-				return 0;
-			}
-			var v, bar = _healthBars[barIndex].querySelector("img.chb2");
-			if (!bar) {
-				v = 0;
-			} else {
-				r = /width\s*?:\s*?(\d+?)px/i.exec(bar.style.cssText);
-				if (r && r.length >= 2) {
-					v = Number(r[1]) / _maxBarWidth;
+		if (hvStat.settings.showMonsterInfoFromDB) {
+			for (abbrLevel = 0; abbrLevel < maxAbbrLevel; abbrLevel++) {
+				statsHtml = '';
+				if (!that._scanResult || !that._scanResult.monsterClass) {
+//					if (hvStat.settings.showNewLabelForUnknownMonster) {
+						statsHtml = '[<span class="hvstat-monster-status-unknown">NEW</span>]';
+//					}
 				} else {
-					v = bar.width() / _maxBarWidth;	// TODO: remove jQuery call
-				}
-			}
-			return v;
-		};
-
-		var _currHpRate = currBarRate(0);
-		var _currMpRate = currBarRate(1);
-		var _currSpRate = currBarRate(2);
-		var _hasSpiritPoint = _healthBars.length > 2;
-		var _currHp = function () {
-			var v = _currHpRate * _maxHp;
-			if (!_isDead && v === 0) {
-				v = 1;
-			}
-			return v;
-		};
-		var _waitingForDBResponse = function () {
-			return _waitingForGetResponseOfMonsterScanResults || _waitingForGetResponseOfMonsterSkills;
-		};
-		var _getManaSkills = function () {
-			var manaSkills = [];
-			var i, skill;
-			var len = _skills.length;
-			for (i = 0; i < len; i++) {
-				skill = _skills[i];
-				if (skill.skillType === hvStat.constant.skillType.MANA) {
-					manaSkills.push(skill);
-				}
-			}
-			return manaSkills;
-		};
-		var _getManaSkillTable = function () {
-			var manaSkills = _getManaSkills();
-			var damageTable = {
-				CRUSHING: false,
-				SLASHING: false,
-				PIERCING: false,
-				FIRE: false,
-				COLD: false,
-				ELEC: false,
-				WIND: false,
-				HOLY: false,
-				DARK: false,
-				SOUL: false,
-				VOID: false
-			};
-			var skillTable = {
-				PHYSICAL: { exists: false, damageTable: {} },
-				MAGICAL: { exists: false, damageTable: {} }
-			};
-			skillTable.PHYSICAL.damageTable = Object.create(damageTable);
-			skillTable.MAGICAL.damageTable = Object.create(damageTable);
-			var skillType, damageType;
-			for (var i = 0; i < manaSkills.length; i++) {
-				attackType = manaSkills[i].attackType.id;
-				damageType = manaSkills[i].damageType.id;
-				skillTable[attackType].exists = true;
-				skillTable[attackType].damageTable[damageType] = true;
-			}
-			return skillTable;
-		};
-		var _getSpiritSkill = function () {
-			var i, skill;
-			var len = _skills.length;
-			for (i = 0; i < len; i++) {
-				skill = _skills[i];
-				if (skill.skillType === hvStat.constant.skillType.SPIRIT) {
-					return skill;
-				}
-			}
-			return null;
-		};
-		var _renderStats = function () {
-			if (_isDead) {
-				return;
-			}
-			if (!(hvStat.settings.showMonsterHP
-					|| hvStat.settings.showMonsterMP
-					|| hvStat.settings.showMonsterSP
-					|| hvStat.settings.showMonsterInfoFromDB)) {
-				return;
-			}
-
-			var nameOuterFrameElement = _baseElement.children[1];
-			var nameInnerFrameElement = _baseElement.children[1].children[0];
-			var maxAbbrLevel = hvStat.settings.ResizeMonsterInfo ? 5 : 1;
-			var maxStatsWidth = 315;
-
-			var html, statsHtml;
-			var div;
-			var abbrLevel;
-
-			if (hvStat.settings.showMonsterInfoFromDB) {
-				for (abbrLevel = 0; abbrLevel < maxAbbrLevel; abbrLevel++) {
-					statsHtml = '';
-					if (!_scanResult || !_scanResult.monsterClass) {
-//						if (hvStat.settings.showNewLabelForUnknownMonster) {
-							statsHtml = '[<span class="hvstat-monster-status-unknown">NEW</span>]';
-//						}
-					} else {
-						// Class and power level
-						if (hvStat.settings.showMonsterClassFromDB || hvStat.settings.showMonsterPowerLevelFromDB) {
-							statsHtml += '{';
-						}
+					// Class and power level
+					if (hvStat.settings.showMonsterClassFromDB || hvStat.settings.showMonsterPowerLevelFromDB) {
+						statsHtml += '{';
+					}
+					if (hvStat.settings.showMonsterClassFromDB) {
+						statsHtml += '<span class="hvstat-monster-status-class">';
+						statsHtml += that._scanResult.monsterClass.toString(abbrLevel);
+						statsHtml += '</span>';
+					}
+					if (hvStat.settings.showMonsterPowerLevelFromDB && that._scanResult.powerLevel) {
 						if (hvStat.settings.showMonsterClassFromDB) {
-							statsHtml += '<span class="hvstat-monster-status-class">';
-							statsHtml += _scanResult.monsterClass.toString(abbrLevel);
-							statsHtml += '</span>';
+							statsHtml += hvStat.constant.delimiter.toString(abbrLevel);
 						}
-						if (hvStat.settings.showMonsterPowerLevelFromDB && _scanResult.powerLevel) {
-							if (hvStat.settings.showMonsterClassFromDB) {
-								statsHtml += hvStat.constant.delimiter.toString(abbrLevel);
-							}
-							statsHtml += '<span class="hvstat-monster-status-power-level">';
-							statsHtml += _scanResult.powerLevel + '+';
-							statsHtml += '</span>';
-						}
-						if (hvStat.settings.showMonsterClassFromDB || hvStat.settings.showMonsterPowerLevelFromDB) {
-							statsHtml += '}';
-						}
-						// Weaknesses and resistances
-						if (hvStat.settings.showMonsterWeaknessesFromDB || hvStat.settings.showMonsterResistancesFromDB) {
-							statsHtml += '[';
-						}
+						statsHtml += '<span class="hvstat-monster-status-power-level">';
+						statsHtml += that._scanResult.powerLevel + '+';
+						statsHtml += '</span>';
+					}
+					if (hvStat.settings.showMonsterClassFromDB || hvStat.settings.showMonsterPowerLevelFromDB) {
+						statsHtml += '}';
+					}
+					// Weaknesses and resistances
+					if (hvStat.settings.showMonsterWeaknessesFromDB || hvStat.settings.showMonsterResistancesFromDB) {
+						statsHtml += '[';
+					}
+					if (hvStat.settings.showMonsterWeaknessesFromDB) {
+						statsHtml += '<span class="hvstat-monster-status-weakness">';
+						statsHtml += (that._scanResult.defWeak.length > 0) ? that._scanResult.getDefWeakString(true, true, abbrLevel) : "-";
+						statsHtml += '</span>';
+					}
+					if (hvStat.settings.showMonsterResistancesFromDB) {
 						if (hvStat.settings.showMonsterWeaknessesFromDB) {
-							statsHtml += '<span class="hvstat-monster-status-weakness">';
-							statsHtml += (_scanResult.defWeak.length > 0) ? _scanResult.getDefWeakString(true, true, abbrLevel) : "-";
-							statsHtml += '</span>';
+							statsHtml += '|';
 						}
-						if (hvStat.settings.showMonsterResistancesFromDB) {
-							if (hvStat.settings.showMonsterWeaknessesFromDB) {
-								statsHtml += '|';
-							}
-							statsHtml += '<span class="hvstat-monster-status-resistance">';
-							statsHtml += (_scanResult.defResistant.length > 0) ? _scanResult.getDefResistantString(true, true, abbrLevel) : '-';
+						statsHtml += '<span class="hvstat-monster-status-resistance">';
+						statsHtml += (that._scanResult.defResistant.length > 0) ? that._scanResult.getDefResistantString(true, true, abbrLevel) : '-';
+						statsHtml += '</span>';
+						if (that._scanResult.defImpervious.length > 0) {
+							statsHtml += '|<span class="hvstat-monster-status-imperviableness">';
+							statsHtml += that._scanResult.getDefImperviousString(true, true, abbrLevel);
 							statsHtml += '</span>';
-							if (_scanResult.defImpervious.length > 0) {
-								statsHtml += '|<span class="hvstat-monster-status-imperviableness">';
-								statsHtml += _scanResult.getDefImperviousString(true, true, abbrLevel);
-								statsHtml += '</span>';
-							}
-						}
-						if (hvStat.settings.showMonsterWeaknessesFromDB || hvStat.settings.showMonsterResistancesFromDB) {
-							statsHtml += "]";
 						}
 					}
-					// Melee attack and skills
-					if (hvStat.settings.showMonsterAttackTypeFromDB) {
-						var meleeAttackExists = _scanResult && _scanResult.meleeAttack;
-						var manaSkills = _getManaSkills();
-						var manaSkillsExist = manaSkills.length > 0;
-						var spiritSkill = _getSpiritSkill();
-						if (meleeAttackExists || manaSkillsExist || spiritSkill) {
-							statsHtml += '(';
-						}
-						// Melee attack
+					if (hvStat.settings.showMonsterWeaknessesFromDB || hvStat.settings.showMonsterResistancesFromDB) {
+						statsHtml += "]";
+					}
+				}
+				// Melee attack and skills
+				if (hvStat.settings.showMonsterAttackTypeFromDB) {
+					var meleeAttackExists = that._scanResult && that._scanResult.meleeAttack;
+					var manaSkills = that._getManaSkills();
+					var manaSkillsExist = manaSkills.length > 0;
+					var spiritSkill = that._getSpiritSkill();
+					if (meleeAttackExists || manaSkillsExist || spiritSkill) {
+						statsHtml += '(';
+					}
+					// Melee attack
+					if (meleeAttackExists) {
+						statsHtml += '<span class="hvstat-monster-status-melee-attack-type">';
+						statsHtml += that._scanResult.meleeAttack.toString(abbrLevel > 0 ? abbrLevel : 1);
+						statsHtml += '</span>';
+					}
+					// Mana skills
+					if (manaSkillsExist) {
 						if (meleeAttackExists) {
-							statsHtml += '<span class="hvstat-monster-status-melee-attack-type">';
-							statsHtml += _scanResult.meleeAttack.toString(abbrLevel > 0 ? abbrLevel : 1);
-							statsHtml += '</span>';
+							statsHtml += ';';
 						}
-						// Mana skills
-						if (manaSkillsExist) {
-							if (meleeAttackExists) {
-								statsHtml += ';';
-							}
-							statsHtml += '<span class="hvstat-monster-status-magic-skill-attack-type">';
-							var skillTable = _getManaSkillTable();
-							var attackTypeCount, damageTypeCount;
-							attackTypeCount = 0;
-							for (attackType in skillTable) {
-								if (skillTable[attackType].exists) {
-									if (attackTypeCount > 0) {
-										statsHtml += '|';
-									}
-									damageTypeCount = 0;
-									for (damageType in skillTable[attackType].damageTable) {
-										if (skillTable[attackType].damageTable[damageType]) {
-											if (damageTypeCount === 0) {
-												statsHtml += hvStat.constant.attackType[attackType].toString(abbrLevel > 0 ? abbrLevel : 1) + '-';
-											} else {
-												statsHtml += hvStat.constant.delimiter.toString(abbrLevel);
-											}
-											statsHtml += hvStat.constant.damageType[damageType].toString(abbrLevel > 0 ? abbrLevel : 1);
-											damageTypeCount++;
+						statsHtml += '<span class="hvstat-monster-status-magic-skill-attack-type">';
+						var skillTable = that._getManaSkillTable();
+						var attackTypeCount, damageTypeCount;
+						attackTypeCount = 0;
+						for (attackType in skillTable) {
+							if (skillTable[attackType].exists) {
+								if (attackTypeCount > 0) {
+									statsHtml += '|';
+								}
+								damageTypeCount = 0;
+								for (damageType in skillTable[attackType].damageTable) {
+									if (skillTable[attackType].damageTable[damageType]) {
+										if (damageTypeCount === 0) {
+											statsHtml += hvStat.constant.attackType[attackType].toString(abbrLevel > 0 ? abbrLevel : 1) + '-';
+										} else {
+											statsHtml += hvStat.constant.delimiter.toString(abbrLevel);
 										}
-									}
-									attackTypeCount++;
-								}
-							}
-							statsHtml += '</span>';
-						}
-						// Spirit skill
-						if (spiritSkill) {
-							if (!manaSkillsExist) {
-								statsHtml += ';';
-							} else {
-								statsHtml += '|';
-							}
-							statsHtml += '<span class="hvstat-monster-status-spirit-skill-attack-type">';
-							statsHtml += spiritSkill.toString(abbrLevel > 0 ? abbrLevel : 1);
-							statsHtml += '</span>';
-						}
-						if (meleeAttackExists || manaSkillsExist || spiritSkill) {
-							statsHtml += ')';
-						}
-					}
-					if (hv.settings.useHVFontEngine) {
-						nameOuterFrameElement.style.width = "auto"; // Tweak for Firefox
-						nameInnerFrameElement.style.width = "auto"; // Tweak for Firefox
-						div = document.createElement("div");
-						div.className ="hvstat-monster-status-on-hv-font";
-						div.innerHTML = statsHtml;
-						nameInnerFrameElement.parentNode.insertBefore(div, nameInnerFrameElement.nextSibling);
-						//console.log("scrollWidth = " + div.prop("scrollWidth"));
-						if (Number(nameOuterFrameElement.scrollWidth) <= maxStatsWidth) {	// Does not work with Firefox without tweak
-							break;
-						} else if (abbrLevel < maxAbbrLevel - 1) {
-							// Revert
-							nameInnerFrameElement.parentNode.removeChild(div);
-						}
-					} else {
-						html = '<div class="hvstat-monster-status-on-custom-font">' + statsHtml + "</div>";
-						var nameElement = nameInnerFrameElement.children[0];
-						var name = nameElement.innerHTML;
-						nameOuterFrameElement.style.width = "auto"; // Tweak for Firefox
-						nameInnerFrameElement.style.width = "auto"; // Tweak for Firefox
-						nameElement.innerHTML = name + html;
-						nameElement.style.whiteSpace = "nowrap";
-						//console.log("scrollWidth = " + nameElement.prop("scrollWidth"));
-						if (Number(nameElement.scrollWidth) <= maxStatsWidth) {	// Does not work with Firefox without tweak
-							break;
-						} else if (hvStat.settings.ResizeMonsterInfo) {
-							// Revert
-							nameElement.innerHTML = name;
-							if (abbrLevel >= maxAbbrLevel - 1) {
-								// Reduce name length
-								for (var len = name.length - 2; len >= 6; len--) {
-									var reducedName = name.substring(0, len) + "...";
-									nameElement.innerHTML = reducedName + html;
-									//console.log("scrollWidth = " + nameElement.prop("scrollWidth"));
-									if (Number(nameElement.scrollWidth) <= maxStatsWidth) {	// does not work with Firefox without tweak
-										break;
+										statsHtml += hvStat.constant.damageType[damageType].toString(abbrLevel > 0 ? abbrLevel : 1);
+										damageTypeCount++;
 									}
 								}
+								attackTypeCount++;
 							}
 						}
+						statsHtml += '</span>';
 					}
-				}
-				nameOuterFrameElement.style.width = String(maxStatsWidth) + "px";
-			}
-		};
-
-		var _renderPopup = function () {
-			var i, len, skill, lastScanString;
-			var existsScanResult = _scanResult && _scanResult.monsterClass;
-			var html = '<table cellspacing="0" cellpadding="0" style="width:100%">'
-				+ '<tr class="monname"><td colspan="2"><b>' + _name + '</b></td></tr>'
-				+ '<tr><td width="33%">ID: </td><td>' + _id + '</td></tr>'
-				+ '<tr><td>Health: </td><td>' + _currHp().toFixed(1) + ' / ' + _maxHp.toFixed(1) + '</td></tr>'
-				+ '<tr><td>Mana: </td><td>' + (_currMpRate * 100).toFixed(2) + '%</td></tr>';
-			if (_hasSpiritPoint) {
-				html += '<tr><td>Spirit: </td><td>' + (_currSpRate * 100).toFixed(2) + '%</td></tr>';
-			}
-			if (existsScanResult) {
-				html += '<tr><td>Class:</td><td>' + (_scanResult.monsterClass ? _scanResult.monsterClass : "") + '</td></tr>'
-					+ '<tr><td>Trainer:</td><td>' + (_scanResult.trainer ? _scanResult.trainer : "") + '</td></tr>';
-				if (_scanResult.powerLevel) {
-					html += '<tr><td>Power Level:</td><td>' + _scanResult.powerLevel + '</td></tr>';
-				}
-				html += '<tr><td>Melee Attack:</td><td>' + (_scanResult.meleeAttack ? _scanResult.meleeAttack : "") + '</td></tr>';
-			}
-			var manaSkills = _getManaSkills();
-			if (manaSkills && manaSkills.length > 0) {
-				html += '<tr><td valign="top">Skills:</td><td>';
-				len = manaSkills.length;
-				var skillTable = _getManaSkillTable();
-				var skillCount = 0;
-				for (attackType in skillTable) {
-					if (skillTable[attackType].exists) {
-						for (damageType in skillTable[attackType].damageTable) {
-							if (skillTable[attackType].damageTable[damageType]) {
-								if (skillCount > 0) {
-									html += '<br/>';
-								}
-								html += hvStat.constant.attackType[attackType].name + '-' + hvStat.constant.damageType[damageType].name;
-								skillCount++;
-							}
-						}
-					}
-				}
-				html += '</td></tr>';
-			}
-			var spiritSkill = _getSpiritSkill();
-			if (spiritSkill) {
-				html += '<tr><td>Spirit Skill:</td><td>';
-				html += spiritSkill.toString();
-				html += '</td></tr>';
-			}
-			lastScanString = "Never";
-			if (existsScanResult) {
-				html += '<tr><td>Weak against:</td><td>' + (_scanResult.defWeak.length > 0 ? _scanResult.getDefWeakString(false, true, 0) : "-") + '</td></tr>'
-					+ '<tr><td>Resistant to:</td><td>' + (_scanResult.defResistant.length > 0 ? _scanResult.getDefResistantString(false, true, 0) : "-") + '</td></tr>'
-					+ '<tr><td>Impervious to:</td><td>' + (_scanResult.defImpervious.length > 0 ? _scanResult.getDefImperviousString(false, true, 0) : "-") + '</td></tr>'
-					+ '<tr><td>Debuffs affected:</td><td>' + (_scanResult.debuffsAffected.length > 0 ? _scanResult.debuffsAffected.join(", ") : "-") + '</td></tr>';
-				if (_scanResult.lastScanDate) {
-					lastScanString = HVStat.getDateTimeString(_scanResult.lastScanDate);
-				}
-			}
-			html += '<tr><td valign="top">Last Scan:</td><td>' + lastScanString + '</td></tr>';
-			if (existsScanResult && _scanResult.lastScanDate) {
-				html += '<tr><td></td><td>' + HVStat.getElapsedFrom(_scanResult.lastScanDate) + ' ago</td></tr>';
-			}
-			html += '</table>';
-			return html;
-		};
-
-		return {
-			get id() { return _id; },
-			get name() { return _name; },
-			get maxHp() { return _maxHp; },
-			get currHp() { return _currHp(); },
-			get currHpRate() { return _currHpRate; },
-			get currMpRate() { return _currMpRate; },
-			get currSpRate() { return _currSpRate; },
-			get hasSpiritPoint() { return _hasSpiritPoint; },
-			get isDead() { return _isDead; },
-			get scanResult() { return _scanResult; },
-			get skills() { return _skills; },
-			get valueObject() {
-				var vo = new HVStat.MonsterVO();
-				vo.id = _id;
-				vo.name = _name;
-				vo.maxHp = _maxHp;
-				vo.prevMpRate = _currMpRate;
-				vo.prevSpRate = _currSpRate;
-				vo.scanResult = _scanResult ? _scanResult.valueObject : null;
-				for (var i = 0; i < _skills.length; i++) {
-					vo.skills[i] = _skills[i].valueObject;
-				}
-				return vo;
-			},
-			get domElementId() { return _domElementIds[_index]; },
-			get baseElement() { return _baseElement; },
-
-			set id(id) { _id = id; },
-			set name(name) { _name = name; },
-			set maxHp(maxHp) { _maxHp = maxHp; },
-
-			// Public instance methods
-			fetchStartingLog: function (html) {
-				var r;
-				r = /MID=(\d+)\s/.exec(html);
-				if (!r || r.length < 2) {
-					alert("HVSTAT: cannot identify MID");
-					return;
-				}
-				_id = Number(r[1]);
-				r = /\(([^\.\)]{0,30})\) LV/.exec(html);
-				if (r && r.length >= 2) {
-					_name = r[1];
-				}
-				r = /HP=(\d+\.?\d*)$/.exec(html);
-				if (r && r.length >= 2) {
-					_maxHp = Number(r[1]);
-				}
-			},
-			fetchScanningLog: function (text, transaction) {
-				_scanResult = HVStat.MonsterScanResults.fetchScanningLog(_index, text);
-				this.putScanResultToDB(transaction);
-			},
-			fetchSkillLog: function (used, damaged, transaction) {
-				var i;
-				var spiritSkillFound;
-				var skillType = (_prevSpRate <= _currSpRate) ? hvStat.constant.skillType.MANA : hvStat.constant.skillType.SPIRIT;
-				var skill = HVStat.MonsterSkill.fetchSkillLog(used, damaged, skillType);
-				if (skillType === hvStat.constant.skillType.SPIRIT) {
 					// Spirit skill
-					// Overwrite if exists
-					for (i = 0; i < _skills.length; i++) {
-						if (_skills[i].skillType ===  hvStat.constant.skillType.SPIRIT) {
-							break;
+					if (spiritSkill) {
+						if (!manaSkillsExist) {
+							statsHtml += ';';
+						} else {
+							statsHtml += '|';
 						}
+						statsHtml += '<span class="hvstat-monster-status-spirit-skill-attack-type">';
+						statsHtml += spiritSkill.toString(abbrLevel > 0 ? abbrLevel : 1);
+						statsHtml += '</span>';
 					}
-					_skills[i] = skill;
+					if (meleeAttackExists || manaSkillsExist || spiritSkill) {
+						statsHtml += ')';
+					}
+				}
+				if (hv.settings.useHVFontEngine) {
+					nameOuterFrameElement.style.width = "auto"; // Tweak for Firefox
+					nameInnerFrameElement.style.width = "auto"; // Tweak for Firefox
+					div = document.createElement("div");
+					div.className ="hvstat-monster-status-on-hv-font";
+					div.innerHTML = statsHtml;
+					nameInnerFrameElement.parentNode.insertBefore(div, nameInnerFrameElement.nextSibling);
+					//console.log("scrollWidth = " + div.prop("scrollWidth"));
+					if (Number(nameOuterFrameElement.scrollWidth) <= maxStatsWidth) {	// Does not work with Firefox without tweak
+						break;
+					} else if (abbrLevel < maxAbbrLevel - 1) {
+						// Revert
+						nameInnerFrameElement.parentNode.removeChild(div);
+					}
 				} else {
-					// Mana skill
-					// Overwrite if same name or name is null
-					for (i = 0; i < _skills.length; i++) {
-						if (_skills[i].skillType ===  hvStat.constant.skillType.MANA
-								&& (_skills[i].name === skill.name
-									|| (_skills[i].name === null && _skills[i].attackType === skill.attackType && _skills[i].damageType === skill.damageType))) {
-							break;
-						}
-					}
-					_skills[i] = skill;
-				}
-				if (hvStat.settings.isRememberSkillsTypes) {
-					this.putSkillsToDB(transaction);
-				}
-			},
-			setFromValueObject: function (valueObject) {
-				var vo = valueObject;
-				_id = vo.id;
-				_name = vo.name;
-				_maxHp = vo.maxHp;
-				_prevMpRate = vo.prevMpRate;
-				_prevSpRate = vo.prevSpRate;
-				_scanResult = vo.scanResult ? new HVStat.MonsterScanResults(vo.scanResult) : null;
-				vo.skills.forEach(function (element, index, array) {
-					_skills.push(new HVStat.MonsterSkill(element));
-				});
-			},
-			getFromDB: function (transaction, callback) {
-				if (!_id) {
-					return;
-				}
-				var tx = transaction;
-				var scanResultsStore = tx.objectStore("MonsterScanResults");
-				var skillsStore = tx.objectStore("MonsterSkills");
-				// MonsterScanResults
-				var reqGet = scanResultsStore.get(_id);
-				_waitingForGetResponseOfMonsterScanResults = true;
-				reqGet.onsuccess = function (event) {
-					_waitingForGetResponseOfMonsterScanResults = false;
-					//console.debug(event.target.result);
-					if (event.target.result === undefined) {
-						//console.log("get from MonsterScanResults: not found: id = " + _id);
-					} else {
-						//console.log("get from MonsterScanResults: success: id = " + _id);
-						_scanResult = new HVStat.MonsterScanResults(event.target.result);
-						//console.debug(_scanResult.valueObject);
-					}
-					if (!_waitingForDBResponse()) {
-						callback();
-					}
-				};
-				reqGet.onerror = function (event) {
-					_waitingForGetResponseOfMonsterScanResults = false;
-					console.log("get from MonsterScanResults: error");
-				};
-				// MonsterSkills
-				var reqGet = skillsStore.get(_id);
-				var idx = skillsStore.index("ix_id");
-				var range = IDBKeyRange.bound(_id, _id);
-				var reqOpen = idx.openCursor(range, "next");
-				_waitingForGetResponseOfMonsterSkills = true;
-				reqOpen.onsuccess = function(){
-					var cursor = this.result;
-					if (cursor) {
-						//console.debug(cursor.value);
-						var skill = new HVStat.MonsterSkill(cursor.value);
-						//console.debug(skill.valueObject);
-						_skills.push(skill);
-						//console.log("get from MonsterSkills: id = " + _id);
-						cursor.continue();
-					} else {
-						_waitingForGetResponseOfMonsterSkills = false;
-						//console.log("get from MonsterSkills: finished: id = " + _id);
-					}
-					if (!_waitingForDBResponse()) {
-						callback();
-					}
-				}
-				reqOpen.onerror = function () {
-					_waitingForGetResponseOfMonsterSkills = false;
-					console.log('request error.');
-				};
-			},
-			putScanResultToDB: function (transaction) {
-				if (!_id || !_scanResult) {
-					return;
-				}
-				var scanResultsStore = transaction.objectStore("MonsterScanResults");
-				var vo = _scanResult.valueObject;
-				vo.id = _id;
-				vo.name = _name;
-				var reqPut = scanResultsStore.put(vo);
-				reqPut.onsuccess = function (event) {
-					//console.log("putScanResultToDB: success: id = " + _id);
-				};
-				reqPut.onerror = function (event) {
-					console.log("putScanResultToDB: error: id = " + _id);
-				};
-			},
-			putSkillsToDB: function (transaction) {
-				if (!_id) {
-					return;
-				}
-				// Put after delete
-				var skillsStore = transaction.objectStore("MonsterSkills");
-				var range = IDBKeyRange.bound(_id, _id);
-				var reqOpen = skillsStore.openCursor(range, "next");
-				reqOpen.onsuccess = function () {
-					var i;
-					var vo;
-					var reqPut;
-					var cursor = this.result;
-					if (cursor) {
-						// Delete
-						cursor.delete();
-						cursor.continue();
-					} else {
-						// Put
-						for (i = 0; i < _skills.length; i++) {
-							vo = _skills[i].valueObject;
-							vo.id = _id;
-							vo.createKey();
-//							alert("Skill: id = " + vo.id + ", name = '" + vo.name + "', skillType = " + vo.skillType + ", attackType = " + vo.attackType + ", damageType = " + vo.damageType);
-							reqPut = skillsStore.put(vo);
-							reqPut.onsuccess = function (event) {
-								//console.log("putSkillsToDB: success: id = " + _id);
-							};
-							reqPut.onerror = function (event) {
-								console.log("putSkillsToDB: error: id = " + _id);
-							};
+					html = '<div class="hvstat-monster-status-on-custom-font">' + statsHtml + "</div>";
+					var nameElement = nameInnerFrameElement.children[0];
+					var name = nameElement.innerHTML;
+					nameOuterFrameElement.style.width = "auto"; // Tweak for Firefox
+					nameInnerFrameElement.style.width = "auto"; // Tweak for Firefox
+					nameElement.innerHTML = name + html;
+					nameElement.style.whiteSpace = "nowrap";
+					//console.log("scrollWidth = " + nameElement.prop("scrollWidth"));
+					if (Number(nameElement.scrollWidth) <= maxStatsWidth) {	// Does not work with Firefox without tweak
+						break;
+					} else if (hvStat.settings.ResizeMonsterInfo) {
+						// Revert
+						nameElement.innerHTML = name;
+						if (abbrLevel >= maxAbbrLevel - 1) {
+							// Reduce name length
+							for (var len = name.length - 2; len >= 6; len--) {
+								var reducedName = name.substring(0, len) + "...";
+								nameElement.innerHTML = reducedName + html;
+								//console.log("scrollWidth = " + nameElement.prop("scrollWidth"));
+								if (Number(nameElement.scrollWidth) <= maxStatsWidth) {	// does not work with Firefox without tweak
+									break;
+								}
+							}
 						}
 					}
 				}
-				reqOpen.onerror = function () {
-					console.log('request error.');
-					alert('request error.');
-				}
-			},
-
-			renderHealth: function () {
-				if (this.isDead || !hvStat.settings.showMonsterHP && !hvStat.settings.showMonsterMP && !hvStat.settings.showMonsterSP) {
-					return;
-				}
-
-				var nameOuterFrameElement = this.baseElement.children[1];
-				var nameInnerFrameElement = this.baseElement.children[1].children[0];
-				var hpBarBaseElement = this.baseElement.children[2].children[0];
-				var mpBarBaseElement = this.baseElement.children[2].children[1];
-				var spBarBaseElement = this.baseElement.children[2].children[2];
-				var hpIndicator = "";
-				var mpIndicator = "";
-				var spIndicator = "";
-				var div;
-
-				if (hvStat.settings.showMonsterHP || hvStat.settings.showMonsterHPPercent) {
-					div = document.createElement("div");
-					div.className = "hvstat-monster-health";
-					if (hvStat.settings.showMonsterHPPercent) {
-						hpIndicator = (this.currHpRate * 100).toFixed(2) + "%";
-					} else if (this.currHp && this.maxHp) {
-						hpIndicator = this.currHp.toFixed(0) + " / " + this.maxHp.toFixed(0);
+			}
+			nameOuterFrameElement.style.width = String(maxStatsWidth) + "px";
+		}
+	},
+	_renderPopup: function () {
+		var that = this;
+		var i, len, skill, lastScanString;
+		var existsScanResult = that._scanResult && that._scanResult.monsterClass;
+		var html = '<table cellspacing="0" cellpadding="0" style="width:100%">'
+			+ '<tr class="monname"><td colspan="2"><b>' + that._name + '</b></td></tr>'
+			+ '<tr><td width="33%">ID: </td><td>' + that._id + '</td></tr>'
+			+ '<tr><td>Health: </td><td>' + that._currHp().toFixed(1) + ' / ' + that._maxHp.toFixed(1) + '</td></tr>'
+			+ '<tr><td>Mana: </td><td>' + (that._currMpRate * 100).toFixed(2) + '%</td></tr>';
+		if (that._hasSpiritPoint) {
+			html += '<tr><td>Spirit: </td><td>' + (that._currSpRate * 100).toFixed(2) + '%</td></tr>';
+		}
+		if (existsScanResult) {
+			html += '<tr><td>Class:</td><td>' + (that._scanResult.monsterClass ? that._scanResult.monsterClass : "") + '</td></tr>'
+				+ '<tr><td>Trainer:</td><td>' + (that._scanResult.trainer ? that._scanResult.trainer : "") + '</td></tr>';
+			if (that._scanResult.powerLevel) {
+				html += '<tr><td>Power Level:</td><td>' + that._scanResult.powerLevel + '</td></tr>';
+			}
+			html += '<tr><td>Melee Attack:</td><td>' + (that._scanResult.meleeAttack ? that._scanResult.meleeAttack : "") + '</td></tr>';
+		}
+		var manaSkills = that._getManaSkills();
+		if (manaSkills && manaSkills.length > 0) {
+			html += '<tr><td valign="top">Skills:</td><td>';
+			len = manaSkills.length;
+			var skillTable = that._getManaSkillTable();
+			var skillCount = 0;
+			for (attackType in skillTable) {
+				if (skillTable[attackType].exists) {
+					for (damageType in skillTable[attackType].damageTable) {
+						if (skillTable[attackType].damageTable[damageType]) {
+							if (skillCount > 0) {
+								html += '<br/>';
+							}
+							html += hvStat.constant.attackType[attackType].name + '-' + hvStat.constant.damageType[damageType].name;
+							skillCount++;
+						}
 					}
-					div.textContent = hpIndicator;
-					hpBarBaseElement.parentNode.insertBefore(div, hpBarBaseElement.nextSibling);
 				}
-				if (hvStat.settings.showMonsterMP) {
-					div = document.createElement("div");
-					div.className = "hvstat-monster-magic";
-					mpIndicator = (this.currMpRate * 100).toFixed(1) + "%";
-					div.textContent = mpIndicator;
-					mpBarBaseElement.parentNode.insertBefore(div, mpBarBaseElement.nextSibling);
+			}
+			html += '</td></tr>';
+		}
+		var spiritSkill = that._getSpiritSkill();
+		if (spiritSkill) {
+			html += '<tr><td>Spirit Skill:</td><td>';
+			html += spiritSkill.toString();
+			html += '</td></tr>';
+		}
+		lastScanString = "Never";
+		if (existsScanResult) {
+			html += '<tr><td>Weak against:</td><td>' + (that._scanResult.defWeak.length > 0 ? that._scanResult.getDefWeakString(false, true, 0) : "-") + '</td></tr>'
+				+ '<tr><td>Resistant to:</td><td>' + (that._scanResult.defResistant.length > 0 ? that._scanResult.getDefResistantString(false, true, 0) : "-") + '</td></tr>'
+				+ '<tr><td>Impervious to:</td><td>' + (that._scanResult.defImpervious.length > 0 ? that._scanResult.getDefImperviousString(false, true, 0) : "-") + '</td></tr>'
+				+ '<tr><td>Debuffs affected:</td><td>' + (that._scanResult.debuffsAffected.length > 0 ? that._scanResult.debuffsAffected.join(", ") : "-") + '</td></tr>';
+			if (that._scanResult.lastScanDate) {
+				lastScanString = HVStat.getDateTimeString(that._scanResult.lastScanDate);
+			}
+		}
+		html += '<tr><td valign="top">Last Scan:</td><td>' + lastScanString + '</td></tr>';
+		if (existsScanResult && that._scanResult.lastScanDate) {
+			html += '<tr><td></td><td>' + HVStat.getElapsedFrom(that._scanResult.lastScanDate) + ' ago</td></tr>';
+		}
+		html += '</table>';
+		return html;
+	},
+
+	get id() { return this._id; },
+	get name() { return this._name; },
+	get maxHp() { return this._maxHp; },
+	get currHp() { return this._currHp(); },
+	get currHpRate() { return this._currHpRate; },
+	get currMpRate() { return this._currMpRate; },
+	get currSpRate() { return this._currSpRate; },
+	get hasSpiritPoint() { return this._hasSpiritPoint; },
+	get isDead() { return this._isDead; },
+	get scanResult() { return this._scanResult; },
+	get skills() { return this._skills; },
+	get valueObject() {
+		var vo = new HVStat.MonsterVO();
+		vo.id = this._id;
+		vo.name = this._name;
+		vo.maxHp = this._maxHp;
+		vo.prevMpRate = this._currMpRate;
+		vo.prevSpRate = this._currSpRate;
+		vo.scanResult = this._scanResult ? this._scanResult.valueObject : null;
+		for (var i = 0; i < this._skills.length; i++) {
+			vo.skills[i] = this._skills[i].valueObject;
+		}
+		return vo;
+	},
+	get baseElement() { return this._baseElement; },
+
+	set id(id) { this._id = id; },
+	set name(name) { this._name = name; },
+	set maxHp(maxHp) { this._maxHp = maxHp; },
+
+	fetchStartingLog: function (html) {
+		var that = this;
+		var r;
+		r = /MID=(\d+)\s/.exec(html);
+		if (!r) {
+			alert("HVSTAT: cannot identify MID");
+			return;
+		}
+		that._id = Number(r[1]);
+		r = /\(([^\.\)]{0,30})\) LV/.exec(html);
+		if (r) {
+			that._name = r[1];
+		}
+		r = /HP=(\d+\.?\d*)$/.exec(html);
+		if (r) {
+			that._maxHp = Number(r[1]);
+		}
+	},
+	fetchScanningLog: function (text, transaction) {
+		var that = this;
+		that._scanResult = HVStat.MonsterScanResults.prototype.fetchScanningLog(that._index, text);
+		that.putScanResultToDB(transaction);
+	},
+	fetchSkillLog: function (used, damaged, transaction) {
+		var that = this;
+		var i;
+		var spiritSkillFound;
+		var skillType = (that._prevSpRate <= that._currSpRate) ? hvStat.constant.skillType.MANA : hvStat.constant.skillType.SPIRIT;
+		var skill = HVStat.MonsterSkill.prototype.fetchSkillLog(used, damaged, skillType);
+		if (skillType === hvStat.constant.skillType.SPIRIT) {
+			// Spirit skill
+			// Overwrite if exists
+			for (i = 0; i < that._skills.length; i++) {
+				if (that._skills[i].skillType ===  hvStat.constant.skillType.SPIRIT) {
+					break;
 				}
-				if (hvStat.settings.showMonsterSP && this.hasSpiritPoint) {
-					div = document.createElement("div");
-					div.className = "hvstat-monster-spirit";
-					spIndicator = (this.currSpRate * 100).toFixed(1) + "%";
-					div.textContent = spIndicator;
-					spBarBaseElement.parentNode.insertBefore(div, spBarBaseElement.nextSibling);
+			}
+			that._skills[i] = skill;
+		} else {
+			// Mana skill
+			// Overwrite if same name or name is null
+			for (i = 0; i < that._skills.length; i++) {
+				if (that._skills[i].skillType ===  hvStat.constant.skillType.MANA
+						&& (that._skills[i].name === skill.name
+							|| (that._skills[i].name === null && that._skills[i].attackType === skill.attackType && that._skills[i].damageType === skill.damageType))) {
+					break;
 				}
-			},
-			renderStats: function () {
-				if (!_waitingForDBResponse()) {
-					_renderStats();
-				} else {
-					setTimeout(arguments.callee, 10);
-				}
-			},
-			renderPopup: function () {
-				return _renderPopup();
+			}
+			that._skills[i] = skill;
+		}
+		if (hvStat.settings.isRememberSkillsTypes) {
+			this.putSkillsToDB(transaction);
+		}
+	},
+	setFromValueObject: function (valueObject) {
+		var that = this;
+		var vo = valueObject;
+		that._id = vo.id;
+		that._name = vo.name;
+		that._maxHp = vo.maxHp;
+		that._prevMpRate = vo.prevMpRate;
+		that._prevSpRate = vo.prevSpRate;
+		that._scanResult = vo.scanResult ? new HVStat.MonsterScanResults(vo.scanResult) : null;
+		vo.skills.forEach(function (element, index, array) {
+			that._skills.push(new HVStat.MonsterSkill(element));
+		});
+	},
+	getFromDB: function (transaction, callback) {
+		var that = this;
+		if (!that._id) {
+			return;
+		}
+		var tx = transaction;
+		var scanResultsStore = tx.objectStore("MonsterScanResults");
+		var skillsStore = tx.objectStore("MonsterSkills");
+		// MonsterScanResults
+		var reqGet = scanResultsStore.get(that._id);
+		that._waitingForGetResponseOfMonsterScanResults = true;
+		reqGet.onsuccess = function (event) {
+			that._waitingForGetResponseOfMonsterScanResults = false;
+			//console.debug(event.target.result);
+			if (event.target.result === undefined) {
+				//console.log("get from MonsterScanResults: not found: id = " + that._id);
+			} else {
+				//console.log("get from MonsterScanResults: success: id = " + that._id);
+				that._scanResult = new HVStat.MonsterScanResults(event.target.result);
+				//console.debug(that._scanResult.valueObject);
+			}
+			if (!that._waitingForDBResponse()) {
+				callback();
 			}
 		};
-	};
-
-	// Public static method
-	Monster.getDomElementId = function (index) {
-		if (isNaN(index) || index < 0 || _domElementIds.length <= index) {
-			alert("Monster.getDomElementId: invalid index");
-			return null;
+		reqGet.onerror = function (event) {
+			that._waitingForGetResponseOfMonsterScanResults = false;
+			console.log("get from MonsterScanResults: error");
+		};
+		// MonsterSkills
+		var reqGet = skillsStore.get(that._id);
+		var idx = skillsStore.index("ix_id");
+		var range = IDBKeyRange.bound(that._id, that._id);
+		var reqOpen = idx.openCursor(range, "next");
+		that._waitingForGetResponseOfMonsterSkills = true;
+		reqOpen.onsuccess = function () {
+			var cursor = this.result;
+			if (cursor) {
+				//console.debug(cursor.value);
+				var skill = new HVStat.MonsterSkill(cursor.value);
+				//console.debug(skill.valueObject);
+				that._skills.push(skill);
+				//console.log("get from MonsterSkills: id = " + that._id);
+				cursor.continue();
+			} else {
+				that._waitingForGetResponseOfMonsterSkills = false;
+				//console.log("get from MonsterSkills: finished: id = " + that._id);
+			}
+			if (!that._waitingForDBResponse()) {
+				callback();
+			}
 		}
-		return _domElementIds[index];
-	};
+		reqOpen.onerror = function () {
+			that._waitingForGetResponseOfMonsterSkills = false;
+			console.log('request error.');
+		};
+	},
+	putScanResultToDB: function (transaction) {
+		var that = this;
+		if (!that._id || !that._scanResult) {
+			return;
+		}
+		var scanResultsStore = transaction.objectStore("MonsterScanResults");
+		var vo = that._scanResult.valueObject;
+		vo.id = that._id;
+		vo.name = that._name;
+		var reqPut = scanResultsStore.put(vo);
+		reqPut.onsuccess = function (event) {
+			//console.log("putScanResultToDB: success: id = " + that._id);
+		};
+		reqPut.onerror = function (event) {
+			console.log("putScanResultToDB: error: id = " + that._id);
+		};
+	},
+	putSkillsToDB: function (transaction) {
+		var that = this;
+		if (!that._id) {
+			return;
+		}
+		// Put after delete
+		var skillsStore = transaction.objectStore("MonsterSkills");
+		var range = IDBKeyRange.bound(that._id, that._id);
+		var reqOpen = skillsStore.openCursor(range, "next");
+		reqOpen.onsuccess = function () {
+			var i;
+			var vo;
+			var reqPut;
+			var cursor = this.result;
+			if (cursor) {
+				// Delete
+				cursor.delete();
+				cursor.continue();
+			} else {
+				// Put
+				for (i = 0; i < that._skills.length; i++) {
+					vo = that._skills[i].valueObject;
+					vo.id = that._id;
+					vo.createKey();
+					reqPut = skillsStore.put(vo);
+					reqPut.onsuccess = function (event) {
+						//console.log("putSkillsToDB: success: id = " + that._id);
+					};
+					reqPut.onerror = function (event) {
+						console.log("putSkillsToDB: error: id = " + that._id);
+					};
+				}
+			}
+		}
+		reqOpen.onerror = function () {
+			console.log('request error.');
+			alert('request error.');
+		}
+	},
+	renderHealth: function () {
+		var that = this;
+		if (that.isDead || !hvStat.settings.showMonsterHP && !hvStat.settings.showMonsterMP && !hvStat.settings.showMonsterSP) {
+			return;
+		}
 
-	return Monster;
-}());
+		var nameOuterFrameElement = that.baseElement.children[1];
+		var nameInnerFrameElement = that.baseElement.children[1].children[0];
+		var hpBarBaseElement = that.baseElement.children[2].children[0];
+		var mpBarBaseElement = that.baseElement.children[2].children[1];
+		var spBarBaseElement = that.baseElement.children[2].children[2];
+		var hpIndicator = "";
+		var mpIndicator = "";
+		var spIndicator = "";
+		var div;
+
+		if (hvStat.settings.showMonsterHP || hvStat.settings.showMonsterHPPercent) {
+			div = document.createElement("div");
+			div.className = "hvstat-monster-health";
+			if (hvStat.settings.showMonsterHPPercent) {
+				hpIndicator = (that.currHpRate * 100).toFixed(2) + "%";
+			} else if (this.currHp && that.maxHp) {
+				hpIndicator = that.currHp.toFixed(0) + " / " + that.maxHp.toFixed(0);
+			}
+			div.textContent = hpIndicator;
+			hpBarBaseElement.parentNode.insertBefore(div, hpBarBaseElement.nextSibling);
+		}
+		if (hvStat.settings.showMonsterMP) {
+			div = document.createElement("div");
+			div.className = "hvstat-monster-magic";
+			mpIndicator = (that.currMpRate * 100).toFixed(1) + "%";
+			div.textContent = mpIndicator;
+			mpBarBaseElement.parentNode.insertBefore(div, mpBarBaseElement.nextSibling);
+		}
+		if (hvStat.settings.showMonsterSP && this.hasSpiritPoint) {
+			div = document.createElement("div");
+			div.className = "hvstat-monster-spirit";
+			spIndicator = (that.currSpRate * 100).toFixed(1) + "%";
+			div.textContent = spIndicator;
+			spBarBaseElement.parentNode.insertBefore(div, spBarBaseElement.nextSibling);
+		}
+	},
+	renderStats: function () {
+		if (!this._waitingForDBResponse()) {
+			this._renderStats();
+		} else {
+//			setTimeout(arguments.callee, 10);
+			(function (that) {
+				setTimeout(function () {
+					that.renderStats();
+				}, 10);
+			})(this);
+		}
+	},
+	renderPopup: function () {
+		return this._renderPopup();
+	},
+};
 
 //------------------------------------
 // IndexedDB manipulators
@@ -6211,7 +6161,7 @@ function registerEventHandlersForMonsterPopup() {
 	var showPopup = function (event) {
 		var i, index = -1;
 		for (i = 0; i < HVStat.monsters.length; i++) {
-			if (HVStat.monsters[i].domElementId === this.id) {
+			if (HVStat.monsters[i].baseElement.id === this.id) {
 				index = i;
 				break;
 			}
