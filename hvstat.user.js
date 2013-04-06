@@ -410,7 +410,7 @@ hvStat.util = {
 			var treated = false;
 			var i = primitives.length;
 			while (i--) {
-				if (typeof item === primitives[i]) {
+				if (typeof property === primitives[i]) {
 					callback(target, base, key);
 					treated = true;
 					break;
@@ -2106,7 +2106,7 @@ var HVStat = {	// TODO: To be refactored
 	key_mpAlertAlreadyShown: "hvStat.magicAlertShown",
 	key_spAlertAlreadyShown: "hvStat.spiritAlertShown",
 	key_ocAlertAlreadyShown: "hvStat.overchargeAlertShown",
-	key_queuedAlerts: "hvstat.queuedAlerts",
+	key_queuedAlerts: "hvStat.queuedAlerts",
 
 	// indexedDB
 	idb: null,
@@ -2350,6 +2350,7 @@ HVStat.AlertAllFromQueue = function () {
 		for (i = 0; i < len; i++) {
 			alert(HVStat.alertQueue.shift());
 		}
+	}
 	if (hvStat.settings.condenseAlerts) {
 		if (HVStat.alertQueue.length !== 0) {
 			alert(HVStat.alertQueue.join("\n\n"));
