@@ -682,6 +682,8 @@ hvStat.storage.initialValue = {
 		isShowEndProfsWeapon: true,
 		autoAdvanceBattleRound: false,
 		autoAdvanceBattleRoundDelay: 500,
+		isCondenseAlerts: false,
+		delayRoundEndAlerts:false,
 
 		// Warning System
 		// - Self Status
@@ -2105,6 +2107,7 @@ var HVStat = {	// TODO: To be refactored
 	key_mpAlertAlreadyShown: "hvStat.magicAlertShown",
 	key_spAlertAlreadyShown: "hvStat.spiritAlertShown",
 	key_ocAlertAlreadyShown: "hvStat.overchargeAlertShown",
+	key_queuedAlerts: "hvstat.queuedAlerts",
 
 	// indexedDB
 	idb: null,
@@ -2338,6 +2341,16 @@ HVStat.enqueueAlert = function (message) {
 };
 
 HVStat.AlertAllFromQueue = function () {
+	if (hvStat.settings.isCondenseAlerts) {
+		if (HVStat.alertQueue.length!==0) {
+			alert(HVStat.alertQueue.join("\n\n"));
+			HVStat.alertQueue.length=0;
+		}
+	} else {
+		var i, len = HVStat.alertQueue.length;
+		for (i = 0; i < len; i++) {
+			alert(HVStat.alertQueue.shift());
+		}
 	if (hvStat.settings.condenseAlerts) {
 		if (HVStat.alertQueue.length !== 0) {
 			alert(HVStat.alertQueue.join("\n\n"));
@@ -2350,6 +2363,19 @@ HVStat.AlertAllFromQueue = function () {
 		}
 	}
 };
+
+HVStat.stashAlerts = function () {
+	hvStat.storage.setItem(HVStat.key_queuedAlerts, HVStat.alertQueue);
+	HVStat.alertQueue.length=0;
+}
+
+HVStat.restoreAlerts = function () {
+	var q=hvStat.storage.getItem(HVStat.key_queuedAlerts);
+	if (q!==null) {
+		HVStat.alertQueue=q;
+	}
+	hvStat.storage.removeItem(HVStat.key_queuedAlerts);
+}
 
 //------------------------------------
 // Classes
@@ -4254,6 +4280,21 @@ function collectRoundInfo() {
 		if (hvStat.settings.alertWhenChannelingIsGained && logText.indexOf("You gain the effect Channeling") >= 0) {
 			HVStat.enqueueAlert("You gained the effect Channeling.");
 		}
+		if (hvStat.settings.isMainEffectsAlertSelf && logHTML.match(/^The effect (.*)  has expired.$/)) {
+			//TODO: make this globally accessible to keep sync with AlertEffectsSelf
+			var effectNames = [
+				"Protection", "Hastened", "Shadow Veil", "Regen", "Absorbing Ward",
+				"Spark of Life", "Channeling", "Arcane Focus", "Heartseeker", "Spirit Shield",
+				"Flame Spikes", "Frost Spikes", "Lightning Spikes", "Storm Spikes",
+				"Chain 1", "Chain 2",
+			];
+			var effectName=RegExp.$1;
+			if (effectName==="Regen II")
+				effectName="Regen";
+			var i=effectNames.indexOf(effectName);
+			if (i!==-1 && hvStat.settings.isEffectsAlertSelf[i] && hvStat.settings.EffectsAlertSelfRounds[i]==="-1")
+				HVStat.enqueueAlert(effectName+" has expired");
+		}
 		if ((hvStat.settings.isShowSidebarProfs || hvStat.settings.isTrackStats) && logHTML.match(/0.0(\d+) points of (.*?) proficiency/ig)) {
 			var p = (RegExp.$1) / 100;
 			var r = RegExp.$2;
@@ -5563,6 +5604,8 @@ function initSettingsPane() {
 	}
 	if (hvStat.settings.autoAdvanceBattleRound) $("input[name=autoAdvanceBattleRound]").attr("checked", "checked");
 	$("input[name=autoAdvanceBattleRoundDelay]").attr("value", hvStat.settings.autoAdvanceBattleRoundDelay);
+	if (hvStat.settings.isCondenseAlerts) $("input[name=isCondenseAlerts]").attr("checked", "checked");
+	if (hvStat.settings.delayRoundEndAlerts) $("input[name=delayRoundEndAlerts]").attr("checked", "checked");
 
 	// Warning System
 	// - Self Status
@@ -5742,6 +5785,8 @@ function initSettingsPane() {
 	$("input[name=isShowEndProfsWeapon]").click(saveSettings); //isShowEndProfs added by Ilirith
 	$("input[name=autoAdvanceBattleRound]").click(saveSettings);
 	$("input[name=autoAdvanceBattleRoundDelay]").change(saveSettings);
+	$("input[name=isCondenseAlerts]").click(saveSettings);
+	$("input[name=delayRoundEndAlerts]").click(saveSettings);
 
 	// Warning System
 	// - Self Status
@@ -5887,6 +5932,8 @@ function saveSettings() {
 	hvStat.settings.isShowEndProfsWeapon = $("input[name=isShowEndProfsWeapon]").get(0).checked; //isShowEndProfs added by Ilirith
 	hvStat.settings.autoAdvanceBattleRound = $("input[name=autoAdvanceBattleRound]").get(0).checked;
 	hvStat.settings.autoAdvanceBattleRoundDelay = $("input[name=autoAdvanceBattleRoundDelay]").get(0).value;
+	hvStat.settings.isCondenseAlerts = $("input[name=isCondenseAlerts]").get(0).checked;
+	hvStat.settings.delayRoundEndAlerts = $("input[name=delayRoundEndAlerts]").get(0).checked;
 
 	// Warning System
 	// - Self Status
@@ -6084,6 +6131,7 @@ function HVMasterReset() {
 		key_mpAlertAlreadyShown,
 		key_spAlertAlreadyShown,
 		key_ocAlertAlreadyShown,
+		key_queuedAlerts,
 	];
 	var i = keys.length;
 	while (i--) {
@@ -6452,6 +6500,9 @@ hvStat.startup = {
 		}
 		if (hv.battle.active) {
 			hvStat.battle.setup();
+			if (hvStat.settings.delayRoundEndAlerts) {
+				HVStat.restoreAlerts();
+			}
 			collectRoundInfo();
 			if (hvStat.roundInfo.currRound > 0 && hvStat.settings.isShowRoundCounter) {
 				hvStat.battle.enhancement.roundCounter.create();
@@ -6487,6 +6538,10 @@ hvStat.startup = {
 				hvStat.storage.roundInfo.remove();
 				if (hvStat.settings.autoAdvanceBattleRound) {
 					hvStat.battle.advanceRound();
+				}
+				//Don't stash alerts if the battle's over
+				if (hvStat.settings.delayRoundEndAlerts && !hv.battle.finished) {
+					HVStat.stashAlerts();
 				}
 			}
 			HVStat.AlertAllFromQueue();
