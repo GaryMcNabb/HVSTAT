@@ -2351,17 +2351,6 @@ HVStat.AlertAllFromQueue = function () {
 			alert(HVStat.alertQueue.shift());
 		}
 	}
-	if (hvStat.settings.condenseAlerts) {
-		if (HVStat.alertQueue.length !== 0) {
-			alert(HVStat.alertQueue.join("\n\n"));
-			HVStat.alertQueue.length = 0;
-		}
-	} else {
-		var i, len = HVStat.alertQueue.length;
-		for (i = 0; i < len; i++) {
-			alert(HVStat.alertQueue.shift());
-		}
-	}
 };
 
 HVStat.stashAlerts = function () {
