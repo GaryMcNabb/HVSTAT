@@ -252,7 +252,7 @@ var hv = {
 		var i, r;
 		for (i = 0; i < e.length; i++) {
 			r = /(Easy|Normal|Hard|Heroic|Nightmare|Hell|Nintendo|Battletoads|IWBTH)/.exec(util.innerText(e[i]));
-			if (r && r.length >= 2) {
+			if (r) {
 				settings.difficulty = r[1];
 				break;
 			}
@@ -1839,7 +1839,7 @@ hvStat.battle.command.SubMenuItem = function (spec) {
 	this.element = spec && spec.element || null;
 	var onmouseover = String(this.element.getAttribute("onmouseover"));
 	var result = hvStat.battle.constant.rInfoPaneParameters.exec(onmouseover);
-	if (!result || result.length < 3) {
+	if (!result) {
 		return null;
 	}
 	this.name = result[1];
@@ -1975,7 +1975,7 @@ hvStat.battle.enhancement.roundCounter = {
 hvStat.battle.enhancement.effectDurationBadge = {
 	create: function (effectIcon) {
 		var result = hvStat.battle.constant.rInfoPaneParameters.exec(effectIcon.getAttribute("onmouseover"));
-		if (!result || result.length < 3) {
+		if (!result) {
 			return;
 		}
 		var duration = parseFloat(result[2]);
@@ -2359,7 +2359,7 @@ hvStat.battle.monster.MonsterSkill.prototype = {
 	fetchSkillLog: function (logUsed, logDamaged, skillType) {
 		var vo = new hvStat.vo.MonsterSkillVO();
 		var r = / (uses|casts) ([^\.]+)/.exec(logUsed);
-		if (!r || r.length < 3) {
+		if (!r) {
 			return null;
 		}
 		vo.name = r[2];
@@ -2375,7 +2375,7 @@ hvStat.battle.monster.MonsterSkill.prototype = {
 			vo.attackType = null;
 		}
 		r = / ([A-Za-z]+) damage/.exec(logDamaged);
-		if (!r || r.length < 2) {
+		if (!r) {
 			return null;
 		}
 		var dt = hvStat.constant.damageType[r[1].toUpperCase()];
@@ -2573,7 +2573,7 @@ hvStat.battle.monster.MonsterScanResults.prototype = {
 		var reScan = /Scanning (.*)\.\.\.\s+HP: [^\s]+\/([^\s]+)\s+MP: [^\s]+\/[^\s]+(?:\s+SP: [^\s]+\/[^\s]+)? Monster Class: (.+?)(?:, Power Level (\d+))? Monster Trainer:(?: (.+))? Melee Attack: (.+) Weak against: (.+) Resistant to: (.+) Impervious to: (.+)/;
 		var vo = new hvStat.vo.MonsterScanResultsVO();
 		var result = reScan.exec(text);
-		if (!result || result.length < 10) {
+		if (!result) {
 			alert("HVSTAT: Unknown scanning format");
 			return null;
 		}
@@ -4449,7 +4449,7 @@ function collectRoundInfo() {
 					var scanningMonsterIndex = -1;
 					var r = /Scanning ([^\.]{0,30})\.{3,}/.exec(logText);
 					var i, len, monster;
-					if (r && r.length >= 2) {
+					if (r) {
 						scanningMonsterName = r[1];
 						len = hvStat.battle.monster.monsters.length;
 						for (i = 0; i < len; i++) {
@@ -4533,7 +4533,7 @@ function collectRoundInfo() {
 						var j = hvStat.battle.monster.monsters.length;
 						while (j--) {
 							reResult = /([^\.]{1,30}) (?:uses|casts) /.exec(logHTMLOfPreviousRow);
-							if (reResult && reResult.length >= 2 && reResult[1] === hvStat.battle.monster.monsters[j].name && reResult[1].indexOf("Unnamed ") !== 0) {
+							if (reResult && reResult[1] === hvStat.battle.monster.monsters[j].name && reResult[1].indexOf("Unnamed ") !== 0) {
 								(function (j, logHTMLOfPreviousRow, logHTML) {
 									hvStat.database.idbAccessQueue.add(function () {
 										hvStat.battle.monster.monsters[j].fetchSkillLog(logHTMLOfPreviousRow, logHTML, hvStat.database.transaction);
@@ -6304,7 +6304,7 @@ function captureCharacterStatuses() {
 	var result;
 	for (var i = 0; i < elements.length; i++) {
 		result = /set(\d)_on/.exec(elements[i].getAttribute("src"));
-		if (result && result.length >= 2) {
+		if (result) {
 			hvStat.characterStatus.equippedSet = Number(result[1]);
 			break;
 		}
