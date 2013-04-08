@@ -2279,6 +2279,54 @@ hvStat.battle.monster = {
 	},
 };
 
+hvStat.battle.monster.popup = {
+	timerId: null,
+	setup: function () {
+		for (var i = 0; i < hvStat.battle.monster.monsters.length; i++) {
+			var monsterElement = hvStat.battle.monster.monsters[i].baseElement;
+			monsterElement.addEventListener("mouseover", this.onmouseover);
+			monsterElement.addEventListener("mouseout", this.onmouseout);
+		}
+	},
+	show: function (event) {
+		var i, index = -1;
+		for (i = 0; i < hvStat.battle.monster.monsters.length; i++) {
+			if (hvStat.battle.monster.monsters[i].baseElement.id === this.id) {
+				index = i;
+				break;
+			}
+		}
+		if (index < 0) return;
+		var html = hvStat.battle.monster.monsters[index].renderPopup();
+		hv.elementCache.popup.style.width = "270px";
+		hv.elementCache.popup.style.height = "auto";
+		hv.elementCache.popup.innerHTML = html;
+		var popupTopOffset = hv.battle.elementCache.monsterPane.offsetTop
+			+ index * ((hv.battle.elementCache.monsterPane.scrollHeight - hv.elementCache.popup.scrollHeight) / 9);
+		var popupLeftOffset = hvStat.settings.isMonsterPopupPlacement ? 955 : 275;
+		hv.elementCache.popup.style.top = popupTopOffset + "px";
+		hv.elementCache.popup.style.left = popupLeftOffset + "px";
+		hv.elementCache.popup.style.visibility = "visible";
+	},
+	hide: function () {
+		hv.elementCache.popup.style.visibility = "hidden";
+	},
+	onmouseover: function (event) {
+		(function (event, that) {
+			var popup = hvStat.battle.monster.popup;
+			var delay = Number(hvStat.settings.monsterPopupDelay);
+			popup.timerId = setTimeout(function () {
+				popup.show.call(that, event);
+			}, delay);
+		})(event, this);
+	},
+	onmouseout: function (event) {
+		var popup = hvStat.battle.monster.popup;
+		popup.hide();
+		clearTimeout(popup.timerId);
+	},
+};
+
 hvStat.battle.monster.MonsterSkill = function (vo) {
 	this._id = vo.id || null;
 	this._name = vo.name || null;
@@ -6218,50 +6266,6 @@ function addfromStatsBackup(back) {
 	hvStat.storage.stats.save();
 }
 
-function registerEventHandlersForMonsterPopup() {
-	var delay = hvStat.settings.monsterPopupDelay;
-	var popupLeftOffset = hvStat.settings.isMonsterPopupPlacement ? 955 : 275;
-	var showPopup = function (event) {
-		var i, index = -1;
-		for (i = 0; i < hvStat.battle.monster.monsters.length; i++) {
-			if (hvStat.battle.monster.monsters[i].baseElement.id === this.id) {
-				index = i;
-				break;
-			}
-		}
-		if (index < 0) return;
-		var html = hvStat.battle.monster.monsters[index].renderPopup();
-		hv.elementCache.popup.style.width = "270px";
-		hv.elementCache.popup.style.height = "auto";
-		hv.elementCache.popup.innerHTML = html;
-		var popupTopOffset = hv.battle.elementCache.monsterPane.offsetTop
-			+ index * ((hv.battle.elementCache.monsterPane.scrollHeight - hv.elementCache.popup.scrollHeight) / 9);
-		hv.elementCache.popup.style.top = popupTopOffset + "px";
-		hv.elementCache.popup.style.left = popupLeftOffset + "px";
-		hv.elementCache.popup.style.visibility = "visible";
-	};
-	var hidePopup = function () {
-		hv.elementCache.popup.style.visibility = "hidden";
-	};
-	var timerId;
-	var prepareForShowingPopup = function (event) {
-		(function (event, that) {
-			timerId = setTimeout(function () {
-				showPopup.call(that, event);
-			}, delay);
-		})(event, this);
-	};
-	var prepareForHidingPopup = function (event) {
-		hidePopup();
-		clearTimeout(timerId);
-	};
-	var i, len = hvStat.battle.monster.monsters.length;
-	for (i = 0; i < len; i++) {
-		var monsterElement = hvStat.battle.monster.monsters[i].baseElement;
-		monsterElement.addEventListener("mouseover", prepareForShowingPopup);
-		monsterElement.addEventListener("mouseout", prepareForHidingPopup);
-	}
-}
 function StartBattleAlerts () {
 	var elements = document.querySelectorAll('#arenaform img[onclick*="arenaform"]');
 	var i, element;
@@ -6306,60 +6310,6 @@ function captureCharacterStatuses() {
 		}
 	}
 	hvStat.storage.characterStatus.save();
-}
-function AlertEffectsSelf() {
-	var effectNames = [
-		"Protection", "Hastened", "Shadow Veil", "Regen", "Absorbing Ward",
-		"Spark of Life", "Channeling", "Arcane Focus", "Heartseeker", "Spirit Shield",
-		"Flame Spikes", "Frost Spikes", "Lightning Spikes", "Storm Spikes",
-		"Chain 1", "Chain 2",
-	];
-	var elements = hv.battle.elementCache.characterEffectIcons;
-	Array.prototype.forEach.call(elements, function (element) {
-		var onmouseover = element.getAttribute("onmouseover").toString();
-		var result = hvStat.battle.constant.rInfoPaneParameters.exec(onmouseover);
-		if (!result) return;
-		var effectName = result[1];
-		var duration = result[2];
-		var i;
-		for (i = 0; i < effectNames.length; i++) {
-			if (hvStat.settings.isEffectsAlertSelf[i]
-					&& (effectName + " ").indexOf(effectNames[i] + " ") >= 0	// To match "Regen" and "Regen II", not "Regeneration"
-					&& String(hvStat.settings.EffectsAlertSelfRounds[i]) === duration) {
-				hvStat.battle.warningSystem.enqueueAlert(effectName + " is expiring");
-			}
-		}
-	});
-}
-function AlertEffectsMonsters() {
-	var effectNames = [
-		"Spreading Poison", "Slowed", "Weakened", "Asleep", "Confused",
-		"Imperiled", "Blinded", "Silenced", "Nerfed", "Magically Snared",
-		"Lifestream", "Coalesced Mana"
-	];
-	var elements = document.querySelectorAll("#monsterpane div.btm6 > img");
-	Array.prototype.forEach.call(elements, function (element) {
-		var onmouseover = element.getAttribute("onmouseover").toString();
-		var result = hvStat.battle.constant.rInfoPaneParameters.exec(onmouseover);
-		if (!result) return;
-		var effectName = result[1];
-		var duration = result[2];
-		var i, base, monsterNumber;
-		for (i = 0; i < effectNames.length; i++) {
-			if (hvStat.settings.isEffectsAlertMonsters[i]
-					&& effectNames[i] === effectName
-					&& String(hvStat.settings.EffectsAlertMonstersRounds[i]) === duration) {
-				for (base = element; base; base = base.parentElement) {
-					if (base.id && base.id.indexOf("mkey_") >= 0) {
-						break;
-					}
-				}
-				if (!base) continue;
-				monsterNumber = base.id.replace("mkey_", "");
-				hvStat.battle.warningSystem.enqueueAlert(effectName + '\n on monster number "' + monsterNumber + '" is expiring');
-			}
-		}
-	});
 }
 function TaggingItems(clean) {
 	// Can clean tag data when visited the Inventory page.
@@ -6531,7 +6481,7 @@ hvStat.startup = {
 				});
 			}
 			if (hvStat.settings.isShowStatsPopup) {
-				registerEventHandlersForMonsterPopup();
+				hvStat.battle.monster.popup.setup();
 			}
 			// Show warnings
 			if (!hv.battle.round.finished) {
