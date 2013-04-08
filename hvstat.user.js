@@ -667,6 +667,8 @@ hvStat.storage.initialValue = {
 		isAltHighlight: false,
 		isShowDivider: true,
 		isShowScanButton: false,
+		highlightScanButtonWhenScanResultExpired: false,
+		nDaysUntilScanResultExpiration: 30,
 		isShowSkillButton: false,
 		isShowMonsterNumber: false,
 		isShowMonsterDuration: true,
@@ -1903,6 +1905,7 @@ hvStat.battle.enhancement.log = {
 };
 
 hvStat.battle.enhancement.scanButton = {
+	elements: [],
 	createAll: function () {
 		hv.battle.elementCache.monsterPane.style.overflow = "visible";
 		var monsters = hv.battle.elementCache.monsters;
@@ -1914,6 +1917,7 @@ hvStat.battle.enhancement.scanButton = {
 			if (button) {
 				monsters[i].insertBefore(button, null);
 			}
+			this.elements[i] = button;
 		}
 	},
 	create: function (monster) {
@@ -2975,6 +2979,29 @@ HVStat.Monster.prototype = {
 				}
 			}
 			nameOuterFrameElement.style.width = String(maxStatsWidth) + "px";
+
+			if (hvStat.settings.highlightScanButtonWhenScanResultExpired) {
+				var existsScanResult = !!(that._scanResult && that._scanResult.monsterClass);
+				var getElapsedDaysFrom = function (date) {
+					var mins = 0, hours = 0, days = 0;
+					mins = Math.floor(((new Date()).getTime() - date.getTime()) / (60 * 1000));
+					if (mins >= 60) {
+						hours = Math.floor(mins / 60);
+						mins = mins % 60;
+					}
+					if (hours >= 24) {
+						days = Math.floor(hours / 24);
+						hours = hours % 24;
+					}
+					return days;
+				};
+				if (!existsScanResult || getElapsedDaysFrom(that._scanResult.lastScanDate) >= Number(hvStat.settings.nDaysUntilScanResultExpiration)) {
+					var scanButton = hvStat.battle.enhancement.scanButton.elements[that._index];
+					if (scanButton) {
+						scanButton.className += " hvstat-scan-button-highlight";
+					}
+				}
+			}
 		}
 	},
 	_renderPopup: function () {
@@ -5572,6 +5599,8 @@ function initSettingsPane() {
 	if (hvStat.settings.isAltHighlight) $("input[name=isAltHighlight]").attr("checked", "checked");
 	if (hvStat.settings.isShowDivider) $("input[name=isShowDivider]").attr("checked", "checked");
 	if (hvStat.settings.isShowScanButton) $("input[name=isShowScanButton]").attr("checked", "checked");
+	if (hvStat.settings.highlightScanButtonWhenScanResultExpired) $("input[name=highlightScanButtonWhenScanResultExpired]").attr("checked", "checked");
+	$("input[name=nDaysUntilScanResultExpiration]").attr("value", hvStat.settings.nDaysUntilScanResultExpiration);
 	if (hvStat.settings.isShowSkillButton) $("input[name=isShowSkillButton]").attr("checked", "checked");
 	if (hvStat.settings.isShowMonsterNumber) $("input[name=isShowMonsterNumber]").attr("checked", "checked"); //isShowMonsterNumber stolen from HV Lite, and added by Ilirith
 	if (hvStat.settings.isShowMonsterDuration) $("input[name=isShowMonsterDuration]").attr("checked", "checked");
@@ -5758,6 +5787,8 @@ function initSettingsPane() {
 	$("input[name=isAltHighlight]").click(saveSettings);
 	$("input[name=isShowDivider]").click(saveSettings);
 	$("input[name=isShowScanButton]").click(saveSettings);
+	$("input[name=highlightScanButtonWhenScanResultExpired]").click(saveSettings);
+	$("input[name=nDaysUntilScanResultExpiration]").change(saveSettings);
 	$("input[name=isShowSkillButton]").click(saveSettings);
 	$("input[name=isShowMonsterNumber]").click(saveSettings);
 	$("input[name=isShowMonsterDuration]").click(saveSettings);
@@ -5904,6 +5935,8 @@ function saveSettings() {
 	hvStat.settings.isAltHighlight = $("input[name=isAltHighlight]").get(0).checked;
 	hvStat.settings.isShowDivider = $("input[name=isShowDivider]").get(0).checked;
 	hvStat.settings.isShowScanButton = $("input[name=isShowScanButton]").get(0).checked;
+	hvStat.settings.highlightScanButtonWhenScanResultExpired = $("input[name=highlightScanButtonWhenScanResultExpired]").get(0).checked;
+	hvStat.settings.nDaysUntilScanResultExpiration = $("input[name=nDaysUntilScanResultExpiration]").get(0).value;
 	hvStat.settings.isShowSkillButton = $("input[name=isShowSkillButton]").get(0).checked;
 	hvStat.settings.isShowMonsterNumber = $("input[name=isShowMonsterNumber]").get(0).checked;
 	hvStat.settings.isShowMonsterDuration = $("input[name=isShowMonsterDuration]").get(0).checked;
