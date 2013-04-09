@@ -719,10 +719,11 @@ hvStat.storage.initialValue = {
 		isShowEndProfsWeapon: true,
 		autoAdvanceBattleRound: false,
 		autoAdvanceBattleRoundDelay: 500,
-		isCondenseAlerts: false,
-		delayRoundEndAlerts:false,
 
 		// Warning System
+		// - Display Method
+		isCondenseAlerts: false,
+		delayRoundEndAlerts:false,
 		// - Self Status
 		isHighlightQC: true,
 		warnOrangeLevel: 40,
@@ -5701,10 +5702,11 @@ function initSettingsPane() {
 	}
 	if (hvStat.settings.autoAdvanceBattleRound) $("input[name=autoAdvanceBattleRound]").attr("checked", "checked");
 	$("input[name=autoAdvanceBattleRoundDelay]").attr("value", hvStat.settings.autoAdvanceBattleRoundDelay);
-	if (hvStat.settings.isCondenseAlerts) $("input[name=isCondenseAlerts]").attr("checked", "checked");
-	if (hvStat.settings.delayRoundEndAlerts) $("input[name=delayRoundEndAlerts]").attr("checked", "checked");
 
 	// Warning System
+	// - Display Method
+	if (hvStat.settings.isCondenseAlerts) $("input[name=isCondenseAlerts]").attr("checked", "checked");
+	if (hvStat.settings.delayRoundEndAlerts) $("input[name=delayRoundEndAlerts]").attr("checked", "checked");
 	// - Self Status
 	if (hvStat.settings.isHighlightQC) $("input[name=isHighlightQC]").attr("checked", "checked");
 	$("input[name=warnOrangeLevel]").attr("value", hvStat.settings.warnOrangeLevel);
@@ -5883,10 +5885,11 @@ function initSettingsPane() {
 	$("input[name=isShowEndProfsWeapon]").click(saveSettings); //isShowEndProfs added by Ilirith
 	$("input[name=autoAdvanceBattleRound]").click(saveSettings);
 	$("input[name=autoAdvanceBattleRoundDelay]").change(saveSettings);
-	$("input[name=isCondenseAlerts]").click(saveSettings);
-	$("input[name=delayRoundEndAlerts]").click(saveSettings);
 
 	// Warning System
+	// - Display Method
+	$("input[name=isCondenseAlerts]").click(saveSettings);
+	$("input[name=delayRoundEndAlerts]").click(saveSettings);
 	// - Self Status
 	$("input[name=isHighlightQC]").click(saveSettings);
 	$("input[name=warnOrangeLevel]").change(saveSettings);
@@ -6031,10 +6034,11 @@ function saveSettings() {
 	hvStat.settings.isShowEndProfsWeapon = $("input[name=isShowEndProfsWeapon]").get(0).checked; //isShowEndProfs added by Ilirith
 	hvStat.settings.autoAdvanceBattleRound = $("input[name=autoAdvanceBattleRound]").get(0).checked;
 	hvStat.settings.autoAdvanceBattleRoundDelay = $("input[name=autoAdvanceBattleRoundDelay]").get(0).value;
-	hvStat.settings.isCondenseAlerts = $("input[name=isCondenseAlerts]").get(0).checked;
-	hvStat.settings.delayRoundEndAlerts = $("input[name=delayRoundEndAlerts]").get(0).checked;
 
 	// Warning System
+	// - Display Method
+	hvStat.settings.isCondenseAlerts = $("input[name=isCondenseAlerts]").get(0).checked;
+	hvStat.settings.delayRoundEndAlerts = $("input[name=delayRoundEndAlerts]").get(0).checked;
 	// - Self Status
 	hvStat.settings.isHighlightQC = $("input[name=isHighlightQC]").get(0).checked;
 	hvStat.settings.warnOrangeLevel = $("input[name=warnOrangeLevel]").get(0).value;
