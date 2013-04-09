@@ -3336,13 +3336,6 @@ hvStat.battle.warningSystem = {
 		}
 		hvStat.storage.warningState.save();
 	},
-	resetHealthWarningStates: function () {
-		hvStat.warningState.healthAlertShown = false;
-		hvStat.warningState.magicAlertShown = false;
-		hvStat.warningState.spiritAlertShown = false;
-		hvStat.warningState.overchargeAlertShown = false;
-		hvStat.storage.warningState.save();
-	},
 	selfEffectNames: [
 		"Protection", "Hastened", "Shadow Veil", "Regen", "Absorbing Ward",
 		"Spark of Life", "Channeling", "Arcane Focus", "Heartseeker", "Spirit Shield",
@@ -6516,8 +6509,7 @@ hvStat.startup = {
 				captureCharacterStatuses();
 			}
 			if (!hv.location.isRiddle) {
-				hvStat.storage.warningState.reset();
-				hvStat.storage.warningState.save();
+				hvStat.storage.warningState.remove();
 			}
 			if (hvStat.settings.enableScrollHotkey) {
 				hvStat.keyboard.scrollable.setup();
