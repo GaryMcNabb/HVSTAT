@@ -3287,13 +3287,13 @@ hvStat.battle.warningSystem = {
 		}
 	},
 	stashAlerts: function () {
-		hvStat.warningState.queuedAlerts = this.alertQueue.concat();	// have to make clone
-		this.alertQueue.length = 0;
+		hvStat.warningState.queuedAlerts = this.alertQueue;
+		this.alertQueue = [];
 		hvStat.storage.warningState.save();
 	},
 	restoreAlerts: function () {
-		this.alertQueue = hvStat.warningState.queuedAlerts.concat();	// have to make clone
-		hvStat.warningState.queuedAlerts.length = 0;
+		this.alertQueue = hvStat.warningState.queuedAlerts;
+		hvStat.warningState.queuedAlerts = [];
 		hvStat.storage.warningState.save();
 	},
 	warnHealthStatus: function () {
