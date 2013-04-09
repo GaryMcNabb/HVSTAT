@@ -3286,12 +3286,12 @@ hvStat.battle.warningSystem = {
 		}
 	},
 	stashAlerts: function () {
-		hvStat.warningState.queuedAlerts = this.alertQueue;
+		hvStat.warningState.queuedAlerts = this.alertQueue.concat();	// have to make clone
 		this.alertQueue.length = 0;
 		hvStat.storage.warningState.save();
 	},
 	restoreAlerts: function () {
-		this.alertQueue = hvStat.warningState.queuedAlerts;
+		this.alertQueue = hvStat.warningState.queuedAlerts.concat();	// have to make clone
 		hvStat.warningState.queuedAlerts.length = 0;
 		hvStat.storage.warningState.save();
 	},
@@ -6516,7 +6516,8 @@ hvStat.startup = {
 				captureCharacterStatuses();
 			}
 			if (!hv.location.isRiddle) {
-				hvStat.battle.warningSystem.resetHealthWarningStates();
+				hvStat.storage.warningState.reset();
+				hvStat.storage.warningState.save();
 			}
 			if (hvStat.settings.enableScrollHotkey) {
 				hvStat.keyboard.scrollable.setup();
