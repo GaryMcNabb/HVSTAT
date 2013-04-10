@@ -478,7 +478,7 @@ hvStat.util = {
 			return date.toDateString() + " " + date.toTimeString();
 		}
 	},
-	getElapsedFrom: function (date) {
+	getElapseFrom: function (date) {
 		if (!date) return "";
 		var mins = 0, hours = 0, days = 0;
 		var str;
@@ -499,6 +499,17 @@ hvStat.util = {
 			str = String(days) + ((days > 1) ? " days, " : " day, ") + str;
 		}
 		return str;
+	},
+	getRelativeTime: function (b) {
+		var a = (arguments.length > 1) ? arguments[1] : new Date();
+		var c = parseInt((a.getTime() - b) / 1000);
+		if (c < 60) return "less than a minute ago";
+		if (c < 120) return "about a minute ago";
+		if (c < (60 * 60)) return (parseInt(c / 60)).toString() + " minutes ago";
+		if (c < (120 * 60)) return "about an hour ago";
+		if (c < (24 * 60 * 60)) return "about " + (parseInt(c / 3600)).toString() + " hours ago";
+		if (c < (48 * 60 * 60)) return "1 day ago";
+		return (parseInt(c / 86400)).toString() + " days ago";
 	},
 };
 
@@ -1245,6 +1256,103 @@ hvStat.storage.equipmentTags = new hvStat.storage.Item("HVTags", hvStat.storage.
 hvStat.storage.oldMonsterDatabase = new hvStat.storage.Item("HVDatabase", hvStat.storage.initialValue.oldMonsterDatabase);
 
 //------------------------------------
+// Support Functions
+//------------------------------------
+hvStat.support = {
+	captureStatuses: function () {
+		var difficulties = ["", "Easy", "Normal", "Hard", "Heroic", "Nightmare", "Hell", "Nintendo", "Battletoads", "IWBTH"];
+		var difficulty = hv.settings.difficulty;
+		if (difficulty) {
+			hvStat.characterStatus.difficulty.name = hv.settings.difficulty;
+			hvStat.characterStatus.difficulty.index = difficulties.indexOf(difficulty);
+		}
+		elements = document.querySelectorAll('#setform img');
+		var result;
+		for (var i = 0; i < elements.length; i++) {
+			result = /set(\d)_on/.exec(elements[i].getAttribute("src"));
+			if (result) {
+				hvStat.characterStatus.equippedSet = Number(result[1]);
+				break;
+			}
+		}
+		hvStat.storage.characterStatus.save();
+	},
+	captureProficiencies: function () {
+		var proficiencyTable = document.getElementById("leftpane").children[1].querySelectorAll('div.fd12');
+		var prof = hvStat.characterStatus.proficiencies;
+		prof.oneHanded = Number(util.innerText(proficiencyTable[2]));
+		prof.twoHanded = Number(util.innerText(proficiencyTable[4]));
+		prof.dualWielding = Number(util.innerText(proficiencyTable[6]));
+		prof.staff = Number(util.innerText(proficiencyTable[8]));
+		prof.clothArmor = Number(util.innerText(proficiencyTable[10]));
+		prof.lightArmor = Number(util.innerText(proficiencyTable[12]));
+		prof.heavyArmor = Number(util.innerText(proficiencyTable[14]));
+		prof.elemental = Number(util.innerText(proficiencyTable[17]));
+		prof.divine = Number(util.innerText(proficiencyTable[19]));
+		prof.forbidden = Number(util.innerText(proficiencyTable[21]));
+		prof.spiritual = Number(util.innerText(proficiencyTable[23]));
+		prof.deprecating = Number(util.innerText(proficiencyTable[25]));
+		prof.supportive = Number(util.innerText(proficiencyTable[27]));
+		hvStat.characterStatus.areProficienciesCaptured = true;
+		hvStat.storage.characterStatus.save();
+	},
+	captureShrine: function () {
+		var messageBoxElement = document.querySelector('#messagebox');
+		if (!messageBoxElement) {
+			return;
+		}
+		var messageElements = messageBoxElement.querySelectorAll('div.cmb6');
+		var message0 = util.innerText(messageElements[0]);
+		if (message0.match(/power/i)) {
+			hvStat.shrine.artifactsTraded++;
+			var message2 = util.innerText(messageElements[2]);
+			if (message2.match(/ability point/i)) {
+				hvStat.shrine.artifactAP++;
+			} else if (message2.match(/crystal/i)) {
+				hvStat.shrine.artifactCrystal++;
+			} else if (message2.match(/increased/i)) {
+				hvStat.shrine.artifactStat++;
+			} else if (message2.match(/(\d) hath/i)) {
+				hvStat.shrine.artifactHath++;
+				hvStat.shrine.artifactHathTotal += Number(RegExp.$1);
+			} else if (message2.match(/energy drink/i)) {
+				hvStat.shrine.artifactItem++;
+			}
+		} else if (message0.match(/item/i)) {
+			var message3 = util.innerText(messageElements[3]);
+			hvStat.shrine.trophyArray.push(message3);
+		}
+		hvStat.storage.shrine.save();
+	},
+	confirmBeforeBattle: function () {
+		var elements = document.querySelectorAll('#arenaform img[onclick*="arenaform"]');
+		var i, element;
+		for (i = 0; i < elements.length; i++) {
+			element = elements[i];
+			var oldOnClick = element.getAttribute("onclick");
+			var newOnClick = 'if(confirm("Are you sure you want to start this challenge on '
+				+ hvStat.characterStatus.difficulty.name
+				+ ' difficulty, with set number: '
+				+ hvStat.characterStatus.equippedSet + '?\\n';
+			if (hvStat.settings.StartAlertHP > hv.character.healthPercent) {
+				newOnClick += '\\n - HP is only '+ hv.character.healthPercent + '%';
+			}
+			if (hvStat.settings.StartAlertMP > hv.character.magicPercent) {
+				newOnClick += '\\n - MP is only '+ hv.character.magicPercent + '%';
+			}
+			if (hvStat.settings.StartAlertSP > hv.character.spiritPercent) {
+				newOnClick += '\\n - SP is only '+ hv.character.spiritPercent + '%';
+			}
+			if (hvStat.settings.StartAlertDifficulty < hvStat.characterStatus.difficulty.index) {
+				newOnClick += '\\n - Difficulty is '+ hvStat.characterStatus.difficulty.name;
+			}
+			newOnClick += '")) {'+ oldOnClick+ '}';
+			element.setAttribute("onclick", newOnClick);
+		}
+	},
+};
+
+//------------------------------------
 // Gadgets
 //------------------------------------
 hvStat.gadget = {};
@@ -1294,7 +1402,7 @@ hvStat.gadget.proficiencyPopupIcon = {
 		icon.appendChild(this.popup);
 		icon.addEventListener("mouseover", this.mouseover);
 		icon.addEventListener("mouseout", this.mouseout);
-		var leftBar = document.querySelector("div.clb");
+		var leftBar = document.querySelector('div.clb');
 		leftBar.parentNode.insertBefore(icon, leftBar.nextSibling);
 	},
 	mouseover: function (event) {
@@ -1637,41 +1745,8 @@ hvStat.battle = {
 	constant: {
 		rInfoPaneParameters: /battle\.set_infopane_(?:spell|skill|item|effect)\('((?:[^'\\]|\\.)*)'\s*,\s*'(?:[^'\\]|\\.)*'\s*,\s*(.+)\)/,
 	},
-	setup: function () { // TODO: To be moved to hvStat.battle.enhancement
-		if (hvStat.settings.isShowSelfDuration) {
-			hvStat.battle.enhancement.effectDurationBadge.showForCharacter();
-		}
-		if (hvStat.settings.showSelfEffectStackLevel) {
-			hvStat.battle.enhancement.effectStackLevelBadge.showForCharacter();
-		}
-		if (hvStat.settings.isShowPowerupBox) {
-			hvStat.battle.enhancement.powerupBox.create();
-		}
-		if (hvStat.settings.isHighlightQC) {
-			hvStat.battle.enhancement.quickcast.highlight();
-		}
-		if (hvStat.settings.isShowHighlight) {
-			hvStat.battle.enhancement.log.setHighlightStyle();
-			hvStat.battle.enhancement.log.highlight();
-		}
-		if (hvStat.settings.isShowDivider) {
-			hvStat.battle.enhancement.log.showDivider();
-		}
-		if (hvStat.settings.isShowScanButton) {
-			hvStat.battle.enhancement.scanButton.createAll();
-		}
-		if (hvStat.settings.isShowSkillButton) {
-			hvStat.battle.enhancement.skillButton.createAll();
-		}
-		if (hvStat.settings.isShowMonsterNumber) {
-			hvStat.battle.enhancement.monsterLabel.replaceWithNumber();
-		}
-		if (hvStat.settings.isShowMonsterDuration) {
-			hvStat.battle.enhancement.effectDurationBadge.showForMonsters();
-		}
-		if (hvStat.settings.showMonsterEffectStackLevel) {
-			hvStat.battle.enhancement.effectStackLevelBadge.showForMonsters();
-		}
+	setup: function () {
+		hvStat.battle.enhancement.setup();
 	},
 	advanceRound: function () {
 		if (!hv.battle.finished && hv.battle.round.finished) {
@@ -1696,7 +1771,7 @@ hvStat.battle.log.Turn = function (specifiedTurn) {
 	this.texts = [];
 	this.innerHTMLs = [];
 
-	var turnElements = document.querySelectorAll("#togpane_log td:first-child");
+	var turnElements = document.querySelectorAll('#togpane_log td:first-child');
 	this.lastTurn = Number(util.innerText(turnElements[0]));
 	if (isNaN(parseFloat(specifiedTurn))) {
 		specifiedTurn = this.lastTurn;
@@ -1884,7 +1959,7 @@ hvStat.battle.command.SubMenu = function (spec) {
 	this.element = this.elementId && document.getElementById(this.elementId) || null;
 
 	this.items = [];
-	var itemElements = this.element.querySelectorAll("div.btsd, #ikey_p, img.btii");
+	var itemElements = this.element.querySelectorAll('div.btsd, #ikey_p, img.btii');
 	for (var i = 0; i < itemElements.length; i++) {
 		this.items[i] = new hvStat.battle.command.SubMenuItem({ parent: this, element: itemElements[i] });
 	}
@@ -1951,7 +2026,44 @@ hvStat.battle.command.Command.prototype = {
 //------------------------------------
 // Battle - Enhancements
 //------------------------------------
-hvStat.battle.enhancement = {};
+hvStat.battle.enhancement = {
+	setup: function () {
+		if (hvStat.settings.isShowSelfDuration) {
+			this.effectDurationBadge.showForCharacter();
+		}
+		if (hvStat.settings.showSelfEffectStackLevel) {
+			this.effectStackLevelBadge.showForCharacter();
+		}
+		if (hvStat.settings.isShowPowerupBox) {
+			this.powerupBox.create();
+		}
+		if (hvStat.settings.isHighlightQC) {
+			this.quickcast.highlight();
+		}
+		if (hvStat.settings.isShowHighlight) {
+			this.log.setHighlightStyle();
+			this.log.highlight();
+		}
+		if (hvStat.settings.isShowDivider) {
+			this.log.showDivider();
+		}
+		if (hvStat.settings.isShowScanButton) {
+			this.scanButton.createAll();
+		}
+		if (hvStat.settings.isShowSkillButton) {
+			this.skillButton.createAll();
+		}
+		if (hvStat.settings.isShowMonsterNumber) {
+			this.monsterLabel.replaceWithNumber();
+		}
+		if (hvStat.settings.isShowMonsterDuration) {
+			this.effectDurationBadge.showForMonsters();
+		}
+		if (hvStat.settings.showMonsterEffectStackLevel) {
+			this.effectStackLevelBadge.showForMonsters();
+		}
+	},
+};
 
 hvStat.battle.enhancement.roundCounter = {
 	// Adds a Round counter to the Battle screen.
@@ -2248,7 +2360,7 @@ hvStat.battle.enhancement.skillButton = {
 
 hvStat.battle.enhancement.monsterLabel = {
 	replaceWithNumber: function () {
-		var targets = document.querySelectorAll("img.btmi");
+		var targets = document.querySelectorAll('img.btmi');
 		for (var i = 0; i < targets.length; i++) {
 			var target = targets[i];
 			target.className += " hvstat-monster-number";
@@ -2650,7 +2762,7 @@ hvStat.battle.monster.Monster.prototype = {
 		if (barIndex >= this._healthBars.length) {
 			return 0;
 		}
-		var v, bar = this._healthBars[barIndex].querySelector("img.chb2");
+		var v, bar = this._healthBars[barIndex].querySelector('img.chb2');
 		if (!bar) {
 			v = 0;
 		} else {
@@ -2990,7 +3102,7 @@ hvStat.battle.monster.Monster.prototype = {
 		}
 		html += '<tr><td valign="top">Last Scan:</td><td>' + lastScanString + '</td></tr>';
 		if (existsScanResult && that._scanResult.lastScanDate) {
-			html += '<tr><td></td><td>' + hvStat.util.getElapsedFrom(that._scanResult.lastScanDate) + ' ago</td></tr>';
+			html += '<tr><td></td><td>' + hvStat.util.getElapseFrom(that._scanResult.lastScanDate) + ' ago</td></tr>';
 		}
 		html += '</table>';
 		return html;
@@ -3367,7 +3479,7 @@ hvStat.battle.warningSystem = {
 		}
 	},
 	warnMonsterEffectExpiring: function () {
-		var elements = document.querySelectorAll("#monsterpane div.btm6 > img");
+		var elements = document.querySelectorAll('#monsterpane div.btm6 > img');
 		for (var i = 0; i < elements.length; i++) {
 			var element = elements[i];
 			var onmouseover = element.getAttribute("onmouseover");
@@ -3907,7 +4019,7 @@ hvStat.ui = {
 		browser.extension.style.addFromResource("css/", "jquery-ui-1.9.2.custom.min.css", imageResouces);
 	},
 	createIcon: function () {
-		var stuffBox = document.querySelector("div.stuffbox");
+		var stuffBox = document.querySelector('div.stuffbox');
 		var icon = document.createElement("div");
 		icon.id = "hvstat-icon";
 		icon.className = "ui-state-default ui-corner-all";
@@ -4261,29 +4373,9 @@ function showBattleEndStats() {
 	var battleLog = document.getElementById("togpane_log");
 	battleLog.innerHTML = "<div class='ui-state-default ui-corner-bottom' style='padding:10px;margin-bottom:10px;text-align:left'>" + getBattleEndStatsHtml() + "</div>" + battleLog.innerHTML;
 }
-
-function collectCurrentProfsData() {
-	var proficiencyTable = document.getElementById("leftpane").children[1].querySelectorAll("div.fd12");
-	var prof = hvStat.characterStatus.proficiencies;
-	prof.oneHanded = Number(util.innerText(proficiencyTable[2]));
-	prof.twoHanded = Number(util.innerText(proficiencyTable[4]));
-	prof.dualWielding = Number(util.innerText(proficiencyTable[6]));
-	prof.staff = Number(util.innerText(proficiencyTable[8]));
-	prof.clothArmor = Number(util.innerText(proficiencyTable[10]));
-	prof.lightArmor = Number(util.innerText(proficiencyTable[12]));
-	prof.heavyArmor = Number(util.innerText(proficiencyTable[14]));
-	prof.elemental = Number(util.innerText(proficiencyTable[17]));
-	prof.divine = Number(util.innerText(proficiencyTable[19]));
-	prof.forbidden = Number(util.innerText(proficiencyTable[21]));
-	prof.spiritual = Number(util.innerText(proficiencyTable[23]));
-	prof.deprecating = Number(util.innerText(proficiencyTable[25]));
-	prof.supportive = Number(util.innerText(proficiencyTable[27]));
-	hvStat.characterStatus.areProficienciesCaptured = true;
-	hvStat.storage.characterStatus.save();
-}
 function inventoryWarning() {
 	var d = 4;
-	var rectObject = document.querySelector("div.stuffbox").getBoundingClientRect();
+	var rectObject = document.querySelector('div.stuffbox').getBoundingClientRect();
 	var c = rectObject.width - 85 - 4;
 	var div = document.createElement("div");
 	div.setAttribute("class", "ui-state-error ui-corner-all");
@@ -4786,7 +4878,7 @@ function RoundSave() {
 function saveStats() {
 	var d = 0;
 	var c = 0;
-	var elements = document.querySelectorAll("#togpane_log td:last-child");
+	var elements = document.querySelectorAll('#togpane_log td:last-child');
 	var i, html;
 	for (i = 0; i < elements.length; i++) {
 		html = elements[i].innerHTML;
@@ -5086,7 +5178,7 @@ function initOverviewPane() {
 	var tdReportingPeriod = $('#hvstat-overview-reporting-period td');
 	$(tdReportingPeriod[0]).text(start.toLocaleString());
 	$(tdReportingPeriod[1]).text(now.toLocaleString());
-	$(tdReportingPeriod[2]).text(hvStat.util.getElapsedFrom(start));
+	$(tdReportingPeriod[2]).text(hvStat.util.getElapseFrom(start));
 
  	var tdRoundsHourlyEncounters = $('#hvstat-overview-rounds-hourly-encounters td');
  	var tdRoundsArena = $('#hvstat-overview-rounds-arenas td');
@@ -5204,7 +5296,7 @@ function initOverviewPane() {
 		lastFoundTime = "N/A";
 	} else {
 		lastFoundName = hvStat.overview.lastEquipName;
-		lastFoundTime = getRelativeTime(hvStat.overview.lastEquipTime);
+		lastFoundTime = hvStat.util.getRelativeTime(hvStat.overview.lastEquipTime);
 	}
 	$(spanDropsEquipmentLastFound[0]).text(lastFoundName);
 	$(spanDropsEquipmentLastFound[1]).text(lastFoundTime);
@@ -5214,7 +5306,7 @@ function initOverviewPane() {
 		lastFoundTime = "N/A";
 	} else {
 		lastFoundName = hvStat.overview.lastArtName;
-		lastFoundTime = getRelativeTime(hvStat.overview.lastArtTime);
+		lastFoundTime = hvStat.util.getRelativeTime(hvStat.overview.lastArtTime);
 	}
 	$(spanDropsArtifactLastFound[0]).text(lastFoundName);
 	$(spanDropsArtifactLastFound[1]).text(lastFoundTime);
@@ -6163,45 +6255,6 @@ function reminderAndSaveSettings() {
 	}
 	saveSettings();
 }
-function captureShrine() {
-	var messageBoxElement = document.querySelector("#messagebox");
-	if (!messageBoxElement) {
-		return;
-	}
-	var messageElements = messageBoxElement.querySelectorAll("div.cmb6");
-	var message0 = util.innerText(messageElements[0]);
-	if (message0.match(/power/i)) {
-		hvStat.shrine.artifactsTraded++;
-		var message2 = util.innerText(messageElements[2]);
-		if (message2.match(/ability point/i)) {
-			hvStat.shrine.artifactAP++;
-		} else if (message2.match(/crystal/i)) {
-			hvStat.shrine.artifactCrystal++;
-		} else if (message2.match(/increased/i)) {
-			hvStat.shrine.artifactStat++;
-		} else if (message2.match(/(\d) hath/i)) {
-			hvStat.shrine.artifactHath++;
-			hvStat.shrine.artifactHathTotal += Number(RegExp.$1);
-		} else if (message2.match(/energy drink/i)) {
-			hvStat.shrine.artifactItem++;
-		}
-	} else if (message0.match(/item/i)) {
-		var message3 = util.innerText(messageElements[3]);
-		hvStat.shrine.trophyArray.push(message3);
-	}
-	hvStat.storage.shrine.save();
-}
-function getRelativeTime(b) {
-	var a = (arguments.length > 1) ? arguments[1] : new Date();
-	var c = parseInt((a.getTime() - b) / 1000);
-	if (c < 60) return "less than a minute ago";
-	if (c < 120) return "about a minute ago";
-	if (c < (60 * 60)) return (parseInt(c / 60)).toString() + " minutes ago";
-	if (c < (120 * 60)) return "about an hour ago";
-	if (c < (24 * 60 * 60)) return "about " + (parseInt(c / 3600)).toString() + " hours ago";
-	if (c < (48 * 60 * 60)) return "1 day ago";
-	return (parseInt(c / 86400)).toString() + " days ago";
-}
 function HVResetTracking() {
 	hvStat.storage.overview.reset();
 	hvStat.storage.stats.reset();
@@ -6263,51 +6316,6 @@ function addfromStatsBackup(back) {
 	hvStat.storage.stats.save();
 }
 
-function StartBattleAlerts () {
-	var elements = document.querySelectorAll('#arenaform img[onclick*="arenaform"]');
-	var i, element;
-	for (i = 0; i < elements.length; i++) {
-		element = elements[i];
-		var oldOnClick = element.getAttribute("onclick");
-		var newOnClick = 'if(confirm("Are you sure you want to start this challenge on '
-			+ hvStat.characterStatus.difficulty.name
-			+ ' difficulty, with set number: '
-			+ hvStat.characterStatus.equippedSet + '?\\n';
-		if (hvStat.settings.StartAlertHP > hv.character.healthPercent) {
-			newOnClick += '\\n - HP is only '+ hv.character.healthPercent + '%';
-		}
-		if (hvStat.settings.StartAlertMP > hv.character.magicPercent) {
-			newOnClick += '\\n - MP is only '+ hv.character.magicPercent + '%';
-		}
-		if (hvStat.settings.StartAlertSP > hv.character.spiritPercent) {
-			newOnClick += '\\n - SP is only '+ hv.character.spiritPercent + '%';
-		}
-		if (hvStat.settings.StartAlertDifficulty < hvStat.characterStatus.difficulty.index) {
-			newOnClick += '\\n - Difficulty is '+ hvStat.characterStatus.difficulty.name;
-		}
-		newOnClick += '")) {'+ oldOnClick+ '}';
-		element.setAttribute("onclick", newOnClick);
-	}
-}
-
-function captureCharacterStatuses() {
-	var difficulties = ["", "Easy", "Normal", "Hard", "Heroic", "Nightmare", "Hell", "Nintendo", "Battletoads", "IWBTH"];
-	var difficulty = hv.settings.difficulty;
-	if (difficulty) {
-		hvStat.characterStatus.difficulty.name = hv.settings.difficulty;
-		hvStat.characterStatus.difficulty.index = difficulties.indexOf(difficulty);
-	}
-	elements = document.querySelectorAll("#setform img");
-	var result;
-	for (var i = 0; i < elements.length; i++) {
-		result = /set(\d)_on/.exec(elements[i].getAttribute("src"));
-		if (result) {
-			hvStat.characterStatus.equippedSet = Number(result[1]);
-			break;
-		}
-	}
-	hvStat.storage.characterStatus.save();
-}
 function TaggingItems(clean) {
 	// Can clean tag data when visited the Inventory page.
 	// Because all equipments which is owned are listed.
@@ -6320,7 +6328,7 @@ function TaggingItems(clean) {
 		{id: hvStat.equipmentTags.LightIDs,		value: hvStat.equipmentTags.LightTAGs,		idClean: [], valueClean: []},
 		{id: hvStat.equipmentTags.HeavyIDs,		value: hvStat.equipmentTags.HeavyTAGs,		idClean: [], valueClean: []}
 	];
-	var elements = document.querySelectorAll("#inv_equip div.eqdp, #item_pane div.eqdp, #equip div.eqdp, #equip_pane div.eqdp");
+	var elements = document.querySelectorAll('#inv_equip div.eqdp, #item_pane div.eqdp, #equip div.eqdp, #equip_pane div.eqdp');
 	Array.prototype.forEach.call(elements, function (element) {
 		var equipType = String(element.onmouseover)
 			.match(/(One-handed Weapon|Two-handed Weapon|Staff|Shield|Cloth Armor|Light Armor|Heavy Armor) &nbsp; &nbsp; Level/i)[0]
@@ -6510,7 +6518,7 @@ hvStat.startup = {
 		} else {
 			hvStat.storage.roundInfo.remove();
 			if ((hvStat.settings.isStartAlert || hvStat.settings.isShowEquippedSet) && !hv.settings.useHVFontEngine) {
-				captureCharacterStatuses();
+				hvStat.support.captureStatuses();
 			}
 			if (!hv.location.isRiddle) {
 				hvStat.storage.warningState.remove();
@@ -6532,7 +6540,7 @@ hvStat.startup = {
 				TaggingItems(false);
 			}
 			if (hv.location.isMoogleWrite && hvStat.settings.isShowTags[3]) {
-				var mailForm = document.querySelector("#mailform #leftpane");
+				var mailForm = document.querySelector('#mailform #leftpane');
 				if (mailForm) {
 					var attachEquipButton = mailForm.children[3].children[1];
 					attachEquipButton.addEventListener("click", function (event) {
@@ -6547,11 +6555,11 @@ hvStat.startup = {
 				document.onkeypress = null;
 			}
 			if (hv.location.isCharacter && !hv.settings.useHVFontEngine) {
-				collectCurrentProfsData();
+				hvStat.support.captureProficiencies();
 			}
 			if (hv.location.isShrine) {
 				if (hvStat.settings.isTrackShrine) {
-					captureShrine();
+					hvStat.support.captureShrine();
 				}
 				if (browser.isChrome && hvStat.settings.enableShrineKeyPatch) {
 					document.onkeydown = null;	// Workaround to make enable SPACE key
@@ -6559,7 +6567,7 @@ hvStat.startup = {
 				}
 			}
 			if (hvStat.settings.isStartAlert && !hv.settings.useHVFontEngine) {
-				StartBattleAlerts();
+				hvStat.support.confirmBeforeBattle();
 			}
 		}
 		if (!hv.settings.useHVFontEngine && hvStat.settings.isShowEquippedSet) {
