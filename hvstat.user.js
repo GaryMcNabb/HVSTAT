@@ -6519,7 +6519,9 @@ hvStat.startup = {
 					hvStat.battle.warningSystem.stashAlerts();
 				}
 			}
-			hvStat.battle.warningSystem.alertAllFromQueue();
+			if (!hv.battle.finished) {
+				hvStat.battle.warningSystem.alertAllFromQueue();
+			}
 		} else {
 			hvStat.storage.roundInfo.remove();
 			if ((hvStat.settings.isStartAlert || hvStat.settings.isShowEquippedSet) && !hv.settings.useHVFontEngine) {
