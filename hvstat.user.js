@@ -3435,13 +3435,13 @@ hvStat.battle.warningSystem = {
 				hvStat.warningState.overchargeAlertShown = true;
 			}
 		}
-		if (hv.character.healthPercent >= healthWarningLevel) {
+		if (hv.character.healthPercent >= healthWarningResumeLevel) {
 			hvStat.warningState.healthAlertShown = false;
 		}
-		if (hv.character.magicPercent >= magicWarningLevel) {
+		if (hv.character.magicPercent >= magicWarningResumeLevel) {
 			hvStat.warningState.magicAlertShown = false;
 		}
-		if (hv.character.spiritPercent >= spiritWarningLevel) {
+		if (hv.character.spiritPercent >= spiritWarningResumeLevel) {
 			hvStat.warningState.spiritAlertShown = false;
 		}
 		if (hv.character.overchargeRate < 1.0) {
