@@ -4476,10 +4476,7 @@ function collectRoundInfo() {
 		}
 		if (hvStat.settings.isMainEffectsAlertSelf && logHTML.match(/^The effect (.*)  has expired.$/)) {
 			var effectName = RegExp.$1;
-			if (effectName === "Regen II") {
-				effectName = "Regen";
-			}
-			var i = hvStat.battle.warningSystem.selfEffectNames.indexOf(effectName);
+			var i = hvStat.battle.warningSystem.selfEffectNames.indexOf(effectName === "Regen II" ? "Regen" : effectName);
 			if (i !== -1 && hvStat.settings.isEffectsAlertSelf[i] && hvStat.settings.EffectsAlertSelfRounds[i] === "-1") {
 				hvStat.battle.warningSystem.enqueueAlert(effectName + " has expired");
 			}
