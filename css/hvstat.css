@@ -150,7 +150,6 @@
 	top: -2px;
 	left: -32px;
 	position: absolute;
-	background-color: #EFEEDC;
 	width: 25px;
 	height:10px;
 	border: 2px double #555555;
@@ -158,6 +157,9 @@
 	font-weight: bold;
 	text-align: center;
 	cursor: pointer;
+}
+.hvstat-scan-button-highlight {
+	background-color: Pink;
 }
 
 /* Skill button */
