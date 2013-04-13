@@ -2175,7 +2175,7 @@ hvStat.battle.enhancement.powerupBox = {
 	// Creates a shortcut to the powerup if one is available.
 	create: function () {
 		var battleMenu = document.getElementsByClassName("btp"),
-			powerBox = document.createElement("div");
+			powerBox = document.createElement("div"),
 			powerup = document.getElementById("ikey_p");
 
 		powerBox.className = "hvstat-powerup-box";
@@ -2249,7 +2249,7 @@ hvStat.battle.enhancement.log = {
 	},
 	showDivider: function () {
 		// Adds a divider between Battle Log rounds.
-		var logRows = hv.battle.elementCache.battleLog.getElementsByTagName('tr');
+		var logRows = hv.battle.elementCache.battleLog.getElementsByTagName('tr'),
 			i = logRows.length,
 			prevTurn = null,
 			currTurn = null;
@@ -2766,7 +2766,7 @@ hvStat.battle.monster.Monster.prototype = {
 		if (!bar) {
 			v = 0;
 		} else {
-			r = /width\s*?:\s*?(\d+?)px/i.exec(bar.style.cssText);
+			var r = /width\s*?:\s*?(\d+?)px/i.exec(bar.style.cssText);
 			if (r) {
 				v = Number(r[1]) / 120;
 			}
@@ -4743,7 +4743,7 @@ function collectRoundInfo() {
 			}
 		} else if (logHTML.match(/dropped.*?color:.*?blue.*?\[.*?\]/ig)) {
 			_artifacts++;
-			itemToAdd = logHTML.match(l)[0];
+			var itemToAdd = logHTML.match(l)[0];
 			_lastArtName = itemToAdd;
 			if (hvStat.settings.isTrackItems) {
 				hvStat.drops.artDrop++;
@@ -4763,7 +4763,7 @@ function collectRoundInfo() {
 				}
 			}
 		} else if (hvStat.settings.isTrackItems && (logHTML.match(/dropped.*?color:.*?green.*?\[.*?\]/ig) || logHTML.match(/dropped.*?token/ig))) {
-			itemToAdd = logHTML.match(l)[0];
+			var itemToAdd = logHTML.match(l)[0];
 			if (itemToAdd.match(/(\d){0,2}.?x?.?Crystal of /ig)) {
 				t = parseInt("0" + RegExp.$1, 10);
 				if (t < 1) {
@@ -4795,7 +4795,7 @@ function collectRoundInfo() {
 			}
 		} else if (logHTML.match(/(clear bonus).*?color:.*?blue.*?\[.*?\]/ig)) {
 			_artifacts++;
-			itemToAdd = logHTML.match(l)[0];
+			var itemToAdd = logHTML.match(l)[0];
 			_lastArtName = itemToAdd;
 			if (hvStat.settings.isTrackRewards) {
 				hvStat.arenaRewards.artRwrd++;
@@ -4815,7 +4815,7 @@ function collectRoundInfo() {
 			}
 		} else if (hvStat.settings.isTrackRewards && (logHTML.match(/(clear bonus).*?color:.*?green.*?\[.*?\]/ig) || logHTML.match(/(clear bonus).*?token/ig))) {
 			hvStat.arenaRewards.itemsRwrd++;
-			itemToAdd = logHTML.match(l)[0];
+			var itemToAdd = logHTML.match(l)[0];
 			if (itemToAdd.match(/(\d)x Crystal/ig)) {
 				t = parseInt("0" + RegExp.$1, 10);
 				itemToAdd = itemToAdd.replace(/\dx /, "");
