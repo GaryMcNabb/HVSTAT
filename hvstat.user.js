@@ -1932,9 +1932,6 @@ return;
 		relatedMessageTypeNames: null,
 		contentType: "text",
 		evaluationFn: function (message) {
-			if (hvStat.settings.isTrackItems) {
-				hvStat.roundInfo.dropChances++;
-			}
 			var letter = message.regexResult[1];
 			var index = "ABCDEFGHIJ".indexOf(letter);
 			if (index >= 0) {
@@ -1951,6 +1948,10 @@ return;
 						});
 					})(monster);
 				}
+			}
+return;
+			if (hvStat.settings.isTrackItems) {
+				hvStat.roundInfo.dropChances++;
 			}
 		},
 	},
@@ -2296,11 +2297,11 @@ return;
 		relatedMessageTypeNames: null,
 		contentType: "text",
 		evaluationFn: function (message) {
-return;
 			var effectName = message.regexResult[1];
 			if (hvStat.settings.alertWhenChannelingIsGained && effectName === "Channeling") {
 				hvStat.battle.warningSystem.enqueueAlert("You gained the effect Channeling.");
 			}
+return;
 			switch (effectName) {
 			case "Channeling":
 				hvStat.roundInfo.channel++;
@@ -2315,11 +2316,10 @@ return;
 		},
 	},
 	EFFECT_EXPIRATION: {
-		regex: /^The effect (.+?) has expired\./,
+		regex: /^The effect (.+?)\s+has expired\./,
 		relatedMessageTypeNames: null,
 		contentType: "text",
 		evaluationFn: function (message) {
-return;
 			var effectName = message.regexResult[1];
 			if (hvStat.settings.isWarnSparkExpire && effectName === "Spark of Life") {
 				hvStat.battle.warningSystem.enqueueAlert("Spark of Life has expired!!");
@@ -2368,10 +2368,10 @@ return;
 		relatedMessageTypeNames: null,
 		contentType: "text",
 		evaluationFn: function (message) {
-return;
 			if (hvStat.settings.isWarnAbsorbTrigger) {
 				hvStat.battle.warningSystem.enqueueAlert("Absorbing Ward has triggered.");
 			}
+return;
 			hvStat.roundInfo.absArry[1]++;
 			hvStat.roundInfo.absArry[2] += parseFloat(message.regexResult[1]);
 		},
@@ -2405,61 +2405,62 @@ return;
 		relatedMessageTypeNames: null,
 		contentType: "text",
 		evaluationFn: function (message) {
-return;
-			var p = message.regexResult[1] / 100;
-			switch (message.regexResult[2]) {
-			case "one-handed weapon":
-				hvStat.characterStatus.proficiencies.oneHanded += p;
-				hvStat.roundInfo.weapProfGain[0] += p;
-				break;
-			case "two-handed weapon":
-				hvStat.characterStatus.proficiencies.twoHanded += p;
-				hvStat.roundInfo.weapProfGain[1] += p;
-				break;
-			case "dual wielding":
-				hvStat.characterStatus.proficiencies.dualWielding += p;
-				hvStat.roundInfo.weapProfGain[2] += p;
-				break;
-			case "staff":
-				hvStat.characterStatus.proficiencies.staff += p;
-				hvStat.roundInfo.weapProfGain[3] += p;
-				break;
-			case "cloth armor":
-				hvStat.characterStatus.proficiencies.clothArmor += p;
-				hvStat.roundInfo.armorProfGain[0] += p;
-				break;
-			case "light armor":
-				hvStat.characterStatus.proficiencies.lightArmor += p;
-				hvStat.roundInfo.armorProfGain[1] += p;
-				break;
-			case "heavy armor":
-				hvStat.characterStatus.proficiencies.heavyArmor += p;
-				hvStat.roundInfo.armorProfGain[2] += p;
-				break;
-			case "elemental magic":
-				hvStat.characterStatus.proficiencies.elemental += p;
-				hvStat.roundInfo.elemGain += p;
-				break;
-			case "divine magic":
-				hvStat.characterStatus.proficiencies.divine += p;
-				hvStat.characterStatus.proficiencies.spiritual = (hvStat.characterStatus.proficiencies.divine + hvStat.characterStatus.proficiencies.forbidden) / 2;
-				hvStat.roundInfo.divineGain += p;
-				break;
-			case "forbidden magic":
-				hvStat.characterStatus.proficiencies.forbidden += p;
-				hvStat.characterStatus.proficiencies.spiritual = (hvStat.characterStatus.proficiencies.divine + hvStat.characterStatus.proficiencies.forbidden) / 2;
-				hvStat.roundInfo.forbidGain += p;
-				break;
-			case "deprecating magic":
-				hvStat.characterStatus.proficiencies.deprecating += p;
-				hvStat.roundInfo.depGain += p;
-				break;
-			case "supportive magic":
-				hvStat.characterStatus.proficiencies.supportive += p;
-				hvStat.roundInfo.supportGain += p;
-				break;
+			if (hvStat.settings.isShowSidebarProfs || hvStat.settings.isTrackStats) {
+				var p = message.regexResult[1] / 100;
+				switch (message.regexResult[2]) {
+				case "one-handed weapon":
+					hvStat.characterStatus.proficiencies.oneHanded += p;
+					hvStat.roundInfo.weapProfGain[0] += p;
+					break;
+				case "two-handed weapon":
+					hvStat.characterStatus.proficiencies.twoHanded += p;
+					hvStat.roundInfo.weapProfGain[1] += p;
+					break;
+				case "dual wielding":
+					hvStat.characterStatus.proficiencies.dualWielding += p;
+					hvStat.roundInfo.weapProfGain[2] += p;
+					break;
+				case "staff":
+					hvStat.characterStatus.proficiencies.staff += p;
+					hvStat.roundInfo.weapProfGain[3] += p;
+					break;
+				case "cloth armor":
+					hvStat.characterStatus.proficiencies.clothArmor += p;
+					hvStat.roundInfo.armorProfGain[0] += p;
+					break;
+				case "light armor":
+					hvStat.characterStatus.proficiencies.lightArmor += p;
+					hvStat.roundInfo.armorProfGain[1] += p;
+					break;
+				case "heavy armor":
+					hvStat.characterStatus.proficiencies.heavyArmor += p;
+					hvStat.roundInfo.armorProfGain[2] += p;
+					break;
+				case "elemental magic":
+					hvStat.characterStatus.proficiencies.elemental += p;
+					hvStat.roundInfo.elemGain += p;
+					break;
+				case "divine magic":
+					hvStat.characterStatus.proficiencies.divine += p;
+					hvStat.characterStatus.proficiencies.spiritual = (hvStat.characterStatus.proficiencies.divine + hvStat.characterStatus.proficiencies.forbidden) / 2;
+					hvStat.roundInfo.divineGain += p;
+					break;
+				case "forbidden magic":
+					hvStat.characterStatus.proficiencies.forbidden += p;
+					hvStat.characterStatus.proficiencies.spiritual = (hvStat.characterStatus.proficiencies.divine + hvStat.characterStatus.proficiencies.forbidden) / 2;
+					hvStat.roundInfo.forbidGain += p;
+					break;
+				case "deprecating magic":
+					hvStat.characterStatus.proficiencies.deprecating += p;
+					hvStat.roundInfo.depGain += p;
+					break;
+				case "supportive magic":
+					hvStat.characterStatus.proficiencies.supportive += p;
+					hvStat.roundInfo.supportGain += p;
+					break;
+				}
+				hvStat.storage.characterStatus.save();
 			}
-			hvStat.storage.characterStatus.save();
 		},
 	},
 
@@ -5294,7 +5295,7 @@ function collectRoundInfo() {
 			hvStat.battle.monster.monsters[i].setFromValueObject(hvStat.roundInfo.monsters[i]);
 		}
 	}
-	var monsterIndex = 0;
+// 	var monsterIndex = 0;
 	var turnLog = new hvStat.battle.log.Turn();
 	turnLog.evaluate();
 	var joinedLogStringOfCurrentTurn = turnLog.texts.join("\n");
@@ -5353,69 +5354,69 @@ function collectRoundInfo() {
 // 		if (hvStat.settings.isAlertGem && logHTML.match(/drops a (.*) Gem/)) {
 // 			hvStat.battle.warningSystem.enqueueAlert("You picked up a " + RegExp.$1 + " Gem.");
 // 		}
-		if (hvStat.settings.isWarnAbsorbTrigger && /The spell is absorbed/.test(logHTML)) {
-			hvStat.battle.warningSystem.enqueueAlert("Absorbing Ward has triggered.");
-		}
+// 		if (hvStat.settings.isWarnAbsorbTrigger && /The spell is absorbed/.test(logHTML)) {
+// 			hvStat.battle.warningSystem.enqueueAlert("Absorbing Ward has triggered.");
+// 		}
 // 		if (hvStat.settings.isWarnSparkTrigger && logHTML.match(/spark of life.*defeat/ig)) {
 // 			hvStat.battle.warningSystem.enqueueAlert("Spark of Life has triggered!!");
 // 		}
-		if (hvStat.settings.isWarnSparkExpire && logHTML.match(/spark of life.*expired/ig)) {
-			hvStat.battle.warningSystem.enqueueAlert("Spark of Life has expired!!");
-		}
-		if (hvStat.settings.alertWhenChannelingIsGained && logText.indexOf("You gain the effect Channeling") >= 0) {
-			hvStat.battle.warningSystem.enqueueAlert("You gained the effect Channeling.");
-		}
-		if (hvStat.settings.isMainEffectsAlertSelf && logHTML.match(/^The effect (.*)  has expired.$/)) {
-			var effectName = RegExp.$1;
-			var i = hvStat.battle.warningSystem.selfEffectNames.indexOf(effectName === "Regen II" ? "Regen" : effectName);
-			if (i !== -1 && hvStat.settings.isEffectsAlertSelf[i] && hvStat.settings.EffectsAlertSelfRounds[i] === "-1") {
-				hvStat.battle.warningSystem.enqueueAlert(effectName + " has expired");
-			}
-		}
-		if ((hvStat.settings.isShowSidebarProfs || hvStat.settings.isTrackStats) && logHTML.match(/0.0(\d+) points of (.*?) proficiency/ig)) {
-			var p = (RegExp.$1) / 100;
-			var r = RegExp.$2;
-			if (r.match(/one-handed weapon/)) {
-				hvStat.characterStatus.proficiencies.oneHanded += p;
-				hvStat.roundInfo.weapProfGain[0] += p;
-			} else if (r.match(/two-handed weapon/)) {
-				hvStat.characterStatus.proficiencies.twoHanded += p;
-				hvStat.roundInfo.weapProfGain[1] += p;
-			} else if (r.match(/dual wielding/)) {
-				hvStat.characterStatus.proficiencies.dualWielding += p;
-				hvStat.roundInfo.weapProfGain[2] += p;
-			} else if (r.match(/staff/)) {
-				hvStat.characterStatus.proficiencies.staff += p;
-				hvStat.roundInfo.weapProfGain[3] += p;
-			} else if (r.match(/cloth armor/)) {
-				hvStat.characterStatus.proficiencies.clothArmor += p;
-				hvStat.roundInfo.armorProfGain[0] += p;
-			} else if (r.match(/light armor/)) {
-				hvStat.characterStatus.proficiencies.lightArmor += p;
-				hvStat.roundInfo.armorProfGain[1] += p;
-			} else if (r.match(/heavy armor/)) {
-				hvStat.characterStatus.proficiencies.heavyArmor += p;
-				hvStat.roundInfo.armorProfGain[2] += p;
-			} else if (r.match(/elemental magic/)) {
-				hvStat.characterStatus.proficiencies.elemental += p;
-				hvStat.roundInfo.elemGain += p;
-			} else if (r.match(/divine magic/)) {
-				hvStat.characterStatus.proficiencies.divine += p;
-				hvStat.characterStatus.proficiencies.spiritual = (hvStat.characterStatus.proficiencies.divine + hvStat.characterStatus.proficiencies.forbidden) / 2;
-				hvStat.roundInfo.divineGain += p;
-			} else if (r.match(/forbidden magic/)) {
-				hvStat.characterStatus.proficiencies.forbidden += p;
-				hvStat.characterStatus.proficiencies.spiritual = (hvStat.characterStatus.proficiencies.divine + hvStat.characterStatus.proficiencies.forbidden) / 2;
-				hvStat.roundInfo.forbidGain += p;
-			} else if (r.match(/deprecating magic/)) {
-				hvStat.characterStatus.proficiencies.deprecating += p;
-				hvStat.roundInfo.depGain += p;
-			} else if (r.match(/supportive magic/)) {
-				hvStat.characterStatus.proficiencies.supportive += p;
-				hvStat.roundInfo.supportGain += p;
-			}
-			hvStat.storage.characterStatus.save();
-		}
+// 		if (hvStat.settings.isWarnSparkExpire && logHTML.match(/spark of life.*expired/ig)) {
+// 			hvStat.battle.warningSystem.enqueueAlert("Spark of Life has expired!!");
+// 		}
+// 		if (hvStat.settings.alertWhenChannelingIsGained && logText.indexOf("You gain the effect Channeling") >= 0) {
+// 			hvStat.battle.warningSystem.enqueueAlert("You gained the effect Channeling.");
+// 		}
+// 		if (hvStat.settings.isMainEffectsAlertSelf && logHTML.match(/^The effect (.*)  has expired.$/)) {
+// 			var effectName = RegExp.$1;
+// 			var i = hvStat.battle.warningSystem.selfEffectNames.indexOf(effectName === "Regen II" ? "Regen" : effectName);
+// 			if (i !== -1 && hvStat.settings.isEffectsAlertSelf[i] && hvStat.settings.EffectsAlertSelfRounds[i] === "-1") {
+// 				hvStat.battle.warningSystem.enqueueAlert(effectName + " has expired");
+// 			}
+// 		}
+// 		if ((hvStat.settings.isShowSidebarProfs || hvStat.settings.isTrackStats) && logHTML.match(/0.0(\d+) points of (.*?) proficiency/ig)) {
+// 			var p = (RegExp.$1) / 100;
+// 			var r = RegExp.$2;
+// 			if (r.match(/one-handed weapon/)) {
+// 				hvStat.characterStatus.proficiencies.oneHanded += p;
+// 				hvStat.roundInfo.weapProfGain[0] += p;
+// 			} else if (r.match(/two-handed weapon/)) {
+// 				hvStat.characterStatus.proficiencies.twoHanded += p;
+// 				hvStat.roundInfo.weapProfGain[1] += p;
+// 			} else if (r.match(/dual wielding/)) {
+// 				hvStat.characterStatus.proficiencies.dualWielding += p;
+// 				hvStat.roundInfo.weapProfGain[2] += p;
+// 			} else if (r.match(/staff/)) {
+// 				hvStat.characterStatus.proficiencies.staff += p;
+// 				hvStat.roundInfo.weapProfGain[3] += p;
+// 			} else if (r.match(/cloth armor/)) {
+// 				hvStat.characterStatus.proficiencies.clothArmor += p;
+// 				hvStat.roundInfo.armorProfGain[0] += p;
+// 			} else if (r.match(/light armor/)) {
+// 				hvStat.characterStatus.proficiencies.lightArmor += p;
+// 				hvStat.roundInfo.armorProfGain[1] += p;
+// 			} else if (r.match(/heavy armor/)) {
+// 				hvStat.characterStatus.proficiencies.heavyArmor += p;
+// 				hvStat.roundInfo.armorProfGain[2] += p;
+// 			} else if (r.match(/elemental magic/)) {
+// 				hvStat.characterStatus.proficiencies.elemental += p;
+// 				hvStat.roundInfo.elemGain += p;
+// 			} else if (r.match(/divine magic/)) {
+// 				hvStat.characterStatus.proficiencies.divine += p;
+// 				hvStat.characterStatus.proficiencies.spiritual = (hvStat.characterStatus.proficiencies.divine + hvStat.characterStatus.proficiencies.forbidden) / 2;
+// 				hvStat.roundInfo.divineGain += p;
+// 			} else if (r.match(/forbidden magic/)) {
+// 				hvStat.characterStatus.proficiencies.forbidden += p;
+// 				hvStat.characterStatus.proficiencies.spiritual = (hvStat.characterStatus.proficiencies.divine + hvStat.characterStatus.proficiencies.forbidden) / 2;
+// 				hvStat.roundInfo.forbidGain += p;
+// 			} else if (r.match(/deprecating magic/)) {
+// 				hvStat.characterStatus.proficiencies.deprecating += p;
+// 				hvStat.roundInfo.depGain += p;
+// 			} else if (r.match(/supportive magic/)) {
+// 				hvStat.characterStatus.proficiencies.supportive += p;
+// 				hvStat.roundInfo.supportGain += p;
+// 			}
+// 			hvStat.storage.characterStatus.save();
+// 		}
 		if (hvStat.settings.isRememberScan) {
 			if (logHTML.indexOf("Scanning") >= 0) {
 				(function () {
