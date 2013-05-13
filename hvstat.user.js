@@ -511,6 +511,50 @@ hvStat.util = {
 		if (c < (48 * 60 * 60)) return "1 day ago";
 		return (parseInt(c / 86400, 10)).toString() + " days ago";
 	},
+	elementalSpells: [
+		"Fireball", "Inferno", "Flare", "Meteor", "Nova", "Flames of Loki",
+		"Icestrike", "Snowstorm", "Freeze", "Blizzard", "Cryostasis", "Fimbulvetr",
+		"Lighting", "Thunderstorm", "Ball Lighting", "Chain Lighting", "Shockblast", "Wrath of Thor",
+		"Windblast", "Cyclone", "Gale", "Hurricane", "Downburst", "Storms of Njord",
+	],
+	divineSpells: [
+		"Condemn", "Purge", "Smite", "Banish",
+	],
+	forbiddenSpells: [
+		"Corruption", "Pestilence", "Disintegrate", "Ragnarok",
+	],
+	spiritualSpells: [
+		"Soul Reaper", "Soul Harvest", "Soul Fire", "Soul Burst",
+	],
+	deprecatingSpells: [
+		"Poison", "Slow", "Weaken", "Sleep",
+		"Confuse", "Imperil", "Blind", "Silence",
+		"Nerf", "X-Nerf", "MagNet", "Lifestream",
+	],
+	supportiveSpells: [
+		"Cure", "Cure II", "Cure III", "Regen", "Regen II",
+		"Protection", "Haste", "Shadow Veil", "Regen", "Absorb",
+		"Spark of Life", "Arcane Focus", "Heartseeker", "Spirit Shield",
+		"Frame Spikes", "Frost Spikes", "Lightning Spikes", "Storm Spikes",
+	],
+	isElementalSpell: function (spell) {
+		return elementalSpells.indexOf(spell) >= 0;
+	},
+	isDivineSpell: function (spell) {
+		return divineSpells.indexOf(spell) >= 0;
+	},
+	isForbiddenSpell: function (spell) {
+		return forbiddenSpells.indexOf(spell) >= 0;
+	},
+	isSpiritualSpell: function (spell) {
+		return spiritualSpells.indexOf(spell) >= 0;
+	},
+	isDeprecatingSpell: function (spell) {
+		return deprecatingSpells.indexOf(spell) >= 0;
+	},
+	isSupportiveSpell: function (spell) {
+		return supportiveSpells.indexOf(spell) >= 0;
+	},
 };
 
 //------------------------------------
@@ -1747,6 +1791,7 @@ hvStat.battle = {
 	},
 	setup: function () {
 		hvStat.battle.enhancement.setup();
+		hvStat.battle.log.setup();
 	},
 	advanceRound: function () {
 		if (!hv.battle.finished && hv.battle.round.finished) {
@@ -1763,34 +1808,849 @@ hvStat.battle = {
 //------------------------------------
 // Battle - Log Management
 //------------------------------------
-hvStat.battle.log = {};
+hvStat.battle.log = {
+	messageTypes: {},
+	buildMessageTypes: function () {
+		for (var key in hvStat.battle.log.messageTypeParams) {
+			var param = hvStat.battle.log.messageTypeParams[key];
+			hvStat.battle.log.messageTypes[key] = new hvStat.battle.log.MessageType(param);
+		}
+	},
+	setup: function () {
+		this.buildMessageTypes();
+	},
+};
 
-hvStat.battle.log.Turn = function (specifiedTurn) {
+hvStat.battle.log.MessageType = function (param) {
+	this.regex = param.regex || null;
+	this.relatedMessageTypeNames = param.relatedMessageTypeNames || null;
+	this.contentType = param.contentType || null;
+	this.parsingFn = param.parsingFn || null;
+};
+hvStat.battle.log.MessageType.prototype = {
+	match: function (text, innerHTML) {
+		var target;
+		if (this.contentType === "text") {
+			target = text;
+		} else if (this.contentType === "html") {
+			target = innerHTML;
+		}
+		var result = target && target.match(this.regex);
+		return result;
+	},
+	evaluate: function (message) {
+		if (this.parsingFn instanceof Function) {
+			this.parsingFn(message);
+		}
+	},
+};
+
+hvStat.battle.log.Message = function (text, innerHTML) {
+	this.text = text;
+	this.innerHTML = innerHTML;
+	this.messageType = null;
+	this.regexResult = null;
+	this.relatedMessage = null;	// Estimate
+	this.parsed = false;
+};
+hvStat.battle.log.Message.prototype = {
+	parse: function () {
+		for (var key in hvStat.battle.log.messageTypes) {
+			var messageType = hvStat.battle.log.messageTypes[key];
+			var regexResult = messageType.match(this.text, this.innerHTML);
+			if (regexResult) {
+				this.messageType = messageType;
+				this.regexResult = regexResult;
+				break;
+			}
+		}
+		this.parsed = true;
+	},
+	evaluate: function () {
+		if (!this.parsed) {
+			this.parse();
+		}
+		if (this.messageType) {
+			this.messageType.evaluate(this);
+		}
+	},
+};
+
+hvStat.battle.log.messageTypeParams = {
+	// Core events
+	START: {
+		regex: /^Battle Start!/,
+		relatedMessageTypeNames: null,
+		contentType: "text",
+		parsingFn: function (message) {
+		},
+	},
+	HOURY_ENCOUNTER_INITIALIZATION: {
+		regex: /^Initializing random encounter \.\.\./,
+		relatedMessageTypeNames: null,
+		contentType: "text",
+		parsingFn: function (message) {
+			hvStat.roundInfo.battleType = HOURLY;
+		},
+	},
+	ARENA_INITIALIZATION: {
+		regex: /^Initializing arena challenge #(\d+) \(Round (\d+) \/ (\d+)\) \.\.\./,
+		relatedMessageTypeNames: null,
+		contentType: "text",
+		parsingFn: function (message) {
+			hvStat.roundInfo.battleType = ARENA;
+			hvStat.roundInfo.arenaNum = parseFloat(regexResult[1]);
+			hvStat.roundInfo.currRound = parseFloat(regexResult[2]);
+			hvStat.roundInfo.maxRound = parseFloat(regexResult[3]);
+		},
+	},
+	ITEM_WORLD_INITIALIZATION: {
+		regex: /^Initializing Item World \(Round (\d+) \/ (\d+)\) \.\.\./,
+		relatedMessageTypeNames: null,
+		contentType: "text",
+		parsingFn: function (message) {
+			hvStat.roundInfo.battleType = ITEM_WORLD;
+			hvStat.roundInfo.currRound = parseFloat(regexResult[1]);
+			hvStat.roundInfo.maxRound = parseFloat(regexResult[2]);
+		},
+	},
+	GRINDFEST_INITIALIZATION: {
+		regex: /^Initializing GrindFest \(Round (\d+)\) \.\.\./,
+		relatedMessageTypeNames: null,
+		contentType: "text",
+		parsingFn: function (message) {
+			hvStat.roundInfo.battleType = GRINDFEST;
+			hvStat.roundInfo.currRound = parseFloat(regexResult[1]);
+		},
+	},
+	SPAWNING_MONSTER: {
+		regex: /^Spawned Monster ([A-J]): MID=(\d+) \((.+?)\) LV=(\d+) HP=(\d+|\d+\.\d+)/,
+		relatedMessageTypeNames: null,
+		contentType: "text",
+		parsingFn: function (message) {
+			if (hvStat.settings.isTrackItems) {
+				hvStat.roundInfo.dropChances++;
+			}
+			var letter = message.regexResult[1];
+			var index = "ABCDEFGHIJ".indexOf(letter);
+			if (index >= 0) {
+				var monster = hvStat.battle.monster.monsters[index];
+				var mid = message.regexResult[2];
+				var name = message.regexResult[3];
+				var hp = message.regexResult[5];
+				monster.initialize(mid, name, hp);
+				if (hvStat.settings.showMonsterInfoFromDB) {
+					hvStat.database.loadingMonsterInfoFromDB = true;
+					(function (monster) {
+						hvStat.database.idbAccessQueue.add(function () {
+							monster.getFromDB(hvStat.database.transaction, RoundSave);
+						});
+					})(monster);
+				}
+			}
+		},
+	},
+	ESCAPE: {
+		regex: /^You have escaped from the battle\./,
+		relatedMessageTypeNames: null,
+		contentType: "text",
+		parsingFn: function (message) {
+		},
+	},
+	DEFEAT: {
+		regex: /^You have been defeated\./,
+		relatedMessageTypeNames: null,
+		contentType: "text",
+		parsingFn: function (message) {
+		},
+	},
+	VICTORY: {
+		regex: /^You are Victorious!/,
+		relatedMessageTypeNames: null,
+		contentType: "text",
+		parsingFn: function (message) {
+		},
+	},
+	DROP: {
+		regex: /(.+?) dropped <span style="\s*color\s*:\s*(.+?)\s*;?\s*">\[(.+?)\]<\/span>/,
+		relatedMessageTypeNames: null,
+		contentType: "html",
+		parsingFn: function (message) {
+			var styleColor = message.regexResult[2];
+			var stuffName = message.regexResult[3];
+			switch (styleColor.toLowerCase()) {
+			case "green":	// Items
+				break;
+			case "red":		// Equipments
+				break;
+			case "blue":	// Artifacts or Figurines
+				break;
+			case "#461b7e":	// Tokens
+				break;
+			}
+		},
+	},
+	ARENA_CLEAR_BONUS: {
+		regex: /Arena Clear Bonus! <span style="\s*color\s*:\s*(.+?)\s*;?\s*">\[(.+?)\]<\/span>/,
+		relatedMessageTypeNames: null,
+		contentType: "html",
+		parsingFn: function (message) {
+			var styleColor = message.regexResult[1];
+			var stuffName = message.regexResult[2];
+			switch (styleColor.toLowerCase()) {
+			case "green":	// Items
+				break;
+			case "red":		// Equipments
+				break;
+			case "blue":	// Artifacts or Figurines
+				break;
+			case "#461b7e":	// Tokens
+				break;
+			}
+		},
+	},
+	ARENA_TOKEN_BONUS: {
+		regex: /Arena Token Bonus! <span style="\s*color\s*:\s*(.+?)\s*;?\s*">\[(.+?)\]<\/span>/,
+		relatedMessageTypeNames: null,
+		contentType: "html",
+		parsingFn: function (message) {
+		},
+	},
+	CREDIT: {
+		regex: /^You gain (\d+) Credits!/,
+		relatedMessageTypeNames: null,
+		contentType: "text",
+		parsingFn: function (message) {
+			var credits = parseFloat(message.regexResult[1]);
+			hvStat.overview.credits += credits;
+			hvStat.overview.creditsbyBT[hvStat.roundInfo.battleType] += credits;
+		},
+	},
+	EXP: {
+		regex: /^You gain (\d+) EXP!/,
+		relatedMessageTypeNames: null,
+		contentType: "text",
+		parsingFn: function (message) {
+			var exp = parseFloat(message.regexResult[1]);
+			hvStat.overview.exp += exp;
+			hvStat.overview.expbyBT[hvStat.roundInfo.battleType] += exp;
+		},
+	},
+	INVENTORY_LIMIT_WARNING: {
+		regex: /^Warning: Reached equipment inventory limit \(\d+\)\. Generated item instead\./,
+		relatedMessageTypeNames: null,
+		contentType: "text",
+		parsingFn: function (message) {
+			localStorage.setItem(HV_EQUIP, "true");
+		},
+	},
+
+	// Character active actions
+	CAST: {
+		regex: /^You cast (.+?)\./,
+		relatedMessageTypeNames: null,
+		contentType: "text",
+		parsingFn: function (message) {
+			var spell = message.regexResult[1];
+			if (hvStat.util.isElementalSpell(spell)) {
+				hvStat.roundInfo.elemSpells[0]++;
+				hvStat.roundInfo.sAttempts++;
+			} else if (hvStat.util.isDivineSpell(spell)) {
+				hvStat.roundInfo.divineSpells[0]++;
+				hvStat.roundInfo.sAttempts++;
+			} else if (hvStat.util.isForbiddenSpell(spell)) {
+				hvStat.roundInfo.forbidSpells[0]++;
+				hvStat.roundInfo.sAttempts++;
+			} else if (hvStat.util.isSpiritualSpell(spell)) {
+				// TODO
+			} else if (hvStat.util.isDeprecatingSpell(spell)) {
+				hvStat.roundInfo.sAttempts++;
+				hvStat.roundInfo.depSpells[0]++;
+			} else if (hvStat.util.isSupportiveSpell(spell)) {
+				hvStat.roundInfo.supportSpells++;
+				if (spell === "Absorb") {
+					hvStat.roundInfo.absArry[0]++;
+				}
+			}
+		},
+	},
+	MELEE_MISS: {
+		regex: /^Your attack misses its mark/,
+		relatedMessageTypeNames: null,
+		contentType: "text",
+		parsingFn: function (message) {
+			hvStat.roundInfo.aAttempts++;
+		},
+	},
+	MAGIC_MISS: {
+		regex: /^Your spell misses its mark/,
+		relatedMessageTypeNames: ["CAST"],
+		contentType: "text",
+		parsingFn: function (message) {
+			var spell = message.relatedLog.regexResult[1];
+			if (hvStat.util.isElementalSpell(spell)) {
+				hvStat.roundInfo.elemSpells[3]++;
+			} else if (hvStat.util.isDivineSpell(spell)) {
+				hvStat.roundInfo.divineSpells[3]++;
+			} else if (hvStat.util.isForbiddenSpell(spell)) {
+				hvStat.roundInfo.forbidSpells[3]++;
+			} else if (hvStat.util.isSpiritualSpell(spell)) {
+				// TODO
+			} else if (hvStat.util.isDeprecatingSpell(spell)) {
+				// TODO
+			}
+		},
+	},
+	MELEE_HIT: {
+		regex: /^You (hit|crit) (.+?) for (\d+) (.+?) damage\./,
+		relatedMessageTypeNames: null,
+		contentType: "text",
+		parsingFn: function (message) {
+			var damageAmount = parseFloat(message.regexResult[3]);
+			var critical = message.regexResult[1] === "crit";
+			hvStat.roundInfo.aAttempts++;
+//			meleeHitCount++;
+			hvStat.roundInfo.aHits[critical ? 1 : 0]++;
+			hvStat.roundInfo.dDealt[critical ? 1 : 0] += damageAmount;
+		},
+	},
+	HIT: {
+		regex: /^(.+?) (hits|crits|blasts) (?!you)(.+?) for (\d+) (.+?) damage\./,
+		relatedMessageTypeNames: null,
+		contentType: "text",
+		parsingFn: function (message) {
+				var damageSource = message.regexResult[1];
+				var damageAmount = parseFloat(message.regexResult[4]);
+				var critical = message.regexResult[2] === "crits" || message.regexResult[2] === "blasts";
+				switch (damageSource) {
+				case "Bleeding Wound":
+					hvStat.roundInfo.dDealt[2] += damageAmount;
+					break;
+				case "Spreading Poison":
+					hvStat.roundInfo.effectPoison[1] += damageAmount;
+					hvStat.roundInfo.effectPoison[0]++;
+					break;
+				case "Your offhand":
+					hvStat.roundInfo.aOffhands[critical ? 2 : 0]++;
+					hvStat.roundInfo.aOffhands[critical ? 3 : 1] += damageAmount;
+					break;
+				case "Fireball": case "Inferno": case "Flare": case "Meteor": case "Nova": case "Flames of Loki":
+				case "Icestrike": case "Snowstorm": case "Freeze": case "Blizzard": case "Cryostasis": case "Fimbulvetr":
+				case "Lighting": case "Thunderstorm": case "Ball Lighting": case "Chain Lighting": case "Shockblast": case "Wrath of Thor":
+				case "Windblast": case "Cyclone": case "Gale": case "Hurricane": case "Downburst": case "Storms of Njord":
+					hvStat.roundInfo.dDealtSp[critical ? 1 : 0] += damageAmount;
+					hvStat.roundInfo.sHits[critical ? 1 : 0]++;
+					hvStat.roundInfo.elemSpells[1]++;
+					hvStat.roundInfo.elemSpells[2] += damageAmount;
+					break;
+				case "Condemn": case "Purge": case "Smite": case "Banish":
+					hvStat.roundInfo.dDealtSp[critical ? 1 : 0] += damageAmount;
+					hvStat.roundInfo.sHits[critical ? 1 : 0]++;
+					hvStat.roundInfo.divineSpells[1]++;
+					hvStat.roundInfo.divineSpells[2] += damageAmount;
+					break;
+				case "Corruption": case "Pestilence": case "Disintegrate": case "Ragnarok":
+					hvStat.roundInfo.dDealtSp[critical ? 1 : 0] += damageAmount;
+					hvStat.roundInfo.sHits[critical ? 1 : 0]++;
+					hvStat.roundInfo.forbidSpells[1]++;
+					hvStat.roundInfo.forbidSpells[2] += damageAmount;
+					break;
+				case "Soul Reaper": case "Soul Harvest": case "Soul Fire": case "Soul Burst":
+					hvStat.roundInfo.dDealtSp[critical ? 1 : 0] += damageAmount;
+					hvStat.roundInfo.sHits[critical ? 1 : 0]++;
+					// TODO
+//					hvStat.roundInfo.forbidSpells[1]++;
+//					hvStat.roundInfo.forbidSpells[2] += damageAmount;
+					break;
+				}
+		},
+	},
+	ITEM_OR_SKILL: {
+		regex: /^You use (.+?)\./,
+		relatedMessageTypeNames: null,
+		contentType: "text",
+		parsingFn: function (message) {
+			var usedObject = message.regexResult[1];
+			if (usedObject === "Mystic Gem") {
+				hvStat.roundInfo.channel--;
+			}
+		},
+	},
+
+	// Character passive actions
+	COUNTER: {
+		regex: /^You counter (.+?) for (\d+) points of (.+?) damage\./,
+		relatedMessageTypeNames: null,
+		contentType: "text",
+		parsingFn: function (message) {
+			var damageAmount = parseFloat(message.regexResult[2]);
+			if (hvStat.settings.isTrackStats || hvStat.settings.isShowEndStats) {
+				hvStat.roundInfo.aCounters[0]++;
+				hvStat.roundInfo.aCounters[1] += damageAmount;
+//				counterHitCount++;
+				hvStat.roundInfo.dDealt[0] += damageAmount;
+			}
+		},
+	},
+	DEFENSE: {
+		regex: /^You (block|evade|parry|resist) the attack from (.+?)\./,
+		relatedMessageTypeNames: null,
+		contentType: "text",
+		parsingFn: function (message) {
+			hvStat.roundInfo.mAttempts++;
+			switch (message.regexResult[1]) {
+			case "evade":
+				hvStat.roundInfo.pEvades++;
+				break;
+			case "block":
+				hvStat.roundInfo.pBlocks++;
+				break;
+			case "parry":
+				hvStat.roundInfo.pParries++;
+				break;
+			case "resist":
+				hvStat.roundInfo.pResists++;
+				break;
+			}
+		},
+	},
+
+	// Other events related to character
+	SCAN: {
+		regex: /^Scanning (.*)\.\.\.\s+HP: [^\s]+\/([^\s]+)\s+MP: [^\s]+\/[^\s]+(?:\s+SP: [^\s]+\/[^\s]+)? Monster Class: (.+?)(?:, Power Level (\d+))? Monster Trainer:(?: (.+))? Melee Attack: (.+) Weak against: (.+) Resistant to: (.+) Impervious to: (.+)/,
+		relatedMessageTypeNames: null,
+		contentType: "text",
+		parsingFn: function (message) {
+			if (hvStat.settings.isRememberScan) {
+				var scanningMonsterName = message.regexResult[1];
+				var scanningMonsterIndex = -1;
+				for (var i = 0; i < hvStat.battle.monster.monsters.length; i++) {
+					var monster = hvStat.battle.monster.monsters[i];
+					if (monster.name === scanningMonsterName) {
+						hvStat.database.loadingMonsterInfoFromDB = true;
+						(function (monster, logText) {
+							hvStat.database.idbAccessQueue.add(function () {
+								monster.fetchScanningLog(logText, hvStat.database.transaction);
+								RoundSave();
+							});
+						})(monster, message.text);
+					}
+				}
+			}
+		},
+	},
+	DRAIN: {
+		regex: /^You drain (\d+|\d+\.\d+) (HP|MP|SP) from (.+?)/,
+		relatedMessageTypeNames: null,
+		contentType: "text",
+		parsingFn: function (message) {
+			var drainObject = message.regexResult[2];
+			switch (drainObject) {
+			case "HP":
+				hvStat.roundInfo.weaponprocs[4]++;
+				break;
+			case "MP":
+				hvStat.roundInfo.weaponprocs[5]++;
+				break;
+			case "SP":
+				hvStat.roundInfo.weaponprocs[6]++;
+				break;
+			}
+		},
+	},
+	SKILL_COOLDOWN_EXPIRATION: {
+		regex: /^Cooldown expired for (.+?)/,
+		relatedMessageTypeNames: null,
+		contentType: "text",
+		parsingFn: function (message) {
+		},
+	},
+	RESTORATION: {
+		regex: /^(.+?) restores (\d+) points of (.+?)\./,
+		relatedMessageTypeNames: null,
+		contentType: "text",
+		parsingFn: function (message) {
+		},
+	},
+	GAINING_EFFECT: {
+		regex: /^You gain the effect (.+?)\./,
+		relatedMessageTypeNames: null,
+		contentType: "text",
+		parsingFn: function (message) {
+			var effectName = message.regexResult[1];
+			if (hvStat.settings.alertWhenChannelingIsGained && effectName === "Channeling") {
+				hvStat.battle.warningSystem.enqueueAlert("You gained the effect Channeling.");
+			}
+			switch (effectName) {
+			case "Channeling":
+				hvStat.roundInfo.channel++;
+				break;
+			case "Overwhelming Strikes":
+				hvStat.roundInfo.overStrikes++;
+				break;
+			case "Ether Tap":
+				// TODO
+				break;
+			}
+		},
+	},
+	EFFECT_EXPIRATION: {
+		regex: /^The effect (.+?) has expired\./,
+		relatedMessageTypeNames: null,
+		contentType: "text",
+		parsingFn: function (message) {
+			var effectName = message.regexResult[1];
+			if (hvStat.settings.isWarnSparkExpire && effectName === "Spark of Life") {
+				hvStat.battle.warningSystem.enqueueAlert("Spark of Life has expired!!");
+			}
+			var i = hvStat.battle.warningSystem.selfEffectNames.indexOf(effectName === "Regen II" ? "Regen" : effectName);
+			if (i !== -1 && hvStat.settings.isEffectsAlertSelf[i] && hvStat.settings.EffectsAlertSelfRounds[i] === "-1") {
+				hvStat.battle.warningSystem.enqueueAlert(effectName + " has expired");
+			}
+		},
+	},
+	CURE: {
+		regex: /^You are healed for (\d+) Health Points\./,
+		relatedMessageTypeNames: ["CAST"],
+		contentType: "text",
+		parsingFn: function (message, relatedLog) {
+			var spell = message.relatedLog.regexResult[1];
+			var healedPoints = parseFloat(message.regexResult[1]);
+			var index = -1;
+			switch (spell) {
+			case "Cure":
+				index = 0;
+				break;
+			case "Cure II":
+				index = 1;
+				break;
+			case "Cure III":
+				index = 2;
+				break;
+			}
+			if (index >= 0) {
+				hvStat.roundInfo.cureTotals[index] += healedPoints;
+				hvStat.roundInfo.cureCounts[index]++;
+			}
+		},
+	},
+	RECOVERY: {
+		regex: /^Recovered (\d+) points of (.+?)\./,
+		relatedMessageTypeNames: null,
+		contentType: "text",
+		parsingFn: function (message) {
+		},
+	},
+	ABSORPTION: {
+		regex: /^The spell is absorbed. You gain (\d+) Magic Points\./,
+		relatedMessageTypeNames: null,
+		contentType: "text",
+		parsingFn: function (message) {
+			if (hvStat.settings.isWarnAbsorbTrigger) {
+				hvStat.battle.warningSystem.enqueueAlert("Absorbing Ward has triggered.");
+			}
+			hvStat.roundInfo.absArry[1]++;
+			hvStat.roundInfo.absArry[2] += parseFloat(message.regexResult[1]);
+		},
+	},
+	SPARK_OF_LIFE_SUCCESS: {
+		regex: /^Your Spark of Life restores you from the brink of defeat\./,
+		relatedMessageTypeNames: null,
+		contentType: "text",
+		parsingFn: function (message) {
+			if (hvStat.settings.isWarnSparkTrigger) {
+				hvStat.battle.warningSystem.enqueueAlert("Spark of Life has triggered!!");
+			}
+		},
+	},
+	SPARK_OF_LIFE_FAILURE: {
+		regex: /^Your Spark of Life fails due to insufficient Spirit\./,
+		relatedMessageTypeNames: null,
+		contentType: "text",
+		parsingFn: function (message) {
+		},
+	},
+	SPIRIT_SHIELD_SUCCESS: {
+		regex: /^Your spirit shield absorbs (\d+) points of damage from the attack into (\d+\.?\d*) points of spirit damage\./,
+		relatedMessageTypeNames: null,
+		contentType: "text",
+		parsingFn: function (message) {
+		},
+	},
+	PROFICIENCY_GAIN: {
+		regex: /^You gain 0\.0(\d) points of (.+?) proficiency\./,
+		relatedMessageTypeNames: null,
+		contentType: "text",
+		parsingFn: function (message) {
+			var p = message.regexResult[1] / 100;
+			switch (message.regexResult[2]) {
+			case "one-handed weapon":
+				hvStat.characterStatus.proficiencies.oneHanded += p;
+				hvStat.roundInfo.weapProfGain[0] += p;
+				break;
+			case "two-handed weapon":
+				hvStat.characterStatus.proficiencies.twoHanded += p;
+				hvStat.roundInfo.weapProfGain[1] += p;
+				break;
+			case "dual wielding":
+				hvStat.characterStatus.proficiencies.dualWielding += p;
+				hvStat.roundInfo.weapProfGain[2] += p;
+				break;
+			case "staff":
+				hvStat.characterStatus.proficiencies.staff += p;
+				hvStat.roundInfo.weapProfGain[3] += p;
+				break;
+			case "cloth armor":
+				hvStat.characterStatus.proficiencies.clothArmor += p;
+				hvStat.roundInfo.armorProfGain[0] += p;
+				break;
+			case "light armor":
+				hvStat.characterStatus.proficiencies.lightArmor += p;
+				hvStat.roundInfo.armorProfGain[1] += p;
+				break;
+			case "heavy armor":
+				hvStat.characterStatus.proficiencies.heavyArmor += p;
+				hvStat.roundInfo.armorProfGain[2] += p;
+				break;
+			case "elemental magic":
+				hvStat.characterStatus.proficiencies.elemental += p;
+				hvStat.roundInfo.elemGain += p;
+				break;
+			case "divine magic":
+				hvStat.characterStatus.proficiencies.divine += p;
+				hvStat.characterStatus.proficiencies.spiritual = (hvStat.characterStatus.proficiencies.divine + hvStat.characterStatus.proficiencies.forbidden) / 2;
+				hvStat.roundInfo.divineGain += p;
+				break;
+			case "forbidden magic":
+				hvStat.characterStatus.proficiencies.forbidden += p;
+				hvStat.characterStatus.proficiencies.spiritual = (hvStat.characterStatus.proficiencies.divine + hvStat.characterStatus.proficiencies.forbidden) / 2;
+				hvStat.roundInfo.forbidGain += p;
+				break;
+			case "deprecating magic":
+				hvStat.characterStatus.proficiencies.deprecating += p;
+				hvStat.roundInfo.depGain += p;
+				break;
+			case "supportive magic":
+				hvStat.characterStatus.proficiencies.supportive += p;
+				hvStat.roundInfo.supportGain += p;
+				break;
+			}
+			hvStat.storage.characterStatus.save();
+		},
+	},
+
+	// Monster active actions
+	MONSTER_HIT: {
+		regex: /^(.+?) (hits|crits) you for (\d+) (.+?) damage\./,
+		relatedMessageTypeNames: ["MONSTER_SKILL"],
+		contentType: "text",
+		parsingFn: function (message) {
+			var damageSource = message.regexResult[1];
+			var damageAmount = parseFloat(message.regexResult[3]);
+			var critical = message.regexResult[2] === "crits";
+			hvStat.roundInfo.mAttempts++;
+			hvStat.roundInfo.mHits[critical ? 1 : 0]++;
+			hvStat.roundInfo.dTaken[critical ? 1 : 0] += damageAmount;
+			if (relatedLog) {
+				// Skill hit
+				hvStat.roundInfo.pskills[1]++;
+				hvStat.roundInfo.pskills[2] += damageAmount;
+				if (relatedLog.regexResult[2] === "uses") {
+					hvStat.roundInfo.pskills[3]++;
+					hvStat.roundInfo.pskills[4] += damageAmount;
+				} else {
+					hvStat.roundInfo.pskills[5]++;
+					hvStat.roundInfo.pskills[6] += damageAmount;
+				}
+			}
+			if (relatedLog && hvStat.settings.isRememberSkillsTypes) {
+				for (var i = 0; i < hvStat.battle.monster.monsters.length; i++) {
+					var monster = hvStat.battle.monster.monsters[i];
+					if (damageSource === monster.name && damageSource.indexOf("Unnamed ") !== 0) {
+						(function (relatedLogText, messageText) {
+							hvStat.database.idbAccessQueue.add(function () {
+								monster.fetchSkillLog(relatedLogText, messageText, hvStat.database.transaction);
+							});
+						})(relatedLog.text, message.text);
+						break;
+					}
+				}
+			}
+		},
+	},
+	MONSTER_SKILL: {
+		regex: /^(.+?) (uses|casts) (.+?)/,
+		relatedMessageTypeNames: null,
+		contentType: "text",
+		parsingFn: function (message) {
+			var verb = message.regexResult[2];
+			if (verb === "uses") {
+				hvStat.roundInfo.pskills[0]++;
+			} else if (verb === "casts") {
+				hvStat.roundInfo.mAttempts++;
+				hvStat.roundInfo.mSpells++;
+			}
+		},
+	},
+
+	// Monster passive actions
+	MONSTER_DEFENSE: {
+		regex: /^(.+?) (evades|parries|resists) your (attack|spell)\./,
+		relatedMessageTypeNames: null,
+		contentType: "text",
+		parsingFn: function (message) {
+		},
+	},
+	MONSTER_AGITATED: {
+		regex: /^(.+?) is agitated!/,
+		relatedMessageTypeNames: null,
+		contentType: "text",
+		parsingFn: function (message) {
+		},
+	},
+	MONSTER_DEFEAT: {
+		regex: /^(.+?) has been defeated\./,
+		relatedMessageTypeNames: null,
+		contentType: "text",
+		parsingFn: function (message) {
+			hvStat.roundInfo.kills++;
+		},
+	},
+
+	// Other events related to monster
+	MONSTER_GAINING_EFFECT: {
+		regex: /^(.+?) gains the effect (.+?)\./,
+		relatedMessageTypeNames: ["CAST", "COUNTER"],
+		contentType: "text",
+		parsingFn: function (message) {
+			var effectName = message.regexResult[2];
+			switch (effectName) {
+			case "Coalesced Mana":
+				hvStat.roundInfo.coalesce++;
+				break;
+			case "Searing Skin": case "Freezing Limbs": case "Deep Burns": case "Turbulent Air":
+			case "Breached Defense": case "Blunted Attack": case "Rippened Soul": case "Burning Soul":
+				hvStat.roundInfo.elemEffects[0]++;
+				break;
+			case "Spreading Poison": case "Slowed": case "Weakened": case "Sleep":
+			case "Confused": case "Imperiled": case "Blinded": case "Silenced":
+			case "Nerfed": case "Magically Snared": case "Lifestream":
+				hvStat.roundInfo.depSpells[1]++;
+				break;
+			case "Stunned":
+				hvStat.roundInfo.weaponprocs[0]++;
+				if (message.relatedLog.type === hvStat.battle.log.messageTypes.COUNTER) {
+					// TODO: check
+					hvStat.roundInfo.weaponprocs[0]--;
+					hvStat.roundInfo.weaponprocs[7]++
+				}
+				break;
+			case "Penetrated Armor":
+				hvStat.roundInfo.weaponprocs[1]++;
+				break;
+			case "Bleeding Wound":
+				hvStat.roundInfo.weaponprocs[2]++;
+				break;
+			}
+		},
+	},
+	MONSTER_EFFECT_EXPIRATION: {
+		regex: /^The effect (.+?) on (.+?) has expired\./,
+		relatedMessageTypeNames: null,
+		contentType: "text",
+		parsingFn: function (message) {
+		},
+	},
+	MONSTER_EFFECT_EXPLOSION: {
+		regex: /^(.+?) explodes for (\d+) (.+?) damage/,
+		relatedMessageTypeNames: null,
+		contentType: "text",
+		parsingFn: function (message) {
+			var damageAmount = parseFloat(regexResult[2]);
+			if (hvStat.settings.isTrackStats || hvStat.settings.isShowEndStats) {
+				hvStat.roundInfo.elemEffects[1]++;
+				hvStat.roundInfo.elemEffects[2] += damageAmount;
+			}
+		},
+	},
+	POWERUP_DROP: {
+		regex: /^(.+?) drops a (.+?) powerup!/,
+		relatedMessageTypeNames: null,
+		contentType: "text",
+		parsingFn: function (message) {
+			if (hvStat.settings.isAlertGem) {
+				hvStat.battle.warningSystem.enqueueAlert("You picked up a " + regexResult[2] + ".");
+			}
+		},
+	},
+};
+
+hvStat.battle.log.Turn = function (targetTurnNumber) {
 	this.turn = -1;
 	this.lastTurn = -1;
 	this.texts = [];
 	this.innerHTMLs = [];
+	this.messages = [];
 
 	var turnElements = document.querySelectorAll('#togpane_log td:first-child');
 	this.lastTurn = Number(util.innerText(turnElements[0]));
-	if (isNaN(parseFloat(specifiedTurn))) {
-		specifiedTurn = this.lastTurn;
+	if (isNaN(parseFloat(targetTurnNumber))) {
+		targetTurnNumber = this.lastTurn;
 	} else {
-		specifiedTurn = Number(specifiedTurn);
+		targetTurnNumber = Number(targetTurnNumber);
 	}
-	this.turn = specifiedTurn;
+	this.turn = targetTurnNumber;
 
 	for (var i = 0; i < turnElements.length; i++) {
 		var turnElement = turnElements[i];
 		var turn = Number(util.innerText(turnElement));
-		if (turn === specifiedTurn) {
+		if (turn === targetTurnNumber) {
 			var logTextElement = turnElement.nextSibling.nextSibling;
-			this.texts.push(util.innerText(logTextElement));
-			this.innerHTMLs.push(logTextElement.innerHTML);
+			var text = util.innerText(logTextElement);
+			var innerHTML = logTextElement.innerHTML;
+			this.texts.push(text);
+			this.innerHTMLs.push(innerHTML);
+			this.messages.push(new hvStat.battle.log.Message(text, innerHTML));
 		}
 	}
 	this.texts.reverse();
 	this.innerHTMLs.reverse();
+	this.messages.reverse();
+	for (i = 0; i < this.messages.length; i++) {
+		var message = this.messages[i];
+		message.parse();
+	}
+	this.analyze();
+	console.debug(this);
+};
+hvStat.battle.log.Turn.prototype = {
+	analyze: function () {
+		for (var i = 0; i < this.messages.length; i++) {
+			var message = this.messages[i];
+			var messageType = message.messageType;
+			if (messageType && Array.isArray(messageType.relatedMessageTypeNames)) {
+				var relatedMessageTypes = [];
+				for (var j = 0; j < messageType.relatedMessageTypeNames.length; j++) {
+					var messageTypeName = messageType.relatedMessageTypeNames[j];
+					relatedMessageTypes[j] = hvStat.battle.log.messageTypes[messageTypeName];
+				}
+				for (j = 0; j < i; j++) {
+					var prevMessage = this.messages[j];
+					var prevMessageType = prevMessage.messageType;
+					if (relatedMessageTypes.indexOf(prevMessageType) >= 0) {
+						message.relatedMessage = prevMessage;
+						break;
+					}
+				}
+			}
+		}
+	},
+	evaluate: function () {
+		for (var i = 0; i < this.messages.length; i++) {
+			var message = this.messages[i];
+			message.evaluate();
+		}
+	},
 };
 
 //------------------------------------
@@ -3138,6 +3998,12 @@ hvStat.battle.monster.Monster.prototype = {
 	set name(name) { this._name = name; },
 	set maxHp(maxHp) { this._maxHp = maxHp; },
 
+	initialize: function (mid, name, hp) {
+		var that = this;
+		that._id = Number(mid);
+		that._name = name;
+		that._maxHp = hp;
+	},
 	fetchStartingLog: function (html) {
 		var that = this;
 		var r;
@@ -3364,7 +4230,6 @@ hvStat.battle.monster.Monster.prototype = {
 		if (!this._waitingForDBResponse()) {
 			this._renderStats();
 		} else {
-//			setTimeout(arguments.callee, 10);
 			(function (that) {
 				setTimeout(function () {
 					that.renderStats();
