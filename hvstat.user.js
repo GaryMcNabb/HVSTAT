@@ -5356,9 +5356,9 @@ function collectRoundInfo() {
 		if (hvStat.settings.isWarnAbsorbTrigger && /The spell is absorbed/.test(logHTML)) {
 			hvStat.battle.warningSystem.enqueueAlert("Absorbing Ward has triggered.");
 		}
-		if (hvStat.settings.isWarnSparkTrigger && logHTML.match(/spark of life.*defeat/ig)) {
-			hvStat.battle.warningSystem.enqueueAlert("Spark of Life has triggered!!");
-		}
+// 		if (hvStat.settings.isWarnSparkTrigger && logHTML.match(/spark of life.*defeat/ig)) {
+// 			hvStat.battle.warningSystem.enqueueAlert("Spark of Life has triggered!!");
+// 		}
 		if (hvStat.settings.isWarnSparkExpire && logHTML.match(/spark of life.*expired/ig)) {
 			hvStat.battle.warningSystem.enqueueAlert("Spark of Life has expired!!");
 		}
