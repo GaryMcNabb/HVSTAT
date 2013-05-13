@@ -1825,7 +1825,7 @@ hvStat.battle.log.MessageType = function (param) {
 	this.regex = param.regex || null;
 	this.relatedMessageTypeNames = param.relatedMessageTypeNames || null;
 	this.contentType = param.contentType || null;
-	this.parsingFn = param.parsingFn || null;
+	this.evaluationFn = param.evaluationFn || null;
 };
 hvStat.battle.log.MessageType.prototype = {
 	match: function (text, innerHTML) {
@@ -1839,8 +1839,8 @@ hvStat.battle.log.MessageType.prototype = {
 		return result;
 	},
 	evaluate: function (message) {
-		if (this.parsingFn instanceof Function) {
-			this.parsingFn(message);
+		if (this.evaluationFn instanceof Function) {
+			this.evaluationFn(message);
 		}
 	},
 };
@@ -1882,14 +1882,15 @@ hvStat.battle.log.messageTypeParams = {
 		regex: /^Battle Start!/,
 		relatedMessageTypeNames: null,
 		contentType: "text",
-		parsingFn: function (message) {
+		evaluationFn: function (message) {
 		},
 	},
 	HOURY_ENCOUNTER_INITIALIZATION: {
 		regex: /^Initializing random encounter \.\.\./,
 		relatedMessageTypeNames: null,
 		contentType: "text",
-		parsingFn: function (message) {
+		evaluationFn: function (message) {
+return;
 			hvStat.roundInfo.battleType = HOURLY;
 		},
 	},
@@ -1897,7 +1898,8 @@ hvStat.battle.log.messageTypeParams = {
 		regex: /^Initializing arena challenge #(\d+) \(Round (\d+) \/ (\d+)\) \.\.\./,
 		relatedMessageTypeNames: null,
 		contentType: "text",
-		parsingFn: function (message) {
+		evaluationFn: function (message) {
+return;
 			hvStat.roundInfo.battleType = ARENA;
 			hvStat.roundInfo.arenaNum = parseFloat(regexResult[1]);
 			hvStat.roundInfo.currRound = parseFloat(regexResult[2]);
@@ -1908,7 +1910,8 @@ hvStat.battle.log.messageTypeParams = {
 		regex: /^Initializing Item World \(Round (\d+) \/ (\d+)\) \.\.\./,
 		relatedMessageTypeNames: null,
 		contentType: "text",
-		parsingFn: function (message) {
+		evaluationFn: function (message) {
+return;
 			hvStat.roundInfo.battleType = ITEM_WORLD;
 			hvStat.roundInfo.currRound = parseFloat(regexResult[1]);
 			hvStat.roundInfo.maxRound = parseFloat(regexResult[2]);
@@ -1918,7 +1921,8 @@ hvStat.battle.log.messageTypeParams = {
 		regex: /^Initializing GrindFest \(Round (\d+)\) \.\.\./,
 		relatedMessageTypeNames: null,
 		contentType: "text",
-		parsingFn: function (message) {
+		evaluationFn: function (message) {
+return;
 			hvStat.roundInfo.battleType = GRINDFEST;
 			hvStat.roundInfo.currRound = parseFloat(regexResult[1]);
 		},
@@ -1927,7 +1931,7 @@ hvStat.battle.log.messageTypeParams = {
 		regex: /^Spawned Monster ([A-J]): MID=(\d+) \((.+?)\) LV=(\d+) HP=(\d+|\d+\.\d+)/,
 		relatedMessageTypeNames: null,
 		contentType: "text",
-		parsingFn: function (message) {
+		evaluationFn: function (message) {
 			if (hvStat.settings.isTrackItems) {
 				hvStat.roundInfo.dropChances++;
 			}
@@ -1935,9 +1939,9 @@ hvStat.battle.log.messageTypeParams = {
 			var index = "ABCDEFGHIJ".indexOf(letter);
 			if (index >= 0) {
 				var monster = hvStat.battle.monster.monsters[index];
-				var mid = message.regexResult[2];
+				var mid = Number(message.regexResult[2]);
 				var name = message.regexResult[3];
-				var hp = message.regexResult[5];
+				var hp = Number(message.regexResult[5]);
 				monster.initialize(mid, name, hp);
 				if (hvStat.settings.showMonsterInfoFromDB) {
 					hvStat.database.loadingMonsterInfoFromDB = true;
@@ -1954,28 +1958,29 @@ hvStat.battle.log.messageTypeParams = {
 		regex: /^You have escaped from the battle\./,
 		relatedMessageTypeNames: null,
 		contentType: "text",
-		parsingFn: function (message) {
+		evaluationFn: function (message) {
 		},
 	},
 	DEFEAT: {
 		regex: /^You have been defeated\./,
 		relatedMessageTypeNames: null,
 		contentType: "text",
-		parsingFn: function (message) {
+		evaluationFn: function (message) {
 		},
 	},
 	VICTORY: {
 		regex: /^You are Victorious!/,
 		relatedMessageTypeNames: null,
 		contentType: "text",
-		parsingFn: function (message) {
+		evaluationFn: function (message) {
 		},
 	},
 	DROP: {
 		regex: /(.+?) dropped <span style="\s*color\s*:\s*(.+?)\s*;?\s*">\[(.+?)\]<\/span>/,
 		relatedMessageTypeNames: null,
 		contentType: "html",
-		parsingFn: function (message) {
+		evaluationFn: function (message) {
+return;
 			var styleColor = message.regexResult[2];
 			var stuffName = message.regexResult[3];
 			switch (styleColor.toLowerCase()) {
@@ -1994,7 +1999,8 @@ hvStat.battle.log.messageTypeParams = {
 		regex: /Arena Clear Bonus! <span style="\s*color\s*:\s*(.+?)\s*;?\s*">\[(.+?)\]<\/span>/,
 		relatedMessageTypeNames: null,
 		contentType: "html",
-		parsingFn: function (message) {
+		evaluationFn: function (message) {
+return;
 			var styleColor = message.regexResult[1];
 			var stuffName = message.regexResult[2];
 			switch (styleColor.toLowerCase()) {
@@ -2013,15 +2019,16 @@ hvStat.battle.log.messageTypeParams = {
 		regex: /Arena Token Bonus! <span style="\s*color\s*:\s*(.+?)\s*;?\s*">\[(.+?)\]<\/span>/,
 		relatedMessageTypeNames: null,
 		contentType: "html",
-		parsingFn: function (message) {
+		evaluationFn: function (message) {
 		},
 	},
 	CREDIT: {
 		regex: /^You gain (\d+) Credits!/,
 		relatedMessageTypeNames: null,
 		contentType: "text",
-		parsingFn: function (message) {
-			var credits = parseFloat(message.regexResult[1]);
+		evaluationFn: function (message) {
+return;
+			var credits = Number(message.regexResult[1]);
 			hvStat.overview.credits += credits;
 			hvStat.overview.creditsbyBT[hvStat.roundInfo.battleType] += credits;
 		},
@@ -2030,8 +2037,9 @@ hvStat.battle.log.messageTypeParams = {
 		regex: /^You gain (\d+) EXP!/,
 		relatedMessageTypeNames: null,
 		contentType: "text",
-		parsingFn: function (message) {
-			var exp = parseFloat(message.regexResult[1]);
+		evaluationFn: function (message) {
+return;
+			var exp = Number(message.regexResult[1]);
 			hvStat.overview.exp += exp;
 			hvStat.overview.expbyBT[hvStat.roundInfo.battleType] += exp;
 		},
@@ -2040,7 +2048,8 @@ hvStat.battle.log.messageTypeParams = {
 		regex: /^Warning: Reached equipment inventory limit \(\d+\)\. Generated item instead\./,
 		relatedMessageTypeNames: null,
 		contentType: "text",
-		parsingFn: function (message) {
+		evaluationFn: function (message) {
+return;
 			localStorage.setItem(HV_EQUIP, "true");
 		},
 	},
@@ -2050,7 +2059,8 @@ hvStat.battle.log.messageTypeParams = {
 		regex: /^You cast (.+?)\./,
 		relatedMessageTypeNames: null,
 		contentType: "text",
-		parsingFn: function (message) {
+		evaluationFn: function (message) {
+return;
 			var spell = message.regexResult[1];
 			if (hvStat.util.isElementalSpell(spell)) {
 				hvStat.roundInfo.elemSpells[0]++;
@@ -2078,7 +2088,8 @@ hvStat.battle.log.messageTypeParams = {
 		regex: /^Your attack misses its mark/,
 		relatedMessageTypeNames: null,
 		contentType: "text",
-		parsingFn: function (message) {
+		evaluationFn: function (message) {
+return;
 			hvStat.roundInfo.aAttempts++;
 		},
 	},
@@ -2086,7 +2097,8 @@ hvStat.battle.log.messageTypeParams = {
 		regex: /^Your spell misses its mark/,
 		relatedMessageTypeNames: ["CAST"],
 		contentType: "text",
-		parsingFn: function (message) {
+		evaluationFn: function (message) {
+return;
 			var spell = message.relatedLog.regexResult[1];
 			if (hvStat.util.isElementalSpell(spell)) {
 				hvStat.roundInfo.elemSpells[3]++;
@@ -2105,7 +2117,8 @@ hvStat.battle.log.messageTypeParams = {
 		regex: /^You (hit|crit) (.+?) for (\d+) (.+?) damage\./,
 		relatedMessageTypeNames: null,
 		contentType: "text",
-		parsingFn: function (message) {
+		evaluationFn: function (message) {
+return;
 			var damageAmount = parseFloat(message.regexResult[3]);
 			var critical = message.regexResult[1] === "crit";
 			hvStat.roundInfo.aAttempts++;
@@ -2118,7 +2131,8 @@ hvStat.battle.log.messageTypeParams = {
 		regex: /^(.+?) (hits|crits|blasts) (?!you)(.+?) for (\d+) (.+?) damage\./,
 		relatedMessageTypeNames: null,
 		contentType: "text",
-		parsingFn: function (message) {
+		evaluationFn: function (message) {
+return;
 				var damageSource = message.regexResult[1];
 				var damageAmount = parseFloat(message.regexResult[4]);
 				var critical = message.regexResult[2] === "crits" || message.regexResult[2] === "blasts";
@@ -2169,7 +2183,8 @@ hvStat.battle.log.messageTypeParams = {
 		regex: /^You use (.+?)\./,
 		relatedMessageTypeNames: null,
 		contentType: "text",
-		parsingFn: function (message) {
+		evaluationFn: function (message) {
+return;
 			var usedObject = message.regexResult[1];
 			if (usedObject === "Mystic Gem") {
 				hvStat.roundInfo.channel--;
@@ -2182,7 +2197,8 @@ hvStat.battle.log.messageTypeParams = {
 		regex: /^You counter (.+?) for (\d+) points of (.+?) damage\./,
 		relatedMessageTypeNames: null,
 		contentType: "text",
-		parsingFn: function (message) {
+		evaluationFn: function (message) {
+return;
 			var damageAmount = parseFloat(message.regexResult[2]);
 			if (hvStat.settings.isTrackStats || hvStat.settings.isShowEndStats) {
 				hvStat.roundInfo.aCounters[0]++;
@@ -2196,7 +2212,8 @@ hvStat.battle.log.messageTypeParams = {
 		regex: /^You (block|evade|parry|resist) the attack from (.+?)\./,
 		relatedMessageTypeNames: null,
 		contentType: "text",
-		parsingFn: function (message) {
+		evaluationFn: function (message) {
+return;
 			hvStat.roundInfo.mAttempts++;
 			switch (message.regexResult[1]) {
 			case "evade":
@@ -2220,7 +2237,8 @@ hvStat.battle.log.messageTypeParams = {
 		regex: /^Scanning (.*)\.\.\.\s+HP: [^\s]+\/([^\s]+)\s+MP: [^\s]+\/[^\s]+(?:\s+SP: [^\s]+\/[^\s]+)? Monster Class: (.+?)(?:, Power Level (\d+))? Monster Trainer:(?: (.+))? Melee Attack: (.+) Weak against: (.+) Resistant to: (.+) Impervious to: (.+)/,
 		relatedMessageTypeNames: null,
 		contentType: "text",
-		parsingFn: function (message) {
+		evaluationFn: function (message) {
+return;
 			if (hvStat.settings.isRememberScan) {
 				var scanningMonsterName = message.regexResult[1];
 				var scanningMonsterIndex = -1;
@@ -2243,7 +2261,8 @@ hvStat.battle.log.messageTypeParams = {
 		regex: /^You drain (\d+|\d+\.\d+) (HP|MP|SP) from (.+?)/,
 		relatedMessageTypeNames: null,
 		contentType: "text",
-		parsingFn: function (message) {
+		evaluationFn: function (message) {
+return;
 			var drainObject = message.regexResult[2];
 			switch (drainObject) {
 			case "HP":
@@ -2262,21 +2281,22 @@ hvStat.battle.log.messageTypeParams = {
 		regex: /^Cooldown expired for (.+?)/,
 		relatedMessageTypeNames: null,
 		contentType: "text",
-		parsingFn: function (message) {
+		evaluationFn: function (message) {
 		},
 	},
 	RESTORATION: {
 		regex: /^(.+?) restores (\d+) points of (.+?)\./,
 		relatedMessageTypeNames: null,
 		contentType: "text",
-		parsingFn: function (message) {
+		evaluationFn: function (message) {
 		},
 	},
 	GAINING_EFFECT: {
 		regex: /^You gain the effect (.+?)\./,
 		relatedMessageTypeNames: null,
 		contentType: "text",
-		parsingFn: function (message) {
+		evaluationFn: function (message) {
+return;
 			var effectName = message.regexResult[1];
 			if (hvStat.settings.alertWhenChannelingIsGained && effectName === "Channeling") {
 				hvStat.battle.warningSystem.enqueueAlert("You gained the effect Channeling.");
@@ -2298,7 +2318,8 @@ hvStat.battle.log.messageTypeParams = {
 		regex: /^The effect (.+?) has expired\./,
 		relatedMessageTypeNames: null,
 		contentType: "text",
-		parsingFn: function (message) {
+		evaluationFn: function (message) {
+return;
 			var effectName = message.regexResult[1];
 			if (hvStat.settings.isWarnSparkExpire && effectName === "Spark of Life") {
 				hvStat.battle.warningSystem.enqueueAlert("Spark of Life has expired!!");
@@ -2313,7 +2334,8 @@ hvStat.battle.log.messageTypeParams = {
 		regex: /^You are healed for (\d+) Health Points\./,
 		relatedMessageTypeNames: ["CAST"],
 		contentType: "text",
-		parsingFn: function (message, relatedLog) {
+		evaluationFn: function (message, relatedLog) {
+return;
 			var spell = message.relatedLog.regexResult[1];
 			var healedPoints = parseFloat(message.regexResult[1]);
 			var index = -1;
@@ -2338,14 +2360,15 @@ hvStat.battle.log.messageTypeParams = {
 		regex: /^Recovered (\d+) points of (.+?)\./,
 		relatedMessageTypeNames: null,
 		contentType: "text",
-		parsingFn: function (message) {
+		evaluationFn: function (message) {
 		},
 	},
 	ABSORPTION: {
 		regex: /^The spell is absorbed. You gain (\d+) Magic Points\./,
 		relatedMessageTypeNames: null,
 		contentType: "text",
-		parsingFn: function (message) {
+		evaluationFn: function (message) {
+return;
 			if (hvStat.settings.isWarnAbsorbTrigger) {
 				hvStat.battle.warningSystem.enqueueAlert("Absorbing Ward has triggered.");
 			}
@@ -2357,7 +2380,7 @@ hvStat.battle.log.messageTypeParams = {
 		regex: /^Your Spark of Life restores you from the brink of defeat\./,
 		relatedMessageTypeNames: null,
 		contentType: "text",
-		parsingFn: function (message) {
+		evaluationFn: function (message) {
 			if (hvStat.settings.isWarnSparkTrigger) {
 				hvStat.battle.warningSystem.enqueueAlert("Spark of Life has triggered!!");
 			}
@@ -2367,21 +2390,22 @@ hvStat.battle.log.messageTypeParams = {
 		regex: /^Your Spark of Life fails due to insufficient Spirit\./,
 		relatedMessageTypeNames: null,
 		contentType: "text",
-		parsingFn: function (message) {
+		evaluationFn: function (message) {
 		},
 	},
 	SPIRIT_SHIELD_SUCCESS: {
 		regex: /^Your spirit shield absorbs (\d+) points of damage from the attack into (\d+\.?\d*) points of spirit damage\./,
 		relatedMessageTypeNames: null,
 		contentType: "text",
-		parsingFn: function (message) {
+		evaluationFn: function (message) {
 		},
 	},
 	PROFICIENCY_GAIN: {
 		regex: /^You gain 0\.0(\d) points of (.+?) proficiency\./,
 		relatedMessageTypeNames: null,
 		contentType: "text",
-		parsingFn: function (message) {
+		evaluationFn: function (message) {
+return;
 			var p = message.regexResult[1] / 100;
 			switch (message.regexResult[2]) {
 			case "one-handed weapon":
@@ -2444,7 +2468,8 @@ hvStat.battle.log.messageTypeParams = {
 		regex: /^(.+?) (hits|crits) you for (\d+) (.+?) damage\./,
 		relatedMessageTypeNames: ["MONSTER_SKILL"],
 		contentType: "text",
-		parsingFn: function (message) {
+		evaluationFn: function (message) {
+return;
 			var damageSource = message.regexResult[1];
 			var damageAmount = parseFloat(message.regexResult[3]);
 			var critical = message.regexResult[2] === "crits";
@@ -2482,7 +2507,8 @@ hvStat.battle.log.messageTypeParams = {
 		regex: /^(.+?) (uses|casts) (.+?)/,
 		relatedMessageTypeNames: null,
 		contentType: "text",
-		parsingFn: function (message) {
+		evaluationFn: function (message) {
+return;
 			var verb = message.regexResult[2];
 			if (verb === "uses") {
 				hvStat.roundInfo.pskills[0]++;
@@ -2498,21 +2524,22 @@ hvStat.battle.log.messageTypeParams = {
 		regex: /^(.+?) (evades|parries|resists) your (attack|spell)\./,
 		relatedMessageTypeNames: null,
 		contentType: "text",
-		parsingFn: function (message) {
+		evaluationFn: function (message) {
 		},
 	},
 	MONSTER_AGITATED: {
 		regex: /^(.+?) is agitated!/,
 		relatedMessageTypeNames: null,
 		contentType: "text",
-		parsingFn: function (message) {
+		evaluationFn: function (message) {
 		},
 	},
 	MONSTER_DEFEAT: {
 		regex: /^(.+?) has been defeated\./,
 		relatedMessageTypeNames: null,
 		contentType: "text",
-		parsingFn: function (message) {
+		evaluationFn: function (message) {
+return;
 			hvStat.roundInfo.kills++;
 		},
 	},
@@ -2522,7 +2549,8 @@ hvStat.battle.log.messageTypeParams = {
 		regex: /^(.+?) gains the effect (.+?)\./,
 		relatedMessageTypeNames: ["CAST", "COUNTER"],
 		contentType: "text",
-		parsingFn: function (message) {
+		evaluationFn: function (message) {
+return;
 			var effectName = message.regexResult[2];
 			switch (effectName) {
 			case "Coalesced Mana":
@@ -2558,14 +2586,15 @@ hvStat.battle.log.messageTypeParams = {
 		regex: /^The effect (.+?) on (.+?) has expired\./,
 		relatedMessageTypeNames: null,
 		contentType: "text",
-		parsingFn: function (message) {
+		evaluationFn: function (message) {
 		},
 	},
 	MONSTER_EFFECT_EXPLOSION: {
 		regex: /^(.+?) explodes for (\d+) (.+?) damage/,
 		relatedMessageTypeNames: null,
 		contentType: "text",
-		parsingFn: function (message) {
+		evaluationFn: function (message) {
+return;
 			var damageAmount = parseFloat(regexResult[2]);
 			if (hvStat.settings.isTrackStats || hvStat.settings.isShowEndStats) {
 				hvStat.roundInfo.elemEffects[1]++;
@@ -2577,7 +2606,7 @@ hvStat.battle.log.messageTypeParams = {
 		regex: /^(.+?) drops a (.+?) powerup!/,
 		relatedMessageTypeNames: null,
 		contentType: "text",
-		parsingFn: function (message) {
+		evaluationFn: function (message) {
 			if (hvStat.settings.isAlertGem) {
 				hvStat.battle.warningSystem.enqueueAlert("You picked up a " + regexResult[2] + ".");
 			}
@@ -5267,6 +5296,7 @@ function collectRoundInfo() {
 	}
 	var monsterIndex = 0;
 	var turnLog = new hvStat.battle.log.Turn();
+	turnLog.evaluate();
 	var joinedLogStringOfCurrentTurn = turnLog.texts.join("\n");
 
 	for (var turnLogIndex = 0; turnLogIndex < turnLog.texts.length; turnLogIndex++) {
@@ -5276,19 +5306,19 @@ function collectRoundInfo() {
 		var logHTMLOfPreviousRow = turnLog.innerHTMLs[turnLogIndex - 1];
 		if (turnLog.turn === 0) {
 			if (logHTML.match(/HP=/)) {
-				hvStat.battle.monster.monsters[monsterIndex].fetchStartingLog(logHTML);
-				if (hvStat.settings.showMonsterInfoFromDB) {
-					hvStat.database.loadingMonsterInfoFromDB = true;
-					(function (monsterIndex) {
-						hvStat.database.idbAccessQueue.add(function () {
-							hvStat.battle.monster.monsters[monsterIndex].getFromDB(hvStat.database.transaction, RoundSave);
-						});
-					})(monsterIndex);
-				}
-				if (hvStat.settings.isTrackItems) {
-					hvStat.roundInfo.dropChances++;
-				}
-				monsterIndex++;
+// 				hvStat.battle.monster.monsters[monsterIndex].fetchStartingLog(logHTML);
+// 				if (hvStat.settings.showMonsterInfoFromDB) {
+// 					hvStat.database.loadingMonsterInfoFromDB = true;
+// 					(function (monsterIndex) {
+// 						hvStat.database.idbAccessQueue.add(function () {
+// 							hvStat.battle.monster.monsters[monsterIndex].getFromDB(hvStat.database.transaction, RoundSave);
+// 						});
+// 					})(monsterIndex);
+// 				}
+// 				if (hvStat.settings.isTrackItems) {
+// 					hvStat.roundInfo.dropChances++;
+// 				}
+// 				monsterIndex++;
 			} else if (logHTML.match(/\(Round/)) {
 				var f = logHTML.match(/\(round.*?\)/i)[0].replace("(", "").replace(")", "");
 				var m = f.split(" ");
