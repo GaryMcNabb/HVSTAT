@@ -2608,7 +2608,7 @@ return;
 		contentType: "text",
 		evaluationFn: function (message) {
 			if (hvStat.settings.isAlertGem) {
-				hvStat.battle.warningSystem.enqueueAlert("You picked up a " + regexResult[2] + ".");
+				hvStat.battle.warningSystem.enqueueAlert("You picked up a " + message.regexResult[2] + ".");
 			}
 		},
 	},
@@ -5350,9 +5350,9 @@ function collectRoundInfo() {
 			}
 			RoundSave();
 		}
-		if (hvStat.settings.isAlertGem && logHTML.match(/drops a (.*) Gem/)) {
-			hvStat.battle.warningSystem.enqueueAlert("You picked up a " + RegExp.$1 + " Gem.");
-		}
+// 		if (hvStat.settings.isAlertGem && logHTML.match(/drops a (.*) Gem/)) {
+// 			hvStat.battle.warningSystem.enqueueAlert("You picked up a " + RegExp.$1 + " Gem.");
+// 		}
 		if (hvStat.settings.isWarnAbsorbTrigger && /The spell is absorbed/.test(logHTML)) {
 			hvStat.battle.warningSystem.enqueueAlert("Absorbing Ward has triggered.");
 		}
