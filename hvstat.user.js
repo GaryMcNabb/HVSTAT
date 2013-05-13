@@ -2239,17 +2239,15 @@ return;
 		relatedMessageTypeNames: null,
 		contentType: "text",
 		evaluationFn: function (message) {
-return;
 			if (hvStat.settings.isRememberScan) {
 				var scanningMonsterName = message.regexResult[1];
-				var scanningMonsterIndex = -1;
 				for (var i = 0; i < hvStat.battle.monster.monsters.length; i++) {
 					var monster = hvStat.battle.monster.monsters[i];
 					if (monster.name === scanningMonsterName) {
 						hvStat.database.loadingMonsterInfoFromDB = true;
-						(function (monster, logText) {
+						(function (monster, messageText) {
 							hvStat.database.idbAccessQueue.add(function () {
-								monster.fetchScanningLog(logText, hvStat.database.transaction);
+								monster.fetchScanningLog(messageText, hvStat.database.transaction);
 								RoundSave();
 							});
 						})(monster, message.text);
@@ -5417,32 +5415,32 @@ function collectRoundInfo() {
 // 			}
 // 			hvStat.storage.characterStatus.save();
 // 		}
-		if (hvStat.settings.isRememberScan) {
-			if (logHTML.indexOf("Scanning") >= 0) {
-				(function () {
-					var scanningMonsterName;
-					var scanningMonsterIndex = -1;
-					var r = /Scanning ([^\.]{0,30})\.{3,}/.exec(logText);
-					var i, len, monster;
-					if (r) {
-						scanningMonsterName = r[1];
-						len = hvStat.battle.monster.monsters.length;
-						for (i = 0; i < len; i++) {
-							monster = hvStat.battle.monster.monsters[i];
-							if (monster.name === scanningMonsterName) {
-								hvStat.database.loadingMonsterInfoFromDB = true;
-								(function (monster, logText) {
-									hvStat.database.idbAccessQueue.add(function () {
-										monster.fetchScanningLog(logText, hvStat.database.transaction);
-										RoundSave();
-									});
-								})(monster, logText);
-							}
-						}
-					}
-				})();
-			}
-		}
+// 		if (hvStat.settings.isRememberScan) {
+// 			if (logHTML.indexOf("Scanning") >= 0) {
+// 				(function () {
+// 					var scanningMonsterName;
+// 					var scanningMonsterIndex = -1;
+// 					var r = /Scanning ([^\.]{0,30})\.{3,}/.exec(logText);
+// 					var i, len, monster;
+// 					if (r) {
+// 						scanningMonsterName = r[1];
+// 						len = hvStat.battle.monster.monsters.length;
+// 						for (i = 0; i < len; i++) {
+// 							monster = hvStat.battle.monster.monsters[i];
+// 							if (monster.name === scanningMonsterName) {
+// 								hvStat.database.loadingMonsterInfoFromDB = true;
+// 								(function (monster, logText) {
+// 									hvStat.database.idbAccessQueue.add(function () {
+// 										monster.fetchScanningLog(logText, hvStat.database.transaction);
+// 										RoundSave();
+// 									});
+// 								})(monster, logText);
+// 							}
+// 						}
+// 					}
+// 				})();
+// 			}
+// 		}
 		if (hvStat.settings.isTrackStats || hvStat.settings.isShowEndStats) {
 			var o = 0;
 			if (logHTML.match(/\s(\d+)\s/)) {
