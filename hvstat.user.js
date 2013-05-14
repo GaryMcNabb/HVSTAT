@@ -2468,42 +2468,45 @@ return;
 		relatedMessageTypeNames: ["MONSTER_SKILL"],
 		contentType: "text",
 		evaluationFn: function (message) {
-return;
 			var damageSource = message.regexResult[1];
-			var damageAmount = parseFloat(message.regexResult[3]);
+			var damageAmount = Number(message.regexResult[3]);
+			var damageType = message.regexResult[4];
 			var critical = message.regexResult[2] === "crits";
 			hvStat.roundInfo.mAttempts++;
 			hvStat.roundInfo.mHits[critical ? 1 : 0]++;
 			hvStat.roundInfo.dTaken[critical ? 1 : 0] += damageAmount;
-			if (relatedLog) {
-				// Skill hit
-				hvStat.roundInfo.pskills[1]++;
-				hvStat.roundInfo.pskills[2] += damageAmount;
-				if (relatedLog.regexResult[2] === "uses") {
-					hvStat.roundInfo.pskills[3]++;
-					hvStat.roundInfo.pskills[4] += damageAmount;
-				} else {
-					hvStat.roundInfo.pskills[5]++;
-					hvStat.roundInfo.pskills[6] += damageAmount;
-				}
-			}
-			if (relatedLog && hvStat.settings.isRememberSkillsTypes) {
-				for (var i = 0; i < hvStat.battle.monster.monsters.length; i++) {
-					var monster = hvStat.battle.monster.monsters[i];
-					if (damageSource === monster.name && damageSource.indexOf("Unnamed ") !== 0) {
-						(function (relatedLogText, messageText) {
-							hvStat.database.idbAccessQueue.add(function () {
-								monster.fetchSkillLog(relatedLogText, messageText, hvStat.database.transaction);
-							});
-						})(relatedLog.text, message.text);
-						break;
+			if (message.relatedMessage) {
+				var skillUser = message.relatedMessage.regexResult[1];
+				var skillVerb = message.relatedMessage.regexResult[2];
+				var skillName = message.relatedMessage.regexResult[3];
+				if (damageSource === skillName) {
+					// Skill hit
+					hvStat.roundInfo.pskills[1]++;
+					hvStat.roundInfo.pskills[2] += damageAmount;
+					if (skillVerb === "uses") {
+						hvStat.roundInfo.pskills[3]++;
+						hvStat.roundInfo.pskills[4] += damageAmount;
+					} else if (skillVerb === "casts") {
+						hvStat.roundInfo.pskills[5]++;
+						hvStat.roundInfo.pskills[6] += damageAmount;
+					}
+					if (hvStat.settings.isRememberSkillsTypes && skillUser.indexOf("Unnamed ") !== 0) {
+						var monster = hvStat.battle.monster.findByName(skillUser);
+						if (monster) {
+//							alert(monster + ":" + skillName  + ":" + skillVerb  + ":" + damageType);
+							(function (monster, skillName, skillVerb, damageType) {
+								hvStat.database.idbAccessQueue.add(function () {
+									monster.recordSkill(skillName, skillVerb, damageType, hvStat.database.transaction);
+								});
+							})(monster, skillName, skillVerb, damageType);
+						}
 					}
 				}
 			}
 		},
 	},
 	MONSTER_SKILL: {
-		regex: /^(.+?) (uses|casts) (.+?)/,
+		regex: /^(.+?) (uses|casts) (.+?)$/,
 		relatedMessageTypeNames: null,
 		contentType: "text",
 		evaluationFn: function (message) {
@@ -3277,6 +3280,15 @@ hvStat.battle.monster = {
 		for (var i = 0; i < hv.battle.elementCache.monsters.length; i++) {
 			hvStat.battle.monster.monsters[i].renderStats();
 		}
+	},
+	findByName: function (monsterName) {
+		for (var i = 0; i < this.monsters.length; i++) {
+			var monster = this.monsters[i];
+			if (monster.name === monsterName) {
+				return monster;
+			}
+		}
+		return null;
 	},
 };
 
@@ -4085,6 +4097,50 @@ hvStat.battle.monster.Monster.prototype = {
 		if (hvStat.settings.isRememberSkillsTypes) {
 			this.putSkillsToDB(transaction);
 		}
+	},
+	recordSkill: function (skillName, skillVerb, damageType, transaction) {
+		var that = this;
+		var i;
+		var skillType = (that._prevSpRate <= that._currSpRate) ? hvStat.constant.skillType.MANA : hvStat.constant.skillType.SPIRIT;
+		var vo = new hvStat.vo.MonsterSkillVO();
+		vo.name = skillName;
+		vo.skillType = skillType.id;
+		switch (skillVerb) {
+		case "uses":
+			vo.attackType = hvStat.constant.attackType.PHYSICAL.id;
+			break;
+		case "casts":
+			vo.attackType = hvStat.constant.attackType.MAGICAL.id;
+			break;
+		default:
+			vo.attackType = null;
+		}
+		var dt = hvStat.constant.damageType[damageType.toUpperCase()];
+		vo.damageType = dt ? dt.id : null;
+		vo.lastUsedDate = new Date();
+		var skill = new hvStat.battle.monster.MonsterSkill(vo);
+		if (skillType === hvStat.constant.skillType.SPIRIT) {
+			// Spirit skill
+			// Overwrite if exists
+			for (i = 0; i < that._skills.length; i++) {
+				if (that._skills[i].skillType ===  hvStat.constant.skillType.SPIRIT) {
+					break;
+				}
+			}
+			that._skills[i] = skill;
+		} else {
+			// Mana skill
+			// Overwrite if same name or name is null
+			for (i = 0; i < that._skills.length; i++) {
+				if (that._skills[i].skillType ===  hvStat.constant.skillType.MANA &&
+						(that._skills[i].name === skill.name ||
+							(that._skills[i].name === null && that._skills[i].attackType === skill.attackType && that._skills[i].damageType === skill.damageType))) {
+					break;
+				}
+			}
+			that._skills[i] = skill;
+		}
+		that.putSkillsToDB(transaction);
 	},
 	setFromValueObject: function (valueObject) {
 		var that = this;
@@ -5488,35 +5544,35 @@ function collectRoundInfo() {
 						hvStat.roundInfo.forbidSpells[2] += o
 					}
 				}
-			} else if (logHTML.match(/(hits you )|(crits you )/i)) {
-				hvStat.roundInfo.mAttempts++;
-				hvStat.roundInfo.mHits[logHTML.match(/crits/i) ? 1 : 0]++;
-				hvStat.roundInfo.dTaken[logHTML.match(/crits/i) ? 1 : 0] += o;
-				if (logHTMLOfPreviousRow.match(/ uses | casts /i)) {
-					hvStat.roundInfo.pskills[1]++;
-					hvStat.roundInfo.pskills[2] += o;
-					if (logHTMLOfPreviousRow.match(/ casts /i)) {
-						hvStat.roundInfo.pskills[5]++;
-						hvStat.roundInfo.pskills[6] += o;
-					} else {
-						hvStat.roundInfo.pskills[3]++;
-						hvStat.roundInfo.pskills[4] += o;
-					}
-					if (hvStat.settings.isRememberSkillsTypes) {
-						var j = hvStat.battle.monster.monsters.length;
-						while (j--) {
-							reResult = /([^\.]{1,30}) (?:uses|casts) /.exec(logHTMLOfPreviousRow);
-							if (reResult && reResult[1] === hvStat.battle.monster.monsters[j].name && reResult[1].indexOf("Unnamed ") !== 0) {
-								(function (j, logHTMLOfPreviousRow, logHTML) {
-									hvStat.database.idbAccessQueue.add(function () {
-										hvStat.battle.monster.monsters[j].fetchSkillLog(logHTMLOfPreviousRow, logHTML, hvStat.database.transaction);
-									});
-								})(j, logHTMLOfPreviousRow, logHTML);
-								break;
-							}
-						}
-					}
-				}
+// 			} else if (logHTML.match(/(hits you )|(crits you )/i)) {
+// 				hvStat.roundInfo.mAttempts++;
+// 				hvStat.roundInfo.mHits[logHTML.match(/crits/i) ? 1 : 0]++;
+// 				hvStat.roundInfo.dTaken[logHTML.match(/crits/i) ? 1 : 0] += o;
+// 				if (logHTMLOfPreviousRow.match(/ uses | casts /i)) {
+// 					hvStat.roundInfo.pskills[1]++;
+// 					hvStat.roundInfo.pskills[2] += o;
+// 					if (logHTMLOfPreviousRow.match(/ casts /i)) {
+// 						hvStat.roundInfo.pskills[5]++;
+// 						hvStat.roundInfo.pskills[6] += o;
+// 					} else {
+// 						hvStat.roundInfo.pskills[3]++;
+// 						hvStat.roundInfo.pskills[4] += o;
+// 					}
+// 					if (hvStat.settings.isRememberSkillsTypes) {
+// 						var j = hvStat.battle.monster.monsters.length;
+// 						while (j--) {
+// 							reResult = /([^\.]{1,30}) (?:uses|casts) /.exec(logHTMLOfPreviousRow);
+// 							if (reResult && reResult[1] === hvStat.battle.monster.monsters[j].name && reResult[1].indexOf("Unnamed ") !== 0) {
+// 								(function (j, logHTMLOfPreviousRow, logHTML) {
+// 									hvStat.database.idbAccessQueue.add(function () {
+// 										hvStat.battle.monster.monsters[j].fetchSkillLog(logHTMLOfPreviousRow, logHTML, hvStat.database.transaction);
+// 									});
+// 								})(j, logHTMLOfPreviousRow, logHTML);
+// 								break;
+// 							}
+// 						}
+// 					}
+// 				}
 			} else if (logHTML.match(/you (dodge|evade|block|parry|resist)|(misses.*?against you)/i)) {
 				hvStat.roundInfo.mAttempts++;
 				if (logHTML.match(/dodge|(misses.*?against you)/)) {
