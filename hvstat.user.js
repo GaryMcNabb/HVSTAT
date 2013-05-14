@@ -1883,6 +1883,7 @@ hvStat.battle.log.Message.prototype = {
 			if (regexResult) {
 				this.messageType = messageType;
 				this.regexResult = regexResult;
+				console.debug(key);
 				break;
 			}
 		}
@@ -1899,50 +1900,550 @@ hvStat.battle.log.Message.prototype = {
 };
 
 hvStat.battle.log.messageTypeParams = {
-	// Core events
-	START: {
-		regex: /^Battle Start!/,
+	// Arrange in order from the event frequently occurring
+	DEFENSE: {
+		regex: /^You (evade|block|parry|resist) the attack from (.+?)\./,
+		relatedMessageTypeNames: null,
+		contentType: "text",
+		evaluationFn: function (message) {
+			hvStat.roundInfo.mAttempts++;
+			switch (message.regexResult[1]) {
+			case "evade":
+				hvStat.roundInfo.pEvades++;
+				break;
+			case "block":
+				hvStat.roundInfo.pBlocks++;
+				break;
+			case "parry":
+				hvStat.roundInfo.pParries++;
+				break;
+			case "resist":
+				hvStat.roundInfo.pResists++;
+				break;
+			}
+		},
+	},
+	MONSTER_MISS: {
+		regex: /^(.+?) misses the attack against you\./,
+		relatedMessageTypeNames: null,
+		contentType: "text",
+		evaluationFn: function (message) {
+			hvStat.roundInfo.mAttempts++;
+			hvStat.roundInfo.pDodges++;	// correct?
+		},
+	},
+	MONSTER_HIT: {
+		regex: /^(.+?) (hits|crits) you for (\d+) (.+?) damage\./,
+		relatedMessageTypeNames: ["MONSTER_SKILL"],
+		contentType: "text",
+		evaluationFn: function (message) {
+			var damageSource = message.regexResult[1];
+			var damageAmount = Number(message.regexResult[3]);
+			var damageType = message.regexResult[4];
+			var critical = message.regexResult[2] === "crits";
+			hvStat.roundInfo.mAttempts++;
+			hvStat.roundInfo.mHits[critical ? 1 : 0]++;
+			hvStat.roundInfo.dTaken[critical ? 1 : 0] += damageAmount;
+			if (message.relatedMessage) {
+				var skillUser = message.relatedMessage.regexResult[1];
+				var skillVerb = message.relatedMessage.regexResult[2];
+				var skillName = message.relatedMessage.regexResult[3];
+				if (damageSource === skillName) {
+					// Skill hit
+					hvStat.roundInfo.pskills[1]++;
+					hvStat.roundInfo.pskills[2] += damageAmount;
+					if (skillVerb === "uses") {
+						hvStat.roundInfo.pskills[3]++;
+						hvStat.roundInfo.pskills[4] += damageAmount;
+					} else if (skillVerb === "casts") {
+						hvStat.roundInfo.pskills[5]++;
+						hvStat.roundInfo.pskills[6] += damageAmount;
+					}
+					if (hvStat.settings.isRememberSkillsTypes && skillUser.indexOf("Unnamed ") !== 0) {
+						var monster = hvStat.battle.monster.findByName(skillUser);
+						if (monster) {
+//							alert(monster + ":" + skillName  + ":" + skillVerb  + ":" + damageType);
+							(function (monster, skillName, skillVerb, damageType) {
+								hvStat.database.idbAccessQueue.add(function () {
+									monster.recordSkill(skillName, skillVerb, damageType, hvStat.database.transaction);
+								});
+							})(monster, skillName, skillVerb, damageType);
+						}
+					}
+				}
+			}
+		},
+	},
+	MONSTER_DEFENSE: {
+		regex: /^(.+?) (evades|parries|resists) your (attack|spell)\./,
+		relatedMessageTypeNames: null,
+		contentType: "text",
+		evaluationFn: function (message) {
+			var method = message.regexResult[3];
+			if (method === "attack") {
+				// TODO
+			} else if (method === "spell") {
+				// TODO
+			}
+		},
+	},
+	MONSTER_GAINING_EFFECT: {
+		regex: /^(.+?) gains the effect (.+?)\./,
+		relatedMessageTypeNames: ["CAST", "COUNTER"],
+		contentType: "text",
+		evaluationFn: function (message) {
+			var effectName = message.regexResult[2];
+			switch (effectName) {
+			case "Coalesced Mana":
+				hvStat.roundInfo.coalesce++;
+				break;
+			case "Searing Skin": case "Freezing Limbs": case "Deep Burns": case "Turbulent Air":
+			case "Breached Defense": case "Blunted Attack": case "Rippened Soul": case "Burning Soul":
+				hvStat.roundInfo.elemEffects[0]++;
+				break;
+			case "Spreading Poison": case "Slowed": case "Weakened": case "Sleep":
+			case "Confused": case "Imperiled": case "Blinded": case "Silenced":
+			case "Nerfed": case "Magically Snared": case "Lifestream":
+				hvStat.roundInfo.depSpells[1]++;
+				break;
+			case "Stunned":
+				if (message.relatedMessage &&
+						message.relatedMessage.messageType === hvStat.battle.log.messageTypes.COUNTER) {
+					hvStat.roundInfo.weaponprocs[7]++
+				} else {
+					hvStat.roundInfo.weaponprocs[0]++;
+				}
+				break;
+			case "Penetrated Armor":
+				hvStat.roundInfo.weaponprocs[1]++;
+				break;
+			case "Bleeding Wound":
+				hvStat.roundInfo.weaponprocs[2]++;
+				break;
+			}
+		},
+	},
+	MONSTER_EFFECT_EXPLOSION: {
+		regex: /^(.+?) explodes for (\d+) (.+?) damage/,
+		relatedMessageTypeNames: null,
+		contentType: "text",
+		evaluationFn: function (message) {
+			var damageAmount = Number(message.regexResult[2]);
+			hvStat.roundInfo.elemEffects[1]++;
+			hvStat.roundInfo.elemEffects[2] += damageAmount;
+		},
+	},
+	MELEE_HIT: {
+		regex: /^You (hit|crit) (.+?) for (\d+) (.+?) damage\./,
+		relatedMessageTypeNames: null,
+		contentType: "text",
+		evaluationFn: function (message) {
+			var damageAmount = parseFloat(message.regexResult[3]);
+			var critical = message.regexResult[1] === "crit";
+			hvStat.roundInfo.aAttempts++;
+			hvStat.roundInfo.aHits[critical ? 1 : 0]++;
+			hvStat.roundInfo.dDealt[critical ? 1 : 0] += damageAmount;
+		},
+	},
+	HIT: {
+		regex: /^(.+?) (hits|crits|blasts) (?!you)(.+?) for (\d+)(?: (.+?))? damage\./,
+		relatedMessageTypeNames: null,
+		contentType: "text",
+		evaluationFn: function (message) {
+			var damageSource = message.regexResult[1];
+			var damageAmount = Number(message.regexResult[4]);
+			var critical = message.regexResult[2] === "crits" || message.regexResult[2] === "blasts";
+			switch (damageSource) {
+			case "Bleeding Wound":
+				hvStat.roundInfo.dDealt[2] += damageAmount;
+				break;
+			case "Spreading Poison":
+				hvStat.roundInfo.effectPoison[1] += damageAmount;
+				hvStat.roundInfo.effectPoison[0]++;
+				break;
+			case "Your offhand":
+				hvStat.roundInfo.aOffhands[critical ? 2 : 0]++;
+				hvStat.roundInfo.aOffhands[critical ? 3 : 1] += damageAmount;
+				break;
+			default:
+				if (hvStat.util.isOffensiveSpell(damageSource)) {
+					hvStat.roundInfo.dDealtSp[critical ? 1 : 0] += damageAmount;
+					hvStat.roundInfo.sHits[critical ? 1 : 0]++;
+				}
+				if (hvStat.util.isElementalSpell(damageSource)) {
+					hvStat.roundInfo.elemSpells[1]++;
+					hvStat.roundInfo.elemSpells[2] += damageAmount;
+				} else if (hvStat.util.isDivineSpell(damageSource)) {
+					hvStat.roundInfo.divineSpells[1]++;
+					hvStat.roundInfo.divineSpells[2] += damageAmount;
+				} else if (hvStat.util.isForbiddenSpell(damageSource)) {
+					hvStat.roundInfo.forbidSpells[1]++;
+					hvStat.roundInfo.forbidSpells[2] += damageAmount;
+				} else if (hvStat.util.isSpiritualSpell(damageSource)) {
+					hvStat.roundInfo.spiritualSpells[1]++;
+					hvStat.roundInfo.spiritualSpells[2] += damageAmount;
+				}
+			}
+		},
+	},
+	RESTORATION: {
+		regex: /^(.+?) restores (\d+) points of (.+?)\./,
 		relatedMessageTypeNames: null,
 		contentType: "text",
 		evaluationFn: function (message) {
 		},
 	},
-	HOURY_ENCOUNTER_INITIALIZATION: {
-		regex: /^Initializing random encounter \.\.\./,
+	MELEE_MISS: {
+		regex: /^Your attack misses its mark/,
 		relatedMessageTypeNames: null,
 		contentType: "text",
 		evaluationFn: function (message) {
-			hvStat.roundInfo.battleType = HOURLY;
+			hvStat.roundInfo.aAttempts++;
 		},
 	},
-	ARENA_INITIALIZATION: {
-		regex: /^Initializing arena challenge #(\d+) \(Round (\d+) \/ (\d+)\) \.\.\./,
+	COUNTER: {
+		regex: /^You counter (.+?) for (\d+) points of (.+?) damage\./,
 		relatedMessageTypeNames: null,
 		contentType: "text",
 		evaluationFn: function (message) {
-			hvStat.roundInfo.battleType = ARENA;
-			hvStat.roundInfo.arenaNum = Number(message.regexResult[1]);
-			hvStat.roundInfo.currRound = Number(message.regexResult[2]);
-			hvStat.roundInfo.maxRound = Number(message.regexResult[3]);
+			var damageAmount = parseFloat(message.regexResult[2]);
+			if (hvStat.settings.isTrackStats || hvStat.settings.isShowEndStats) {
+				hvStat.roundInfo.aCounters[0]++;
+				hvStat.roundInfo.aCounters[1] += damageAmount;
+				hvStat.roundInfo.dDealt[0] += damageAmount;
+			}
 		},
 	},
-	ITEM_WORLD_INITIALIZATION: {
-		regex: /^Initializing Item World \(Round (\d+) \/ (\d+)\) \.\.\./,
+	PROFICIENCY_GAIN: {
+		regex: /^You gain 0\.0(\d) points of (.+?) proficiency\./,
 		relatedMessageTypeNames: null,
 		contentType: "text",
 		evaluationFn: function (message) {
-			hvStat.roundInfo.battleType = ITEM_WORLD;
-			hvStat.roundInfo.currRound = Number(message.regexResult[1]);
-			hvStat.roundInfo.maxRound = Number(message.regexResult[2]);
+			if (hvStat.settings.isShowSidebarProfs || hvStat.settings.isTrackStats) {
+				var p = message.regexResult[1] / 100;
+				switch (message.regexResult[2]) {
+				case "one-handed weapon":
+					hvStat.characterStatus.proficiencies.oneHanded += p;
+					hvStat.roundInfo.weapProfGain[0] += p;
+					break;
+				case "two-handed weapon":
+					hvStat.characterStatus.proficiencies.twoHanded += p;
+					hvStat.roundInfo.weapProfGain[1] += p;
+					break;
+				case "dual wielding":
+					hvStat.characterStatus.proficiencies.dualWielding += p;
+					hvStat.roundInfo.weapProfGain[2] += p;
+					break;
+				case "staff":
+					hvStat.characterStatus.proficiencies.staff += p;
+					hvStat.roundInfo.weapProfGain[3] += p;
+					break;
+				case "cloth armor":
+					hvStat.characterStatus.proficiencies.clothArmor += p;
+					hvStat.roundInfo.armorProfGain[0] += p;
+					break;
+				case "light armor":
+					hvStat.characterStatus.proficiencies.lightArmor += p;
+					hvStat.roundInfo.armorProfGain[1] += p;
+					break;
+				case "heavy armor":
+					hvStat.characterStatus.proficiencies.heavyArmor += p;
+					hvStat.roundInfo.armorProfGain[2] += p;
+					break;
+				case "elemental magic":
+					hvStat.characterStatus.proficiencies.elemental += p;
+					hvStat.roundInfo.elemGain += p;
+					break;
+				case "divine magic":
+					hvStat.characterStatus.proficiencies.divine += p;
+					hvStat.characterStatus.proficiencies.spiritual = (hvStat.characterStatus.proficiencies.divine + hvStat.characterStatus.proficiencies.forbidden) / 2;
+					hvStat.roundInfo.divineGain += p;
+					break;
+				case "forbidden magic":
+					hvStat.characterStatus.proficiencies.forbidden += p;
+					hvStat.characterStatus.proficiencies.spiritual = (hvStat.characterStatus.proficiencies.divine + hvStat.characterStatus.proficiencies.forbidden) / 2;
+					hvStat.roundInfo.forbidGain += p;
+					break;
+				case "deprecating magic":
+					hvStat.characterStatus.proficiencies.deprecating += p;
+					hvStat.roundInfo.depGain += p;
+					break;
+				case "supportive magic":
+					hvStat.characterStatus.proficiencies.supportive += p;
+					hvStat.roundInfo.supportGain += p;
+					break;
+				}
+				hvStat.storage.characterStatus.save();
+			}
 		},
 	},
-	GRINDFEST_INITIALIZATION: {
-		regex: /^Initializing GrindFest \(Round (\d+)\) \.\.\./,
+	MONSTER_EFFECT_EXPIRATION: {
+		regex: /^The effect (.+?) on (.+?) has expired\./,
 		relatedMessageTypeNames: null,
 		contentType: "text",
 		evaluationFn: function (message) {
-			hvStat.roundInfo.battleType = GRINDFEST;
-			hvStat.roundInfo.currRound = Number(message.regexResult[1]);
+		},
+	},
+	MONSTER_SKILL: {
+		regex: /^(.+?) (uses|casts) (.+?)$/,
+		relatedMessageTypeNames: null,
+		contentType: "text",
+		evaluationFn: function (message) {
+			var verb = message.regexResult[2];
+			if (verb === "uses") {
+				hvStat.roundInfo.pskills[0]++;
+			} else if (verb === "casts") {
+				hvStat.roundInfo.mAttempts++;
+				hvStat.roundInfo.mSpells++;
+			}
+		},
+	},
+	CAST: {
+		regex: /^You cast (.+?)\./,
+		relatedMessageTypeNames: null,
+		contentType: "text",
+		evaluationFn: function (message) {
+			var spell = message.regexResult[1];
+			if (hvStat.util.isElementalSpell(spell)) {
+				hvStat.roundInfo.elemSpells[0]++;
+				hvStat.roundInfo.sAttempts++;
+			} else if (hvStat.util.isDivineSpell(spell)) {
+				hvStat.roundInfo.divineSpells[0]++;
+				hvStat.roundInfo.sAttempts++;
+			} else if (hvStat.util.isForbiddenSpell(spell)) {
+				hvStat.roundInfo.forbidSpells[0]++;
+				hvStat.roundInfo.sAttempts++;
+			} else if (hvStat.util.isSpiritualSpell(spell)) {
+				hvStat.roundInfo.spiritualSpells[0]++;
+				hvStat.roundInfo.sAttempts++;
+			} else if (hvStat.util.isDeprecatingSpell(spell)) {
+				hvStat.roundInfo.sAttempts++;
+				hvStat.roundInfo.depSpells[0]++;
+			} else if (hvStat.util.isSupportiveSpell(spell)) {
+				hvStat.roundInfo.supportSpells++;
+				if (spell === "Absorb") {
+					hvStat.roundInfo.absArry[0]++;
+				}
+			} else if (hvStat.util.isCurativeSpell(spell)) {
+				hvStat.roundInfo.curativeSpells++;
+			}
+		},
+	},
+	MAGIC_MISS: {
+		regex: /^Your spell misses its mark/,
+		relatedMessageTypeNames: ["CAST"],
+		contentType: "text",
+		evaluationFn: function (message) {
+			var spell = message.relatedMessage.regexResult[1];
+			if (hvStat.util.isElementalSpell(spell)) {
+				hvStat.roundInfo.elemSpells[3]++;
+			} else if (hvStat.util.isDivineSpell(spell)) {
+				hvStat.roundInfo.divineSpells[3]++;
+			} else if (hvStat.util.isForbiddenSpell(spell)) {
+				hvStat.roundInfo.forbidSpells[3]++;
+			} else if (hvStat.util.isSpiritualSpell(spell)) {
+				hvStat.roundInfo.spiritualSpells[3]++;
+			} else if (hvStat.util.isDeprecatingSpell(spell)) {
+				// TODO ?
+			}
+			hvStat.roundInfo.sResists++;	// correct?
+		},
+	},
+	SPELL_WEAVING_FAILURE: {
+		regex: /^You fail to weave the spell into the existing effects on the target\./,
+		relatedMessageTypeNames: null,
+		contentType: "text",
+		evaluationFn: function (message) {
+		},
+	},
+	DRAIN: {
+		regex: /^You drain (\d+|\d+\.\d+) (HP|MP|SP) from (.+?)/,
+		relatedMessageTypeNames: null,
+		contentType: "text",
+		evaluationFn: function (message) {
+			var drainObject = message.regexResult[2];
+			switch (drainObject) {
+			case "HP":
+				hvStat.roundInfo.weaponprocs[4]++;
+				break;
+			case "MP":
+				hvStat.roundInfo.weaponprocs[5]++;
+				break;
+			case "SP":
+				hvStat.roundInfo.weaponprocs[6]++;
+				break;
+			}
+		},
+	},
+	ITEM_OR_SKILL: {
+		regex: /^You use (.+?)\./,
+		relatedMessageTypeNames: null,
+		contentType: "text",
+		evaluationFn: function (message) {
+			var usedObject = message.regexResult[1];
+			if (usedObject === "Mystic Gem") {
+				hvStat.roundInfo.channel--;
+			}
+		},
+	},
+	MONSTER_DEFEAT: {
+		regex: /^(.+?) has been defeated\./,
+		relatedMessageTypeNames: null,
+		contentType: "text",
+		evaluationFn: function (message) {
+			hvStat.roundInfo.kills++;
+		},
+	},
+	MONSTER_AGITATED: {
+		regex: /^(.+?) is agitated!/,
+		relatedMessageTypeNames: null,
+		contentType: "text",
+		evaluationFn: function (message) {
+		},
+	},
+	SKILL_COOLDOWN_EXPIRATION: {
+		regex: /^Cooldown expired for (.+?)/,
+		relatedMessageTypeNames: null,
+		contentType: "text",
+		evaluationFn: function (message) {
+		},
+	},
+	GAINING_EFFECT: {
+		regex: /^You gain the effect (.+?)\./,
+		relatedMessageTypeNames: ["ITEM_OR_SKILL"],
+		contentType: "text",
+		evaluationFn: function (message) {
+			var effectName = message.regexResult[1];
+			if (hvStat.settings.alertWhenChannelingIsGained && effectName === "Channeling") {
+				hvStat.battle.warningSystem.enqueueAlert("You gained the effect Channeling.");
+			}
+			switch (effectName) {
+			case "Channeling":
+				hvStat.roundInfo.channel++;
+				break;
+			case "Overwhelming Strikes":
+				hvStat.roundInfo.overStrikes++;
+				break;
+			case "Ether Tap":
+				// TODO
+				break;
+			}
+		},
+	},
+	EFFECT_EXPIRATION: {
+		regex: /^The effect (.+?)\s+has expired\./,
+		relatedMessageTypeNames: null,
+		contentType: "text",
+		evaluationFn: function (message) {
+			var effectName = message.regexResult[1];
+			if (hvStat.settings.isWarnSparkExpire && effectName === "Spark of Life") {
+				hvStat.battle.warningSystem.enqueueAlert("Spark of Life has expired!!");
+			}
+			var i = hvStat.battle.warningSystem.selfEffectNames.indexOf(effectName === "Regen II" ? "Regen" : effectName);
+			if (i !== -1 && hvStat.settings.isEffectsAlertSelf[i] && hvStat.settings.EffectsAlertSelfRounds[i] === "-1") {
+				hvStat.battle.warningSystem.enqueueAlert(effectName + " has expired");
+			}
+		},
+	},
+	RECOVERY: {
+		regex: /^Recovered (\d+) points of (.+?)\./,
+		relatedMessageTypeNames: null,
+		contentType: "text",
+		evaluationFn: function (message) {
+		},
+	},
+	CURE: {
+		regex: /^You are healed for (\d+) Health Points\./,
+		relatedMessageTypeNames: ["CAST"],
+		contentType: "text",
+		evaluationFn: function (message, relatedLog) {
+			var spell = message.relatedMessage.regexResult[1];
+			var healedAmount = Number(message.regexResult[1]);
+			var index = -1;
+			switch (spell) {
+			case "Cure":
+				index = 0;
+				break;
+			case "Cure II":
+				index = 1;
+				break;
+			case "Cure III":
+				index = 2;
+				break;
+			}
+			if (index >= 0) {
+				hvStat.roundInfo.cureTotals[index] += healedAmount;
+				hvStat.roundInfo.cureCounts[index]++;
+			}
+		},
+	},
+	ABSORPTION: {
+		regex: /^The spell is absorbed. You gain (\d+) Magic Points\./,
+		relatedMessageTypeNames: null,
+		contentType: "text",
+		evaluationFn: function (message) {
+			if (hvStat.settings.isWarnAbsorbTrigger) {
+				hvStat.battle.warningSystem.enqueueAlert("Absorbing Ward has triggered.");
+			}
+			hvStat.roundInfo.absArry[1]++;
+			hvStat.roundInfo.absArry[2] += Number(message.regexResult[1]);
+		},
+	},
+	SPARK_OF_LIFE_SUCCESS: {
+		regex: /^Your Spark of Life restores you from the brink of defeat\./,
+		relatedMessageTypeNames: null,
+		contentType: "text",
+		evaluationFn: function (message) {
+			if (hvStat.settings.isWarnSparkTrigger) {
+				hvStat.battle.warningSystem.enqueueAlert("Spark of Life has triggered!!");
+			}
+		},
+	},
+	SPARK_OF_LIFE_FAILURE: {
+		regex: /^Your Spark of Life fails due to insufficient Spirit\./,
+		relatedMessageTypeNames: null,
+		contentType: "text",
+		evaluationFn: function (message) {
+		},
+	},
+	SPIRIT_SHIELD_SUCCESS: {
+		regex: /^Your spirit shield absorbs (\d+) points of damage from the attack into (\d+\.?\d*) points of spirit damage\./,
+		relatedMessageTypeNames: null,
+		contentType: "text",
+		evaluationFn: function (message) {
+		},
+	},
+	POWERUP_DROP: {
+		regex: /^(.+?) drops a (.+?) powerup!/,
+		relatedMessageTypeNames: null,
+		contentType: "text",
+		evaluationFn: function (message) {
+			if (hvStat.settings.isAlertGem) {
+				hvStat.battle.warningSystem.enqueueAlert("You picked up a " + message.regexResult[2] + ".");
+			}
+			// TODO: Collect statistics
+		},
+	},
+	SCAN: {
+		regex: /^Scanning (.*)\.\.\.\s+HP: [^\s]+\/([^\s]+)\s+MP: [^\s]+\/[^\s]+(?:\s+SP: [^\s]+\/[^\s]+)? Monster Class: (.+?)(?:, Power Level (\d+))? Monster Trainer:(?: (.+))? Melee Attack: (.+) Weak against: (.+) Resistant to: (.+) Impervious to: (.+)/,
+		relatedMessageTypeNames: null,
+		contentType: "text",
+		evaluationFn: function (message) {
+			if (hvStat.settings.isRememberScan) {
+				var scanningMonsterName = message.regexResult[1];
+				for (var i = 0; i < hvStat.battle.monster.monsters.length; i++) {
+					var monster = hvStat.battle.monster.monsters[i];
+					if (monster.name === scanningMonsterName) {
+						hvStat.database.loadingMonsterInfoFromDB = true;
+						(function (monster, messageText) {
+							hvStat.database.idbAccessQueue.add(function () {
+								monster.fetchScanningLog(messageText, hvStat.database.transaction);
+								RoundSave();
+							});
+						})(monster, message.text);
+					}
+				}
+			}
 		},
 	},
 	SPAWNING_MONSTER: {
@@ -1970,27 +2471,6 @@ hvStat.battle.log.messageTypeParams = {
 			if (hvStat.settings.isTrackItems) {
 				hvStat.roundInfo.dropChances++;
 			}
-		},
-	},
-	ESCAPE: {
-		regex: /^You have escaped from the battle\./,
-		relatedMessageTypeNames: null,
-		contentType: "text",
-		evaluationFn: function (message) {
-		},
-	},
-	DEFEAT: {
-		regex: /^You have been defeated\./,
-		relatedMessageTypeNames: null,
-		contentType: "text",
-		evaluationFn: function (message) {
-		},
-	},
-	VICTORY: {
-		regex: /^You are Victorious!/,
-		relatedMessageTypeNames: null,
-		contentType: "text",
-		evaluationFn: function (message) {
 		},
 	},
 	DROP: {
@@ -2056,6 +2536,80 @@ hvStat.battle.log.messageTypeParams = {
 				}
 				break;
 			}
+		},
+	},
+	INVENTORY_LIMIT_WARNING: {
+		regex: /^Warning: Reached equipment inventory limit \(\d+\)\. Generated item instead\./,
+		relatedMessageTypeNames: null,
+		contentType: "text",
+		evaluationFn: function (message) {
+			localStorage.setItem(HV_EQUIP, "true");
+		},
+	},
+	START: {
+		regex: /^Battle Start!/,
+		relatedMessageTypeNames: null,
+		contentType: "text",
+		evaluationFn: function (message) {
+		},
+	},
+	HOURY_ENCOUNTER_INITIALIZATION: {
+		regex: /^Initializing random encounter \.\.\./,
+		relatedMessageTypeNames: null,
+		contentType: "text",
+		evaluationFn: function (message) {
+			hvStat.roundInfo.battleType = HOURLY;
+		},
+	},
+	ARENA_INITIALIZATION: {
+		regex: /^Initializing arena challenge #(\d+) \(Round (\d+) \/ (\d+)\) \.\.\./,
+		relatedMessageTypeNames: null,
+		contentType: "text",
+		evaluationFn: function (message) {
+			hvStat.roundInfo.battleType = ARENA;
+			hvStat.roundInfo.arenaNum = Number(message.regexResult[1]);
+			hvStat.roundInfo.currRound = Number(message.regexResult[2]);
+			hvStat.roundInfo.maxRound = Number(message.regexResult[3]);
+		},
+	},
+	ITEM_WORLD_INITIALIZATION: {
+		regex: /^Initializing Item World \(Round (\d+) \/ (\d+)\) \.\.\./,
+		relatedMessageTypeNames: null,
+		contentType: "text",
+		evaluationFn: function (message) {
+			hvStat.roundInfo.battleType = ITEM_WORLD;
+			hvStat.roundInfo.currRound = Number(message.regexResult[1]);
+			hvStat.roundInfo.maxRound = Number(message.regexResult[2]);
+		},
+	},
+	GRINDFEST_INITIALIZATION: {
+		regex: /^Initializing GrindFest \(Round (\d+)\) \.\.\./,
+		relatedMessageTypeNames: null,
+		contentType: "text",
+		evaluationFn: function (message) {
+			hvStat.roundInfo.battleType = GRINDFEST;
+			hvStat.roundInfo.currRound = Number(message.regexResult[1]);
+		},
+	},
+	ESCAPE: {
+		regex: /^You have escaped from the battle\./,
+		relatedMessageTypeNames: null,
+		contentType: "text",
+		evaluationFn: function (message) {
+		},
+	},
+	DEFEAT: {
+		regex: /^You have been defeated\./,
+		relatedMessageTypeNames: null,
+		contentType: "text",
+		evaluationFn: function (message) {
+		},
+	},
+	VICTORY: {
+		regex: /^You are Victorious!/,
+		relatedMessageTypeNames: null,
+		contentType: "text",
+		evaluationFn: function (message) {
 		},
 	},
 	ARENA_CLEAR_BONUS: {
@@ -2148,578 +2702,13 @@ hvStat.battle.log.messageTypeParams = {
 			hvStat.roundInfo.exp = exp;
 		},
 	},
-	INVENTORY_LIMIT_WARNING: {
-		regex: /^Warning: Reached equipment inventory limit \(\d+\)\. Generated item instead\./,
-		relatedMessageTypeNames: null,
-		contentType: "text",
-		evaluationFn: function (message) {
-			localStorage.setItem(HV_EQUIP, "true");
-		},
-	},
-
-	// Character active actions
-	CAST: {
-		regex: /^You cast (.+?)\./,
-		relatedMessageTypeNames: null,
-		contentType: "text",
-		evaluationFn: function (message) {
-			var spell = message.regexResult[1];
-			if (hvStat.util.isElementalSpell(spell)) {
-				hvStat.roundInfo.elemSpells[0]++;
-				hvStat.roundInfo.sAttempts++;
-			} else if (hvStat.util.isDivineSpell(spell)) {
-				hvStat.roundInfo.divineSpells[0]++;
-				hvStat.roundInfo.sAttempts++;
-			} else if (hvStat.util.isForbiddenSpell(spell)) {
-				hvStat.roundInfo.forbidSpells[0]++;
-				hvStat.roundInfo.sAttempts++;
-			} else if (hvStat.util.isSpiritualSpell(spell)) {
-				hvStat.roundInfo.spiritualSpells[0]++;
-				hvStat.roundInfo.sAttempts++;
-			} else if (hvStat.util.isDeprecatingSpell(spell)) {
-				hvStat.roundInfo.sAttempts++;
-				hvStat.roundInfo.depSpells[0]++;
-			} else if (hvStat.util.isSupportiveSpell(spell)) {
-				hvStat.roundInfo.supportSpells++;
-				if (spell === "Absorb") {
-					hvStat.roundInfo.absArry[0]++;
-				}
-			} else if (hvStat.util.isCurativeSpell(spell)) {
-				hvStat.roundInfo.curativeSpells++;
-			}
-		},
-	},
-	MELEE_MISS: {
-		regex: /^Your attack misses its mark/,
-		relatedMessageTypeNames: null,
-		contentType: "text",
-		evaluationFn: function (message) {
-			hvStat.roundInfo.aAttempts++;
-		},
-	},
-	MAGIC_MISS: {
-		regex: /^Your spell misses its mark/,
-		relatedMessageTypeNames: ["CAST"],
-		contentType: "text",
-		evaluationFn: function (message) {
-			var spell = message.relatedMessage.regexResult[1];
-			if (hvStat.util.isElementalSpell(spell)) {
-				hvStat.roundInfo.elemSpells[3]++;
-			} else if (hvStat.util.isDivineSpell(spell)) {
-				hvStat.roundInfo.divineSpells[3]++;
-			} else if (hvStat.util.isForbiddenSpell(spell)) {
-				hvStat.roundInfo.forbidSpells[3]++;
-			} else if (hvStat.util.isSpiritualSpell(spell)) {
-				hvStat.roundInfo.spiritualSpells[3]++;
-			} else if (hvStat.util.isDeprecatingSpell(spell)) {
-				// TODO ?
-			}
-			hvStat.roundInfo.sResists++;	// correct?
-		},
-	},
-	SPELL_WEAVING_FAILURE: {
-		regex: /^You fail to weave the spell into the existing effects on the target\./,
-		relatedMessageTypeNames: null,
-		contentType: "text",
-		evaluationFn: function (message) {
-		},
-	},
-	MELEE_HIT: {
-		regex: /^You (hit|crit) (.+?) for (\d+) (.+?) damage\./,
-		relatedMessageTypeNames: null,
-		contentType: "text",
-		evaluationFn: function (message) {
-			var damageAmount = parseFloat(message.regexResult[3]);
-			var critical = message.regexResult[1] === "crit";
-			hvStat.roundInfo.aAttempts++;
-			hvStat.roundInfo.aHits[critical ? 1 : 0]++;
-			hvStat.roundInfo.dDealt[critical ? 1 : 0] += damageAmount;
-		},
-	},
-	HIT: {
-		regex: /^(.+?) (hits|crits|blasts) (?!you)(.+?) for (\d+)(?: (.+?))? damage\./,
-		relatedMessageTypeNames: null,
-		contentType: "text",
-		evaluationFn: function (message) {
-			var damageSource = message.regexResult[1];
-			var damageAmount = Number(message.regexResult[4]);
-			var critical = message.regexResult[2] === "crits" || message.regexResult[2] === "blasts";
-			switch (damageSource) {
-			case "Bleeding Wound":
-				hvStat.roundInfo.dDealt[2] += damageAmount;
-				break;
-			case "Spreading Poison":
-				hvStat.roundInfo.effectPoison[1] += damageAmount;
-				hvStat.roundInfo.effectPoison[0]++;
-				break;
-			case "Your offhand":
-				hvStat.roundInfo.aOffhands[critical ? 2 : 0]++;
-				hvStat.roundInfo.aOffhands[critical ? 3 : 1] += damageAmount;
-				break;
-			default:
-				if (hvStat.util.isOffensiveSpell(damageSource)) {
-					hvStat.roundInfo.dDealtSp[critical ? 1 : 0] += damageAmount;
-					hvStat.roundInfo.sHits[critical ? 1 : 0]++;
-				}
-				if (hvStat.util.isElementalSpell(damageSource)) {
-					hvStat.roundInfo.elemSpells[1]++;
-					hvStat.roundInfo.elemSpells[2] += damageAmount;
-				} else if (hvStat.util.isDivineSpell(damageSource)) {
-					hvStat.roundInfo.divineSpells[1]++;
-					hvStat.roundInfo.divineSpells[2] += damageAmount;
-				} else if (hvStat.util.isForbiddenSpell(damageSource)) {
-					hvStat.roundInfo.forbidSpells[1]++;
-					hvStat.roundInfo.forbidSpells[2] += damageAmount;
-				} else if (hvStat.util.isSpiritualSpell(damageSource)) {
-					hvStat.roundInfo.spiritualSpells[1]++;
-					hvStat.roundInfo.spiritualSpells[2] += damageAmount;
-				}
-			}
-		},
-	},
-	ITEM_OR_SKILL: {
-		regex: /^You use (.+?)\./,
-		relatedMessageTypeNames: null,
-		contentType: "text",
-		evaluationFn: function (message) {
-			var usedObject = message.regexResult[1];
-			if (usedObject === "Mystic Gem") {
-				hvStat.roundInfo.channel--;
-			}
-		},
-	},
-
-	// Character passive actions
-	COUNTER: {
-		regex: /^You counter (.+?) for (\d+) points of (.+?) damage\./,
-		relatedMessageTypeNames: null,
-		contentType: "text",
-		evaluationFn: function (message) {
-			var damageAmount = parseFloat(message.regexResult[2]);
-			if (hvStat.settings.isTrackStats || hvStat.settings.isShowEndStats) {
-				hvStat.roundInfo.aCounters[0]++;
-				hvStat.roundInfo.aCounters[1] += damageAmount;
-				hvStat.roundInfo.dDealt[0] += damageAmount;
-			}
-		},
-	},
-	DEFENSE: {
-		regex: /^You (evade|block|parry|resist) the attack from (.+?)\./,
-		relatedMessageTypeNames: null,
-		contentType: "text",
-		evaluationFn: function (message) {
-			hvStat.roundInfo.mAttempts++;
-			switch (message.regexResult[1]) {
-			case "evade":
-				hvStat.roundInfo.pEvades++;
-				break;
-			case "block":
-				hvStat.roundInfo.pBlocks++;
-				break;
-			case "parry":
-				hvStat.roundInfo.pParries++;
-				break;
-			case "resist":
-				hvStat.roundInfo.pResists++;
-				break;
-			}
-		},
-	},
-
-	// Other events related to character
-	SCAN: {
-		regex: /^Scanning (.*)\.\.\.\s+HP: [^\s]+\/([^\s]+)\s+MP: [^\s]+\/[^\s]+(?:\s+SP: [^\s]+\/[^\s]+)? Monster Class: (.+?)(?:, Power Level (\d+))? Monster Trainer:(?: (.+))? Melee Attack: (.+) Weak against: (.+) Resistant to: (.+) Impervious to: (.+)/,
-		relatedMessageTypeNames: null,
-		contentType: "text",
-		evaluationFn: function (message) {
-			if (hvStat.settings.isRememberScan) {
-				var scanningMonsterName = message.regexResult[1];
-				for (var i = 0; i < hvStat.battle.monster.monsters.length; i++) {
-					var monster = hvStat.battle.monster.monsters[i];
-					if (monster.name === scanningMonsterName) {
-						hvStat.database.loadingMonsterInfoFromDB = true;
-						(function (monster, messageText) {
-							hvStat.database.idbAccessQueue.add(function () {
-								monster.fetchScanningLog(messageText, hvStat.database.transaction);
-								RoundSave();
-							});
-						})(monster, message.text);
-					}
-				}
-			}
-		},
-	},
-	DRAIN: {
-		regex: /^You drain (\d+|\d+\.\d+) (HP|MP|SP) from (.+?)/,
-		relatedMessageTypeNames: null,
-		contentType: "text",
-		evaluationFn: function (message) {
-			var drainObject = message.regexResult[2];
-			switch (drainObject) {
-			case "HP":
-				hvStat.roundInfo.weaponprocs[4]++;
-				break;
-			case "MP":
-				hvStat.roundInfo.weaponprocs[5]++;
-				break;
-			case "SP":
-				hvStat.roundInfo.weaponprocs[6]++;
-				break;
-			}
-		},
-	},
-	SKILL_COOLDOWN_EXPIRATION: {
-		regex: /^Cooldown expired for (.+?)/,
-		relatedMessageTypeNames: null,
-		contentType: "text",
-		evaluationFn: function (message) {
-		},
-	},
-	RESTORATION: {
-		regex: /^(.+?) restores (\d+) points of (.+?)\./,
-		relatedMessageTypeNames: null,
-		contentType: "text",
-		evaluationFn: function (message) {
-		},
-	},
-	GAINING_EFFECT: {
-		regex: /^You gain the effect (.+?)\./,
-		relatedMessageTypeNames: ["ITEM_OR_SKILL"],
-		contentType: "text",
-		evaluationFn: function (message) {
-			var effectName = message.regexResult[1];
-			if (hvStat.settings.alertWhenChannelingIsGained && effectName === "Channeling") {
-				hvStat.battle.warningSystem.enqueueAlert("You gained the effect Channeling.");
-			}
-			switch (effectName) {
-			case "Channeling":
-				hvStat.roundInfo.channel++;
-				break;
-			case "Overwhelming Strikes":
-				hvStat.roundInfo.overStrikes++;
-				break;
-			case "Ether Tap":
-				// TODO
-				break;
-			}
-		},
-	},
-	EFFECT_EXPIRATION: {
-		regex: /^The effect (.+?)\s+has expired\./,
-		relatedMessageTypeNames: null,
-		contentType: "text",
-		evaluationFn: function (message) {
-			var effectName = message.regexResult[1];
-			if (hvStat.settings.isWarnSparkExpire && effectName === "Spark of Life") {
-				hvStat.battle.warningSystem.enqueueAlert("Spark of Life has expired!!");
-			}
-			var i = hvStat.battle.warningSystem.selfEffectNames.indexOf(effectName === "Regen II" ? "Regen" : effectName);
-			if (i !== -1 && hvStat.settings.isEffectsAlertSelf[i] && hvStat.settings.EffectsAlertSelfRounds[i] === "-1") {
-				hvStat.battle.warningSystem.enqueueAlert(effectName + " has expired");
-			}
-		},
-	},
-	CURE: {
-		regex: /^You are healed for (\d+) Health Points\./,
-		relatedMessageTypeNames: ["CAST"],
-		contentType: "text",
-		evaluationFn: function (message, relatedLog) {
-			var spell = message.relatedMessage.regexResult[1];
-			var healedAmount = Number(message.regexResult[1]);
-			var index = -1;
-			switch (spell) {
-			case "Cure":
-				index = 0;
-				break;
-			case "Cure II":
-				index = 1;
-				break;
-			case "Cure III":
-				index = 2;
-				break;
-			}
-			if (index >= 0) {
-				hvStat.roundInfo.cureTotals[index] += healedAmount;
-				hvStat.roundInfo.cureCounts[index]++;
-			}
-		},
-	},
-	RECOVERY: {
-		regex: /^Recovered (\d+) points of (.+?)\./,
-		relatedMessageTypeNames: null,
-		contentType: "text",
-		evaluationFn: function (message) {
-		},
-	},
-	ABSORPTION: {
-		regex: /^The spell is absorbed. You gain (\d+) Magic Points\./,
-		relatedMessageTypeNames: null,
-		contentType: "text",
-		evaluationFn: function (message) {
-			if (hvStat.settings.isWarnAbsorbTrigger) {
-				hvStat.battle.warningSystem.enqueueAlert("Absorbing Ward has triggered.");
-			}
-			hvStat.roundInfo.absArry[1]++;
-			hvStat.roundInfo.absArry[2] += Number(message.regexResult[1]);
-		},
-	},
-	SPARK_OF_LIFE_SUCCESS: {
-		regex: /^Your Spark of Life restores you from the brink of defeat\./,
-		relatedMessageTypeNames: null,
-		contentType: "text",
-		evaluationFn: function (message) {
-			if (hvStat.settings.isWarnSparkTrigger) {
-				hvStat.battle.warningSystem.enqueueAlert("Spark of Life has triggered!!");
-			}
-		},
-	},
-	SPARK_OF_LIFE_FAILURE: {
-		regex: /^Your Spark of Life fails due to insufficient Spirit\./,
-		relatedMessageTypeNames: null,
-		contentType: "text",
-		evaluationFn: function (message) {
-		},
-	},
-	SPIRIT_SHIELD_SUCCESS: {
-		regex: /^Your spirit shield absorbs (\d+) points of damage from the attack into (\d+\.?\d*) points of spirit damage\./,
-		relatedMessageTypeNames: null,
-		contentType: "text",
-		evaluationFn: function (message) {
-		},
-	},
-	PROFICIENCY_GAIN: {
-		regex: /^You gain 0\.0(\d) points of (.+?) proficiency\./,
-		relatedMessageTypeNames: null,
-		contentType: "text",
-		evaluationFn: function (message) {
-			if (hvStat.settings.isShowSidebarProfs || hvStat.settings.isTrackStats) {
-				var p = message.regexResult[1] / 100;
-				switch (message.regexResult[2]) {
-				case "one-handed weapon":
-					hvStat.characterStatus.proficiencies.oneHanded += p;
-					hvStat.roundInfo.weapProfGain[0] += p;
-					break;
-				case "two-handed weapon":
-					hvStat.characterStatus.proficiencies.twoHanded += p;
-					hvStat.roundInfo.weapProfGain[1] += p;
-					break;
-				case "dual wielding":
-					hvStat.characterStatus.proficiencies.dualWielding += p;
-					hvStat.roundInfo.weapProfGain[2] += p;
-					break;
-				case "staff":
-					hvStat.characterStatus.proficiencies.staff += p;
-					hvStat.roundInfo.weapProfGain[3] += p;
-					break;
-				case "cloth armor":
-					hvStat.characterStatus.proficiencies.clothArmor += p;
-					hvStat.roundInfo.armorProfGain[0] += p;
-					break;
-				case "light armor":
-					hvStat.characterStatus.proficiencies.lightArmor += p;
-					hvStat.roundInfo.armorProfGain[1] += p;
-					break;
-				case "heavy armor":
-					hvStat.characterStatus.proficiencies.heavyArmor += p;
-					hvStat.roundInfo.armorProfGain[2] += p;
-					break;
-				case "elemental magic":
-					hvStat.characterStatus.proficiencies.elemental += p;
-					hvStat.roundInfo.elemGain += p;
-					break;
-				case "divine magic":
-					hvStat.characterStatus.proficiencies.divine += p;
-					hvStat.characterStatus.proficiencies.spiritual = (hvStat.characterStatus.proficiencies.divine + hvStat.characterStatus.proficiencies.forbidden) / 2;
-					hvStat.roundInfo.divineGain += p;
-					break;
-				case "forbidden magic":
-					hvStat.characterStatus.proficiencies.forbidden += p;
-					hvStat.characterStatus.proficiencies.spiritual = (hvStat.characterStatus.proficiencies.divine + hvStat.characterStatus.proficiencies.forbidden) / 2;
-					hvStat.roundInfo.forbidGain += p;
-					break;
-				case "deprecating magic":
-					hvStat.characterStatus.proficiencies.deprecating += p;
-					hvStat.roundInfo.depGain += p;
-					break;
-				case "supportive magic":
-					hvStat.characterStatus.proficiencies.supportive += p;
-					hvStat.roundInfo.supportGain += p;
-					break;
-				}
-				hvStat.storage.characterStatus.save();
-			}
-		},
-	},
-
-	// Monster active actions
-	MONSTER_MISS: {
-		regex: /^(.+?) misses the attack against you\./,
-		relatedMessageTypeNames: null,
-		contentType: "text",
-		evaluationFn: function (message) {
-			hvStat.roundInfo.mAttempts++;
-			hvStat.roundInfo.pDodges++;	// correct?
-		},
-	},
-	MONSTER_HIT: {
-		regex: /^(.+?) (hits|crits) you for (\d+) (.+?) damage\./,
-		relatedMessageTypeNames: ["MONSTER_SKILL"],
-		contentType: "text",
-		evaluationFn: function (message) {
-			var damageSource = message.regexResult[1];
-			var damageAmount = Number(message.regexResult[3]);
-			var damageType = message.regexResult[4];
-			var critical = message.regexResult[2] === "crits";
-			hvStat.roundInfo.mAttempts++;
-			hvStat.roundInfo.mHits[critical ? 1 : 0]++;
-			hvStat.roundInfo.dTaken[critical ? 1 : 0] += damageAmount;
-			if (message.relatedMessage) {
-				var skillUser = message.relatedMessage.regexResult[1];
-				var skillVerb = message.relatedMessage.regexResult[2];
-				var skillName = message.relatedMessage.regexResult[3];
-				if (damageSource === skillName) {
-					// Skill hit
-					hvStat.roundInfo.pskills[1]++;
-					hvStat.roundInfo.pskills[2] += damageAmount;
-					if (skillVerb === "uses") {
-						hvStat.roundInfo.pskills[3]++;
-						hvStat.roundInfo.pskills[4] += damageAmount;
-					} else if (skillVerb === "casts") {
-						hvStat.roundInfo.pskills[5]++;
-						hvStat.roundInfo.pskills[6] += damageAmount;
-					}
-					if (hvStat.settings.isRememberSkillsTypes && skillUser.indexOf("Unnamed ") !== 0) {
-						var monster = hvStat.battle.monster.findByName(skillUser);
-						if (monster) {
-//							alert(monster + ":" + skillName  + ":" + skillVerb  + ":" + damageType);
-							(function (monster, skillName, skillVerb, damageType) {
-								hvStat.database.idbAccessQueue.add(function () {
-									monster.recordSkill(skillName, skillVerb, damageType, hvStat.database.transaction);
-								});
-							})(monster, skillName, skillVerb, damageType);
-						}
-					}
-				}
-			}
-		},
-	},
-	MONSTER_SKILL: {
-		regex: /^(.+?) (uses|casts) (.+?)$/,
-		relatedMessageTypeNames: null,
-		contentType: "text",
-		evaluationFn: function (message) {
-			var verb = message.regexResult[2];
-			if (verb === "uses") {
-				hvStat.roundInfo.pskills[0]++;
-			} else if (verb === "casts") {
-				hvStat.roundInfo.mAttempts++;
-				hvStat.roundInfo.mSpells++;
-			}
-		},
-	},
-
-	// Monster passive actions
-	MONSTER_DEFENSE: {
-		regex: /^(.+?) (evades|parries|resists) your (attack|spell)\./,
-		relatedMessageTypeNames: null,
-		contentType: "text",
-		evaluationFn: function (message) {
-			var method = message.regexResult[3];
-			if (method === "attack") {
-				// TODO
-			} else if (method === "spell") {
-				// TODO
-			}
-		},
-	},
-	MONSTER_AGITATED: {
-		regex: /^(.+?) is agitated!/,
-		relatedMessageTypeNames: null,
-		contentType: "text",
-		evaluationFn: function (message) {
-		},
-	},
-	MONSTER_DEFEAT: {
-		regex: /^(.+?) has been defeated\./,
-		relatedMessageTypeNames: null,
-		contentType: "text",
-		evaluationFn: function (message) {
-			hvStat.roundInfo.kills++;
-		},
-	},
-
-	// Other events related to monster
-	MONSTER_GAINING_EFFECT: {
-		regex: /^(.+?) gains the effect (.+?)\./,
-		relatedMessageTypeNames: ["CAST", "COUNTER"],
-		contentType: "text",
-		evaluationFn: function (message) {
-			var effectName = message.regexResult[2];
-			switch (effectName) {
-			case "Coalesced Mana":
-				hvStat.roundInfo.coalesce++;
-				break;
-			case "Searing Skin": case "Freezing Limbs": case "Deep Burns": case "Turbulent Air":
-			case "Breached Defense": case "Blunted Attack": case "Rippened Soul": case "Burning Soul":
-				hvStat.roundInfo.elemEffects[0]++;
-				break;
-			case "Spreading Poison": case "Slowed": case "Weakened": case "Sleep":
-			case "Confused": case "Imperiled": case "Blinded": case "Silenced":
-			case "Nerfed": case "Magically Snared": case "Lifestream":
-				hvStat.roundInfo.depSpells[1]++;
-				break;
-			case "Stunned":
-				if (message.relatedMessage &&
-						message.relatedMessage.messageType === hvStat.battle.log.messageTypes.COUNTER) {
-					hvStat.roundInfo.weaponprocs[7]++
-				} else {
-					hvStat.roundInfo.weaponprocs[0]++;
-				}
-				break;
-			case "Penetrated Armor":
-				hvStat.roundInfo.weaponprocs[1]++;
-				break;
-			case "Bleeding Wound":
-				hvStat.roundInfo.weaponprocs[2]++;
-				break;
-			}
-		},
-	},
-	MONSTER_EFFECT_EXPIRATION: {
-		regex: /^The effect (.+?) on (.+?) has expired\./,
-		relatedMessageTypeNames: null,
-		contentType: "text",
-		evaluationFn: function (message) {
-		},
-	},
-	MONSTER_EFFECT_EXPLOSION: {
-		regex: /^(.+?) explodes for (\d+) (.+?) damage/,
-		relatedMessageTypeNames: null,
-		contentType: "text",
-		evaluationFn: function (message) {
-			var damageAmount = Number(message.regexResult[2]);
-			hvStat.roundInfo.elemEffects[1]++;
-			hvStat.roundInfo.elemEffects[2] += damageAmount;
-		},
-	},
-	POWERUP_DROP: {
-		regex: /^(.+?) drops a (.+?) powerup!/,
-		relatedMessageTypeNames: null,
-		contentType: "text",
-		evaluationFn: function (message) {
-			if (hvStat.settings.isAlertGem) {
-				hvStat.battle.warningSystem.enqueueAlert("You picked up a " + message.regexResult[2] + ".");
-			}
-			// TODO: Collect statistics
-		},
-	},
 };
 
 hvStat.battle.log.Turn = function (targetTurnNumber) {
 	this.turn = -1;
 	this.lastTurn = -1;
-	this.texts = [];
-	this.innerHTMLs = [];
+// 	this.texts = [];
+// 	this.innerHTMLs = [];
 	this.messages = [];
 
 	var turnElements = document.querySelectorAll('#togpane_log td:first-child');
@@ -2738,13 +2727,13 @@ hvStat.battle.log.Turn = function (targetTurnNumber) {
 			var logTextElement = turnElement.nextSibling.nextSibling;
 			var text = util.innerText(logTextElement);
 			var innerHTML = logTextElement.innerHTML;
-			this.texts.push(text);
-			this.innerHTMLs.push(innerHTML);
+// 			this.texts.push(text);
+// 			this.innerHTMLs.push(innerHTML);
 			this.messages.push(new hvStat.battle.log.Message(text, innerHTML));
 		}
 	}
-	this.texts.reverse();
-	this.innerHTMLs.reverse();
+// 	this.texts.reverse();
+// 	this.innerHTMLs.reverse();
 	this.messages.reverse();
 	for (i = 0; i < this.messages.length; i++) {
 		var message = this.messages[i];
@@ -3481,33 +3470,33 @@ hvStat.battle.monster.MonsterSkill.prototype = {
 	toString: function (abbrLevel) {
 		return this._attackType.toString(abbrLevel) + "-" + (this._damageType ? this._damageType.toString(abbrLevel) : "?");
 	},
-	fetchSkillLog: function (logUsed, logDamaged, skillType) {
-		var vo = new hvStat.vo.MonsterSkillVO();
-		var r = / (uses|casts) ([^\.]+)/.exec(logUsed);
-		if (!r) {
-			return null;
-		}
-		vo.name = r[2];
-		vo.skillType = skillType.id;
-		switch (r[1]) {
-		case "uses":
-			vo.attackType = hvStat.constant.attackType.PHYSICAL.id;
-			break;
-		case "casts":
-			vo.attackType = hvStat.constant.attackType.MAGICAL.id;
-			break;
-		default:
-			vo.attackType = null;
-		}
-		r = / ([A-Za-z]+) damage/.exec(logDamaged);
-		if (!r) {
-			return null;
-		}
-		var dt = hvStat.constant.damageType[r[1].toUpperCase()];
-		vo.damageType = dt ? dt.id : null;
-		vo.lastUsedDate = new Date();
-		return new hvStat.battle.monster.MonsterSkill(vo);
-	},
+// 	fetchSkillLog: function (logUsed, logDamaged, skillType) {
+// 		var vo = new hvStat.vo.MonsterSkillVO();
+// 		var r = / (uses|casts) ([^\.]+)/.exec(logUsed);
+// 		if (!r) {
+// 			return null;
+// 		}
+// 		vo.name = r[2];
+// 		vo.skillType = skillType.id;
+// 		switch (r[1]) {
+// 		case "uses":
+// 			vo.attackType = hvStat.constant.attackType.PHYSICAL.id;
+// 			break;
+// 		case "casts":
+// 			vo.attackType = hvStat.constant.attackType.MAGICAL.id;
+// 			break;
+// 		default:
+// 			vo.attackType = null;
+// 		}
+// 		r = / ([A-Za-z]+) damage/.exec(logDamaged);
+// 		if (!r) {
+// 			return null;
+// 		}
+// 		var dt = hvStat.constant.damageType[r[1].toUpperCase()];
+// 		vo.damageType = dt ? dt.id : null;
+// 		vo.lastUsedDate = new Date();
+// 		return new hvStat.battle.monster.MonsterSkill(vo);
+// 	},
 };
 
 hvStat.battle.monster.MonsterScanResults = function (vo) {
@@ -4179,37 +4168,37 @@ hvStat.battle.monster.Monster.prototype = {
 		that._scanResult = hvStat.battle.monster.MonsterScanResults.prototype.fetchScanningLog(that._index, text);
 		that.putScanResultToDB(transaction);
 	},
-	fetchSkillLog: function (used, damaged, transaction) {
-		var that = this;
-		var i;
-		var spiritSkillFound;
-		var skillType = (that._prevSpRate <= that._currSpRate) ? hvStat.constant.skillType.MANA : hvStat.constant.skillType.SPIRIT;
-		var skill = hvStat.battle.monster.MonsterSkill.prototype.fetchSkillLog(used, damaged, skillType);
-		if (skillType === hvStat.constant.skillType.SPIRIT) {
-			// Spirit skill
-			// Overwrite if exists
-			for (i = 0; i < that._skills.length; i++) {
-				if (that._skills[i].skillType ===  hvStat.constant.skillType.SPIRIT) {
-					break;
-				}
-			}
-			that._skills[i] = skill;
-		} else {
-			// Mana skill
-			// Overwrite if same name or name is null
-			for (i = 0; i < that._skills.length; i++) {
-				if (that._skills[i].skillType ===  hvStat.constant.skillType.MANA &&
-						(that._skills[i].name === skill.name ||
-							(that._skills[i].name === null && that._skills[i].attackType === skill.attackType && that._skills[i].damageType === skill.damageType))) {
-					break;
-				}
-			}
-			that._skills[i] = skill;
-		}
-		if (hvStat.settings.isRememberSkillsTypes) {
-			this.putSkillsToDB(transaction);
-		}
-	},
+// 	fetchSkillLog: function (used, damaged, transaction) {
+// 		var that = this;
+// 		var i;
+// 		var spiritSkillFound;
+// 		var skillType = (that._prevSpRate <= that._currSpRate) ? hvStat.constant.skillType.MANA : hvStat.constant.skillType.SPIRIT;
+// 		var skill = hvStat.battle.monster.MonsterSkill.prototype.fetchSkillLog(used, damaged, skillType);
+// 		if (skillType === hvStat.constant.skillType.SPIRIT) {
+// 			// Spirit skill
+// 			// Overwrite if exists
+// 			for (i = 0; i < that._skills.length; i++) {
+// 				if (that._skills[i].skillType ===  hvStat.constant.skillType.SPIRIT) {
+// 					break;
+// 				}
+// 			}
+// 			that._skills[i] = skill;
+// 		} else {
+// 			// Mana skill
+// 			// Overwrite if same name or name is null
+// 			for (i = 0; i < that._skills.length; i++) {
+// 				if (that._skills[i].skillType ===  hvStat.constant.skillType.MANA &&
+// 						(that._skills[i].name === skill.name ||
+// 							(that._skills[i].name === null && that._skills[i].attackType === skill.attackType && that._skills[i].damageType === skill.damageType))) {
+// 					break;
+// 				}
+// 			}
+// 			that._skills[i] = skill;
+// 		}
+// 		if (hvStat.settings.isRememberSkillsTypes) {
+// 			this.putSkillsToDB(transaction);
+// 		}
+// 	},
 	recordSkill: function (skillName, skillVerb, damageType, transaction) {
 		var that = this;
 		var i;
@@ -5420,11 +5409,6 @@ HOURLY = 0;
 ARENA = 1;
 GRINDFEST = 2;
 ITEM_WORLD = 3;
-// _equips = 0;
-// _lastEquipName = "";
-// _artifacts = 0;
-// _lastArtName = "";
-// _tokenDrops = [0, 0, 0];
 
 function showBattleEndStats() {
 	var battleLog = document.getElementById("togpane_log");
@@ -5450,23 +5434,18 @@ function collectRoundInfo() {
 		hvStat.database.transaction = hvStat.database.idb.transaction(["MonsterScanResults", "MonsterSkills"], "readwrite");
 	});
 
-	// create monster objects
+	// Create monster objects
 	for (var i = 0; i < hv.battle.elementCache.monsters.length; i++) {
 		hvStat.battle.monster.monsters[i] = new hvStat.battle.monster.Monster(i);
 		if (hvStat.roundInfo.monsters[i]) {
 			hvStat.battle.monster.monsters[i].setFromValueObject(hvStat.roundInfo.monsters[i]);
 		}
 	}
+	// Handle events on the current turn
 	var turnLog = new hvStat.battle.log.Turn();
 	console.debug(turnLog);
 	turnLog.evaluate();
-// 	var joinedLogStringOfCurrentTurn = turnLog.texts.join("\n");
-// 	for (var turnLogIndex = 0; turnLogIndex < turnLog.texts.length; turnLogIndex++) {
-// 		var reResult;
-// 		var logText = turnLog.texts[turnLogIndex];
-// 		var logHTML = turnLog.innerHTMLs[turnLogIndex];
-// 		var logHTMLOfPreviousRow = turnLog.innerHTMLs[turnLogIndex - 1];
-// 	}
+
 	if (turnLog.turn === 0) {
 		if (hvStat.settings.isShowRoundReminder &&
 				(hvStat.roundInfo.maxRound >= hvStat.settings.reminderMinRounds) &&
@@ -5477,7 +5456,6 @@ function collectRoundInfo() {
 				hvStat.battle.warningSystem.enqueueAlert("The final round is approaching.");
 			}
 		}
-//		RoundSave();
 	}
 	var meleeHitCount = turnLog.getCountOf("MELEE_HIT");
 	if (meleeHitCount >= 2) {
@@ -5504,18 +5482,6 @@ function RoundSave() {
 }
 
 function saveStats() {
-// 	var d = 0;
-// 	var c = 0;
-// 	var elements = document.querySelectorAll('#togpane_log td:last-child');
-// 	var i, html;
-// 	for (i = 0; i < elements.length; i++) {
-// 		html = elements[i].innerHTML;
-// 		if (html.match(/you gain.*?credit/i)) {
-// 			c = parseInt(html.split(" ")[2]);
-// 		} else if (html.match(/you gain.*?exp/i)) {
-// 			d = parseFloat(html.split(" ")[2]);
-// 		}
-// 	}
 	var a = (new Date()).getTime();
 	if (hvStat.overview.startTime === 0) {
 		hvStat.overview.startTime = a;
