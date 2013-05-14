@@ -1890,7 +1890,6 @@ hvStat.battle.log.messageTypeParams = {
 		relatedMessageTypeNames: null,
 		contentType: "text",
 		evaluationFn: function (message) {
-return;
 			hvStat.roundInfo.battleType = HOURLY;
 		},
 	},
@@ -1899,11 +1898,10 @@ return;
 		relatedMessageTypeNames: null,
 		contentType: "text",
 		evaluationFn: function (message) {
-return;
 			hvStat.roundInfo.battleType = ARENA;
-			hvStat.roundInfo.arenaNum = parseFloat(regexResult[1]);
-			hvStat.roundInfo.currRound = parseFloat(regexResult[2]);
-			hvStat.roundInfo.maxRound = parseFloat(regexResult[3]);
+			hvStat.roundInfo.arenaNum = Number(message.regexResult[1]);
+			hvStat.roundInfo.currRound = Number(message.regexResult[2]);
+			hvStat.roundInfo.maxRound = Number(message.regexResult[3]);
 		},
 	},
 	ITEM_WORLD_INITIALIZATION: {
@@ -1911,10 +1909,9 @@ return;
 		relatedMessageTypeNames: null,
 		contentType: "text",
 		evaluationFn: function (message) {
-return;
 			hvStat.roundInfo.battleType = ITEM_WORLD;
-			hvStat.roundInfo.currRound = parseFloat(regexResult[1]);
-			hvStat.roundInfo.maxRound = parseFloat(regexResult[2]);
+			hvStat.roundInfo.currRound = Number(message.regexResult[1]);
+			hvStat.roundInfo.maxRound = Number(message.regexResult[2]);
 		},
 	},
 	GRINDFEST_INITIALIZATION: {
@@ -1922,9 +1919,8 @@ return;
 		relatedMessageTypeNames: null,
 		contentType: "text",
 		evaluationFn: function (message) {
-return;
 			hvStat.roundInfo.battleType = GRINDFEST;
-			hvStat.roundInfo.currRound = parseFloat(regexResult[1]);
+			hvStat.roundInfo.currRound = Number(message.regexResult[1]);
 		},
 	},
 	SPAWNING_MONSTER: {
@@ -1949,7 +1945,6 @@ return;
 					})(monster);
 				}
 			}
-return;
 			if (hvStat.settings.isTrackItems) {
 				hvStat.roundInfo.dropChances++;
 			}
@@ -2333,9 +2328,8 @@ return;
 		relatedMessageTypeNames: ["CAST"],
 		contentType: "text",
 		evaluationFn: function (message, relatedLog) {
-return;
-			var spell = message.relatedLog.regexResult[1];
-			var healedPoints = parseFloat(message.regexResult[1]);
+			var spell = message.relatedMessage.regexResult[1];
+			var healedAmount = Number(message.regexResult[1]);
 			var index = -1;
 			switch (spell) {
 			case "Cure":
@@ -2349,7 +2343,7 @@ return;
 				break;
 			}
 			if (index >= 0) {
-				hvStat.roundInfo.cureTotals[index] += healedPoints;
+				hvStat.roundInfo.cureTotals[index] += healedAmount;
 				hvStat.roundInfo.cureCounts[index]++;
 			}
 		},
@@ -5360,7 +5354,7 @@ function collectRoundInfo() {
 		var logHTML = turnLog.innerHTMLs[turnLogIndex];
 		var logHTMLOfPreviousRow = turnLog.innerHTMLs[turnLogIndex - 1];
 		if (turnLog.turn === 0) {
-			if (logHTML.match(/HP=/)) {
+// 			if (logHTML.match(/HP=/)) {
 // 				hvStat.battle.monster.monsters[monsterIndex].fetchStartingLog(logHTML);
 // 				if (hvStat.settings.showMonsterInfoFromDB) {
 // 					hvStat.database.loadingMonsterInfoFromDB = true;
@@ -5374,14 +5368,14 @@ function collectRoundInfo() {
 // 					hvStat.roundInfo.dropChances++;
 // 				}
 // 				monsterIndex++;
-			} else if (logHTML.match(/\(Round/)) {
-				var f = logHTML.match(/\(round.*?\)/i)[0].replace("(", "").replace(")", "");
-				var m = f.split(" ");
-				hvStat.roundInfo.currRound = parseInt(m[1]);
-				if (m.length > 2) {
-					hvStat.roundInfo.maxRound = parseInt(m[3]);
-				}
-			}
+// 			} else if (logHTML.match(/\(Round/)) {
+// 				var f = logHTML.match(/\(round.*?\)/i)[0].replace("(", "").replace(")", "");
+// 				var m = f.split(" ");
+// 				hvStat.roundInfo.currRound = parseInt(m[1]);
+// 				if (m.length > 2) {
+// 					hvStat.roundInfo.maxRound = parseInt(m[3]);
+// 				}
+// 			}
 			if (hvStat.settings.isShowRoundReminder &&
 					(hvStat.roundInfo.maxRound >= hvStat.settings.reminderMinRounds) &&
 					(hvStat.roundInfo.currRound === hvStat.roundInfo.maxRound - hvStat.settings.reminderBeforeEnd) &&
@@ -5393,16 +5387,16 @@ function collectRoundInfo() {
 				}
 				b = true;
 			}
-			if (logHTML.match(/random encounter/)) {
-				hvStat.roundInfo.battleType = HOURLY;
-			} else if (logHTML.match(/arena challenge/)) {
-				hvStat.roundInfo.battleType = ARENA;
-				hvStat.roundInfo.arenaNum = parseInt(logHTML.match(/challenge #\d+?\s/i)[0].replace("challenge #", ""));
-			} else if (logHTML.match(/GrindFest/)) {
-				hvStat.roundInfo.battleType = GRINDFEST;
-			} else if (logHTML.match(/Item World/)) {
-				hvStat.roundInfo.battleType = ITEM_WORLD;
-			}
+// 			if (logHTML.match(/random encounter/)) {
+// 				hvStat.roundInfo.battleType = HOURLY;
+// 			} else if (logHTML.match(/arena challenge/)) {
+// 				hvStat.roundInfo.battleType = ARENA;
+// 				hvStat.roundInfo.arenaNum = parseInt(logHTML.match(/challenge #\d+?\s/i)[0].replace("challenge #", ""));
+// 			} else if (logHTML.match(/GrindFest/)) {
+// 				hvStat.roundInfo.battleType = GRINDFEST;
+// 			} else if (logHTML.match(/Item World/)) {
+// 				hvStat.roundInfo.battleType = ITEM_WORLD;
+// 			}
 			RoundSave();
 		}
 // 		if (hvStat.settings.isAlertGem && logHTML.match(/drops a (.*) Gem/)) {
@@ -5619,13 +5613,13 @@ function collectRoundInfo() {
 						}
 					} else if (logHTML.match(/(cure|regen)/i)) {
 						hvStat.roundInfo.curativeSpells++
-						if (logHTML.match(/cure/i)) {
-							if (joinedLogStringOfCurrentTurn.match(/You are healed for (\d+) Health Points/)) {
-								healedPoints = parseFloat(RegExp.$1);
-							}
-							hvStat.roundInfo.cureTotals[logHTML.match(/cure\./i) ? 0 : logHTML.match(/cure ii\./i) ? 1 : 2] += healedPoints;
-							hvStat.roundInfo.cureCounts[logHTML.match(/cure\./i) ? 0 : logHTML.match(/cure ii\./i) ? 1 : 2]++
-						}
+// 						if (logHTML.match(/cure/i)) {
+// 							if (joinedLogStringOfCurrentTurn.match(/You are healed for (\d+) Health Points/)) {
+// 								healedPoints = parseFloat(RegExp.$1);
+// 							}
+// 							hvStat.roundInfo.cureTotals[logHTML.match(/cure\./i) ? 0 : logHTML.match(/cure ii\./i) ? 1 : 2] += healedPoints;
+// 							hvStat.roundInfo.cureCounts[logHTML.match(/cure\./i) ? 0 : logHTML.match(/cure ii\./i) ? 1 : 2]++
+// 						}
 					}
 				}
 			} else if (logHTML.match(/The spell is absorbed. You gain (\d+) Magic Points/)) {
