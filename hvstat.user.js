@@ -532,28 +532,40 @@ hvStat.util = {
 		"Nerf", "X-Nerf", "MagNet", "Lifestream",
 	],
 	supportiveSpells: [
-		"Cure", "Cure II", "Cure III", "Regen", "Regen II",
 		"Protection", "Haste", "Shadow Veil", "Regen", "Absorb",
 		"Spark of Life", "Arcane Focus", "Heartseeker", "Spirit Shield",
 		"Frame Spikes", "Frost Spikes", "Lightning Spikes", "Storm Spikes",
 	],
+	curativeSpells: [
+		"Cure", "Cure II", "Cure III", "Regen", "Regen II",
+	],
 	isElementalSpell: function (spell) {
-		return elementalSpells.indexOf(spell) >= 0;
+		return this.elementalSpells.indexOf(spell) >= 0;
 	},
 	isDivineSpell: function (spell) {
-		return divineSpells.indexOf(spell) >= 0;
+		return this.divineSpells.indexOf(spell) >= 0;
 	},
 	isForbiddenSpell: function (spell) {
-		return forbiddenSpells.indexOf(spell) >= 0;
+		return this.forbiddenSpells.indexOf(spell) >= 0;
 	},
 	isSpiritualSpell: function (spell) {
-		return spiritualSpells.indexOf(spell) >= 0;
+		return this.spiritualSpells.indexOf(spell) >= 0;
 	},
 	isDeprecatingSpell: function (spell) {
-		return deprecatingSpells.indexOf(spell) >= 0;
+		return this.deprecatingSpells.indexOf(spell) >= 0;
 	},
 	isSupportiveSpell: function (spell) {
-		return supportiveSpells.indexOf(spell) >= 0;
+		return this.supportiveSpells.indexOf(spell) >= 0;
+	},
+	isCurativeSpell: function (spell) {
+		return this.curativeSpells.indexOf(spell) >= 0;
+	},
+	isOffensiveSpell: function (spell) {
+		return this.isElementalSpell(spell) ||
+			this.isDivineSpell(spell) ||
+			this.isForbiddenSpell(spell) ||
+			this.isSpiritualSpell(spell) ||
+			spell === "Magic Missile";
 	},
 };
 
@@ -907,6 +919,7 @@ hvStat.storage.initialValue = {
 		elemSpells: [0, 0, 0, 0],
 		divineSpells: [0, 0, 0, 0],
 		forbidSpells: [0, 0, 0, 0],
+		spiritualSpells: [0, 0, 0, 0],
 		depSpells: [0, 0],
 		supportSpells: 0,
 		curativeSpells: 0,
@@ -1028,6 +1041,7 @@ hvStat.storage.initialValue = {
 		elemSpells: [0, 0, 0, 0],
 		divineSpells: [0, 0, 0, 0],
 		forbidSpells: [0, 0, 0, 0],
+		spiritualSpells: [0, 0, 0, 0],
 		depSpells: [0, 0],
 		supportSpells: 0,
 		curativeSpells: 0,
@@ -1084,6 +1098,7 @@ hvStat.storage.initialValue = {
 		elemSpells: [0, 0, 0, 0],	// stats
 		divineSpells: [0, 0, 0, 0],	// stats
 		forbidSpells: [0, 0, 0, 0],	// stats
+		spiritualSpells: [0, 0, 0, 0],	// stats
 		depSpells: [0, 0],	// stats
 		supportSpells: 0,	// stats
 		curativeSpells: 0,	// stats
@@ -1096,6 +1111,8 @@ hvStat.storage.initialValue = {
 		armorProfGain: [0, 0, 0],	// stats
 		weaponprocs: [0, 0, 0, 0, 0, 0, 0, 0],	// stats
 		pskills: [0, 0, 0, 0, 0, 0, 0],	// stats
+		exp: 0,
+		credits: 0,
 	},
 	// Warning State object
 	warningState: {
@@ -2023,10 +2040,8 @@ return;
 		relatedMessageTypeNames: null,
 		contentType: "text",
 		evaluationFn: function (message) {
-return;
 			var credits = Number(message.regexResult[1]);
-			hvStat.overview.credits += credits;
-			hvStat.overview.creditsbyBT[hvStat.roundInfo.battleType] += credits;
+			hvStat.roundInfo.credits = credits;
 		},
 	},
 	EXP: {
@@ -2034,10 +2049,8 @@ return;
 		relatedMessageTypeNames: null,
 		contentType: "text",
 		evaluationFn: function (message) {
-return;
 			var exp = Number(message.regexResult[1]);
-			hvStat.overview.exp += exp;
-			hvStat.overview.expbyBT[hvStat.roundInfo.battleType] += exp;
+			hvStat.roundInfo.exp = exp;
 		},
 	},
 	INVENTORY_LIMIT_WARNING: {
@@ -2045,7 +2058,6 @@ return;
 		relatedMessageTypeNames: null,
 		contentType: "text",
 		evaluationFn: function (message) {
-return;
 			localStorage.setItem(HV_EQUIP, "true");
 		},
 	},
@@ -2056,7 +2068,6 @@ return;
 		relatedMessageTypeNames: null,
 		contentType: "text",
 		evaluationFn: function (message) {
-return;
 			var spell = message.regexResult[1];
 			if (hvStat.util.isElementalSpell(spell)) {
 				hvStat.roundInfo.elemSpells[0]++;
@@ -2068,7 +2079,8 @@ return;
 				hvStat.roundInfo.forbidSpells[0]++;
 				hvStat.roundInfo.sAttempts++;
 			} else if (hvStat.util.isSpiritualSpell(spell)) {
-				// TODO
+				hvStat.roundInfo.spiritualSpells[0]++;
+				hvStat.roundInfo.sAttempts++;
 			} else if (hvStat.util.isDeprecatingSpell(spell)) {
 				hvStat.roundInfo.sAttempts++;
 				hvStat.roundInfo.depSpells[0]++;
@@ -2077,6 +2089,8 @@ return;
 				if (spell === "Absorb") {
 					hvStat.roundInfo.absArry[0]++;
 				}
+			} else if (hvStat.util.isCurativeSpell(spell)) {
+				hvStat.roundInfo.curativeSpells++;
 			}
 		},
 	},
@@ -2085,7 +2099,6 @@ return;
 		relatedMessageTypeNames: null,
 		contentType: "text",
 		evaluationFn: function (message) {
-return;
 			hvStat.roundInfo.aAttempts++;
 		},
 	},
@@ -2094,8 +2107,7 @@ return;
 		relatedMessageTypeNames: ["CAST"],
 		contentType: "text",
 		evaluationFn: function (message) {
-return;
-			var spell = message.relatedLog.regexResult[1];
+			var spell = message.relatedMessage.regexResult[1];
 			if (hvStat.util.isElementalSpell(spell)) {
 				hvStat.roundInfo.elemSpells[3]++;
 			} else if (hvStat.util.isDivineSpell(spell)) {
@@ -2103,10 +2115,18 @@ return;
 			} else if (hvStat.util.isForbiddenSpell(spell)) {
 				hvStat.roundInfo.forbidSpells[3]++;
 			} else if (hvStat.util.isSpiritualSpell(spell)) {
-				// TODO
+				hvStat.roundInfo.spiritualSpells[3]++;
 			} else if (hvStat.util.isDeprecatingSpell(spell)) {
-				// TODO
+				// TODO ?
 			}
+			hvStat.roundInfo.sResists++;	// correct?
+		},
+	},
+	SPELL_WEAVING_FAILURE: {
+		regex: /^You fail to weave the spell into the existing effects on the target\./,
+		relatedMessageTypeNames: null,
+		contentType: "text",
+		evaluationFn: function (message) {
 		},
 	},
 	MELEE_HIT: {
@@ -2114,11 +2134,9 @@ return;
 		relatedMessageTypeNames: null,
 		contentType: "text",
 		evaluationFn: function (message) {
-return;
 			var damageAmount = parseFloat(message.regexResult[3]);
 			var critical = message.regexResult[1] === "crit";
 			hvStat.roundInfo.aAttempts++;
-//			meleeHitCount++;
 			hvStat.roundInfo.aHits[critical ? 1 : 0]++;
 			hvStat.roundInfo.dDealt[critical ? 1 : 0] += damageAmount;
 		},
@@ -2128,51 +2146,40 @@ return;
 		relatedMessageTypeNames: null,
 		contentType: "text",
 		evaluationFn: function (message) {
-return;
-				var damageSource = message.regexResult[1];
-				var damageAmount = parseFloat(message.regexResult[4]);
-				var critical = message.regexResult[2] === "crits" || message.regexResult[2] === "blasts";
-				switch (damageSource) {
-				case "Bleeding Wound":
-					hvStat.roundInfo.dDealt[2] += damageAmount;
-					break;
-				case "Spreading Poison":
-					hvStat.roundInfo.effectPoison[1] += damageAmount;
-					hvStat.roundInfo.effectPoison[0]++;
-					break;
-				case "Your offhand":
-					hvStat.roundInfo.aOffhands[critical ? 2 : 0]++;
-					hvStat.roundInfo.aOffhands[critical ? 3 : 1] += damageAmount;
-					break;
-				case "Fireball": case "Inferno": case "Flare": case "Meteor": case "Nova": case "Flames of Loki":
-				case "Icestrike": case "Snowstorm": case "Freeze": case "Blizzard": case "Cryostasis": case "Fimbulvetr":
-				case "Lighting": case "Thunderstorm": case "Ball Lighting": case "Chain Lighting": case "Shockblast": case "Wrath of Thor":
-				case "Windblast": case "Cyclone": case "Gale": case "Hurricane": case "Downburst": case "Storms of Njord":
+			var damageSource = message.regexResult[1];
+			var damageAmount = Number(message.regexResult[4]);
+			var critical = message.regexResult[2] === "crits" || message.regexResult[2] === "blasts";
+			switch (damageSource) {
+			case "Bleeding Wound":
+				hvStat.roundInfo.dDealt[2] += damageAmount;
+				break;
+			case "Spreading Poison":
+				hvStat.roundInfo.effectPoison[1] += damageAmount;
+				hvStat.roundInfo.effectPoison[0]++;
+				break;
+			case "Your offhand":
+				hvStat.roundInfo.aOffhands[critical ? 2 : 0]++;
+				hvStat.roundInfo.aOffhands[critical ? 3 : 1] += damageAmount;
+				break;
+			default:
+				if (hvStat.util.isOffensiveSpell(damageSource)) {
 					hvStat.roundInfo.dDealtSp[critical ? 1 : 0] += damageAmount;
 					hvStat.roundInfo.sHits[critical ? 1 : 0]++;
+				}
+				if (hvStat.util.isElementalSpell(damageSource)) {
 					hvStat.roundInfo.elemSpells[1]++;
 					hvStat.roundInfo.elemSpells[2] += damageAmount;
-					break;
-				case "Condemn": case "Purge": case "Smite": case "Banish":
-					hvStat.roundInfo.dDealtSp[critical ? 1 : 0] += damageAmount;
-					hvStat.roundInfo.sHits[critical ? 1 : 0]++;
+				} else if (hvStat.util.isDivineSpell(damageSource)) {
 					hvStat.roundInfo.divineSpells[1]++;
 					hvStat.roundInfo.divineSpells[2] += damageAmount;
-					break;
-				case "Corruption": case "Pestilence": case "Disintegrate": case "Ragnarok":
-					hvStat.roundInfo.dDealtSp[critical ? 1 : 0] += damageAmount;
-					hvStat.roundInfo.sHits[critical ? 1 : 0]++;
+				} else if (hvStat.util.isForbiddenSpell(damageSource)) {
 					hvStat.roundInfo.forbidSpells[1]++;
 					hvStat.roundInfo.forbidSpells[2] += damageAmount;
-					break;
-				case "Soul Reaper": case "Soul Harvest": case "Soul Fire": case "Soul Burst":
-					hvStat.roundInfo.dDealtSp[critical ? 1 : 0] += damageAmount;
-					hvStat.roundInfo.sHits[critical ? 1 : 0]++;
-					// TODO
-//					hvStat.roundInfo.forbidSpells[1]++;
-//					hvStat.roundInfo.forbidSpells[2] += damageAmount;
-					break;
+				} else if (hvStat.util.isSpiritualSpell(damageSource)) {
+					hvStat.roundInfo.spiritualSpells[1]++;
+					hvStat.roundInfo.spiritualSpells[2] += damageAmount;
 				}
+			}
 		},
 	},
 	ITEM_OR_SKILL: {
@@ -2180,7 +2187,6 @@ return;
 		relatedMessageTypeNames: null,
 		contentType: "text",
 		evaluationFn: function (message) {
-return;
 			var usedObject = message.regexResult[1];
 			if (usedObject === "Mystic Gem") {
 				hvStat.roundInfo.channel--;
@@ -2194,22 +2200,19 @@ return;
 		relatedMessageTypeNames: null,
 		contentType: "text",
 		evaluationFn: function (message) {
-return;
 			var damageAmount = parseFloat(message.regexResult[2]);
 			if (hvStat.settings.isTrackStats || hvStat.settings.isShowEndStats) {
 				hvStat.roundInfo.aCounters[0]++;
 				hvStat.roundInfo.aCounters[1] += damageAmount;
-//				counterHitCount++;
 				hvStat.roundInfo.dDealt[0] += damageAmount;
 			}
 		},
 	},
 	DEFENSE: {
-		regex: /^You (block|evade|parry|resist) the attack from (.+?)\./,
+		regex: /^You (evade|block|parry|resist) the attack from (.+?)\./,
 		relatedMessageTypeNames: null,
 		contentType: "text",
 		evaluationFn: function (message) {
-return;
 			hvStat.roundInfo.mAttempts++;
 			switch (message.regexResult[1]) {
 			case "evade":
@@ -2256,7 +2259,6 @@ return;
 		relatedMessageTypeNames: null,
 		contentType: "text",
 		evaluationFn: function (message) {
-return;
 			var drainObject = message.regexResult[2];
 			switch (drainObject) {
 			case "HP":
@@ -2287,14 +2289,13 @@ return;
 	},
 	GAINING_EFFECT: {
 		regex: /^You gain the effect (.+?)\./,
-		relatedMessageTypeNames: null,
+		relatedMessageTypeNames: ["ITEM_OR_SKILL"],
 		contentType: "text",
 		evaluationFn: function (message) {
 			var effectName = message.regexResult[1];
 			if (hvStat.settings.alertWhenChannelingIsGained && effectName === "Channeling") {
 				hvStat.battle.warningSystem.enqueueAlert("You gained the effect Channeling.");
 			}
-return;
 			switch (effectName) {
 			case "Channeling":
 				hvStat.roundInfo.channel++;
@@ -2363,9 +2364,8 @@ return;
 			if (hvStat.settings.isWarnAbsorbTrigger) {
 				hvStat.battle.warningSystem.enqueueAlert("Absorbing Ward has triggered.");
 			}
-return;
 			hvStat.roundInfo.absArry[1]++;
-			hvStat.roundInfo.absArry[2] += parseFloat(message.regexResult[1]);
+			hvStat.roundInfo.absArry[2] += Number(message.regexResult[1]);
 		},
 	},
 	SPARK_OF_LIFE_SUCCESS: {
@@ -2457,6 +2457,15 @@ return;
 	},
 
 	// Monster active actions
+	MONSTER_MISS: {
+		regex: /^(.+?) misses the attack against you\./,
+		relatedMessageTypeNames: null,
+		contentType: "text",
+		evaluationFn: function (message) {
+			hvStat.roundInfo.mAttempts++;
+			hvStat.roundInfo.pDodges++;	// correct?
+		},
+	},
 	MONSTER_HIT: {
 		regex: /^(.+?) (hits|crits) you for (\d+) (.+?) damage\./,
 		relatedMessageTypeNames: ["MONSTER_SKILL"],
@@ -2504,7 +2513,6 @@ return;
 		relatedMessageTypeNames: null,
 		contentType: "text",
 		evaluationFn: function (message) {
-return;
 			var verb = message.regexResult[2];
 			if (verb === "uses") {
 				hvStat.roundInfo.pskills[0]++;
@@ -2521,6 +2529,12 @@ return;
 		relatedMessageTypeNames: null,
 		contentType: "text",
 		evaluationFn: function (message) {
+			var method = message.regexResult[3];
+			if (method === "attack") {
+				// TODO
+			} else if (method === "spell") {
+				// TODO
+			}
 		},
 	},
 	MONSTER_AGITATED: {
@@ -2535,7 +2549,6 @@ return;
 		relatedMessageTypeNames: null,
 		contentType: "text",
 		evaluationFn: function (message) {
-return;
 			hvStat.roundInfo.kills++;
 		},
 	},
@@ -2546,7 +2559,6 @@ return;
 		relatedMessageTypeNames: ["CAST", "COUNTER"],
 		contentType: "text",
 		evaluationFn: function (message) {
-return;
 			var effectName = message.regexResult[2];
 			switch (effectName) {
 			case "Coalesced Mana":
@@ -2562,11 +2574,11 @@ return;
 				hvStat.roundInfo.depSpells[1]++;
 				break;
 			case "Stunned":
-				hvStat.roundInfo.weaponprocs[0]++;
-				if (message.relatedLog.type === hvStat.battle.log.messageTypes.COUNTER) {
-					// TODO: check
-					hvStat.roundInfo.weaponprocs[0]--;
+				if (message.relatedMessage &&
+						message.relatedMessage.messageType === hvStat.battle.log.messageTypes.COUNTER) {
 					hvStat.roundInfo.weaponprocs[7]++
+				} else {
+					hvStat.roundInfo.weaponprocs[0]++;
 				}
 				break;
 			case "Penetrated Armor":
@@ -2590,12 +2602,9 @@ return;
 		relatedMessageTypeNames: null,
 		contentType: "text",
 		evaluationFn: function (message) {
-return;
-			var damageAmount = parseFloat(regexResult[2]);
-			if (hvStat.settings.isTrackStats || hvStat.settings.isShowEndStats) {
-				hvStat.roundInfo.elemEffects[1]++;
-				hvStat.roundInfo.elemEffects[2] += damageAmount;
-			}
+			var damageAmount = Number(message.regexResult[2]);
+			hvStat.roundInfo.elemEffects[1]++;
+			hvStat.roundInfo.elemEffects[2] += damageAmount;
 		},
 	},
 	POWERUP_DROP: {
@@ -2606,6 +2615,7 @@ return;
 			if (hvStat.settings.isAlertGem) {
 				hvStat.battle.warningSystem.enqueueAlert("You picked up a " + message.regexResult[2] + ".");
 			}
+			// TODO: Collect statistics
 		},
 	},
 };
@@ -2646,7 +2656,6 @@ hvStat.battle.log.Turn = function (targetTurnNumber) {
 		message.parse();
 	}
 	this.analyze();
-	console.debug(this);
 };
 hvStat.battle.log.Turn.prototype = {
 	analyze: function () {
@@ -2675,6 +2684,20 @@ hvStat.battle.log.Turn.prototype = {
 			var message = this.messages[i];
 			message.evaluate();
 		}
+	},
+	getCountOf: function (messageTypeName) {
+		var count = 0;
+		var messageType = hvStat.battle.log.messageTypes[messageTypeName];
+		if (!messageType) {
+			return 0;
+		}
+		for (var i = 0; i < this.messages.length; i++) {
+			var message = this.messages[i];
+			if (message.messageType === messageType) {
+				count++;
+			}
+		}
+		return count;
 	},
 };
 
@@ -5332,9 +5355,9 @@ function collectRoundInfo() {
 		hvStat.database.transaction = hvStat.database.idb.transaction(["MonsterScanResults", "MonsterSkills"], "readwrite");
 	});
 
-	var meleeHitCount = 0;
-	var counterHitCount = 0;
-	var healedPoints = 0;
+// 	var meleeHitCount = 0;
+// 	var counterHitCount = 0;
+// 	var healedPoints = 0;
 	var b = false;
 	// create monster objects
 	for (var i = 0; i < hv.battle.elementCache.monsters.length; i++) {
@@ -5343,8 +5366,8 @@ function collectRoundInfo() {
 			hvStat.battle.monster.monsters[i].setFromValueObject(hvStat.roundInfo.monsters[i]);
 		}
 	}
-// 	var monsterIndex = 0;
 	var turnLog = new hvStat.battle.log.Turn();
+	console.debug(turnLog);
 	turnLog.evaluate();
 	var joinedLogStringOfCurrentTurn = turnLog.texts.join("\n");
 
@@ -5354,28 +5377,6 @@ function collectRoundInfo() {
 		var logHTML = turnLog.innerHTMLs[turnLogIndex];
 		var logHTMLOfPreviousRow = turnLog.innerHTMLs[turnLogIndex - 1];
 		if (turnLog.turn === 0) {
-// 			if (logHTML.match(/HP=/)) {
-// 				hvStat.battle.monster.monsters[monsterIndex].fetchStartingLog(logHTML);
-// 				if (hvStat.settings.showMonsterInfoFromDB) {
-// 					hvStat.database.loadingMonsterInfoFromDB = true;
-// 					(function (monsterIndex) {
-// 						hvStat.database.idbAccessQueue.add(function () {
-// 							hvStat.battle.monster.monsters[monsterIndex].getFromDB(hvStat.database.transaction, RoundSave);
-// 						});
-// 					})(monsterIndex);
-// 				}
-// 				if (hvStat.settings.isTrackItems) {
-// 					hvStat.roundInfo.dropChances++;
-// 				}
-// 				monsterIndex++;
-// 			} else if (logHTML.match(/\(Round/)) {
-// 				var f = logHTML.match(/\(round.*?\)/i)[0].replace("(", "").replace(")", "");
-// 				var m = f.split(" ");
-// 				hvStat.roundInfo.currRound = parseInt(m[1]);
-// 				if (m.length > 2) {
-// 					hvStat.roundInfo.maxRound = parseInt(m[3]);
-// 				}
-// 			}
 			if (hvStat.settings.isShowRoundReminder &&
 					(hvStat.roundInfo.maxRound >= hvStat.settings.reminderMinRounds) &&
 					(hvStat.roundInfo.currRound === hvStat.roundInfo.maxRound - hvStat.settings.reminderBeforeEnd) &&
@@ -5387,292 +5388,26 @@ function collectRoundInfo() {
 				}
 				b = true;
 			}
-// 			if (logHTML.match(/random encounter/)) {
-// 				hvStat.roundInfo.battleType = HOURLY;
-// 			} else if (logHTML.match(/arena challenge/)) {
-// 				hvStat.roundInfo.battleType = ARENA;
-// 				hvStat.roundInfo.arenaNum = parseInt(logHTML.match(/challenge #\d+?\s/i)[0].replace("challenge #", ""));
-// 			} else if (logHTML.match(/GrindFest/)) {
-// 				hvStat.roundInfo.battleType = GRINDFEST;
-// 			} else if (logHTML.match(/Item World/)) {
-// 				hvStat.roundInfo.battleType = ITEM_WORLD;
-// 			}
 			RoundSave();
 		}
-// 		if (hvStat.settings.isAlertGem && logHTML.match(/drops a (.*) Gem/)) {
-// 			hvStat.battle.warningSystem.enqueueAlert("You picked up a " + RegExp.$1 + " Gem.");
-// 		}
-// 		if (hvStat.settings.isWarnAbsorbTrigger && /The spell is absorbed/.test(logHTML)) {
-// 			hvStat.battle.warningSystem.enqueueAlert("Absorbing Ward has triggered.");
-// 		}
-// 		if (hvStat.settings.isWarnSparkTrigger && logHTML.match(/spark of life.*defeat/ig)) {
-// 			hvStat.battle.warningSystem.enqueueAlert("Spark of Life has triggered!!");
-// 		}
-// 		if (hvStat.settings.isWarnSparkExpire && logHTML.match(/spark of life.*expired/ig)) {
-// 			hvStat.battle.warningSystem.enqueueAlert("Spark of Life has expired!!");
-// 		}
-// 		if (hvStat.settings.alertWhenChannelingIsGained && logText.indexOf("You gain the effect Channeling") >= 0) {
-// 			hvStat.battle.warningSystem.enqueueAlert("You gained the effect Channeling.");
-// 		}
-// 		if (hvStat.settings.isMainEffectsAlertSelf && logHTML.match(/^The effect (.*)  has expired.$/)) {
-// 			var effectName = RegExp.$1;
-// 			var i = hvStat.battle.warningSystem.selfEffectNames.indexOf(effectName === "Regen II" ? "Regen" : effectName);
-// 			if (i !== -1 && hvStat.settings.isEffectsAlertSelf[i] && hvStat.settings.EffectsAlertSelfRounds[i] === "-1") {
-// 				hvStat.battle.warningSystem.enqueueAlert(effectName + " has expired");
+// 		if (hvStat.settings.isTrackStats || hvStat.settings.isShowEndStats) {
+// 			var o = 0;
+// 			if (logHTML.match(/\s(\d+)\s/)) {
+// 				o = parseInt(RegExp.$1);
+// 			}
+// 			if (logHTML.match(/has been defeated/i)) {
+// 			} else if (logHTML.match(/(you hit)|(you crit)/i)) {
+// 				hvStat.roundInfo.aAttempts++;
+// 				meleeHitCount++;
+// 				hvStat.roundInfo.aHits[logHTML.match(/you crit/i) ? 1 : 0]++;
+// 				hvStat.roundInfo.dDealt[logHTML.match(/you crit/i) ? 1 : 0] += o;
+// 			} else if (logHTML.match(/you counter/i)) {
+// 				hvStat.roundInfo.aCounters[0]++;
+// 				hvStat.roundInfo.aCounters[1] += o;
+// 				counterHitCount++;
+// 				hvStat.roundInfo.dDealt[0] += o;
 // 			}
 // 		}
-// 		if ((hvStat.settings.isShowSidebarProfs || hvStat.settings.isTrackStats) && logHTML.match(/0.0(\d+) points of (.*?) proficiency/ig)) {
-// 			var p = (RegExp.$1) / 100;
-// 			var r = RegExp.$2;
-// 			if (r.match(/one-handed weapon/)) {
-// 				hvStat.characterStatus.proficiencies.oneHanded += p;
-// 				hvStat.roundInfo.weapProfGain[0] += p;
-// 			} else if (r.match(/two-handed weapon/)) {
-// 				hvStat.characterStatus.proficiencies.twoHanded += p;
-// 				hvStat.roundInfo.weapProfGain[1] += p;
-// 			} else if (r.match(/dual wielding/)) {
-// 				hvStat.characterStatus.proficiencies.dualWielding += p;
-// 				hvStat.roundInfo.weapProfGain[2] += p;
-// 			} else if (r.match(/staff/)) {
-// 				hvStat.characterStatus.proficiencies.staff += p;
-// 				hvStat.roundInfo.weapProfGain[3] += p;
-// 			} else if (r.match(/cloth armor/)) {
-// 				hvStat.characterStatus.proficiencies.clothArmor += p;
-// 				hvStat.roundInfo.armorProfGain[0] += p;
-// 			} else if (r.match(/light armor/)) {
-// 				hvStat.characterStatus.proficiencies.lightArmor += p;
-// 				hvStat.roundInfo.armorProfGain[1] += p;
-// 			} else if (r.match(/heavy armor/)) {
-// 				hvStat.characterStatus.proficiencies.heavyArmor += p;
-// 				hvStat.roundInfo.armorProfGain[2] += p;
-// 			} else if (r.match(/elemental magic/)) {
-// 				hvStat.characterStatus.proficiencies.elemental += p;
-// 				hvStat.roundInfo.elemGain += p;
-// 			} else if (r.match(/divine magic/)) {
-// 				hvStat.characterStatus.proficiencies.divine += p;
-// 				hvStat.characterStatus.proficiencies.spiritual = (hvStat.characterStatus.proficiencies.divine + hvStat.characterStatus.proficiencies.forbidden) / 2;
-// 				hvStat.roundInfo.divineGain += p;
-// 			} else if (r.match(/forbidden magic/)) {
-// 				hvStat.characterStatus.proficiencies.forbidden += p;
-// 				hvStat.characterStatus.proficiencies.spiritual = (hvStat.characterStatus.proficiencies.divine + hvStat.characterStatus.proficiencies.forbidden) / 2;
-// 				hvStat.roundInfo.forbidGain += p;
-// 			} else if (r.match(/deprecating magic/)) {
-// 				hvStat.characterStatus.proficiencies.deprecating += p;
-// 				hvStat.roundInfo.depGain += p;
-// 			} else if (r.match(/supportive magic/)) {
-// 				hvStat.characterStatus.proficiencies.supportive += p;
-// 				hvStat.roundInfo.supportGain += p;
-// 			}
-// 			hvStat.storage.characterStatus.save();
-// 		}
-// 		if (hvStat.settings.isRememberScan) {
-// 			if (logHTML.indexOf("Scanning") >= 0) {
-// 				(function () {
-// 					var scanningMonsterName;
-// 					var scanningMonsterIndex = -1;
-// 					var r = /Scanning ([^\.]{0,30})\.{3,}/.exec(logText);
-// 					var i, len, monster;
-// 					if (r) {
-// 						scanningMonsterName = r[1];
-// 						len = hvStat.battle.monster.monsters.length;
-// 						for (i = 0; i < len; i++) {
-// 							monster = hvStat.battle.monster.monsters[i];
-// 							if (monster.name === scanningMonsterName) {
-// 								hvStat.database.loadingMonsterInfoFromDB = true;
-// 								(function (monster, logText) {
-// 									hvStat.database.idbAccessQueue.add(function () {
-// 										monster.fetchScanningLog(logText, hvStat.database.transaction);
-// 										RoundSave();
-// 									});
-// 								})(monster, logText);
-// 							}
-// 						}
-// 					}
-// 				})();
-// 			}
-// 		}
-		if (hvStat.settings.isTrackStats || hvStat.settings.isShowEndStats) {
-			var o = 0;
-			if (logHTML.match(/\s(\d+)\s/)) {
-				o = parseInt(RegExp.$1);
-			}
-			if (logHTML.match(/has been defeated/i)) {
-				hvStat.roundInfo.kills++;
-			} else if (logHTML.match(/bleeding wound hits/i)) {
-				hvStat.roundInfo.dDealt[2] += o;
-			} else if (logHTML.match(/(you hit)|(you crit)/i)) {
-				hvStat.roundInfo.aAttempts++;
-				meleeHitCount++;
-				hvStat.roundInfo.aHits[logHTML.match(/you crit/i) ? 1 : 0]++;
-				hvStat.roundInfo.dDealt[logHTML.match(/you crit/i) ? 1 : 0] += o;
-			} else if (logHTML.match(/your offhand (hits|crits)/i)) {
-				hvStat.roundInfo.aOffhands[logHTML.match(/offhand crit/i) ? 2 : 0]++;
-				hvStat.roundInfo.aOffhands[logHTML.match(/offhand crit/i) ? 3 : 1] += o;
-			} else if (logHTML.match(/you counter/i)) {
-				hvStat.roundInfo.aCounters[0]++;
-				hvStat.roundInfo.aCounters[1] += o;
-				counterHitCount++;
-				hvStat.roundInfo.dDealt[0] += o;
-			} else if (logHTML.match(/hits|blasts|explodes/i) && !logHTML.match(/hits you /i)) {
-				if (logHTML.match(/spreading poison hits /i) && !logHTML.match(/(hits you |crits you )/i)) {
-					hvStat.roundInfo.effectPoison[1] += o;
-					hvStat.roundInfo.effectPoison[0]++;
-				} else {
-					if (logHTML.match(/(searing skin|freezing limbs|deep burns|turbulent air|burning soul|breached defense|blunted attack) (hits|blasts|explodes)/i) && !logHTML.match(/(hits you |crits you )/i)) {
-						hvStat.roundInfo.elemEffects[1]++;
-						hvStat.roundInfo.elemEffects[2] += o;
-					} else if (logHTML.match(/(fireball|inferno|flare|meteor|nova|flames of loki|icestrike|snowstorm|freeze|blizzard|cryostasis|fimbulvetr|lighting|thunderstorm|ball lighting|chain lighting|shockblast|wrath of thor|windblast|cyclone|gale|hurricane|downburst|storms of njord) (hits|blasts|explodes)/i) && !logHTML.match(/(hits you |crits you )/i)) {
-						hvStat.roundInfo.dDealtSp[logHTML.match(/blasts/i) ? 1 : 0] += o;
-						hvStat.roundInfo.sHits[logHTML.match(/blasts/i) ? 1 : 0]++;
-						hvStat.roundInfo.elemSpells[1]++;
-						hvStat.roundInfo.elemSpells[2] += o;
-					} else if (logHTML.match(/(condemn|purge|smite|banish) (hits|blasts|explodes)/i) && !logHTML.match(/(hits you |crits you )/i)) {
-						hvStat.roundInfo.dDealtSp[logHTML.match(/blasts/i) ? 1 : 0] += o;
-						hvStat.roundInfo.sHits[logHTML.match(/blasts/i) ? 1 : 0]++;
-						hvStat.roundInfo.divineSpells[1]++;
-						hvStat.roundInfo.divineSpells[2] += o
-					} else if (logHTML.match(/(soul reaper|soul harvest|soul fire|soul burst|corruption|pestilence|disintegrate|ragnarok) (hits|blasts|explodes)/i) && !logHTML.match(/(hits you |crits you )/i)) {
-						hvStat.roundInfo.dDealtSp[logHTML.match(/blasts/i) ? 1 : 0] += o;
-						hvStat.roundInfo.sHits[logHTML.match(/blasts/i) ? 1 : 0]++;
-						hvStat.roundInfo.forbidSpells[1]++;
-						hvStat.roundInfo.forbidSpells[2] += o
-					}
-				}
-// 			} else if (logHTML.match(/(hits you )|(crits you )/i)) {
-// 				hvStat.roundInfo.mAttempts++;
-// 				hvStat.roundInfo.mHits[logHTML.match(/crits/i) ? 1 : 0]++;
-// 				hvStat.roundInfo.dTaken[logHTML.match(/crits/i) ? 1 : 0] += o;
-// 				if (logHTMLOfPreviousRow.match(/ uses | casts /i)) {
-// 					hvStat.roundInfo.pskills[1]++;
-// 					hvStat.roundInfo.pskills[2] += o;
-// 					if (logHTMLOfPreviousRow.match(/ casts /i)) {
-// 						hvStat.roundInfo.pskills[5]++;
-// 						hvStat.roundInfo.pskills[6] += o;
-// 					} else {
-// 						hvStat.roundInfo.pskills[3]++;
-// 						hvStat.roundInfo.pskills[4] += o;
-// 					}
-// 					if (hvStat.settings.isRememberSkillsTypes) {
-// 						var j = hvStat.battle.monster.monsters.length;
-// 						while (j--) {
-// 							reResult = /([^\.]{1,30}) (?:uses|casts) /.exec(logHTMLOfPreviousRow);
-// 							if (reResult && reResult[1] === hvStat.battle.monster.monsters[j].name && reResult[1].indexOf("Unnamed ") !== 0) {
-// 								(function (j, logHTMLOfPreviousRow, logHTML) {
-// 									hvStat.database.idbAccessQueue.add(function () {
-// 										hvStat.battle.monster.monsters[j].fetchSkillLog(logHTMLOfPreviousRow, logHTML, hvStat.database.transaction);
-// 									});
-// 								})(j, logHTMLOfPreviousRow, logHTML);
-// 								break;
-// 							}
-// 						}
-// 					}
-// 				}
-			} else if (logHTML.match(/you (dodge|evade|block|parry|resist)|(misses.*?against you)/i)) {
-				hvStat.roundInfo.mAttempts++;
-				if (logHTML.match(/dodge|(misses.*?against you)/)) {
-					hvStat.roundInfo.pDodges++;
-				} else if (logHTML.match(/evade/)) {
-					hvStat.roundInfo.pEvades++;
-				} else if (logHTML.match(/block/)) {
-					hvStat.roundInfo.pBlocks++;
-				} else if (logHTML.match(/parry/)) {
-					hvStat.roundInfo.pParries++;
-				} else if (logHTML.match(/resist/)) {
-					hvStat.roundInfo.pResists++;
-				}
-			} else if (logHTML.match(/casts?/)) {
-				if (logHTML.match(/casts/)) {
-					hvStat.roundInfo.mAttempts++;
-					hvStat.roundInfo.mSpells++;
-				} else if (logHTML.match(/you cast/i)) {
-					if (logHTML.match(/(poison|slow|weaken|sleep|confuse|imperil|blind|silence|nerf|x.nerf|magnet|lifestream)/i)) {
-						hvStat.roundInfo.depSpells[0]++;
-						hvStat.roundInfo.sAttempts++
-					} else if (logHTML.match(/(condemn|purge|smite|banish)/i)) {
-						hvStat.roundInfo.divineSpells[0]++;
-						hvStat.roundInfo.sAttempts++;
-						if (joinedLogStringOfCurrentTurn.match(/Your spell misses its mark/i)) {
-							hvStat.roundInfo.divineSpells[3] += joinedLogStringOfCurrentTurn.match(/Your spell misses its mark/ig).length;
-						}
-					} else if (logHTML.match(/(soul reaper|soul harvest|soul fire|soul burst|corruption|pestilence|disintegrate|ragnarok)/i)) {
-						hvStat.roundInfo.forbidSpells[0]++;
-						hvStat.roundInfo.sAttempts++
-						if (joinedLogStringOfCurrentTurn.match(/Your spell misses its mark/i)) {
-							hvStat.roundInfo.forbidSpells[3] += joinedLogStringOfCurrentTurn.match(/Your spell misses its mark/ig).length;
-						}
-					} else if (logHTML.match(/(fireball|inferno|flare|meteor|nova|flames of loki|icestrike|snowstorm|freeze|blizzard|cryostasis|fimbulvetr|lighting|thunderstorm|ball lighting|chain lighting|shockblast|wrath of thor|windblast|cyclone|gale|hurricane|downburst|storms of njord)/i)) {
-						hvStat.roundInfo.elemSpells[0]++;
-						hvStat.roundInfo.sAttempts++;
-						if (joinedLogStringOfCurrentTurn.match(/Your spell misses its mark/i)) {
-							hvStat.roundInfo.elemSpells[3] += joinedLogStringOfCurrentTurn.match(/Your spell misses its mark/ig).length;
-						}
-					} else if (logHTML.match(/(spark of life|absorb|protection|shadow veil|haste|flame spikes|frost spikes|lightning spikes|storm spikes|arcane focus|heartseeker)/i)) {
-						hvStat.roundInfo.supportSpells++
-						if (logHTML.match(/absorb/i)) {
-							hvStat.roundInfo.absArry[0]++
-						}
-					} else if (logHTML.match(/(cure|regen)/i)) {
-						hvStat.roundInfo.curativeSpells++
-// 						if (logHTML.match(/cure/i)) {
-// 							if (joinedLogStringOfCurrentTurn.match(/You are healed for (\d+) Health Points/)) {
-// 								healedPoints = parseFloat(RegExp.$1);
-// 							}
-// 							hvStat.roundInfo.cureTotals[logHTML.match(/cure\./i) ? 0 : logHTML.match(/cure ii\./i) ? 1 : 2] += healedPoints;
-// 							hvStat.roundInfo.cureCounts[logHTML.match(/cure\./i) ? 0 : logHTML.match(/cure ii\./i) ? 1 : 2]++
-// 						}
-					}
-				}
-			} else if (logHTML.match(/The spell is absorbed. You gain (\d+) Magic Points/)) {
-				hvStat.roundInfo.absArry[1]++;
-				hvStat.roundInfo.absArry[2] += parseInt(RegExp.$1);
-			} else if (logHTML.match(/Your attack misses its mark/)) {
-				hvStat.roundInfo.aAttempts++;
-			} else if (logHTML.match(/Your spell misses its mark/)) {
-				hvStat.roundInfo.sResists++;
-			} else if (logHTML.match(/gains? the effect/i)) {
-				if (logHTML.match(/gain the effect Overwhelming Strikes/i)) {
-					hvStat.roundInfo.overStrikes++;
-				} else if (logHTML.match(/gains the effect Coalesced Mana/i)) {
-					hvStat.roundInfo.coalesce++;
-				} else if (logHTML.match(/gains the effect Ether Theft/i)) {
-					hvStat.roundInfo.eTheft++;
-				} else if (logHTML.match(/gain the effect Channeling/i)) {
-					hvStat.roundInfo.channel++;
-				} else {
-					if (logHTML.match(/gains the effect (searing skin|freezing limbs|deep burns|turbulent air|breached defense|blunted attack|burning soul|rippened soul)/i)) {
-						hvStat.roundInfo.elemEffects[0]++;
-					} else if (logHTML.match(/gains the effect (spreading poison|slowed|weakened|sleep|confused|imperiled|blinded|silenced|nerfed|magically snared|lifestream)/i)) {
-						hvStat.roundInfo.depSpells[1]++;
-					} else if (logHTML.match(/gains the effect stunned/i)) {
-						hvStat.roundInfo.weaponprocs[0]++;
-						if (logHTMLOfPreviousRow.match(/You counter/i)) {
-							hvStat.roundInfo.weaponprocs[0]--;
-							hvStat.roundInfo.weaponprocs[7]++
-						}
-					} else if (logHTML.match(/gains the effect penetrated armor/i)) {
-						hvStat.roundInfo.weaponprocs[1]++;
-					} else if (logHTML.match(/gains the effect bleeding wound/i)) {
-						hvStat.roundInfo.weaponprocs[2]++;
-					} else if (logHTML.match(/gains the effect ether theft/i)) {
-						hvStat.roundInfo.weaponprocs[3]++;
-					}
-				}
-			} else if (logHTML.match(/uses?/i)) {
-				if (logHTML.match(/uses/i)) {
-					hvStat.roundInfo.pskills[0]++;
-				} else if (logHTML.match(/use Mystic Gem/i)) {
-					hvStat.roundInfo.channel--;
-				}
-			} else if (logHTML.match(/you drain/i)) {
-				if (logHTML.match(/you drain \d+(\.)?\d? hp from/i)) {
-					hvStat.roundInfo.weaponprocs[4]++;
-				} else if (logHTML.match(/you drain \d+(\.)?\d? mp from/i)) {
-					hvStat.roundInfo.weaponprocs[5]++;
-				} else if (logHTML.match(/you drain \d+(\.)?\d? sp from/i)) {
-					hvStat.roundInfo.weaponprocs[6]++;
-				}
-			}
-		}
 		var l = /\[.*?\]/i;
 		var n;
 		var t = 1;
@@ -5786,17 +5521,19 @@ function collectRoundInfo() {
 				_tokenDrops[2]++;
 			}
 		}
-		if (logHTML.match(/reached equipment inventory limit/i)) {
-			localStorage.setItem(HV_EQUIP, "true");
-		}
+// 		if (logHTML.match(/reached equipment inventory limit/i)) {
+// 			localStorage.setItem(HV_EQUIP, "true");
+// 		}
 	}
-	if (meleeHitCount > 1) {
+	var meleeHitCount = turnLog.getCountOf("MELEE_HIT");
+	if (meleeHitCount >= 2) {
 		hvStat.roundInfo.aDomino[0]++;
 		hvStat.roundInfo.aDomino[1] += meleeHitCount;
 		hvStat.roundInfo.aDomino[meleeHitCount]++
 	}
-	if (counterHitCount > 1) {
-		hvStat.roundInfo.aCounters[counterHitCount]++;
+	var counterCount = turnLog.getCountOf("COUNTER");
+	if (counterCount >= 1) {
+		hvStat.roundInfo.aCounters[counterCount]++;
 	}
 	if (hvStat.roundInfo.lastTurn < turnLog.lastTurn) {
 		hvStat.roundInfo.lastTurn = turnLog.lastTurn;
@@ -5813,30 +5550,29 @@ function RoundSave() {
 }
 
 function saveStats() {
-	var d = 0;
-	var c = 0;
-	var elements = document.querySelectorAll('#togpane_log td:last-child');
-	var i, html;
-	for (i = 0; i < elements.length; i++) {
-		html = elements[i].innerHTML;
-		if (html.match(/you gain.*?credit/i)) {
-			c = parseInt(html.split(" ")[2]);
-		} else if (html.match(/you gain.*?exp/i)) {
-			d = parseFloat(html.split(" ")[2]);
-		}
-	}
-	var b = new Date();
-	var a = b.getTime();
+// 	var d = 0;
+// 	var c = 0;
+// 	var elements = document.querySelectorAll('#togpane_log td:last-child');
+// 	var i, html;
+// 	for (i = 0; i < elements.length; i++) {
+// 		html = elements[i].innerHTML;
+// 		if (html.match(/you gain.*?credit/i)) {
+// 			c = parseInt(html.split(" ")[2]);
+// 		} else if (html.match(/you gain.*?exp/i)) {
+// 			d = parseFloat(html.split(" ")[2]);
+// 		}
+// 	}
+	var a = (new Date()).getTime();
 	if (hvStat.overview.startTime === 0) {
 		hvStat.overview.startTime = a;
 	}
 	if (hvStat.roundInfo.battleType === HOURLY) {
 		hvStat.overview.lastHourlyTime = a;
 	}
-	hvStat.overview.exp += d;
-	hvStat.overview.credits += c;
-	hvStat.overview.expbyBT[hvStat.roundInfo.battleType] += d;
-	hvStat.overview.creditsbyBT[hvStat.roundInfo.battleType] += c;
+	hvStat.overview.exp += hvStat.roundInfo.exp;
+	hvStat.overview.credits += hvStat.roundInfo.credits;
+	hvStat.overview.expbyBT[hvStat.roundInfo.battleType] += hvStat.roundInfo.exp;
+	hvStat.overview.creditsbyBT[hvStat.roundInfo.battleType] += hvStat.roundInfo.credits;
 	if (_equips > 0) {
 		hvStat.overview.lastEquipTime = a;
 		hvStat.overview.lastEquipName = _lastEquipName;
@@ -5847,7 +5583,7 @@ function saveStats() {
 		hvStat.overview.lastArtName = _lastArtName;
 		hvStat.overview.artifacts += _artifacts;
 	}
-	if (d > 0) {
+	if (hvStat.roundInfo.exp > 0) {
 		hvStat.overview.roundArray[hvStat.roundInfo.battleType]++;
 		hvStat.drops.dropChancesbyBT[hvStat.roundInfo.battleType] += hvStat.roundInfo.dropChances;
 		hvStat.drops.dropChances += hvStat.roundInfo.dropChances;
