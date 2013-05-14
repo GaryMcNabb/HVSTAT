@@ -2446,6 +2446,14 @@ hvStat.battle.log.messageTypeParams = {
 			}
 		},
 	},
+	INVENTORY_LIMIT_WARNING: {
+		regex: /^Warning: Reached equipment inventory limit \(\d+\)\. Generated item instead\./,
+		relatedMessageTypeNames: null,
+		contentType: "text",
+		evaluationFn: function (message) {
+			localStorage.setItem(HV_EQUIP, "true");
+		},
+	},
 	SPAWNING_MONSTER: {
 		regex: /^Spawned Monster ([A-J]): MID=(\d+) \((.+?)\) LV=(\d+) HP=(\d+|\d+\.\d+)/,
 		relatedMessageTypeNames: null,
@@ -2481,8 +2489,8 @@ hvStat.battle.log.messageTypeParams = {
 			var styleColor = message.regexResult[2];
 			var stuffName = message.regexResult[3];
 			switch (styleColor.toLowerCase()) {
-			case "green":		// Item
-			case "darkgreen":	// Token
+			case "green":	// Item
+			case "#254117":	// Token
 				if (hvStat.settings.isTrackItems) {
 					hvStat.drops.itemDrop++;
 					hvStat.drops.itemDropbyBT[hvStat.roundInfo.battleType]++;
@@ -2500,8 +2508,8 @@ hvStat.battle.log.messageTypeParams = {
 					if (index >= 0) {
 						hvStat.drops.itemQtyArry[index] += qty;
 					} else {
-						hvStat.drops.itemArry.push("[" + stuffName + "]");	// Transitional
-						hvStat.drops.itemQtyArry.push(qty);
+//						hvStat.drops.itemArry.push("[" + stuffName + "]");	// Transitional
+//						hvStat.drops.itemQtyArry.push(qty);
 					}
 				}
 				break;
@@ -2514,7 +2522,7 @@ hvStat.battle.log.messageTypeParams = {
 					hvStat.drops.eqDropbyBT[hvStat.roundInfo.battleType]++;
 				}
 				break;
-			case "blue":	// Artifact or Figurine
+			case "blue":	// Artifact and Figurine
 				hvStat.roundInfo.artifacts++;
 				hvStat.roundInfo.lastArtName = stuffName;
 				if (hvStat.settings.isTrackItems) {
@@ -2536,14 +2544,6 @@ hvStat.battle.log.messageTypeParams = {
 				}
 				break;
 			}
-		},
-	},
-	INVENTORY_LIMIT_WARNING: {
-		regex: /^Warning: Reached equipment inventory limit \(\d+\)\. Generated item instead\./,
-		relatedMessageTypeNames: null,
-		contentType: "text",
-		evaluationFn: function (message) {
-			localStorage.setItem(HV_EQUIP, "true");
 		},
 	},
 	START: {
@@ -2621,7 +2621,7 @@ hvStat.battle.log.messageTypeParams = {
 			var stuffName = message.regexResult[2];
 			switch (styleColor.toLowerCase()) {
 			case "green":	// Item
-			case "darkgreen":	// Token
+			case "#254117":	// Token
 				if (hvStat.settings.isTrackRewards) {
 					hvStat.arenaRewards.itemsRwrd++;
 					var regexResult = stuffName.match(/(?:(\d+)x\s*)?(Crystal of .+)/);
@@ -2637,8 +2637,8 @@ hvStat.battle.log.messageTypeParams = {
 					if (index >= 0) {
 						hvStat.arenaRewards.itemRwrdQtyArry[index] += qty;
 					} else {
-						hvStat.arenaRewards.itemRwrdQtyArry.push(1);
-						hvStat.arenaRewards.itemRwrdArry.push("[" + stuffName + "]");	// Transitional
+//						hvStat.arenaRewards.itemRwrdQtyArry.push(1);
+//						hvStat.arenaRewards.itemRwrdArry.push("[" + stuffName + "]");	// Transitional
 					}
 				}
 				break;
@@ -2650,7 +2650,7 @@ hvStat.battle.log.messageTypeParams = {
 					hvStat.arenaRewards.eqRwrdArry.push("[" + stuffName + "]");	// Transitional
 				}
 				break;
-			case "blue":	// Artifact or Figurine
+			case "blue":	// Artifact and Figurine
 				hvStat.roundInfo.artifacts++;
 				hvStat.roundInfo.lastArtName = stuffName;
 				if (hvStat.settings.isTrackRewards) {
@@ -2707,8 +2707,6 @@ hvStat.battle.log.messageTypeParams = {
 hvStat.battle.log.Turn = function (targetTurnNumber) {
 	this.turn = -1;
 	this.lastTurn = -1;
-// 	this.texts = [];
-// 	this.innerHTMLs = [];
 	this.messages = [];
 
 	var turnElements = document.querySelectorAll('#togpane_log td:first-child');
@@ -2727,13 +2725,9 @@ hvStat.battle.log.Turn = function (targetTurnNumber) {
 			var logTextElement = turnElement.nextSibling.nextSibling;
 			var text = util.innerText(logTextElement);
 			var innerHTML = logTextElement.innerHTML;
-// 			this.texts.push(text);
-// 			this.innerHTMLs.push(innerHTML);
 			this.messages.push(new hvStat.battle.log.Message(text, innerHTML));
 		}
 	}
-// 	this.texts.reverse();
-// 	this.innerHTMLs.reverse();
 	this.messages.reverse();
 	for (i = 0; i < this.messages.length; i++) {
 		var message = this.messages[i];
@@ -3470,33 +3464,6 @@ hvStat.battle.monster.MonsterSkill.prototype = {
 	toString: function (abbrLevel) {
 		return this._attackType.toString(abbrLevel) + "-" + (this._damageType ? this._damageType.toString(abbrLevel) : "?");
 	},
-// 	fetchSkillLog: function (logUsed, logDamaged, skillType) {
-// 		var vo = new hvStat.vo.MonsterSkillVO();
-// 		var r = / (uses|casts) ([^\.]+)/.exec(logUsed);
-// 		if (!r) {
-// 			return null;
-// 		}
-// 		vo.name = r[2];
-// 		vo.skillType = skillType.id;
-// 		switch (r[1]) {
-// 		case "uses":
-// 			vo.attackType = hvStat.constant.attackType.PHYSICAL.id;
-// 			break;
-// 		case "casts":
-// 			vo.attackType = hvStat.constant.attackType.MAGICAL.id;
-// 			break;
-// 		default:
-// 			vo.attackType = null;
-// 		}
-// 		r = / ([A-Za-z]+) damage/.exec(logDamaged);
-// 		if (!r) {
-// 			return null;
-// 		}
-// 		var dt = hvStat.constant.damageType[r[1].toUpperCase()];
-// 		vo.damageType = dt ? dt.id : null;
-// 		vo.lastUsedDate = new Date();
-// 		return new hvStat.battle.monster.MonsterSkill(vo);
-// 	},
 };
 
 hvStat.battle.monster.MonsterScanResults = function (vo) {
@@ -4168,37 +4135,6 @@ hvStat.battle.monster.Monster.prototype = {
 		that._scanResult = hvStat.battle.monster.MonsterScanResults.prototype.fetchScanningLog(that._index, text);
 		that.putScanResultToDB(transaction);
 	},
-// 	fetchSkillLog: function (used, damaged, transaction) {
-// 		var that = this;
-// 		var i;
-// 		var spiritSkillFound;
-// 		var skillType = (that._prevSpRate <= that._currSpRate) ? hvStat.constant.skillType.MANA : hvStat.constant.skillType.SPIRIT;
-// 		var skill = hvStat.battle.monster.MonsterSkill.prototype.fetchSkillLog(used, damaged, skillType);
-// 		if (skillType === hvStat.constant.skillType.SPIRIT) {
-// 			// Spirit skill
-// 			// Overwrite if exists
-// 			for (i = 0; i < that._skills.length; i++) {
-// 				if (that._skills[i].skillType ===  hvStat.constant.skillType.SPIRIT) {
-// 					break;
-// 				}
-// 			}
-// 			that._skills[i] = skill;
-// 		} else {
-// 			// Mana skill
-// 			// Overwrite if same name or name is null
-// 			for (i = 0; i < that._skills.length; i++) {
-// 				if (that._skills[i].skillType ===  hvStat.constant.skillType.MANA &&
-// 						(that._skills[i].name === skill.name ||
-// 							(that._skills[i].name === null && that._skills[i].attackType === skill.attackType && that._skills[i].damageType === skill.damageType))) {
-// 					break;
-// 				}
-// 			}
-// 			that._skills[i] = skill;
-// 		}
-// 		if (hvStat.settings.isRememberSkillsTypes) {
-// 			this.putSkillsToDB(transaction);
-// 		}
-// 	},
 	recordSkill: function (skillName, skillVerb, damageType, transaction) {
 		var that = this;
 		var i;
