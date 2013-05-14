@@ -2114,6 +2114,13 @@ hvStat.battle.log.messageTypeParams = {
 			}
 		},
 	},
+	SPIRIT_SHIELD_SUCCESS: {
+		regex: /^Your spirit shield absorbs (\d+) points of damage from the attack into (\d+\.?\d*) points of spirit damage\./,
+		relatedMessageTypeNames: null,
+		contentType: "text",
+		evaluationFn: function (message) {
+		},
+	},
 	PROFICIENCY_GAIN: {
 		regex: /^You gain 0\.0(\d) points of (.+?) proficiency\./,
 		relatedMessageTypeNames: null,
@@ -2406,13 +2413,6 @@ hvStat.battle.log.messageTypeParams = {
 		evaluationFn: function (message) {
 		},
 	},
-	SPIRIT_SHIELD_SUCCESS: {
-		regex: /^Your spirit shield absorbs (\d+) points of damage from the attack into (\d+\.?\d*) points of spirit damage\./,
-		relatedMessageTypeNames: null,
-		contentType: "text",
-		evaluationFn: function (message) {
-		},
-	},
 	POWERUP_DROP: {
 		regex: /^(.+?) drops a (.+?) powerup!/,
 		relatedMessageTypeNames: null,
@@ -2647,7 +2647,7 @@ hvStat.battle.log.messageTypeParams = {
 				hvStat.roundInfo.lastEquipName = stuffName;
 				if (hvStat.settings.isTrackRewards) {
 					hvStat.arenaRewards.eqRwrd++;
-					hvStat.arenaRewards.eqRwrdArry.push(s);
+					hvStat.arenaRewards.eqRwrdArry.push("[" + stuffName + "]");	// Transitional
 				}
 				break;
 			case "blue":	// Artifact or Figurine
