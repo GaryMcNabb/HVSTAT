@@ -1113,6 +1113,11 @@ hvStat.storage.initialValue = {
 		pskills: [0, 0, 0, 0, 0, 0, 0],	// stats
 		exp: 0,
 		credits: 0,
+		equips: 0,
+		lastEquipName: "",
+		artifacts: 0,
+		lastArtName: "",
+		tokenDrops: [0, 0, 0],
 	},
 	// Warning State object
 	warningState: {
@@ -1993,17 +1998,62 @@ hvStat.battle.log.messageTypeParams = {
 		relatedMessageTypeNames: null,
 		contentType: "html",
 		evaluationFn: function (message) {
-return;
 			var styleColor = message.regexResult[2];
 			var stuffName = message.regexResult[3];
 			switch (styleColor.toLowerCase()) {
-			case "green":	// Items
+			case "green":		// Item
+			case "darkgreen":	// Token
+				if (hvStat.settings.isTrackItems) {
+					hvStat.drops.itemDrop++;
+					hvStat.drops.itemDropbyBT[hvStat.roundInfo.battleType]++;
+					var regexResult = stuffName.match(/(?:(\d+)x\s*)?(Crystal of .+)/);
+					var qty = 1;
+					if (regexResult) {
+						// Crystal
+						if (regexResult[1]) {
+							qty = Number(regexResult[1]);
+						}
+						stuffName = regexResult[2];
+						hvStat.drops.crysDropbyBT[hvStat.roundInfo.battleType]++;
+					}
+					var index = hvStat.drops.itemArry.indexOf("[" + stuffName + "]");	// Transitional
+					if (index >= 0) {
+						hvStat.drops.itemQtyArry[index] += qty;
+					} else {
+						hvStat.drops.itemArry.push("[" + stuffName + "]");	// Transitional
+						hvStat.drops.itemQtyArry.push(qty);
+					}
+				}
 				break;
-			case "red":		// Equipments
+			case "red":		// Equipment
+				hvStat.roundInfo.equips++;
+				hvStat.roundInfo.lastEquipName = stuffName;
+				if (hvStat.settings.isTrackItems) {
+					hvStat.drops.eqDrop++;
+					hvStat.drops.eqArray.push("[" + stuffName + "]");	// Transitional
+					hvStat.drops.eqDropbyBT[hvStat.roundInfo.battleType]++;
+				}
 				break;
-			case "blue":	// Artifacts or Figurines
+			case "blue":	// Artifact or Figurine
+				hvStat.roundInfo.artifacts++;
+				hvStat.roundInfo.lastArtName = stuffName;
+				if (hvStat.settings.isTrackItems) {
+					hvStat.drops.artDrop++;
+					hvStat.drops.artDropbyBT[hvStat.roundInfo.battleType]++;
+					var index = hvStat.drops.artArry.indexOf("[" + stuffName + "]");	// Transitional
+					if (index >= 0) {
+						hvStat.drops.artQtyArry[index]++;
+					} else {
+						hvStat.drops.artQtyArry.push(1);
+						hvStat.drops.artArry.push("[" + stuffName + "]");	// Transitional
+					}
+				}
 				break;
-			case "#461b7e":	// Tokens
+			case "#461b7e":	// Trophy
+				if (hvStat.settings.isTrackItems) {
+					hvStat.drops.dropChances--;
+					hvStat.drops.dropChancesbyBT[hvStat.roundInfo.battleType]--;
+				}
 				break;
 			}
 		},
@@ -2013,17 +2063,53 @@ return;
 		relatedMessageTypeNames: null,
 		contentType: "html",
 		evaluationFn: function (message) {
-return;
 			var styleColor = message.regexResult[1];
 			var stuffName = message.regexResult[2];
 			switch (styleColor.toLowerCase()) {
-			case "green":	// Items
+			case "green":	// Item
+			case "darkgreen":	// Token
+				if (hvStat.settings.isTrackRewards) {
+					hvStat.arenaRewards.itemsRwrd++;
+					var regexResult = stuffName.match(/(?:(\d+)x\s*)?(Crystal of .+)/);
+					var qty = 1;
+					if (regexResult) {
+						// Crystal
+						if (regexResult[1]) {
+							qty = Number(regexResult[1]);
+						}
+						stuffName = regexResult[2];
+					}
+					var index = hvStat.arenaRewards.itemRwrdArry.indexOf("[" + stuffName + "]");	// Transitional
+					if (index >= 0) {
+						hvStat.arenaRewards.itemRwrdQtyArry[index] += qty;
+					} else {
+						hvStat.arenaRewards.itemRwrdQtyArry.push(1);
+						hvStat.arenaRewards.itemRwrdArry.push("[" + stuffName + "]");	// Transitional
+					}
+				}
 				break;
-			case "red":		// Equipments
+			case "red":		// Equipment
+				hvStat.roundInfo.equips++;
+				hvStat.roundInfo.lastEquipName = stuffName;
+				if (hvStat.settings.isTrackRewards) {
+					hvStat.arenaRewards.eqRwrd++;
+					hvStat.arenaRewards.eqRwrdArry.push(s);
+				}
 				break;
-			case "blue":	// Artifacts or Figurines
-				break;
-			case "#461b7e":	// Tokens
+			case "blue":	// Artifact or Figurine
+				hvStat.roundInfo.artifacts++;
+				hvStat.roundInfo.lastArtName = stuffName;
+				if (hvStat.settings.isTrackRewards) {
+					hvStat.drops.artDrop++;
+					hvStat.drops.artDropbyBT[hvStat.roundInfo.battleType]++;
+					var index = hvStat.drops.artArry.indexOf("[" + stuffName + "]");	// Transitional
+					if (index >= 0) {
+						hvStat.drops.artQtyArry[index]++;
+					} else {
+						hvStat.drops.artQtyArry.push(1);
+						hvStat.drops.artArry.push("[" + stuffName + "]");	// Transitional
+					}
+				}
 				break;
 			}
 		},
@@ -2033,6 +2119,15 @@ return;
 		relatedMessageTypeNames: null,
 		contentType: "html",
 		evaluationFn: function (message) {
+			var stuffName = message.regexResult[2];
+			switch (stuffName) {
+			case "Token of Blood":
+				hvStat.roundInfo.tokenDrops[0]++;
+				break;
+			case "Chaos Token":
+				hvStat.roundInfo.tokenDrops[2]++;
+				break;
+			}
 		},
 	},
 	CREDIT: {
@@ -2142,7 +2237,7 @@ return;
 		},
 	},
 	HIT: {
-		regex: /^(.+?) (hits|crits|blasts) (?!you)(.+?) for (\d+) (.+?) damage\./,
+		regex: /^(.+?) (hits|crits|blasts) (?!you)(.+?) for (\d+)(?: (.+?))? damage\./,
 		relatedMessageTypeNames: null,
 		contentType: "text",
 		evaluationFn: function (message) {
@@ -5325,11 +5420,11 @@ HOURLY = 0;
 ARENA = 1;
 GRINDFEST = 2;
 ITEM_WORLD = 3;
-_equips = 0;
-_lastEquipName = "";
-_artifacts = 0;
-_lastArtName = "";
-_tokenDrops = [0, 0, 0];
+// _equips = 0;
+// _lastEquipName = "";
+// _artifacts = 0;
+// _lastArtName = "";
+// _tokenDrops = [0, 0, 0];
 
 function showBattleEndStats() {
 	var battleLog = document.getElementById("togpane_log");
@@ -5355,10 +5450,6 @@ function collectRoundInfo() {
 		hvStat.database.transaction = hvStat.database.idb.transaction(["MonsterScanResults", "MonsterSkills"], "readwrite");
 	});
 
-// 	var meleeHitCount = 0;
-// 	var counterHitCount = 0;
-// 	var healedPoints = 0;
-	var b = false;
 	// create monster objects
 	for (var i = 0; i < hv.battle.elementCache.monsters.length; i++) {
 		hvStat.battle.monster.monsters[i] = new hvStat.battle.monster.Monster(i);
@@ -5369,161 +5460,24 @@ function collectRoundInfo() {
 	var turnLog = new hvStat.battle.log.Turn();
 	console.debug(turnLog);
 	turnLog.evaluate();
-	var joinedLogStringOfCurrentTurn = turnLog.texts.join("\n");
-
-	for (var turnLogIndex = 0; turnLogIndex < turnLog.texts.length; turnLogIndex++) {
-		var reResult;
-		var logText = turnLog.texts[turnLogIndex];
-		var logHTML = turnLog.innerHTMLs[turnLogIndex];
-		var logHTMLOfPreviousRow = turnLog.innerHTMLs[turnLogIndex - 1];
-		if (turnLog.turn === 0) {
-			if (hvStat.settings.isShowRoundReminder &&
-					(hvStat.roundInfo.maxRound >= hvStat.settings.reminderMinRounds) &&
-					(hvStat.roundInfo.currRound === hvStat.roundInfo.maxRound - hvStat.settings.reminderBeforeEnd) &&
-					!b) {
-				if (hvStat.settings.reminderBeforeEnd === 0) {
-					hvStat.battle.warningSystem.enqueueAlert("This is final round");
-				} else {
-					hvStat.battle.warningSystem.enqueueAlert("The final round is approaching.");
-				}
-				b = true;
-			}
-			RoundSave();
-		}
-// 		if (hvStat.settings.isTrackStats || hvStat.settings.isShowEndStats) {
-// 			var o = 0;
-// 			if (logHTML.match(/\s(\d+)\s/)) {
-// 				o = parseInt(RegExp.$1);
-// 			}
-// 			if (logHTML.match(/has been defeated/i)) {
-// 			} else if (logHTML.match(/(you hit)|(you crit)/i)) {
-// 				hvStat.roundInfo.aAttempts++;
-// 				meleeHitCount++;
-// 				hvStat.roundInfo.aHits[logHTML.match(/you crit/i) ? 1 : 0]++;
-// 				hvStat.roundInfo.dDealt[logHTML.match(/you crit/i) ? 1 : 0] += o;
-// 			} else if (logHTML.match(/you counter/i)) {
-// 				hvStat.roundInfo.aCounters[0]++;
-// 				hvStat.roundInfo.aCounters[1] += o;
-// 				counterHitCount++;
-// 				hvStat.roundInfo.dDealt[0] += o;
-// 			}
-// 		}
-		var l = /\[.*?\]/i;
-		var n;
-		var t = 1;
-		if (logHTML.match(/dropped.*?color:.*?red.*?\[.*?\]/ig)) {
-			_equips++;
-			var q = logHTML.match(l)[0];
-			_lastEquipName = q;
-			if (hvStat.settings.isTrackItems) {
-				hvStat.drops.eqDrop++;
-				hvStat.drops.eqArray.push(q);
-				hvStat.drops.eqDropbyBT[hvStat.roundInfo.battleType]++;
-			}
-		} else if (logHTML.match(/dropped.*?color:.*?blue.*?\[.*?\]/ig)) {
-			_artifacts++;
-			var itemToAdd = logHTML.match(l)[0];
-			_lastArtName = itemToAdd;
-			if (hvStat.settings.isTrackItems) {
-				hvStat.drops.artDrop++;
-				hvStat.drops.artDropbyBT[hvStat.roundInfo.battleType]++;
-				n = true;
-				var j = hvStat.drops.artArry.length;
-				while (j--) {
-					if (itemToAdd === hvStat.drops.artArry[j]) {
-						hvStat.drops.artQtyArry[j]++;
-						n = false;
-						break;
-					}
-				}
-				if (n) {
-					hvStat.drops.artQtyArry.push(1);
-					hvStat.drops.artArry.push(itemToAdd);
-				}
-			}
-		} else if (hvStat.settings.isTrackItems && (logHTML.match(/dropped.*?color:.*?green.*?\[.*?\]/ig) || logHTML.match(/dropped.*?token/ig))) {
-			var itemToAdd = logHTML.match(l)[0];
-			if (itemToAdd.match(/(\d){0,2}.?x?.?Crystal of /ig)) {
-				t = parseInt("0" + RegExp.$1, 10);
-				if (t < 1) {
-					t = 1;
-				}
-				itemToAdd = itemToAdd.replace(/(\d){1,2}.?x?.?/, "");
-				hvStat.drops.crysDropbyBT[hvStat.roundInfo.battleType]++;
-			}
-			var j = hvStat.drops.itemArry.length;
-			while (j--) {
-				if (itemToAdd === hvStat.drops.itemArry[j]) {
-					hvStat.drops.itemQtyArry[j] += t;
-					hvStat.drops.itemDrop++;
-					hvStat.drops.itemDropbyBT[hvStat.roundInfo.battleType]++;
-					break;
-				}
-			}
-		} else if (hvStat.settings.isTrackItems && logHTML.match(/dropped.*?color:.*?\#461B7E.*?\[.*?\]/ig)) {
-			hvStat.drops.dropChances--;
-			hvStat.drops.dropChancesbyBT[hvStat.roundInfo.battleType]--;
-		}
-		if (logHTML.match(/(clear bonus).*?color:.*?red.*?\[.*?\]/ig)) {
-			_equips++;
-			var s = logHTML.match(l)[0];
-			_lastEquipName = s;
-			if (hvStat.settings.isTrackRewards) {
-				hvStat.arenaRewards.eqRwrd++;
-				hvStat.arenaRewards.eqRwrdArry.push(s);
-			}
-		} else if (logHTML.match(/(clear bonus).*?color:.*?blue.*?\[.*?\]/ig)) {
-			_artifacts++;
-			var itemToAdd = logHTML.match(l)[0];
-			_lastArtName = itemToAdd;
-			if (hvStat.settings.isTrackRewards) {
-				hvStat.arenaRewards.artRwrd++;
-				n = true;
-				var j = hvStat.arenaRewards.artRwrdArry.length;
-				while (j--) {
-					if (itemToAdd === hvStat.arenaRewards.artRwrdArry[j]) {
-						hvStat.arenaRewards.artRwrdQtyArry[j]++;
-						n = false;
-						break;
-					}
-				}
-				if (n) {
-					hvStat.arenaRewards.artRwrdQtyArry.push(1);
-					hvStat.arenaRewards.artRwrdArry.push(itemToAdd);
-				}
-			}
-		} else if (hvStat.settings.isTrackRewards && (logHTML.match(/(clear bonus).*?color:.*?green.*?\[.*?\]/ig) || logHTML.match(/(clear bonus).*?token/ig))) {
-			hvStat.arenaRewards.itemsRwrd++;
-			var itemToAdd = logHTML.match(l)[0];
-			if (itemToAdd.match(/(\d)x Crystal/ig)) {
-				t = parseInt("0" + RegExp.$1, 10);
-				itemToAdd = itemToAdd.replace(/\dx /, "");
-			}
-			n = true;
-			var j = hvStat.arenaRewards.itemRwrdArry.length;
-			while (j--) {
-				if (itemToAdd === hvStat.arenaRewards.itemRwrdArry[j]) {
-					hvStat.arenaRewards.itemRwrdQtyArry[j] += t;
-					n = false;
-					break;
-				}
-			}
-			if (n) {
-				hvStat.arenaRewards.itemRwrdQtyArry.push(1);
-				hvStat.arenaRewards.itemRwrdArry.push(itemToAdd);
-			}
-		} else if (hvStat.settings.isTrackRewards && (logHTML.match(/(token bonus).*?\[.*?\]/ig))) {
-			if (logHTML.match(/token of blood/ig)) {
-				_tokenDrops[0]++;
-			} else if (logHTML.match(/token of healing/ig)) {
-				_tokenDrops[1]++;
-			} else if (logHTML.match(/chaos token/ig)) {
-				_tokenDrops[2]++;
+// 	var joinedLogStringOfCurrentTurn = turnLog.texts.join("\n");
+// 	for (var turnLogIndex = 0; turnLogIndex < turnLog.texts.length; turnLogIndex++) {
+// 		var reResult;
+// 		var logText = turnLog.texts[turnLogIndex];
+// 		var logHTML = turnLog.innerHTMLs[turnLogIndex];
+// 		var logHTMLOfPreviousRow = turnLog.innerHTMLs[turnLogIndex - 1];
+// 	}
+	if (turnLog.turn === 0) {
+		if (hvStat.settings.isShowRoundReminder &&
+				(hvStat.roundInfo.maxRound >= hvStat.settings.reminderMinRounds) &&
+				(hvStat.roundInfo.currRound === hvStat.roundInfo.maxRound - hvStat.settings.reminderBeforeEnd)) {
+			if (hvStat.settings.reminderBeforeEnd === 0) {
+				hvStat.battle.warningSystem.enqueueAlert("This is final round");
+			} else {
+				hvStat.battle.warningSystem.enqueueAlert("The final round is approaching.");
 			}
 		}
-// 		if (logHTML.match(/reached equipment inventory limit/i)) {
-// 			localStorage.setItem(HV_EQUIP, "true");
-// 		}
+//		RoundSave();
 	}
 	var meleeHitCount = turnLog.getCountOf("MELEE_HIT");
 	if (meleeHitCount >= 2) {
@@ -5573,15 +5527,15 @@ function saveStats() {
 	hvStat.overview.credits += hvStat.roundInfo.credits;
 	hvStat.overview.expbyBT[hvStat.roundInfo.battleType] += hvStat.roundInfo.exp;
 	hvStat.overview.creditsbyBT[hvStat.roundInfo.battleType] += hvStat.roundInfo.credits;
-	if (_equips > 0) {
+	if (hvStat.roundInfo.equips > 0) {
 		hvStat.overview.lastEquipTime = a;
-		hvStat.overview.lastEquipName = _lastEquipName;
-		hvStat.overview.equips += _equips;
+		hvStat.overview.lastEquipName = hvStat.roundInfo.lastEquipName;
+		hvStat.overview.equips += hvStat.roundInfo.equips;
 	}
-	if (_artifacts > 0) {
+	if (hvStat.roundInfo.artifacts > 0) {
 		hvStat.overview.lastArtTime = a;
-		hvStat.overview.lastArtName = _lastArtName;
-		hvStat.overview.artifacts += _artifacts;
+		hvStat.overview.lastArtName = hvStat.roundInfo.lastArtName;
+		hvStat.overview.artifacts += hvStat.roundInfo.artifacts;
 	}
 	if (hvStat.roundInfo.exp > 0) {
 		hvStat.overview.roundArray[hvStat.roundInfo.battleType]++;
@@ -5695,13 +5649,18 @@ function saveStats() {
 		hvStat.stats.pskills[6] += hvStat.roundInfo.pskills[6];
 		if (hvStat.stats.datestart === 0) hvStat.stats.datestart = (new Date()).getTime();
 	}
-	hvStat.arenaRewards.tokenDrops[0] += _tokenDrops[0];
-	hvStat.arenaRewards.tokenDrops[1] += _tokenDrops[1];
-	hvStat.arenaRewards.tokenDrops[2] += _tokenDrops[2];
+	hvStat.arenaRewards.tokenDrops[0] += hvStat.roundInfo.tokenDrops[0];
+	hvStat.arenaRewards.tokenDrops[2] += hvStat.roundInfo.tokenDrops[2];
 	hvStat.storage.overview.save();
-	hvStat.storage.stats.save();
-	hvStat.storage.arenaRewards.save();
-	hvStat.storage.drops.save();
+	if (hvStat.settings.isTrackStats) {
+		hvStat.storage.stats.save();
+	}
+	if (hvStat.settings.isTrackRewards) {
+		hvStat.storage.arenaRewards.save();
+	}
+	if (hvStat.settings.isTrackItems) {
+		hvStat.storage.drops.save();
+	}
 }
 function getBattleEndStatsHtml() {
 	function formatProbability(numerator, denominator, digits) {
