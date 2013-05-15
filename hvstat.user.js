@@ -2361,7 +2361,7 @@ hvStat.battle.log.messageTypeParams = {
 		contentType: "text",
 		evaluationFn: function (message, relatedLog) {
 			var spell = message.relatedMessage.regexResult[1];
-			var healedAmount = Number(message.regexResult[1]);
+			var healingAmount = Number(message.regexResult[1]);
 			var index = -1;
 			switch (spell) {
 			case "Cure":
@@ -2375,7 +2375,7 @@ hvStat.battle.log.messageTypeParams = {
 				break;
 			}
 			if (index >= 0) {
-				hvStat.roundInfo.cureTotals[index] += healedAmount;
+				hvStat.roundInfo.cureTotals[index] += healingAmount;
 				hvStat.roundInfo.cureCounts[index]++;
 			}
 		},
