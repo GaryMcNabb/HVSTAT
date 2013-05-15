@@ -1963,11 +1963,7 @@ hvStat.battle.log.messageTypeParams = {
 						var monster = hvStat.battle.monster.findByName(skillUser);
 						if (monster) {
 //							alert(monster + ":" + skillName  + ":" + skillVerb  + ":" + damageType);
-							(function (monster, skillName, skillVerb, damageType) {
-								hvStat.database.idbAccessQueue.add(function () {
-									monster.recordSkill(skillName, skillVerb, damageType, hvStat.database.transaction);
-								});
-							})(monster, skillName, skillVerb, damageType);
+							monster.recordSkill(skillName, skillVerb, damageType);
 						}
 					}
 				}
@@ -4112,30 +4108,30 @@ hvStat.battle.monster.Monster.prototype = {
 		that._name = name;
 		that._maxHp = hp;
 	},
-	fetchStartingLog: function (html) {
-		var that = this;
-		var r;
-		r = /MID=(\d+)\s/.exec(html);
-		if (!r) {
-			alert("HVSTAT: cannot identify MID");
-			return;
-		}
-		that._id = Number(r[1]);
-		r = /\(([^\.\)]{0,30})\) LV/.exec(html);
-		if (r) {
-			that._name = r[1];
-		}
-		r = /HP=(\d+\.?\d*)$/.exec(html);
-		if (r) {
-			that._maxHp = Number(r[1]);
-		}
-	},
+// 	fetchStartingLog: function (html) {
+// 		var that = this;
+// 		var r;
+// 		r = /MID=(\d+)\s/.exec(html);
+// 		if (!r) {
+// 			alert("HVSTAT: cannot identify MID");
+// 			return;
+// 		}
+// 		that._id = Number(r[1]);
+// 		r = /\(([^\.\)]{0,30})\) LV/.exec(html);
+// 		if (r) {
+// 			that._name = r[1];
+// 		}
+// 		r = /HP=(\d+\.?\d*)$/.exec(html);
+// 		if (r) {
+// 			that._maxHp = Number(r[1]);
+// 		}
+// 	},
 	fetchScanningLog: function (text, transaction) {
 		var that = this;
 		that._scanResult = hvStat.battle.monster.MonsterScanResults.prototype.fetchScanningLog(that._index, text);
 		that.putScanResultToDB(transaction);
 	},
-	recordSkill: function (skillName, skillVerb, damageType, transaction) {
+	recordSkill: function (skillName, skillVerb, damageType) {
 		var that = this;
 		var i;
 		var skillType = (that._prevSpRate <= that._currSpRate) ? hvStat.constant.skillType.MANA : hvStat.constant.skillType.SPIRIT;
@@ -4177,7 +4173,11 @@ hvStat.battle.monster.Monster.prototype = {
 			}
 			that._skills[i] = skill;
 		}
-		that.putSkillsToDB(transaction);
+		(function (that) {
+			hvStat.database.idbAccessQueue.add(function () {
+				that.putSkillsToDB(hvStat.database.transaction);
+			});
+		})(that);
 	},
 	setFromValueObject: function (valueObject) {
 		var that = this;
