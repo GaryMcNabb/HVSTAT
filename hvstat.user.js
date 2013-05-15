@@ -1902,7 +1902,7 @@ hvStat.battle.log.Message.prototype = {
 hvStat.battle.log.messageTypeParams = {
 	// Arrange in order from the event frequently occurring
 	DEFENSE: {
-		regex: /^You (evade|block|parry|resist) the attack from (.+?)\./,
+		regex: /^You (evade|block|parry|resist) the attack from (.+?)\.$/,
 		relatedMessageTypeNames: null,
 		contentType: "text",
 		evaluationFn: function (message) {
@@ -1924,7 +1924,7 @@ hvStat.battle.log.messageTypeParams = {
 		},
 	},
 	MONSTER_MISS: {
-		regex: /^(.+?) misses the attack against you\./,
+		regex: /^(.+?) misses the attack against you\.$/,
 		relatedMessageTypeNames: null,
 		contentType: "text",
 		evaluationFn: function (message) {
@@ -1933,7 +1933,7 @@ hvStat.battle.log.messageTypeParams = {
 		},
 	},
 	MONSTER_HIT: {
-		regex: /^(.+?) (hits|crits) you for (\d+) (.+?) damage\./,
+		regex: /^(.+?) (hits|crits) you for (\d+) (.+?) damage\.$/,
 		relatedMessageTypeNames: ["MONSTER_SKILL"],
 		contentType: "text",
 		evaluationFn: function (message) {
@@ -1975,7 +1975,7 @@ hvStat.battle.log.messageTypeParams = {
 		},
 	},
 	MONSTER_DEFENSE: {
-		regex: /^(.+?) (evades|parries|resists) your (attack|spell)\./,
+		regex: /^(.+?) (evades|parries|resists) your (attack|spell)\.$/,
 		relatedMessageTypeNames: null,
 		contentType: "text",
 		evaluationFn: function (message) {
@@ -1988,7 +1988,7 @@ hvStat.battle.log.messageTypeParams = {
 		},
 	},
 	MONSTER_GAINING_EFFECT: {
-		regex: /^(.+?) gains the effect (.+?)\./,
+		regex: /^(.+?) gains the effect (.+?)\.$/,
 		relatedMessageTypeNames: ["CAST", "COUNTER"],
 		contentType: "text",
 		evaluationFn: function (message) {
@@ -2024,7 +2024,7 @@ hvStat.battle.log.messageTypeParams = {
 		},
 	},
 	MONSTER_EFFECT_EXPLOSION: {
-		regex: /^(.+?) explodes for (\d+) (.+?) damage/,
+		regex: /^(.+?) explodes for (\d+) (.+?) damage$/,
 		relatedMessageTypeNames: null,
 		contentType: "text",
 		evaluationFn: function (message) {
@@ -2034,7 +2034,7 @@ hvStat.battle.log.messageTypeParams = {
 		},
 	},
 	MELEE_HIT: {
-		regex: /^You (hit|crit) (.+?) for (\d+) (.+?) damage\./,
+		regex: /^You (hit|crit) (.+?) for (\d+) (.+?) damage\.$/,
 		relatedMessageTypeNames: null,
 		contentType: "text",
 		evaluationFn: function (message) {
@@ -2046,7 +2046,7 @@ hvStat.battle.log.messageTypeParams = {
 		},
 	},
 	HIT: {
-		regex: /^(.+?) (hits|crits|blasts) (?!you)(.+?) for (\d+)(?: (.+?))? damage\./,
+		regex: /^(.+?) (hits|crits|blasts) (?!you)(.+?) for (\d+)(?: (.+?))? damage\.$/,
 		relatedMessageTypeNames: null,
 		contentType: "text",
 		evaluationFn: function (message) {
@@ -2087,7 +2087,7 @@ hvStat.battle.log.messageTypeParams = {
 		},
 	},
 	RESTORATION: {
-		regex: /^(.+?) restores (\d+) points of (.+?)\./,
+		regex: /^(.+?) restores (\d+) points of (.+?)\.$/,
 		relatedMessageTypeNames: null,
 		contentType: "text",
 		evaluationFn: function (message) {
@@ -2102,7 +2102,7 @@ hvStat.battle.log.messageTypeParams = {
 		},
 	},
 	COUNTER: {
-		regex: /^You counter (.+?) for (\d+) points of (.+?) damage\./,
+		regex: /^You counter (.+?) for (\d+) points of (.+?) damage\.$/,
 		relatedMessageTypeNames: null,
 		contentType: "text",
 		evaluationFn: function (message) {
@@ -2115,14 +2115,14 @@ hvStat.battle.log.messageTypeParams = {
 		},
 	},
 	SPIRIT_SHIELD_SUCCESS: {
-		regex: /^Your spirit shield absorbs (\d+) points of damage from the attack into (\d+\.?\d*) points of spirit damage\./,
+		regex: /^Your spirit shield absorbs (\d+) points of damage from the attack into (\d+|\d+\.\d+) points of spirit damage\.$/,
 		relatedMessageTypeNames: null,
 		contentType: "text",
 		evaluationFn: function (message) {
 		},
 	},
 	PROFICIENCY_GAIN: {
-		regex: /^You gain 0\.0(\d) points of (.+?) proficiency\./,
+		regex: /^You gain 0\.0(\d) points of (.+?) proficiency\.$/,
 		relatedMessageTypeNames: null,
 		contentType: "text",
 		evaluationFn: function (message) {
@@ -2185,14 +2185,14 @@ hvStat.battle.log.messageTypeParams = {
 		},
 	},
 	MONSTER_EFFECT_EXPIRATION: {
-		regex: /^The effect (.+?) on (.+?) has expired\./,
+		regex: /^The effect (.+?) on (.+?) has expired\.$/,
 		relatedMessageTypeNames: null,
 		contentType: "text",
 		evaluationFn: function (message) {
 		},
 	},
 	MONSTER_SKILL: {
-		regex: /^(.+?) (uses|casts) (.+?)$/,
+		regex: /^(.+?) (uses|casts) (.+)$/,
 		relatedMessageTypeNames: null,
 		contentType: "text",
 		evaluationFn: function (message) {
@@ -2206,7 +2206,7 @@ hvStat.battle.log.messageTypeParams = {
 		},
 	},
 	CAST: {
-		regex: /^You cast (.+?)\./,
+		regex: /^You cast (.+?)\.$/,
 		relatedMessageTypeNames: null,
 		contentType: "text",
 		evaluationFn: function (message) {
@@ -2257,14 +2257,14 @@ hvStat.battle.log.messageTypeParams = {
 		},
 	},
 	SPELL_WEAVING_FAILURE: {
-		regex: /^You fail to weave the spell into the existing effects on the target\./,
+		regex: /^You fail to weave the spell into the existing effects on the target\.$/,
 		relatedMessageTypeNames: null,
 		contentType: "text",
 		evaluationFn: function (message) {
 		},
 	},
 	DRAIN: {
-		regex: /^You drain (\d+|\d+\.\d+) (HP|MP|SP) from (.+?)/,
+		regex: /^You drain (\d+|\d+\.\d+) (HP|MP|SP) from (.+)$/,
 		relatedMessageTypeNames: null,
 		contentType: "text",
 		evaluationFn: function (message) {
@@ -2283,7 +2283,7 @@ hvStat.battle.log.messageTypeParams = {
 		},
 	},
 	ITEM_OR_SKILL: {
-		regex: /^You use (.+?)\./,
+		regex: /^You use (.+)\.$/,
 		relatedMessageTypeNames: null,
 		contentType: "text",
 		evaluationFn: function (message) {
@@ -2294,7 +2294,7 @@ hvStat.battle.log.messageTypeParams = {
 		},
 	},
 	MONSTER_DEFEAT: {
-		regex: /^(.+?) has been defeated\./,
+		regex: /^(.+?) has been defeated\.$/,
 		relatedMessageTypeNames: null,
 		contentType: "text",
 		evaluationFn: function (message) {
@@ -2302,21 +2302,21 @@ hvStat.battle.log.messageTypeParams = {
 		},
 	},
 	MONSTER_AGITATED: {
-		regex: /^(.+?) is agitated!/,
+		regex: /^(.+?) is agitated\!$/,
 		relatedMessageTypeNames: null,
 		contentType: "text",
 		evaluationFn: function (message) {
 		},
 	},
 	SKILL_COOLDOWN_EXPIRATION: {
-		regex: /^Cooldown expired for (.+?)/,
+		regex: /^Cooldown expired for (.+)$/,
 		relatedMessageTypeNames: null,
 		contentType: "text",
 		evaluationFn: function (message) {
 		},
 	},
 	GAINING_EFFECT: {
-		regex: /^You gain the effect (.+?)\./,
+		regex: /^You gain the effect (.+)\.$/,
 		relatedMessageTypeNames: ["ITEM_OR_SKILL"],
 		contentType: "text",
 		evaluationFn: function (message) {
@@ -2338,7 +2338,7 @@ hvStat.battle.log.messageTypeParams = {
 		},
 	},
 	EFFECT_EXPIRATION: {
-		regex: /^The effect (.+?)\s+has expired\./,
+		regex: /^The effect (.+?)\s+has expired\.$/,
 		relatedMessageTypeNames: null,
 		contentType: "text",
 		evaluationFn: function (message) {
@@ -2353,14 +2353,14 @@ hvStat.battle.log.messageTypeParams = {
 		},
 	},
 	RECOVERY: {
-		regex: /^Recovered (\d+) points of (.+?)\./,
+		regex: /^Recovered (\d+) points of (.+)\.$/,
 		relatedMessageTypeNames: null,
 		contentType: "text",
 		evaluationFn: function (message) {
 		},
 	},
 	CURE: {
-		regex: /^You are healed for (\d+) Health Points\./,
+		regex: /^You are healed for (\d+) Health Points\.$/,
 		relatedMessageTypeNames: ["CAST"],
 		contentType: "text",
 		evaluationFn: function (message, relatedLog) {
@@ -2385,7 +2385,7 @@ hvStat.battle.log.messageTypeParams = {
 		},
 	},
 	ABSORPTION: {
-		regex: /^The spell is absorbed. You gain (\d+) Magic Points\./,
+		regex: /^The spell is absorbed. You gain (\d+) Magic Points\.$/,
 		relatedMessageTypeNames: null,
 		contentType: "text",
 		evaluationFn: function (message) {
@@ -2397,7 +2397,7 @@ hvStat.battle.log.messageTypeParams = {
 		},
 	},
 	SPARK_OF_LIFE_SUCCESS: {
-		regex: /^Your Spark of Life restores you from the brink of defeat\./,
+		regex: /^Your Spark of Life restores you from the brink of defeat\.$/,
 		relatedMessageTypeNames: null,
 		contentType: "text",
 		evaluationFn: function (message) {
@@ -2407,14 +2407,14 @@ hvStat.battle.log.messageTypeParams = {
 		},
 	},
 	SPARK_OF_LIFE_FAILURE: {
-		regex: /^Your Spark of Life fails due to insufficient Spirit\./,
+		regex: /^Your Spark of Life fails due to insufficient Spirit\.$/,
 		relatedMessageTypeNames: null,
 		contentType: "text",
 		evaluationFn: function (message) {
 		},
 	},
 	POWERUP_DROP: {
-		regex: /^(.+?) drops a (.+?) powerup!/,
+		regex: /^(.+?) drops a (.+?) powerup\!$/,
 		relatedMessageTypeNames: null,
 		contentType: "text",
 		evaluationFn: function (message) {
@@ -2447,7 +2447,7 @@ hvStat.battle.log.messageTypeParams = {
 		},
 	},
 	INVENTORY_LIMIT_WARNING: {
-		regex: /^Warning: Reached equipment inventory limit \(\d+\)\. Generated item instead\./,
+		regex: /^Warning: Reached equipment inventory limit \(\d+\)\. Generated item instead\.$/,
 		relatedMessageTypeNames: null,
 		contentType: "text",
 		evaluationFn: function (message) {
@@ -2455,7 +2455,7 @@ hvStat.battle.log.messageTypeParams = {
 		},
 	},
 	SPAWNING_MONSTER: {
-		regex: /^Spawned Monster ([A-J]): MID=(\d+) \((.+?)\) LV=(\d+) HP=(\d+|\d+\.\d+)/,
+		regex: /^Spawned Monster ([A-J]): MID=(\d+) \((.+?)\) LV=(\d+) HP=(\d+|\d+\.\d+)$/,
 		relatedMessageTypeNames: null,
 		contentType: "text",
 		evaluationFn: function (message) {
@@ -2482,7 +2482,7 @@ hvStat.battle.log.messageTypeParams = {
 		},
 	},
 	DROP: {
-		regex: /(.+?) dropped <span style="\s*color\s*:\s*(.+?)\s*;?\s*">\[(.+?)\]<\/span>/,
+		regex: /(.+?) dropped <span style="\s*color\s*:\s*(.+?)\s*;?\s*">\[(.+?)\]<\/span>$/,
 		relatedMessageTypeNames: null,
 		contentType: "html",
 		evaluationFn: function (message) {
@@ -2547,14 +2547,14 @@ hvStat.battle.log.messageTypeParams = {
 		},
 	},
 	START: {
-		regex: /^Battle Start!/,
+		regex: /^Battle Start\!$/,
 		relatedMessageTypeNames: null,
 		contentType: "text",
 		evaluationFn: function (message) {
 		},
 	},
 	HOURY_ENCOUNTER_INITIALIZATION: {
-		regex: /^Initializing random encounter \.\.\./,
+		regex: /^Initializing random encounter \.\.\.$/,
 		relatedMessageTypeNames: null,
 		contentType: "text",
 		evaluationFn: function (message) {
@@ -2562,7 +2562,7 @@ hvStat.battle.log.messageTypeParams = {
 		},
 	},
 	ARENA_INITIALIZATION: {
-		regex: /^Initializing arena challenge #(\d+) \(Round (\d+) \/ (\d+)\) \.\.\./,
+		regex: /^Initializing arena challenge #(\d+) \(Round (\d+) \/ (\d+)\) \.\.\.$/,
 		relatedMessageTypeNames: null,
 		contentType: "text",
 		evaluationFn: function (message) {
@@ -2573,7 +2573,7 @@ hvStat.battle.log.messageTypeParams = {
 		},
 	},
 	ITEM_WORLD_INITIALIZATION: {
-		regex: /^Initializing Item World \(Round (\d+) \/ (\d+)\) \.\.\./,
+		regex: /^Initializing Item World \(Round (\d+) \/ (\d+)\) \.\.\.$/,
 		relatedMessageTypeNames: null,
 		contentType: "text",
 		evaluationFn: function (message) {
@@ -2583,7 +2583,7 @@ hvStat.battle.log.messageTypeParams = {
 		},
 	},
 	GRINDFEST_INITIALIZATION: {
-		regex: /^Initializing GrindFest \(Round (\d+)\) \.\.\./,
+		regex: /^Initializing GrindFest \(Round (\d+)\) \.\.\.$/,
 		relatedMessageTypeNames: null,
 		contentType: "text",
 		evaluationFn: function (message) {
@@ -2592,28 +2592,28 @@ hvStat.battle.log.messageTypeParams = {
 		},
 	},
 	ESCAPE: {
-		regex: /^You have escaped from the battle\./,
+		regex: /^You have escaped from the battle\.$/,
 		relatedMessageTypeNames: null,
 		contentType: "text",
 		evaluationFn: function (message) {
 		},
 	},
 	DEFEAT: {
-		regex: /^You have been defeated\./,
+		regex: /^You have been defeated\.$/,
 		relatedMessageTypeNames: null,
 		contentType: "text",
 		evaluationFn: function (message) {
 		},
 	},
 	VICTORY: {
-		regex: /^You are Victorious!/,
+		regex: /^You are Victorious\!$/,
 		relatedMessageTypeNames: null,
 		contentType: "text",
 		evaluationFn: function (message) {
 		},
 	},
 	ARENA_CLEAR_BONUS: {
-		regex: /Arena Clear Bonus! <span style="\s*color\s*:\s*(.+?)\s*;?\s*">\[(.+?)\]<\/span>/,
+		regex: /Arena Clear Bonus\! <span style="\s*color\s*:\s*(.+?)\s*;?\s*">\[(.+?)\]<\/span>$/,
 		relatedMessageTypeNames: null,
 		contentType: "html",
 		evaluationFn: function (message) {
@@ -2669,7 +2669,7 @@ hvStat.battle.log.messageTypeParams = {
 		},
 	},
 	ARENA_TOKEN_BONUS: {
-		regex: /Arena Token Bonus! <span style="\s*color\s*:\s*(.+?)\s*;?\s*">\[(.+?)\]<\/span>/,
+		regex: /Arena Token Bonus\! <span style="\s*color\s*:\s*(.+?)\s*;?\s*">\[(.+?)\]<\/span>$/,
 		relatedMessageTypeNames: null,
 		contentType: "html",
 		evaluationFn: function (message) {
@@ -2685,7 +2685,7 @@ hvStat.battle.log.messageTypeParams = {
 		},
 	},
 	CREDIT: {
-		regex: /^You gain (\d+) Credits!/,
+		regex: /^You gain (\d+) Credits\!$/,
 		relatedMessageTypeNames: null,
 		contentType: "text",
 		evaluationFn: function (message) {
@@ -2694,7 +2694,7 @@ hvStat.battle.log.messageTypeParams = {
 		},
 	},
 	EXP: {
-		regex: /^You gain (\d+) EXP!/,
+		regex: /^You gain (\d+) EXP\!$/,
 		relatedMessageTypeNames: null,
 		contentType: "text",
 		evaluationFn: function (message) {
