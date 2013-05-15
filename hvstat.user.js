@@ -2005,7 +2005,7 @@ hvStat.battle.log.messageTypeParams = {
 			case "Stunned":
 				if (message.relatedMessage &&
 						message.relatedMessage.messageType === hvStat.battle.log.messageTypes.COUNTER) {
-					hvStat.roundInfo.weaponprocs[7]++
+					hvStat.roundInfo.weaponprocs[7]++;
 				} else {
 					hvStat.roundInfo.weaponprocs[0]++;
 				}
