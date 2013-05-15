@@ -1798,6 +1798,7 @@ hvStat.vo.MonsterVO = function () {
 	this.id = null;
 	this.name = null;
 	this.maxHp = null;
+	this.actualHealthPoint = null;
 	this.prevMpRate = null;
 	this.prevSpRate = null;
 	this.scanResult = null;
@@ -2021,12 +2022,19 @@ hvStat.battle.log.messageTypeParams = {
 	},
 	MONSTER_EFFECT_EXPLOSION: {
 		regex: /^(.+?) explodes for (\d+) (.+?) damage$/,
-		relatedMessageTypeNames: null,
+		relatedMessageTypeNames: ["HIT"],
 		contentType: "text",
 		evaluationFn: function (message) {
 			var damageAmount = Number(message.regexResult[2]);
 			hvStat.roundInfo.elemEffects[1]++;
 			hvStat.roundInfo.elemEffects[2] += damageAmount;
+			var targetMonsterName = message.relatedMessage && message.relatedMessage.regexResult[3];
+			if (targetMonsterName) {
+				var monster = hvStat.battle.monster.findByName(targetMonsterName);
+				if (monster) {
+					monster.takeDamage(damageAmount);
+				}
+			}
 		},
 	},
 	MELEE_HIT: {
@@ -2034,11 +2042,16 @@ hvStat.battle.log.messageTypeParams = {
 		relatedMessageTypeNames: null,
 		contentType: "text",
 		evaluationFn: function (message) {
+			var targetMonsterName = message.regexResult[2];
 			var damageAmount = parseFloat(message.regexResult[3]);
 			var critical = message.regexResult[1] === "crit";
 			hvStat.roundInfo.aAttempts++;
 			hvStat.roundInfo.aHits[critical ? 1 : 0]++;
 			hvStat.roundInfo.dDealt[critical ? 1 : 0] += damageAmount;
+			var monster = hvStat.battle.monster.findByName(targetMonsterName);
+			if (monster) {
+				monster.takeDamage(damageAmount);
+			}
 		},
 	},
 	HIT: {
@@ -2047,6 +2060,7 @@ hvStat.battle.log.messageTypeParams = {
 		contentType: "text",
 		evaluationFn: function (message) {
 			var damageSource = message.regexResult[1];
+			var targetMonsterName = message.regexResult[3];
 			var damageAmount = Number(message.regexResult[4]);
 			var critical = message.regexResult[2] === "crits" || message.regexResult[2] === "blasts";
 			switch (damageSource) {
@@ -2080,6 +2094,10 @@ hvStat.battle.log.messageTypeParams = {
 					hvStat.roundInfo.spiritualSpells[2] += damageAmount;
 				}
 			}
+			var monster = hvStat.battle.monster.findByName(targetMonsterName);
+			if (monster) {
+				monster.takeDamage(damageAmount);
+			}
 		},
 	},
 	RESTORATION: {
@@ -2102,11 +2120,16 @@ hvStat.battle.log.messageTypeParams = {
 		relatedMessageTypeNames: null,
 		contentType: "text",
 		evaluationFn: function (message) {
+			var targetMonsterName = message.regexResult[1];
 			var damageAmount = parseFloat(message.regexResult[2]);
 			if (hvStat.settings.isTrackStats || hvStat.settings.isShowEndStats) {
 				hvStat.roundInfo.aCounters[0]++;
 				hvStat.roundInfo.aCounters[1] += damageAmount;
 				hvStat.roundInfo.dDealt[0] += damageAmount;
+			}
+			var monster = hvStat.battle.monster.findByName(targetMonsterName);
+			if (monster) {
+				monster.takeDamage(damageAmount);
 			}
 		},
 	},
@@ -2289,6 +2312,19 @@ hvStat.battle.log.messageTypeParams = {
 			}
 		},
 	},
+	LIFESTREAM_DRAIN: {
+		regex: /^Lifestream drains (\d+|\d+\.\d+) points of health from (.+?)\.$/,
+		relatedMessageTypeNames: null,
+		contentType: "text",
+		evaluationFn: function (message) {
+			var drainAmount = Number(message.regexResult[1]);
+			var targetMonsterName = message.regexResult[2];
+			var monster = hvStat.battle.monster.findByName(targetMonsterName);
+			if (monster) {
+				monster.takeDamage(drainAmount);
+			}
+		},
+	},
 	MONSTER_DEFEAT: {
 		regex: /^(.+?) has been defeated\.$/,
 		relatedMessageTypeNames: null,
@@ -2360,7 +2396,7 @@ hvStat.battle.log.messageTypeParams = {
 		relatedMessageTypeNames: ["CAST"],
 		contentType: "text",
 		evaluationFn: function (message, relatedLog) {
-			var spell = message.relatedMessage.regexResult[1];
+			var spell = message.relatedMessage && message.relatedMessage.regexResult[1];
 			var healingAmount = Number(message.regexResult[1]);
 			var index = -1;
 			switch (spell) {
@@ -2431,6 +2467,19 @@ hvStat.battle.log.messageTypeParams = {
 				if (monster) {
 					 monster.storeScanResult(message.regexResult);
 				}
+			}
+		},
+	},
+	MONSTER_HEAL: {
+		regex: /^(.+?) heals (.+?) for (\d+|\d+\.\d+) points of health\.$/,
+		relatedMessageTypeNames: null,
+		contentType: "text",
+		evaluationFn: function (message) {
+			var targetMonsterName = message.regexResult[2];
+			var healingAmount = Number(message.regexResult[3]);
+			var monster = hvStat.battle.monster.findByName(targetMonsterName);
+			if (monster) {
+				monster.restoreHealthPoint(healingAmount);
 			}
 		},
 	},
@@ -3698,6 +3747,7 @@ hvStat.battle.monster.Monster = function (index) {
 	this._id = null;
 	this._name = null;
 	this._maxHp = null;
+	this.actualHealthPoint = 0;
 	this._prevMpRate = null;
 	this._prevSpRate = null;
 	this._scanResult = null;
@@ -3727,6 +3777,11 @@ hvStat.battle.monster.Monster.prototype = {
 		var v = this._currHpRate * this._maxHp;
 		if (!this._isDead && v === 0) {
 			v = 1;
+		}
+		var acceptableRange = this._maxHp / 120;
+		if (v - acceptableRange < this.actualHealthPoint && this.actualHealthPoint < v + acceptableRange) {
+			// actualHealthPoint is probably correct
+			v = this.actualHealthPoint;
 		}
 		return v;
 	},
@@ -4074,6 +4129,7 @@ hvStat.battle.monster.Monster.prototype = {
 		vo.id = this._id;
 		vo.name = this._name;
 		vo.maxHp = this._maxHp;
+		vo.actualHealthPoint = this.actualHealthPoint;
 		vo.prevMpRate = this._currMpRate;
 		vo.prevSpRate = this._currSpRate;
 		vo.scanResult = this._scanResult ? this._scanResult.valueObject : null;
@@ -4092,6 +4148,7 @@ hvStat.battle.monster.Monster.prototype = {
 		this._id = Number(mid);
 		this._name = name;
 		this._maxHp = Number(hp);
+		this.actualHealthPoint = this._maxHp;
 	},
 	storeScanResult: function (regexResult) {
 		var that = this;
@@ -4156,6 +4213,7 @@ hvStat.battle.monster.Monster.prototype = {
 		that._id = vo.id;
 		that._name = vo.name;
 		that._maxHp = vo.maxHp;
+		that.actualHealthPoint = vo.actualHealthPoint;
 		that._prevMpRate = vo.prevMpRate;
 		that._prevSpRate = vo.prevSpRate;
 		that._scanResult = vo.scanResult ? new hvStat.battle.monster.MonsterScanResults(vo.scanResult) : null;
@@ -4331,6 +4389,18 @@ hvStat.battle.monster.Monster.prototype = {
 	},
 	renderPopup: function () {
 		return this._renderPopup();
+	},
+	takeDamage: function (damageAmount) {
+		this.actualHealthPoint -= damageAmount;
+		if (this.actualHealthPoint < 0) {
+			this.actualHealthPoint = 0;
+		}
+	},
+	restoreHealthPoint: function (healingAmount) {
+		this.actualHealthPoint += healingAmount;
+		if (this.actualHealthPoint > this.maxHp) {
+			this.actualHealthPoint = this.maxHp;
+		}
 	},
 };
 
