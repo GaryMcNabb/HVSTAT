@@ -2427,17 +2427,9 @@ hvStat.battle.log.messageTypeParams = {
 		evaluationFn: function (message) {
 			if (hvStat.settings.isRememberScan) {
 				var scanningMonsterName = message.regexResult[1];
-				for (var i = 0; i < hvStat.battle.monster.monsters.length; i++) {
-					var monster = hvStat.battle.monster.monsters[i];
-					if (monster.name === scanningMonsterName) {
-						hvStat.database.loadingMonsterInfoFromDB = true;
-						(function (monster, messageText) {
-							hvStat.database.idbAccessQueue.add(function () {
-								monster.fetchScanningLog(messageText, hvStat.database.transaction);
-								RoundSave();
-							});
-						})(monster, message.text);
-					}
+				var monster = hvStat.battle.monster.findByName(scanningMonsterName);
+				if (monster) {
+					 monster.recordScanResult(message.regexResult);
 				}
 			}
 		},
@@ -3646,21 +3638,15 @@ hvStat.battle.monster.MonsterScanResults.prototype = {
 		var damageTypes = this._filterDamageTypes(this._defImpervious, hiding, generalizing);
 		return this._stringifyDamageTypes(damageTypes, abbrLevel);
 	},
-	fetchScanningLog: function (index, text) {
-		var reScan = /Scanning (.*)\.\.\.\s+HP: [^\s]+\/([^\s]+)\s+MP: [^\s]+\/[^\s]+(?:\s+SP: [^\s]+\/[^\s]+)? Monster Class: (.+?)(?:, Power Level (\d+))? Monster Trainer:(?: (.+))? Melee Attack: (.+) Weak against: (.+) Resistant to: (.+) Impervious to: (.+)/;
+	fromRegexResult: function (index, regexResult) {
 		var vo = new hvStat.vo.MonsterScanResultsVO();
-		var result = reScan.exec(text);
-		if (!result) {
-			alert("HVSTAT: Unknown scanning format");
-			return null;
-		}
 		vo.lastScanDate = (new Date()).toISOString();
-		vo.monsterClass = result[3].toUpperCase() || null;
-		vo.powerLevel = Number(result[4]) || null;
-		vo.trainer = result[5] || null;
-		vo.meleeAttack = result[6].toUpperCase() || null;
+		vo.monsterClass = regexResult[3].toUpperCase() || null;
+		vo.powerLevel = Number(regexResult[4]) || null;
+		vo.trainer = regexResult[5] || null;
+		vo.meleeAttack = regexResult[6].toUpperCase() || null;
 		var array;
-		var defWeak = result[7] || null;
+		var defWeak = regexResult[7] || null;
 		if (defWeak) {
 			array = defWeak.toUpperCase().split(", ");
 			array.forEach(function (element, index, array) {
@@ -3669,7 +3655,7 @@ hvStat.battle.monster.MonsterScanResults.prototype = {
 				}
 			});
 		}
-		var defResistant = result[8] || null;
+		var defResistant = regexResult[8] || null;
 		if (defResistant) {
 			array = defResistant.toUpperCase().split(", ");
 			array.forEach(function (element, index, array) {
@@ -3678,7 +3664,7 @@ hvStat.battle.monster.MonsterScanResults.prototype = {
 				}
 			});
 		}
-		var defImpervious = result[9] || null;
+		var defImpervious = regexResult[9] || null;
 		if (defImpervious) {
 			array = defImpervious.toUpperCase().split(", ");
 			array.forEach(function (element, index, array) {
@@ -4107,10 +4093,14 @@ hvStat.battle.monster.Monster.prototype = {
 		this._name = name;
 		this._maxHp = Number(hp);
 	},
-	fetchScanningLog: function (text, transaction) {
+	recordScanResult: function (regexResult) {
 		var that = this;
-		that._scanResult = hvStat.battle.monster.MonsterScanResults.prototype.fetchScanningLog(that._index, text);
-		that.putScanResultToDB(transaction);
+		that._scanResult = hvStat.battle.monster.MonsterScanResults.prototype.fromRegexResult(that._index, regexResult);
+		(function (that) {
+			hvStat.database.idbAccessQueue.add(function () {
+				that.putScanResultToDB(hvStat.database.transaction);
+			});
+		})(that);
 	},
 	recordSkill: function (skillName, skillVerb, damageType) {
 		var that = this;
