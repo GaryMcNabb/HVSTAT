@@ -2742,7 +2742,7 @@ hvStat.battle.log.Turn.prototype = {
 					var messageTypeName = messageType.relatedMessageTypeNames[j];
 					relatedMessageTypes[j] = hvStat.battle.log.messageTypes[messageTypeName];
 				}
-				for (j = 0; j < i; j++) {
+				for (j = i - 1; j >= 0; j--) {
 					var prevMessage = this.messages[j];
 					var prevMessageType = prevMessage.messageType;
 					if (relatedMessageTypes.indexOf(prevMessageType) >= 0) {
