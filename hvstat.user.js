@@ -5499,6 +5499,10 @@ function saveStats() {
 		hvStat.stats.forbidSpells[1] += hvStat.roundInfo.forbidSpells[1];
 		hvStat.stats.forbidSpells[2] += hvStat.roundInfo.forbidSpells[2];
 		hvStat.stats.forbidSpells[3] += hvStat.roundInfo.forbidSpells[3];
+		hvStat.stats.spiritualSpells[0] += hvStat.roundInfo.spiritualSpells[0];
+		hvStat.stats.spiritualSpells[1] += hvStat.roundInfo.spiritualSpells[1];
+		hvStat.stats.spiritualSpells[2] += hvStat.roundInfo.spiritualSpells[2];
+		hvStat.stats.spiritualSpells[3] += hvStat.roundInfo.spiritualSpells[3];
 		hvStat.stats.depSpells[0] += hvStat.roundInfo.depSpells[0];
 		hvStat.stats.depSpells[1] += hvStat.roundInfo.depSpells[1];
 		hvStat.stats.supportSpells += hvStat.roundInfo.supportSpells;
@@ -5845,7 +5849,7 @@ function initBattleStatsPane() {
 		if (!hvStat.settings.isTrackStats) {
 			$("#hvstat-battle-stats-pane .hvstat-tracking-paused").show();
 		}
-		var j = hvStat.stats.elemSpells[1] + hvStat.stats.divineSpells[1] + hvStat.stats.forbidSpells[1];
+		var j = hvStat.stats.elemSpells[1] + hvStat.stats.divineSpells[1] + hvStat.stats.forbidSpells[1];	// unused
 		var i = hvStat.stats.supportSpells + hvStat.stats.curativeSpells + hvStat.stats.depSpells[1] + hvStat.stats.sHits[0] + hvStat.stats.sHits[1];
 		var h = hvStat.stats.sHits[0] + hvStat.stats.sHits[1] + hvStat.stats.depSpells[1] + hvStat.stats.sResists;
 		var g = hvStat.stats.sHits[0] + hvStat.stats.sHits[1] + hvStat.stats.depSpells[1];
@@ -5861,9 +5865,9 @@ function initBattleStatsPane() {
 		dst.setTime(hvStat.stats.datestart);
 		var dst1 = dst.toLocaleString();
 		var dom = hvStat.stats.aDomino[0];
-		var elall = hvStat.stats.elemSpells[1] + hvStat.stats.elemSpells[3];
-		var divall = hvStat.stats.divineSpells[1] + hvStat.stats.divineSpells[3];
-		var forall = hvStat.stats.forbidSpells[1] + hvStat.stats.forbidSpells[3];
+		var elall = hvStat.stats.elemSpells[1] + hvStat.stats.elemSpells[3];	// unused
+		var divall = hvStat.stats.divineSpells[1] + hvStat.stats.divineSpells[3];	// unused
+		var forall = hvStat.stats.forbidSpells[1] + hvStat.stats.forbidSpells[3];	// unused
 		var offhand = hvStat.stats.aOffhands[0] + hvStat.stats.aOffhands[2];
 		var offhanddam = hvStat.stats.aOffhands[1] + hvStat.stats.aOffhands[3];
 		if (browser.isChrome) dst1 = dst.toLocaleDateString() + " " + dst.toLocaleTimeString();
