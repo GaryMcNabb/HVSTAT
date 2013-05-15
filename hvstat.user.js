@@ -4103,29 +4103,10 @@ hvStat.battle.monster.Monster.prototype = {
 	set maxHp(maxHp) { this._maxHp = maxHp; },
 
 	initialize: function (mid, name, hp) {
-		var that = this;
-		that._id = Number(mid);
-		that._name = name;
-		that._maxHp = hp;
+		this._id = Number(mid);
+		this._name = name;
+		this._maxHp = Number(hp);
 	},
-// 	fetchStartingLog: function (html) {
-// 		var that = this;
-// 		var r;
-// 		r = /MID=(\d+)\s/.exec(html);
-// 		if (!r) {
-// 			alert("HVSTAT: cannot identify MID");
-// 			return;
-// 		}
-// 		that._id = Number(r[1]);
-// 		r = /\(([^\.\)]{0,30})\) LV/.exec(html);
-// 		if (r) {
-// 			that._name = r[1];
-// 		}
-// 		r = /HP=(\d+\.?\d*)$/.exec(html);
-// 		if (r) {
-// 			that._maxHp = Number(r[1]);
-// 		}
-// 	},
 	fetchScanningLog: function (text, transaction) {
 		var that = this;
 		that._scanResult = hvStat.battle.monster.MonsterScanResults.prototype.fetchScanningLog(that._index, text);
