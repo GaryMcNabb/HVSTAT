@@ -1963,7 +1963,7 @@ hvStat.battle.log.messageTypeParams = {
 						var monster = hvStat.battle.monster.findByName(skillUser);
 						if (monster) {
 //							alert(monster + ":" + skillName  + ":" + skillVerb  + ":" + damageType);
-							monster.recordSkill(skillName, skillVerb, damageType);
+							monster.storeSkill(skillName, skillVerb, damageType);
 						}
 					}
 				}
@@ -2429,7 +2429,7 @@ hvStat.battle.log.messageTypeParams = {
 				var scanningMonsterName = message.regexResult[1];
 				var monster = hvStat.battle.monster.findByName(scanningMonsterName);
 				if (monster) {
-					 monster.recordScanResult(message.regexResult);
+					 monster.storeScanResult(message.regexResult);
 				}
 			}
 		},
@@ -4093,7 +4093,7 @@ hvStat.battle.monster.Monster.prototype = {
 		this._name = name;
 		this._maxHp = Number(hp);
 	},
-	recordScanResult: function (regexResult) {
+	storeScanResult: function (regexResult) {
 		var that = this;
 		that._scanResult = hvStat.battle.monster.MonsterScanResults.prototype.fromRegexResult(that._index, regexResult);
 		(function (that) {
@@ -4102,7 +4102,7 @@ hvStat.battle.monster.Monster.prototype = {
 			});
 		})(that);
 	},
-	recordSkill: function (skillName, skillVerb, damageType) {
+	storeSkill: function (skillName, skillVerb, damageType) {
 		var that = this;
 		var i;
 		var skillType = (that._prevSpRate <= that._currSpRate) ? hvStat.constant.skillType.MANA : hvStat.constant.skillType.SPIRIT;
