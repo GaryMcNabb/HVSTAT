@@ -2590,7 +2590,7 @@ hvStat.battle.log.messageTypeParams = {
 		evaluationFn: function (message) {
 		},
 	},
-	HOURY_ENCOUNTER_INITIALIZATION: {
+	HOURLY_ENCOUNTER_INITIALIZATION: {
 		regex: /^Initializing random encounter \.\.\.$/,
 		relatedMessageTypeNames: null,
 		contentType: "text",
