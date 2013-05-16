@@ -1814,7 +1814,7 @@ hvStat.battle = {
 	},
 	setup: function () {
 		hvStat.battle.enhancement.setup();
-		hvStat.battle.log.setup();
+		hvStat.battle.eventLog.setup();
 	},
 	advanceRound: function () {
 		if (!hv.battle.finished && hv.battle.round.finished) {
@@ -1829,14 +1829,14 @@ hvStat.battle = {
 };
 
 //------------------------------------
-// Battle - Log Management
+// Battle - Event log management
 //------------------------------------
-hvStat.battle.log = {
+hvStat.battle.eventLog = {
 	messageTypes: {},
 	buildMessageTypes: function () {
-		for (var key in hvStat.battle.log.messageTypeParams) {
-			var param = hvStat.battle.log.messageTypeParams[key];
-			hvStat.battle.log.messageTypes[key] = new hvStat.battle.log.MessageType(param);
+		for (var key in hvStat.battle.eventLog.messageTypeParams) {
+			var param = hvStat.battle.eventLog.messageTypeParams[key];
+			hvStat.battle.eventLog.messageTypes[key] = new hvStat.battle.eventLog.MessageType(param);
 		}
 	},
 	setup: function () {
@@ -1844,13 +1844,13 @@ hvStat.battle.log = {
 	},
 };
 
-hvStat.battle.log.MessageType = function (param) {
+hvStat.battle.eventLog.MessageType = function (param) {
 	this.regex = param.regex || null;
 	this.relatedMessageTypeNames = param.relatedMessageTypeNames || null;
 	this.contentType = param.contentType || null;
 	this.evaluationFn = param.evaluationFn || null;
 };
-hvStat.battle.log.MessageType.prototype = {
+hvStat.battle.eventLog.MessageType.prototype = {
 	match: function (text, innerHTML) {
 		var target;
 		if (this.contentType === "text") {
@@ -1868,39 +1868,35 @@ hvStat.battle.log.MessageType.prototype = {
 	},
 };
 
-hvStat.battle.log.Message = function (text, innerHTML) {
+hvStat.battle.eventLog.Message = function (text, innerHTML) {
 	this.text = text;
 	this.innerHTML = innerHTML;
 	this.messageType = null;
 	this.regexResult = null;
 	this.relatedMessage = null;	// Estimate
-	this.parsed = false;
+	this.initialize();
 };
-hvStat.battle.log.Message.prototype = {
-	parse: function () {
-		for (var key in hvStat.battle.log.messageTypes) {
-			var messageType = hvStat.battle.log.messageTypes[key];
+hvStat.battle.eventLog.Message.prototype = {
+	initialize: function () {
+		for (var key in hvStat.battle.eventLog.messageTypes) {
+			var messageType = hvStat.battle.eventLog.messageTypes[key];
 			var regexResult = messageType.match(this.text, this.innerHTML);
 			if (regexResult) {
 				this.messageType = messageType;
 				this.regexResult = regexResult;
-				console.debug(key);
+//				console.debug(key);
 				break;
 			}
 		}
-		this.parsed = true;
 	},
 	evaluate: function () {
-		if (!this.parsed) {
-			this.parse();
-		}
 		if (this.messageType) {
 			this.messageType.evaluate(this);
 		}
 	},
 };
 
-hvStat.battle.log.messageTypeParams = {
+hvStat.battle.eventLog.messageTypeParams = {
 	// Arrange in order from the event frequently occurring
 	DEFENSE: {
 		regex: /^You (evade|block|parry|resist) the attack from (.+?)\.$/,
@@ -2005,7 +2001,7 @@ hvStat.battle.log.messageTypeParams = {
 				break;
 			case "Stunned":
 				if (message.relatedMessage &&
-						message.relatedMessage.messageType === hvStat.battle.log.messageTypes.COUNTER) {
+						message.relatedMessage.messageType === hvStat.battle.eventLog.messageTypes.COUNTER) {
 					hvStat.roundInfo.weaponprocs[7]++;
 				} else {
 					hvStat.roundInfo.weaponprocs[0]++;
@@ -2740,39 +2736,37 @@ hvStat.battle.log.messageTypeParams = {
 	},
 };
 
-hvStat.battle.log.Turn = function (targetTurnNumber) {
-	this.turn = -1;
-	this.lastTurn = -1;
+hvStat.battle.eventLog.TurnEvents = function (targetTurnNumber) {
+	this.turnNumber = -1;
+	this.lastTurnNumber = -1;
 	this.messages = [];
 
-	var turnElements = document.querySelectorAll('#togpane_log td:first-child');
-	this.lastTurn = Number(util.innerText(turnElements[0]));
+	var turnNumberElements = document.querySelectorAll('#togpane_log td:first-child');
+	this.lastTurnNumber = Number(util.innerText(turnNumberElements[0]));
 	if (isNaN(parseFloat(targetTurnNumber))) {
-		targetTurnNumber = this.lastTurn;
+		targetTurnNumber = this.lastTurnNumber;
 	} else {
 		targetTurnNumber = Number(targetTurnNumber);
 	}
-	this.turn = targetTurnNumber;
+	this.turnNumber = targetTurnNumber;
 
-	for (var i = 0; i < turnElements.length; i++) {
-		var turnElement = turnElements[i];
-		var turn = Number(util.innerText(turnElement));
-		if (turn === targetTurnNumber) {
-			var logTextElement = turnElement.nextSibling.nextSibling;
-			var text = util.innerText(logTextElement);
-			var innerHTML = logTextElement.innerHTML;
-			this.messages.push(new hvStat.battle.log.Message(text, innerHTML));
+	for (var i = 0; i < turnNumberElements.length; i++) {
+		var turnNumberElement = turnNumberElements[i];
+		var turnNumber = Number(util.innerText(turnNumberElement));
+		if (turnNumber === targetTurnNumber) {
+			var messageElement = turnNumberElement.nextSibling.nextSibling;
+			var text = util.innerText(messageElement);
+			var innerHTML = messageElement.innerHTML;
+			var message = new hvStat.battle.eventLog.Message(text, innerHTML);
+			this.messages.push(message);
 		}
 	}
 	this.messages.reverse();
-	for (i = 0; i < this.messages.length; i++) {
-		var message = this.messages[i];
-		message.parse();
-	}
-	this.analyze();
+	this.initialize();
 };
-hvStat.battle.log.Turn.prototype = {
-	analyze: function () {
+hvStat.battle.eventLog.TurnEvents.prototype = {
+	initialize: function () {
+		// Set a related message for each
 		for (var i = 0; i < this.messages.length; i++) {
 			var message = this.messages[i];
 			var messageType = message.messageType;
@@ -2780,7 +2774,7 @@ hvStat.battle.log.Turn.prototype = {
 				var relatedMessageTypes = [];
 				for (var j = 0; j < messageType.relatedMessageTypeNames.length; j++) {
 					var messageTypeName = messageType.relatedMessageTypeNames[j];
-					relatedMessageTypes[j] = hvStat.battle.log.messageTypes[messageTypeName];
+					relatedMessageTypes[j] = hvStat.battle.eventLog.messageTypes[messageTypeName];
 				}
 				for (j = i - 1; j >= 0; j--) {
 					var prevMessage = this.messages[j];
@@ -2793,15 +2787,15 @@ hvStat.battle.log.Turn.prototype = {
 			}
 		}
 	},
-	evaluate: function () {
+	process: function () {
 		for (var i = 0; i < this.messages.length; i++) {
 			var message = this.messages[i];
 			message.evaluate();
 		}
 	},
-	getCountOf: function (messageTypeName) {
+	countOf: function (messageTypeName) {
 		var count = 0;
-		var messageType = hvStat.battle.log.messageTypes[messageTypeName];
+		var messageType = hvStat.battle.eventLog.messageTypes[messageTypeName];
 		if (!messageType) {
 			return 0;
 		}
@@ -5417,15 +5411,15 @@ function collectRoundInfo() {
 			hvStat.battle.monster.monsters[i].setFromValueObject(hvStat.roundInfo.monsters[i]);
 		}
 	}
-	// Handle events on the current turn
-	var turnLog = new hvStat.battle.log.Turn();
-	console.debug(turnLog);
-	turnLog.evaluate();
+	// Process events on the current turn
+	var turnEvents = new hvStat.battle.eventLog.TurnEvents();
+	console.debug(turnEvents);
+	turnEvents.process();
 
-	if (turnLog.turn === 0) {
+	if (turnEvents.turnNumber === 0) {
 		if (hvStat.settings.isShowRoundReminder &&
-				(hvStat.roundInfo.maxRound >= hvStat.settings.reminderMinRounds) &&
-				(hvStat.roundInfo.currRound === hvStat.roundInfo.maxRound - hvStat.settings.reminderBeforeEnd)) {
+				hvStat.roundInfo.maxRound >= hvStat.settings.reminderMinRounds &&
+				hvStat.roundInfo.currRound === hvStat.roundInfo.maxRound - hvStat.settings.reminderBeforeEnd) {
 			if (hvStat.settings.reminderBeforeEnd === 0) {
 				hvStat.battle.warningSystem.enqueueAlert("This is final round");
 			} else {
@@ -5433,18 +5427,18 @@ function collectRoundInfo() {
 			}
 		}
 	}
-	var meleeHitCount = turnLog.getCountOf("MELEE_HIT");
+	var meleeHitCount = turnEvents.countOf("MELEE_HIT");
 	if (meleeHitCount >= 2) {
 		hvStat.roundInfo.aDomino[0]++;
 		hvStat.roundInfo.aDomino[1] += meleeHitCount;
 		hvStat.roundInfo.aDomino[meleeHitCount]++
 	}
-	var counterCount = turnLog.getCountOf("COUNTER");
+	var counterCount = turnEvents.countOf("COUNTER");
 	if (counterCount >= 1) {
 		hvStat.roundInfo.aCounters[counterCount]++;
 	}
-	if (hvStat.roundInfo.lastTurn < turnLog.lastTurn) {
-		hvStat.roundInfo.lastTurn = turnLog.lastTurn;
+	if (hvStat.roundInfo.lastTurn < turnEvents.lastTurnNumber) {
+		hvStat.roundInfo.lastTurn = turnEvents.lastTurnNumber;
 	}
 	RoundSave();
 }
