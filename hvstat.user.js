@@ -2691,14 +2691,13 @@ hvStat.battle.log.messageTypeParams = {
 				hvStat.roundInfo.artifacts++;
 				hvStat.roundInfo.lastArtName = stuffName;
 				if (hvStat.settings.isTrackRewards) {
-					hvStat.drops.artDrop++;
-					hvStat.drops.artDropbyBT[hvStat.roundInfo.battleType]++;
-					var index = hvStat.drops.artArry.indexOf("[" + stuffName + "]");	// Transitional
+					hvStat.arenaRewards.artRwrd++;
+					var index = hvStat.arenaRewards.artRwrdArry.indexOf("[" + stuffName + "]");	// Transitional
 					if (index >= 0) {
-						hvStat.drops.artQtyArry[index]++;
+						hvStat.arenaRewards.artRwrdQtyArry[index]++;
 					} else {
-						hvStat.drops.artQtyArry.push(1);
-						hvStat.drops.artArry.push("[" + stuffName + "]");	// Transitional
+						hvStat.arenaRewards.artRwrdQtyArry.push(1);
+						hvStat.arenaRewards.artRwrdArry.push("[" + stuffName + "]");	// Transitional
 					}
 				}
 				break;
