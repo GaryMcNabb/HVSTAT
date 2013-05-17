@@ -1890,7 +1890,7 @@ hvStat.battle.eventLog = {
 		if (hvStat.roundInfo.lastTurn < turnEvents.lastTurnNumber) {
 			hvStat.roundInfo.lastTurn = turnEvents.lastTurnNumber;
 		}
-		RoundSave();
+		hvStat.storage.roundInfo.save();
 	},
 };
 
@@ -2554,7 +2554,9 @@ hvStat.battle.eventLog.messageTypeParams = {
 					hvStat.database.loadingMonsterInfoFromDB = true;
 					(function (monster) {
 						hvStat.database.idbAccessQueue.add(function () {
-							monster.getFromDB(hvStat.database.transaction, RoundSave);
+							monster.getFromDB(hvStat.database.transaction, function () {
+								hvStat.storage.roundInfo.save();
+							});
 						});
 					})(monster);
 				}
@@ -5456,13 +5458,6 @@ function inventoryWarning() {
 			hvStat.storage.removeItem(HV_EQUIP);
 		}
 	});
-}
-function RoundSave() {
-// 	hvStat.roundInfo.monsters = [];
-// 	for (var i = 0; i < hvStat.battle.monster.monsters.length; i++) {
-// 		hvStat.roundInfo.monsters[i] = hvStat.battle.monster.monsters[i].valueObject;
-// 	}
-	hvStat.storage.roundInfo.save();
 }
 
 function saveStats() {
