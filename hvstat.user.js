@@ -1309,8 +1309,22 @@ hvStat.storage.Shrine.prototype.getValue = function () {
 // Shrine object
 hvStat.storage.shrine = new hvStat.storage.Shrine("HVShrine", hvStat.storage.initialValue.shrine);
 
+// Round Information inherits Item
+hvStat.storage.RoundInfo = function (key, defaultValue) {
+	hvStat.storage.Item.apply(this, [key, defaultValue]);
+};
+hvStat.storage.RoundInfo.prototype = Object.create(hvStat.storage.Item.prototype);
+hvStat.storage.RoundInfo.prototype.constructor = hvStat.storage.RoundInfo;
+hvStat.storage.RoundInfo.prototype.save = function () {
+	this.value.monsters = [];
+	for (var i = 0; i < hvStat.battle.monster.monsters.length; i++) {
+		this.value.monsters[i] = hvStat.battle.monster.monsters[i].valueObject;
+	}
+	hvStat.storage.Item.prototype.save.apply(this);
+};
+
 // Round Information object
-hvStat.storage.roundInfo = new hvStat.storage.Item("hvStat.roundInfo", hvStat.storage.initialValue.roundInfo);
+hvStat.storage.roundInfo = new hvStat.storage.RoundInfo("hvStat.roundInfo", hvStat.storage.initialValue.roundInfo);
 
 // Warning State object
 hvStat.storage.warningState = new hvStat.storage.Item("hvStat.warningState", hvStat.storage.initialValue.warningState);
@@ -1813,7 +1827,11 @@ hvStat.battle = {
 		rInfoPaneParameters: /battle\.set_infopane_(?:spell|skill|item|effect)\('((?:[^'\\]|\\.)*)'\s*,\s*'(?:[^'\\]|\\.)*'\s*,\s*(.+)\)/,
 	},
 	setup: function () {
+		hvStat.database.idbAccessQueue.add(function () {
+			hvStat.database.transaction = hvStat.database.idb.transaction(["MonsterScanResults", "MonsterSkills"], "readwrite");
+		});
 		hvStat.battle.enhancement.setup();
+		hvStat.battle.monster.setup();
 		hvStat.battle.eventLog.setup();
 	},
 	advanceRound: function () {
@@ -1841,6 +1859,38 @@ hvStat.battle.eventLog = {
 	},
 	setup: function () {
 		this.buildMessageTypes();
+	},
+	processEvents: function () {
+		// Process events on the current turn
+		var turnEvents = new hvStat.battle.eventLog.TurnEvents();
+		console.debug(turnEvents);
+		turnEvents.process();
+
+		if (turnEvents.turnNumber === 0) {
+			if (hvStat.settings.isShowRoundReminder &&
+					hvStat.roundInfo.maxRound >= hvStat.settings.reminderMinRounds &&
+					hvStat.roundInfo.currRound === hvStat.roundInfo.maxRound - hvStat.settings.reminderBeforeEnd) {
+				if (hvStat.settings.reminderBeforeEnd === 0) {
+					hvStat.battle.warningSystem.enqueueAlert("This is final round");
+				} else {
+					hvStat.battle.warningSystem.enqueueAlert("The final round is approaching.");
+				}
+			}
+		}
+		var meleeHitCount = turnEvents.countOf("MELEE_HIT");
+		if (meleeHitCount >= 2) {
+			hvStat.roundInfo.aDomino[0]++;
+			hvStat.roundInfo.aDomino[1] += meleeHitCount;
+			hvStat.roundInfo.aDomino[meleeHitCount]++
+		}
+		var counterCount = turnEvents.countOf("COUNTER");
+		if (counterCount >= 1) {
+			hvStat.roundInfo.aCounters[counterCount]++;
+		}
+		if (hvStat.roundInfo.lastTurn < turnEvents.lastTurnNumber) {
+			hvStat.roundInfo.lastTurn = turnEvents.lastTurnNumber;
+		}
+		RoundSave();
 	},
 };
 
@@ -3396,13 +3446,21 @@ hvStat.battle.enhancement.monsterLabel = {
 //------------------------------------
 hvStat.battle.monster = {
 	monsters: [],	// Instances of hvStat.battle.Monster
-	showHealthAll: function () {
+	setup: function () {
 		for (var i = 0; i < hv.battle.elementCache.monsters.length; i++) {
+			hvStat.battle.monster.monsters[i] = new hvStat.battle.monster.Monster(i);
+			if (hvStat.roundInfo.monsters[i]) {
+				hvStat.battle.monster.monsters[i].setFromValueObject(hvStat.roundInfo.monsters[i]);
+			}
+		}
+	},
+	showHealthAll: function () {
+		for (var i = 0; i < this.monsters.length; i++) {
 			hvStat.battle.monster.monsters[i].renderHealth();
 		}
 	},
 	showStatusAll: function () {
-		for (var i = 0; i < hv.battle.elementCache.monsters.length; i++) {
+		for (var i = 0; i < this.monsters.length; i++) {
 			hvStat.battle.monster.monsters[i].renderStats();
 		}
 	},
@@ -5399,55 +5457,11 @@ function inventoryWarning() {
 		}
 	});
 }
-function collectRoundInfo() {
-	hvStat.database.idbAccessQueue.add(function () {
-		hvStat.database.transaction = hvStat.database.idb.transaction(["MonsterScanResults", "MonsterSkills"], "readwrite");
-	});
-
-	// Create monster objects
-	for (var i = 0; i < hv.battle.elementCache.monsters.length; i++) {
-		hvStat.battle.monster.monsters[i] = new hvStat.battle.monster.Monster(i);
-		if (hvStat.roundInfo.monsters[i]) {
-			hvStat.battle.monster.monsters[i].setFromValueObject(hvStat.roundInfo.monsters[i]);
-		}
-	}
-	// Process events on the current turn
-	var turnEvents = new hvStat.battle.eventLog.TurnEvents();
-	console.debug(turnEvents);
-	turnEvents.process();
-
-	if (turnEvents.turnNumber === 0) {
-		if (hvStat.settings.isShowRoundReminder &&
-				hvStat.roundInfo.maxRound >= hvStat.settings.reminderMinRounds &&
-				hvStat.roundInfo.currRound === hvStat.roundInfo.maxRound - hvStat.settings.reminderBeforeEnd) {
-			if (hvStat.settings.reminderBeforeEnd === 0) {
-				hvStat.battle.warningSystem.enqueueAlert("This is final round");
-			} else {
-				hvStat.battle.warningSystem.enqueueAlert("The final round is approaching.");
-			}
-		}
-	}
-	var meleeHitCount = turnEvents.countOf("MELEE_HIT");
-	if (meleeHitCount >= 2) {
-		hvStat.roundInfo.aDomino[0]++;
-		hvStat.roundInfo.aDomino[1] += meleeHitCount;
-		hvStat.roundInfo.aDomino[meleeHitCount]++
-	}
-	var counterCount = turnEvents.countOf("COUNTER");
-	if (counterCount >= 1) {
-		hvStat.roundInfo.aCounters[counterCount]++;
-	}
-	if (hvStat.roundInfo.lastTurn < turnEvents.lastTurnNumber) {
-		hvStat.roundInfo.lastTurn = turnEvents.lastTurnNumber;
-	}
-	RoundSave();
-}
-
 function RoundSave() {
-	hvStat.roundInfo.monsters = [];
-	for (var i = 0; i < hvStat.battle.monster.monsters.length; i++) {
-		hvStat.roundInfo.monsters[i] = hvStat.battle.monster.monsters[i].valueObject;
-	}
+// 	hvStat.roundInfo.monsters = [];
+// 	for (var i = 0; i < hvStat.battle.monster.monsters.length; i++) {
+// 		hvStat.roundInfo.monsters[i] = hvStat.battle.monster.monsters[i].valueObject;
+// 	}
 	hvStat.storage.roundInfo.save();
 }
 
@@ -7050,7 +7064,7 @@ hvStat.startup = {
 			if (hvStat.settings.delayRoundEndAlerts) {
 				hvStat.battle.warningSystem.restoreAlerts();
 			}
-			collectRoundInfo();
+			hvStat.battle.eventLog.processEvents();
 			if (hvStat.roundInfo.currRound > 0 && hvStat.settings.isShowRoundCounter) {
 				hvStat.battle.enhancement.roundCounter.create();
 			}
