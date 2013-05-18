@@ -245,7 +245,7 @@ var hv = {
 		};
 
 		var settings = {
-			useHVFontEngine: document.getElementsByClassName('fd10')[0].textContent !== "Health points",
+			useHVFontEngine: document.getElementsByClassName('fd2')[0].textContent !== "Health points",
 			difficulty: null,
 		};
 		var e = document.querySelectorAll('div.clb table.cit div.fd12 > div');
@@ -278,14 +278,14 @@ var hv = {
 		battle.active = !!battleLog;
 		if (battle.active) {
 			battle.elementCache = {
-				battleForm: document.getElementById("battleform"),
+				mainPane: document.getElementById("mainpane"),
 				quickcastBar: document.getElementById("quickbar"),
 				battleLog: battleLog,
 				monsterPane: document.getElementById("monsterpane"),
 				dialog: document.querySelector('div.btcp'),
 				dialogButton: document.getElementById("ckey_continue"),
 			};
-			battle.elementCache.characterEffectIcons = battle.elementCache.battleForm.querySelectorAll('div.btps img[onmouseover^="battle.set_infopane_effect"]');
+			battle.elementCache.characterEffectIcons = battle.elementCache.mainPane.querySelectorAll('div.bte img[onmouseover^="battle.set_infopane_effect"]');
 			battle.elementCache.monsters = battle.elementCache.monsterPane.querySelectorAll('div[id^="mkey_"]');
 
 			battle.round = {
@@ -862,7 +862,7 @@ hvStat.storage.initialValue = {
 			elemental: 0,
 			divine: 0,
 			forbidden: 0,
-			spiritual: 0,
+//			spiritual: 0,
 			deprecating: 0,
 			supportive: 0,
 		},
@@ -1358,7 +1358,7 @@ hvStat.support = {
 		hvStat.storage.characterStatus.save();
 	},
 	captureProficiencies: function () {
-		var proficiencyTable = document.getElementById("leftpane").children[1].querySelectorAll('div.fd12');
+		var proficiencyTable = document.getElementById("leftpane").children[1].querySelectorAll('div.fd4');
 		var prof = hvStat.characterStatus.proficiencies;
 		prof.oneHanded = Number(util.innerText(proficiencyTable[2]));
 		prof.twoHanded = Number(util.innerText(proficiencyTable[4]));
@@ -1370,9 +1370,8 @@ hvStat.support = {
 		prof.elemental = Number(util.innerText(proficiencyTable[17]));
 		prof.divine = Number(util.innerText(proficiencyTable[19]));
 		prof.forbidden = Number(util.innerText(proficiencyTable[21]));
-		prof.spiritual = Number(util.innerText(proficiencyTable[23]));
-		prof.deprecating = Number(util.innerText(proficiencyTable[25]));
-		prof.supportive = Number(util.innerText(proficiencyTable[27]));
+		prof.deprecating = Number(util.innerText(proficiencyTable[23]));
+		prof.supportive = Number(util.innerText(proficiencyTable[25]));
 		hvStat.characterStatus.areProficienciesCaptured = true;
 		hvStat.storage.characterStatus.save();
 	},
@@ -1472,9 +1471,8 @@ hvStat.gadget.proficiencyPopupIcon = {
 		tableData[ 1].textContent = prof.elemental.toFixed(2);
 		tableData[ 3].textContent = prof.divine.toFixed(2);
 		tableData[ 5].textContent = prof.forbidden.toFixed(2);
-		tableData[ 7].textContent = prof.spiritual.toFixed(2);
-		tableData[ 9].textContent = prof.deprecating.toFixed(2);
-		tableData[11].textContent = prof.supportive.toFixed(2);
+		tableData[ 7].textContent = prof.deprecating.toFixed(2);
+		tableData[ 9].textContent = prof.supportive.toFixed(2);
 		var icon = document.createElement("div");
 		icon.id = "hvstat-proficiency-popup-icon";
 		icon.className = "ui-corner-all";
@@ -1556,8 +1554,8 @@ hvStat.keyboard = {
 				boundKeys = miScan.boundKeys;
 				for (i = 0; i < boundKeys.length; i++) {
 					if (boundKeys[i].matches(event)) {
-						if (hvStat.battle.command.commandMap["Skills"].menuOpened) {
-							hvStat.battle.command.commandMap["Skills"].close();
+						if (hvStat.battle.command.commandMap["Skillbook"].menuOpened) {
+							hvStat.battle.command.commandMap["Skillbook"].close();
 						} else {
 							miScan.select();
 						}
@@ -1591,7 +1589,7 @@ hvStat.keyboard = {
 				for (i = 0; i < boundKeys.length; i++) {
 					if (boundKeys[i].matches(event)) {
 						if (traversalFinished) {
-							hvStat.battle.command.commandMap["Skills"].close();
+							hvStat.battle.command.commandMap["Skillbook"].close();
 							hvStat.keyboard.selectedSkillIndex = -1;
 						} else {
 							for (j = startIndex + increment;
@@ -1612,8 +1610,8 @@ hvStat.keyboard = {
 				boundKeys = miOFC.boundKeys;
 				for (i = 0; i < boundKeys.length; i++) {
 					if (boundKeys[i].matches(event)) {
-						if (hvStat.battle.command.commandMap["Skills"].menuOpened) {
-							hvStat.battle.command.commandMap["Skills"].close();
+						if (hvStat.battle.command.commandMap["Skillbook"].menuOpened) {
+							hvStat.battle.command.commandMap["Skillbook"].close();
 						} else {
 							miOFC.select();
 						}
@@ -2869,13 +2867,12 @@ hvStat.battle.command = {
 	get commandMap() {
 		if (!this._commandMap) {
 			this._commandMap = {
-				"Attack": new hvStat.battle.command.Command({ elementId: "ckey_attack", name: "Attack" }),
-				"Magic":  new hvStat.battle.command.Command({ elementId: "ckey_magic",  name: "Magic",  menuElementIds: ["togpane_magico", "togpane_magict"] }),
-				"Spirit": new hvStat.battle.command.Command({ elementId: "ckey_spirit", name: "Spirit" }),
-				"Skills": new hvStat.battle.command.Command({ elementId: "ckey_skills", name: "Skills", menuElementIds: ["togpane_skill"] }),
-				"Items":  new hvStat.battle.command.Command({ elementId: "ckey_items",  name: "Items",  menuElementIds: ["togpane_item"] }),
-				"Defend": new hvStat.battle.command.Command({ elementId: "ckey_defend", name: "Defend" }),
-				"Focus":  new hvStat.battle.command.Command({ elementId: "ckey_focus",  name: "Focus" })
+				"Attack":    new hvStat.battle.command.Command({ elementId: "ckey_attack", name: "Attack" }),
+				"Skillbook": new hvStat.battle.command.Command({ elementId: "ckey_magic",  name: "Skillbook", menuElementIds: ["togpane_magico", "togpane_magict"] }),
+				"Spirit":    new hvStat.battle.command.Command({ elementId: "ckey_spirit", name: "Spirit" }),
+				"Items":     new hvStat.battle.command.Command({ elementId: "ckey_items",  name: "Items",     menuElementIds: ["togpane_item"] }),
+				"Defend":    new hvStat.battle.command.Command({ elementId: "ckey_defend", name: "Defend" }),
+				"Focus":     new hvStat.battle.command.Command({ elementId: "ckey_focus",  name: "Focus" })
 			};
 		}
 		return this._commandMap;
@@ -2886,21 +2883,21 @@ hvStat.battle.command = {
 			this._subMenuItemMap = {
 				"PowerupGem": hvStat.battle.command.getSubMenuItemById("ikey_p"),
 				"Scan": hvStat.battle.command.getSubMenuItemByName("Scan"),
-				"Skill1": hvStat.battle.command.getSubMenuItemById("110001") ||
-					hvStat.battle.command.getSubMenuItemById("120001") ||
-					hvStat.battle.command.getSubMenuItemById("130001") ||
-					hvStat.battle.command.getSubMenuItemById("140001") ||
-					hvStat.battle.command.getSubMenuItemById("150001"),
-				"Skill2": hvStat.battle.command.getSubMenuItemById("110002") ||
-					hvStat.battle.command.getSubMenuItemById("120002") ||
-					hvStat.battle.command.getSubMenuItemById("130002") ||
-					hvStat.battle.command.getSubMenuItemById("140002") ||
-					hvStat.battle.command.getSubMenuItemById("150002"),
-				"Skill3": hvStat.battle.command.getSubMenuItemById("110003") ||
-					hvStat.battle.command.getSubMenuItemById("120003") ||
-					hvStat.battle.command.getSubMenuItemById("130003") ||
-					hvStat.battle.command.getSubMenuItemById("140003") ||
-					hvStat.battle.command.getSubMenuItemById("150003"),
+				"Skill1": hvStat.battle.command.getSubMenuItemById("2101") ||
+					hvStat.battle.command.getSubMenuItemById("2201") ||
+					hvStat.battle.command.getSubMenuItemById("2301") ||
+					hvStat.battle.command.getSubMenuItemById("2401") ||
+					hvStat.battle.command.getSubMenuItemById("2501"),
+				"Skill2": hvStat.battle.command.getSubMenuItemById("2102") ||
+					hvStat.battle.command.getSubMenuItemById("2202") ||
+					hvStat.battle.command.getSubMenuItemById("2302") ||
+					hvStat.battle.command.getSubMenuItemById("2402") ||
+					hvStat.battle.command.getSubMenuItemById("2502"),
+				"Skill3": hvStat.battle.command.getSubMenuItemById("2103") ||
+					hvStat.battle.command.getSubMenuItemById("2203") ||
+					hvStat.battle.command.getSubMenuItemById("2303") ||
+					hvStat.battle.command.getSubMenuItemById("2403") ||
+					hvStat.battle.command.getSubMenuItemById("2503"),
 				"OFC": hvStat.battle.command.getSubMenuItemByName("Orbital Friendship Cannon"),
 			};
 			if (this._subMenuItemMap["Scan"]) {
@@ -3336,6 +3333,7 @@ hvStat.battle.enhancement.log = {
 hvStat.battle.enhancement.scanButton = {
 	elements: [],
 	createAll: function () {
+		hv.battle.elementCache.mainPane.style.overflow = "visible";
 		hv.battle.elementCache.monsterPane.style.overflow = "visible";
 		var monsters = hv.battle.elementCache.monsters;
 		for (var i = 0; i < monsters.length; i++) {
@@ -3364,17 +3362,17 @@ hvStat.battle.enhancement.scanButton = {
 hvStat.battle.enhancement.skillButton = {
 	getLabelById: function (id) {
 		var labelTable = [
-			{ id: "110001", label: "SkyS" },
-			{ id: "120001", label: "ShiB" },
-			{ id: "120002", label: "VitS" },
-			{ id: "120003", label: "MerB" },
-			{ id: "130001", label: "GreC" },
-			{ id: "130002", label: "RenB" },
-			{ id: "130003", label: "ShaS" },
-			{ id: "140001", label: "IrisS" },
-			{ id: "140002", label: "Stab" },
-			{ id: "140003", label: "FreB" },
-			{ id: "150001", label: "ConS" },
+			{ id: "2101", label: "SkyS" },
+			{ id: "2201", label: "ShiB" },
+			{ id: "2202", label: "VitS" },
+			{ id: "2203", label: "MerB" },
+			{ id: "2301", label: "GreC" },
+			{ id: "2302", label: "RenB" },
+			{ id: "2303", label: "ShaS" },
+			{ id: "2401", label: "IrisS" },
+			{ id: "2402", label: "Stab" },
+			{ id: "2403", label: "FreB" },
+			{ id: "2501", label: "ConS" },
 		];
 		for (var i = 0; i < labelTable.length; i++) {
 			if (labelTable[i].id === id) {
@@ -3397,6 +3395,7 @@ hvStat.battle.enhancement.skillButton = {
 		if (skill3) {
 			skills.push(skill3);
 		}
+		hv.battle.elementCache.mainPane.style.overflow = "visible";
 		hv.battle.elementCache.monsterPane.style.overflow = "visible";
 		var monsters = hv.battle.elementCache.monsters;
 		for (var i = 0; i < monsters.length; i++) {
@@ -3428,7 +3427,7 @@ hvStat.battle.enhancement.skillButton = {
 
 hvStat.battle.enhancement.monsterLabel = {
 	replaceWithNumber: function () {
-		var targets = document.querySelectorAll('img.btmi');
+		var targets = document.querySelectorAll('div.btm2 > div > img');
 		for (var i = 0; i < targets.length; i++) {
 			var target = targets[i];
 			target.className += " hvstat-monster-number";
@@ -3501,7 +3500,7 @@ hvStat.battle.monster.popup = {
 		hv.elementCache.popup.innerHTML = html;
 		var popupTopOffset = hv.battle.elementCache.monsterPane.offsetTop +
 			index * ((hv.battle.elementCache.monsterPane.scrollHeight - hv.elementCache.popup.scrollHeight) / 9);
-		var popupLeftOffset = hvStat.settings.isMonsterPopupPlacement ? 955 : 275;
+		var popupLeftOffset = hvStat.settings.isMonsterPopupPlacement ? 1245 : 555;
 		hv.elementCache.popup.style.top = popupTopOffset + "px";
 		hv.elementCache.popup.style.left = popupLeftOffset + "px";
 		hv.elementCache.popup.style.visibility = "visible";
@@ -6915,10 +6914,13 @@ hvStat.inventory.equipment = {
 		];
 		var elements = document.querySelectorAll('#inv_equip div.eqdp, #item_pane div.eqdp, #equip div.eqdp, #equip_pane div.eqdp');
 		Array.prototype.forEach.call(elements, function (element) {
-			var equipType = String(element.onmouseover)
-				.match(/(One-handed Weapon|Two-handed Weapon|Staff|Shield|Cloth Armor|Light Armor|Heavy Armor) &nbsp; &nbsp; Level/i)[0]
-				.replace(/ &nbsp; &nbsp; Level/i, "")
-				.replace(/ (Weapon|Armor)/i, "");
+			console.debug(element.getAttribute("onmouseover"));
+			var onmouseover = element.getAttribute("onmouseover");
+			var regexResult = onmouseover.match(/(One-handed Weapon|Two-handed Weapon|Staff|Shield|Cloth Armor|Light Armor|Heavy Armor)(?:\s*&nbsp;)*\s*Level/);
+			if (!regexResult) {
+				return;
+			}
+			var equipType = regexResult[1];
 			var id = parseInt(String(element.id), 10);
 			var equipTypeIdx = -1;
 			if (/One-Handed/i.test(equipType)) {
