@@ -248,7 +248,7 @@ var hv = {
 			useHVFontEngine: document.getElementsByClassName('fd2')[0].textContent !== "Health points",
 			difficulty: null,
 		};
-		var e = document.querySelectorAll('div.clb table.cit div.fd12 > div');
+		var e = document.querySelectorAll('div.clb table.cit div.fd4 > div');
 		var i, r;
 		for (i = 0; i < e.length; i++) {
 			r = /(Easy|Normal|Hard|Heroic|Nightmare|Hell|Nintendo|Battletoads|IWBTH)/.exec(util.innerText(e[i]));
@@ -1442,7 +1442,7 @@ hvStat.gadget.equippedSet = {
 		var cssText = leftBar.querySelector('table.cit td > div > div').style.cssText;
 		var table = document.createElement("table");
 		table.className = "cit";
-		table.innerHTML ='<tbody><tr><td><div class="fd12"><div id="hvstat-equipped-set"></div></div></td></tr></tbody>';
+		table.innerHTML ='<tbody><tr><td><div class="fd4"><div id="hvstat-equipped-set"></div></div></td></tr></tbody>';
 		leftBar.insertBefore(table, null);
 		var equippedSet = document.getElementById("hvstat-equipped-set");
 		equippedSet.style.cssText = cssText;
@@ -2300,7 +2300,7 @@ hvStat.battle.eventLog.messageTypeParams = {
 		},
 	},
 	MAGIC_MISS: {
-		regex: /^Your spell misses its mark/,
+		regex: /^Your spell misses its mark\.$/,
 		relatedMessageTypeNames: ["CAST"],
 		contentType: "text",
 		evaluationFn: function (message) {
