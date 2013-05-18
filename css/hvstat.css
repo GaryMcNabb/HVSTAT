@@ -2,7 +2,7 @@
 #hvstat-icon {
 	position: absolute;
 	top: 4px;
-	left: 916px;
+	left: 1204px;
 	cursor: pointer;
 }
 #hvstat-icon span {
@@ -148,7 +148,7 @@
 /* Scan button */
 .hvstat-scan-button {
 	top: -2px;
-	left: -32px;
+	left: 365px;
 	position: absolute;
 	width: 25px;
 	height:10px;
@@ -164,7 +164,7 @@
 
 /* Skill button */
 .hvstat-skill-button {
-	left: -32px;
+	left: 365px;
 	position: absolute;
 	background-color: #EFEEDC;
 	width: 25px;
@@ -273,7 +273,7 @@ div.hvstat-monster-spirit {
 /* Equipment tag */
 input.hvstat-equipment-tag {
 	position: absolute;
-	left: 332px;
+	left: 414px;
 	opacity: 0.8;
 	font-size: 8pt;
 	padding: 0px 0px;
