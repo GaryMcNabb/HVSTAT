@@ -3146,7 +3146,7 @@ hvStat.battle.enhancement.roundCounter = {
 		} else if (curRound === maxRound) {
 			div.className += " hvstat-round-counter-last";
 		}
-		doc.getElementById('battleform').children[0].appendChild(div);
+		doc.getElementById('mainpane').children[1].appendChild(div);
 	},
 };
 
