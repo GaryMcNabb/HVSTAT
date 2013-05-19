@@ -1968,6 +1968,36 @@ hvStat.battle.eventLog.messageTypeParams = {
 			}
 		},
 	},
+	SKILL_DEFENSE: {
+		regex: /^(.+?) (uses|casts) (.+?)\. You (evade|block|parry|resist) the attack\.$/,
+		relatedMessageTypeNames: null,
+		contentType: "text",
+		evaluationFn: function (message) {
+			var verb = message.regexResult[2];
+			if (verb === "uses") {
+				//TODO: pskills doesn't appear to be used anywhere; should it be removed?
+				hvStat.roundContext.pskills[0]++;
+			} else if (verb === "casts") {
+				hvStat.roundContext.mSpells++;
+			}
+
+			hvStat.roundContext.mAttempts++;
+			switch (message.regexResult[4]) {
+			case "evade":
+				hvStat.roundContext.pEvades++;
+				break;
+			case "block":
+				hvStat.roundContext.pBlocks++;
+				break;
+			case "parry":
+				hvStat.roundContext.pParries++;
+				break;
+			case "resist":
+				hvStat.roundContext.pResists++;
+				break;
+			}
+		},
+	},
 	MONSTER_MISS: {
 		regex: /^(.+?) misses the attack against you\.$/,
 		relatedMessageTypeNames: null,
@@ -1989,27 +2019,32 @@ hvStat.battle.eventLog.messageTypeParams = {
 			hvStat.roundContext.mAttempts++;
 			hvStat.roundContext.mHits[critical ? 1 : 0]++;
 			hvStat.roundContext.dTaken[critical ? 1 : 0] += damageAmount;
-			if (message.relatedMessage) {
-				var skillUser = message.relatedMessage.regexResult[1];
-				var skillVerb = message.relatedMessage.regexResult[2];
-				var skillName = message.relatedMessage.regexResult[3];
-				if (damageSource === skillName) {
-					// Skill hit
-					hvStat.roundContext.pskills[1]++;
-					hvStat.roundContext.pskills[2] += damageAmount;
-					if (skillVerb === "uses") {
-						hvStat.roundContext.pskills[3]++;
-						hvStat.roundContext.pskills[4] += damageAmount;
-					} else if (skillVerb === "casts") {
-						hvStat.roundContext.pskills[5]++;
-						hvStat.roundContext.pskills[6] += damageAmount;
-					}
-					if (hvStat.settings.isRememberSkillsTypes && skillUser.indexOf("Unnamed ") !== 0) {
-						var monster = hvStat.battle.monster.findByName(skillUser);
-						if (monster) {
-//							alert(monster + ":" + skillName  + ":" + skillVerb  + ":" + damageType);
-							monster.storeSkill(skillName, skillVerb, damageType);
-						}
+
+			//This check can't be broken into its own property because
+			//properties are checked in unspecified order, and if this property
+			//were checked first it would override the more specific one.
+			var skillRegex=damageSource.match(/^(.+?) (uses|casts) (.+?), and$/);
+			if (skillRegex) {
+				var skillUser = skillRegex[1];
+				var skillVerb = skillRegex[2];
+				var skillName = skillRegex[3];
+				// Skill hit
+				hvStat.roundContext.pskills[1]++;
+				hvStat.roundContext.pskills[2] += damageAmount;
+				if (skillVerb === "uses") {
+					hvStat.roundContext.pskills[0]++;
+					hvStat.roundContext.pskills[3]++;
+					hvStat.roundContext.pskills[4] += damageAmount;
+				} else if (skillVerb === "casts") {
+					hvStat.roundContext.mSpells++;
+					hvStat.roundContext.pskills[5]++;
+					hvStat.roundContext.pskills[6] += damageAmount;
+				}
+				if (hvStat.settings.isRememberSkillsTypes && skillUser.indexOf("Unnamed ") !== 0) {
+					var monster = hvStat.battle.monster.findByName(skillUser);
+					if (monster) {
+//						alert(monster + ":" + skillName  + ":" + skillVerb  + ":" + damageType);
+						monster.storeSkill(skillName, skillVerb, damageType);
 					}
 				}
 			}
@@ -2252,20 +2287,6 @@ hvStat.battle.eventLog.messageTypeParams = {
 		relatedMessageTypeNames: null,
 		contentType: "text",
 		evaluationFn: function (message) {
-		},
-	},
-	MONSTER_SKILL: {
-		regex: /^(.+?) (uses|casts) (.+)$/,
-		relatedMessageTypeNames: null,
-		contentType: "text",
-		evaluationFn: function (message) {
-			var verb = message.regexResult[2];
-			if (verb === "uses") {
-				hvStat.roundContext.pskills[0]++;
-			} else if (verb === "casts") {
-				hvStat.roundContext.mAttempts++;
-				hvStat.roundContext.mSpells++;
-			}
 		},
 	},
 	CAST: {
