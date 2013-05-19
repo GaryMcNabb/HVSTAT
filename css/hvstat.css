@@ -2,7 +2,7 @@
 #hvstat-icon {
 	position: absolute;
 	top: 4px;
-	left: 1204px;
+	left: 1150px;
 	cursor: pointer;
 }
 #hvstat-icon span {
@@ -139,9 +139,8 @@
 	font-weight: bold;
 	text-align: right;
 	position: absolute;
-	top: 6px;
+	top: 23px;
 	right: 17px;
-	padding-right: 15px;
 }
 .hvstat-round-counter-second-last { color: orange; }
 .hvstat-round-counter-last { color: red; }
