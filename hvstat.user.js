@@ -6914,7 +6914,6 @@ hvStat.inventory.equipment = {
 		];
 		var elements = document.querySelectorAll('#inv_equip div.eqdp, #item_pane div.eqdp, #equip div.eqdp, #equip_pane div.eqdp');
 		Array.prototype.forEach.call(elements, function (element) {
-			console.debug(element.getAttribute("onmouseover"));
 			var onmouseover = element.getAttribute("onmouseover");
 			var regexResult = onmouseover.match(/(One-handed Weapon|Two-handed Weapon|Staff|Shield|Cloth Armor|Light Armor|Heavy Armor)(?:\s*&nbsp;)*\s*Level/);
 			if (!regexResult) {
