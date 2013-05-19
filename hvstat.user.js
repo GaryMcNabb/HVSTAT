@@ -784,6 +784,7 @@ hvStat.storage.initialValue = {
 		isShowEndProfsMagic: true,
 		isShowEndProfsArmor: true,
 		isShowEndProfsWeapon: true,
+		isFixTurns: false,
 		autoAdvanceBattleRound: false,
 		autoAdvanceBattleRoundDelay: 500,
 
@@ -2821,10 +2822,21 @@ hvStat.battle.eventLog.TurnEvents = function (targetTurnNumber) {
 	}
 	this.turnNumber = targetTurnNumber;
 
+	var turnLowerBound;
+	if (hvStat.settings.isFixTurns) {
+		if (hvStat.roundContext.lastTurn > targetTurnNumber) {
+			//We missed the round victory screen
+			hvStat.roundContext.lastTurn = -1;
+		}
+		turnLowerBound = hvStat.roundContext.lastTurn;
+	} else {
+		turnLowerBound = targetTurnNumber-1;
+	}
+
 	for (var i = 0; i < turnNumberElements.length; i++) {
 		var turnNumberElement = turnNumberElements[i];
 		var turnNumber = Number(util.innerText(turnNumberElement));
-		if (turnNumber === targetTurnNumber) {
+		if (turnNumber > turnLowerBound) {
 			var messageElement = turnNumberElement.nextSibling.nextSibling;
 			var text = util.innerText(messageElement);
 			var innerHTML = messageElement.innerHTML;
@@ -6393,6 +6405,7 @@ function initSettingsPane() {
 		$("input[name=isShowEndProfsArmor]").removeAttr("checked");
 		$("input[name=isShowEndProfsWeapon]").removeAttr("checked");
 	}
+	if (hvStat.settings.isFixTurns) $("input[name=isFixTurns]").attr("checked", "checked");
 	if (hvStat.settings.autoAdvanceBattleRound) $("input[name=autoAdvanceBattleRound]").attr("checked", "checked");
 	$("input[name=autoAdvanceBattleRoundDelay]").attr("value", hvStat.settings.autoAdvanceBattleRoundDelay);
 
@@ -6576,6 +6589,7 @@ function initSettingsPane() {
 	$("input[name=isShowEndProfsMagic]").click(saveSettings); //isShowEndProfs added by Ilirith
 	$("input[name=isShowEndProfsArmor]").click(saveSettings); //isShowEndProfs added by Ilirith
 	$("input[name=isShowEndProfsWeapon]").click(saveSettings); //isShowEndProfs added by Ilirith
+	$("input[name=isFixTurns]").click(saveSettings);
 	$("input[name=autoAdvanceBattleRound]").click(saveSettings);
 	$("input[name=autoAdvanceBattleRoundDelay]").change(saveSettings);
 
@@ -6725,6 +6739,7 @@ function saveSettings() {
 	hvStat.settings.isShowEndProfsMagic = $("input[name=isShowEndProfsMagic]").get(0).checked; //isShowEndProfs added by Ilirith
 	hvStat.settings.isShowEndProfsArmor = $("input[name=isShowEndProfsArmor]").get(0).checked; //isShowEndProfs added by Ilirith
 	hvStat.settings.isShowEndProfsWeapon = $("input[name=isShowEndProfsWeapon]").get(0).checked; //isShowEndProfs added by Ilirith
+	hvStat.settings.isFixTurns = $("input[name=isFixTurns]").get(0).checked;
 	hvStat.settings.autoAdvanceBattleRound = $("input[name=autoAdvanceBattleRound]").get(0).checked;
 	hvStat.settings.autoAdvanceBattleRoundDelay = $("input[name=autoAdvanceBattleRoundDelay]").get(0).value;
 
