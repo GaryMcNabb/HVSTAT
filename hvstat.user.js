@@ -2008,6 +2008,22 @@ hvStat.battle.eventLog.messageTypeParams = {
 			hvStat.roundContext.pDodges++;	// correct?
 		},
 	},
+	MONSTER_SKILL_MISS: {
+		regex: /^(.+?) (uses|casts) (.+?), but misses the attack\.$/,
+		relatedMessageTypeNames: null,
+		contentType: "text",
+		evaluationFn: function (message) {
+			hvStat.roundContext.mAttempts++;
+			hvStat.roundContext.pDodges++;	// correct?
+
+			var verb = message.regexResult[2];
+			if (verb === "uses") {
+				hvStat.roundContext.pskills[0]++;
+			} else if (verb === "casts") {
+				hvStat.roundContext.mSpells++;
+			}
+		},
+	},
 	MONSTER_HIT: {
 		regex: /^(.+?) (hits|crits) you for (\d+) (.+?) damage\.$/,
 		relatedMessageTypeNames: ["MONSTER_SKILL"],
