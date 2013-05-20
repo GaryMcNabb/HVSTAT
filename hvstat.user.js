@@ -539,6 +539,39 @@ hvStat.util = {
 	curativeSpells: [
 		"Cure", "Cure II", "Cure III", "Regen", "Regen II",
 	],
+	displayedItems: [
+		"[Lesser Health Potion]", "[Scroll of Swiftness]",
+		"[Average Health Potion]", "[Scroll of Shielding]",
+		"[Greater Health Potion]", "[Scroll of Warding]",
+		"[Superior Health Potion]", "[Scroll of the Avatar]",
+		"[Heroic Health Potion]", "[Scroll of Absorption]",
+		"[Health Elixir]", "[Scroll of Shadows]",
+		"[Lesser Mana Potion]", "[Scroll of Life]",
+		"[Average Mana Potion]", "[Scroll of the Gods]",
+		"[Greater Mana Potion]", "[Infusion of Flames]",
+		"[Superior Mana Potion]", "[Infusion of Frost]",
+		"[Heroic Mana Potion]", "[Infusion of Lightning]",
+		"[Mana Elixir]", "[Infusion of Storms]",
+		"[Lesser Spirit Potion]", "[Infusion of Divinity]",
+		"[Average Spirit Potion]", "[Infusion of Darkness]",
+		"[Greater Spirit Potion]", "[Infusion of Gaia]",
+		"[Superior Spirit Potion]", "[Soul Stone]",
+		"[Heroic Spirit Potion]", "[Flower Vase]",
+		"[Spirit Elixir]", "[Last Elixir]",
+		"[Token of Blood]", "[Bubble-Gum]",
+		"[Token of Healing]", "[Crystal of Flames]",
+		"[Chaos Token]", "[Crystal of Frost]",
+		"[Crystal of Vigor]", "[Crystal of Lightning]",
+		"[Crystal of Finesse]", "[Crystal of Tempest]",
+		"[Crystal of Swiftness]", "[Crystal of Devotion]",
+		"[Crystal of Fortitude]", "[Crystal of Corruption]",
+		"[Crystal of Cunning]", "[Crystal of Quintessence]",
+		"[Crystal of Knowledge]", " ",
+		"[Voidseeker Shard]", " ",
+		"[Aether Shard]", " ",
+		"[Featherweight Shard]", " ",
+		"[Amnesia Shard]", " "
+	],
 	isElementalSpell: function (spell) {
 		return this.elementalSpells.indexOf(spell) >= 0;
 	},
@@ -972,6 +1005,7 @@ hvStat.storage.initialValue = {
 			"[Amnesia Shard]", " "
 		],
 		itemQtyArry: [],
+		itemQty: {},
 		itemDrop: 0,
 		eqArray: [],
 		eqDrop: 0,
@@ -1256,6 +1290,13 @@ hvStat.storage.Drops.prototype.getValue = function () {
 	for (var i = 0; i < obj.itemArry.length; i++) {
 		if (isNaN(parseFloat(obj.itemQtyArry[i]))) {
 			obj.itemQtyArry[i] = 0;
+		} else if (obj.itemArry[i].indexOf("[Godly ") >= 0) {
+			//Transition from Godly items to Heroic items
+			if (obj.itemQtyArry[i] !== 0)
+				obj.itemQty[hvStat.util.displayedItems[i]] = obj.itemQtyArry[i];
+			obj.itemQtyArry[i] = 0;
+		} else if (!(obj.itemArry[i] in obj.itemQty)) {
+			obj.itemQty[obj.itemArry[i]] = obj.itemQtyArry[i];
 		}
 	}
 	return obj;
@@ -2655,13 +2696,11 @@ hvStat.battle.eventLog.messageTypeParams = {
 						stuffName = regexResult[2];
 						hvStat.drops.crysDropbyBT[hvStat.roundContext.battleType]++;
 					}
-					var index = hvStat.drops.itemArry.indexOf("[" + stuffName + "]");	// Transitional
-					if (index >= 0) {
-						hvStat.drops.itemQtyArry[index] += qty;
-					} else {
-//						hvStat.drops.itemArry.push("[" + stuffName + "]");	// Transitional
-//						hvStat.drops.itemQtyArry.push(qty);
-					}
+					var bracketedName="[" + stuffName + "]";
+					if (!(bracketedName in hvStat.drops.itemQty))
+						hvStat.drops.itemQty[bracketedName] = qty;
+					else
+						hvStat.drops.itemQty[bracketedName] += qty;
 				}
 				break;
 			case "red":		// Equipment
@@ -5786,10 +5825,10 @@ function getReportItemHtml() {
 			+ '<tr><td colspan="4" style="padding-left:20px">Equipment: ' + hvStat.drops.eqDropbyBT[3] + " (" + (b3 === 0 ? 0 : (hvStat.drops.eqDropbyBT[3]*100 / b3).toFixed(2)) + "% of drops, " + (hvStat.drops.eqDropbyBT[3]*100/hvStat.drops.dropChancesbyBT[3]).toFixed(2) + '% drop chance)</td></tr>'
 			+ '<tr><td colspan="4" style="padding-left:20px">Artifacts: ' + hvStat.drops.artDropbyBT[3] + " (" + (b3 === 0 ? 0 : (hvStat.drops.artDropbyBT[3]*100 / b3).toFixed(2)) + "% of drops, " + (hvStat.drops.artDropbyBT[3]*100/hvStat.drops.dropChancesbyBT[3]).toFixed(2) + '% drop chance)</td></tr>'
 			+ '<tr><td colspan="4"><b>Item:</b></td></tr>';
-		for (var c = 0; c < hvStat.drops.itemArry.length; c = c + 2) {
-			e += "<tr><td style='width:25%;padding-left:10px'>" + hvStat.drops.itemArry[c] + "</td><td style='width:25%'>x " + hvStat.drops.itemQtyArry[c] + " (" + (hvStat.drops.itemDrop === 0 ? 0 : ((hvStat.drops.itemQtyArry[c] / hvStat.drops.itemDrop) * 100).toFixed(2)) + "%)</td>";
-			if (hvStat.drops.itemArry[c + 1] !== " ")
-				e += "<td style='width:25%;padding-left:10px'>" + hvStat.drops.itemArry[c + 1] + "</td><td style='width:25%'>x " + hvStat.drops.itemQtyArry[c + 1] + " (" + (hvStat.drops.itemDrop === 0 ? 0 : ((hvStat.drops.itemQtyArry[c + 1] / hvStat.drops.itemDrop) * 100).toFixed(2)) + "%)</td></tr>";
+		for (var c = 0; c < hvStat.util.displayedItems.length; c = c + 2) {
+			e += "<tr><td style='width:25%;padding-left:10px'>" + hvStat.util.displayedItems[c] + "</td><td style='width:25%'>x " + (hvStat.util.displayedItems[c] in hvStat.drops.itemQty ? hvStat.drops.itemQty[hvStat.util.displayedItems[c]] : 0)+ " (" + (hvStat.drops.itemDrop === 0 ? 0 : (((hvStat.util.displayedItems[c] in hvStat.drops.itemQty ? hvStat.drops.itemQty[hvStat.util.displayedItems[c]] : 0) / hvStat.drops.itemDrop) * 100).toFixed(2)) + "%)</td>";
+			if (hvStat.util.displayedItems[c + 1] !== " ")
+				e += "<td style='width:25%;padding-left:10px'>" + hvStat.util.displayedItems[c + 1] + "</td><td style='width:25%'>x " + (hvStat.util.displayedItems[c + 1] in hvStat.drops.itemQty ? hvStat.drops.itemQty[hvStat.util.displayedItems[c + 1]] : 0)+ " (" + (hvStat.drops.itemDrop === 0 ? 0 : (((hvStat.util.displayedItems[c + 1] in hvStat.drops.itemQty ? hvStat.drops.itemQty[hvStat.util.displayedItems[c + 1]] : 0) / hvStat.drops.itemDrop) * 100).toFixed(2)) + "%)</td></tr>";
 			else e += "<td></td><td></td></tr>";
 		}
 		e += '<tr><td colspan="4"><b>Equipment:</b></td></tr>';
