@@ -5,7 +5,7 @@
 // @include         http://hentaiverse.org/*
 // @exclude         http://hentaiverse.org/pages/showequip*
 // @author          Various (http://forums.e-hentai.org/index.php?showtopic=79552)
-// @version         5.5.5
+// @version         5.5.5.1
 // @resource        battle-log-type0.css                        css/battle-log-type0.css
 // @resource        battle-log-type1.css                        css/battle-log-type1.css
 // @resource        hvstat.css                                  css/hvstat.css
@@ -317,7 +317,7 @@ var hv = {
 // HV STAT object
 //------------------------------------
 var hvStat = {
-	version: "5.5.5",
+	version: "5.5.5.1",
 	setup: function () {
 		this.addStyle();
 	},
@@ -3146,7 +3146,7 @@ hvStat.battle.enhancement.roundCounter = {
 		} else if (curRound === maxRound) {
 			div.className += " hvstat-round-counter-last";
 		}
-		doc.getElementById('battleform').children[0].appendChild(div);
+		doc.getElementById('mainpane').children[1].appendChild(div);
 	},
 };
 
@@ -4035,6 +4035,7 @@ hvStat.battle.monster.Monster.prototype = {
 				if (hv.settings.useHVFontEngine) {
 					nameOuterFrameElement.style.width = "auto"; // Tweak for Firefox
 					nameInnerFrameElement.style.width = "auto"; // Tweak for Firefox
+					nameInnerFrameElement.lastChild.style.clear = "none";
 					div = document.createElement("div");
 					div.className ="hvstat-monster-status-on-hv-font";
 					div.innerHTML = statsHtml;
@@ -6914,7 +6915,6 @@ hvStat.inventory.equipment = {
 		];
 		var elements = document.querySelectorAll('#inv_equip div.eqdp, #item_pane div.eqdp, #equip div.eqdp, #equip_pane div.eqdp');
 		Array.prototype.forEach.call(elements, function (element) {
-			console.debug(element.getAttribute("onmouseover"));
 			var onmouseover = element.getAttribute("onmouseover");
 			var regexResult = onmouseover.match(/(One-handed Weapon|Two-handed Weapon|Staff|Shield|Cloth Armor|Light Armor|Heavy Armor)(?:\s*&nbsp;)*\s*Level/);
 			if (!regexResult) {
