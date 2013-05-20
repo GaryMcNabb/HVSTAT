@@ -1863,6 +1863,36 @@ hvStat.battle.eventLog = {
 		// Process events on the current turn
 		var turnEvents = new hvStat.battle.eventLog.TurnEvents();
 		console.debug(turnEvents);
+		if (hvStat.settings.isFixTurns) {
+			var turnMin;
+			if (turnEvents.turnNumber === hvStat.roundContext.lastTurn) {
+				//We have no unprocessed events, so we do nothing
+				return;
+			} else if (turnEvents.turnNumber < hvStat.roundContext.lastTurn) {
+				//We're in a new round, so start from the beginning
+				turnMin = 0;
+			} else {
+				//Start from where we left off
+				turnMin = hvStat.roundContext.lastTurn + 1;
+			}
+			var turnMax = turnEvents.turnNumber;
+
+			for (var i=turnMin; i<turnMax; ++i) {
+				var thisTurnEvents = new hvStat.battle.eventLog.TurnEvents(i);
+				console.debug(thisTurnEvents);
+				thisTurnEvents.process();
+				var meleeHitCount = thisTurnEvents.countOf("MELEE_HIT");
+				if (meleeHitCount >= 2) {
+					hvStat.roundContext.aDomino[0]++;
+					hvStat.roundContext.aDomino[1] += meleeHitCount;
+					hvStat.roundContext.aDomino[meleeHitCount]++
+				}
+				var counterCount = thisTurnEvents.countOf("COUNTER");
+				if (counterCount >= 1) {
+					hvStat.roundContext.aCounters[counterCount]++;
+				}
+			}
+		}
 		turnEvents.process();
 
 		if (turnEvents.turnNumber === 0) {
@@ -2838,21 +2868,10 @@ hvStat.battle.eventLog.TurnEvents = function (targetTurnNumber) {
 	}
 	this.turnNumber = targetTurnNumber;
 
-	var turnLowerBound;
-	if (hvStat.settings.isFixTurns) {
-		if (hvStat.roundContext.lastTurn > targetTurnNumber) {
-			//We missed the round victory screen
-			hvStat.roundContext.lastTurn = -1;
-		}
-		turnLowerBound = hvStat.roundContext.lastTurn;
-	} else {
-		turnLowerBound = targetTurnNumber-1;
-	}
-
 	for (var i = 0; i < turnNumberElements.length; i++) {
 		var turnNumberElement = turnNumberElements[i];
 		var turnNumber = Number(util.innerText(turnNumberElement));
-		if (turnNumber > turnLowerBound) {
+		if (turnNumber === targetTurnNumber) {
 			var messageElement = turnNumberElement.nextSibling.nextSibling;
 			var text = util.innerText(messageElement);
 			var innerHTML = messageElement.innerHTML;
