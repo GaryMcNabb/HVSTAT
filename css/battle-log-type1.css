@@ -60,7 +60,7 @@
 #togpane_log td[title*='hostile spell is drained'],
 #togpane_log td[title*='You drain'],
 #togpane_log td[title*='Ether Theft drains'],
-#togpane_log td[title*='Lifestream drains']
+#togpane_log td[title*='Vital Theft drains']
 {color: green;}
 
 #togpane_log td[title*='enough MP']
