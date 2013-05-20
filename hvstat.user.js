@@ -4035,6 +4035,7 @@ hvStat.battle.monster.Monster.prototype = {
 				if (hv.settings.useHVFontEngine) {
 					nameOuterFrameElement.style.width = "auto"; // Tweak for Firefox
 					nameInnerFrameElement.style.width = "auto"; // Tweak for Firefox
+					nameInnerFrameElement.lastChild.style.clear = "none";
 					div = document.createElement("div");
 					div.className ="hvstat-monster-status-on-hv-font";
 					div.innerHTML = statsHtml;
