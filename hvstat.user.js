@@ -2458,13 +2458,13 @@ hvStat.battle.eventLog.messageTypeParams = {
 			}
 		},
 	},
-	LIFESTREAM_DRAIN: {
-		regex: /^Lifestream drains (\d+|\d+\.\d+) points of health from (.+?)\.$/,
+	MONSTER_HEALTH_DRAIN: {
+		regex: /^(.+?) drains (\d+(?:\.\d+)?) points of health from (.+?)\.$/,
 		relatedMessageTypeNames: null,
 		contentType: "text",
 		evaluationFn: function (message) {
-			var drainAmount = Number(message.regexResult[1]);
-			var targetMonsterName = message.regexResult[2];
+			var drainAmount = Number(message.regexResult[2]);
+			var targetMonsterName = message.regexResult[3];
 			var monster = hvStat.battle.monster.findByName(targetMonsterName);
 			if (monster) {
 				monster.takeDamage(drainAmount);
