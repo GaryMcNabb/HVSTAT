@@ -1404,7 +1404,7 @@ hvStat.support = {
 		hvStat.storage.shrine.save();
 	},
 	confirmBeforeBattle: function () {
-		var elements = document.querySelectorAll('#arenaform img[onclick*="arenaform"]');
+		var elements = document.querySelectorAll('#mainpane img[onclick*="arenaform"]');
 		var i, element;
 		for (i = 0; i < elements.length; i++) {
 			element = elements[i];
