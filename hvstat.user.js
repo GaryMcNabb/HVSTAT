@@ -2618,12 +2618,12 @@ hvStat.battle.eventLog.messageTypeParams = {
 		},
 	},
 	MONSTER_HEAL: {
-		regex: /^(.+?) heals (.+?) for (\d+|\d+\.\d+) points of health\.$/,
+		regex: /^(.+?) casts (.+?)\, healing (.+?) for (\d+(?:\.\d+)?) points of health\.$/,
 		relatedMessageTypeNames: null,
 		contentType: "text",
 		evaluationFn: function (message) {
-			var targetMonsterName = message.regexResult[2];
-			var healingAmount = Number(message.regexResult[3]);
+			var targetMonsterName = message.regexResult[3];
+			var healingAmount = Number(message.regexResult[4]);
 			var monster = hvStat.battle.monster.findByName(targetMonsterName);
 			if (monster) {
 				monster.restoreHealthPoint(healingAmount);
