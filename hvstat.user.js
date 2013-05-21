@@ -2096,44 +2096,47 @@ hvStat.battle.eventLog.messageTypeParams = {
 		},
 	},
 	MONSTER_HIT: {
-		regex: /^(.+?) (hits|crits) you for (\d+) (.+?) damage\.$/,
-		relatedMessageTypeNames: ["MONSTER_SKILL"],
+		regex: /^((?:.(?!\, and))+?.) (hits|crits) you for (\d+(?:\.\d+)?) (.+?) damage\.$/,
+		relatedMessageTypeNames: null,
 		contentType: "text",
 		evaluationFn: function (message) {
-			var damageSource = message.regexResult[1];
 			var damageAmount = Number(message.regexResult[3]);
-			var damageType = message.regexResult[4];
 			var critical = message.regexResult[2] === "crits";
 			hvStat.roundContext.mAttempts++;
 			hvStat.roundContext.mHits[critical ? 1 : 0]++;
 			hvStat.roundContext.dTaken[critical ? 1 : 0] += damageAmount;
+		},
+	},
+	MONSTER_SKILL_HIT: {
+		regex: /^(.+?) (uses|casts) (.+?)\, and (hits|crits) you for (\d+(?:\.\d+)?) (.+?) damage\.$/,
+		relatedMessageTypeNames: null,
+		contentType: "text",
+		evaluationFn: function (message) {
+			var monsterName = message.regexResult[1];
+			var skillVerb = message.regexResult[2];
+			var skillName = message.regexResult[3];
+			var critical = message.regexResult[4] === "crits";
+			var damageAmount = Number(message.regexResult[5]);
+			var damageType = message.regexResult[6];
 
-			//This check can't be broken into its own property because
-			//properties are checked in unspecified order, and if this property
-			//were checked first it would override the more specific one.
-			var skillRegex=damageSource.match(/^(.+?) (uses|casts) (.+?), and$/);
-			if (skillRegex) {
-				var skillUser = skillRegex[1];
-				var skillVerb = skillRegex[2];
-				var skillName = skillRegex[3];
-				// Skill hit
-				hvStat.roundContext.pskills[1]++;
-				hvStat.roundContext.pskills[2] += damageAmount;
-				if (skillVerb === "uses") {
-					hvStat.roundContext.pskills[0]++;
-					hvStat.roundContext.pskills[3]++;
-					hvStat.roundContext.pskills[4] += damageAmount;
-				} else if (skillVerb === "casts") {
-					hvStat.roundContext.mSpells++;
-					hvStat.roundContext.pskills[5]++;
-					hvStat.roundContext.pskills[6] += damageAmount;
-				}
-				if (hvStat.settings.isRememberSkillsTypes && skillUser.indexOf("Unnamed ") !== 0) {
-					var monster = hvStat.battle.monster.findByName(skillUser);
-					if (monster) {
-//						alert(monster + ":" + skillName  + ":" + skillVerb  + ":" + damageType);
-						monster.storeSkill(skillName, skillVerb, damageType);
-					}
+			hvStat.roundContext.mAttempts++;
+			hvStat.roundContext.mHits[critical ? 1 : 0]++;
+			hvStat.roundContext.dTaken[critical ? 1 : 0] += damageAmount;
+
+			hvStat.roundContext.pskills[1]++;
+			hvStat.roundContext.pskills[2] += damageAmount;
+			if (skillVerb === "uses") {
+				hvStat.roundContext.pskills[3]++;
+				hvStat.roundContext.pskills[4] += damageAmount;
+			} else if (skillVerb === "casts") {
+				hvStat.roundContext.pskills[5]++;
+				hvStat.roundContext.pskills[6] += damageAmount;
+			}
+			if (hvStat.settings.isRememberSkillsTypes && monsterName.indexOf("Unnamed ") !== 0) {
+				var monster = hvStat.battle.monster.findByName(monsterName);
+				if (monster) {
+//					alert(monster + ":" + skillName  + ":" + skillVerb  + ":" + damageType);
+					monster.storeSkill(skillName, skillVerb, damageType);
 				}
 			}
 		},
