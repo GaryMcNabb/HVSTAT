@@ -2563,15 +2563,16 @@ hvStat.battle.eventLog.messageTypeParams = {
 		},
 	},
 	ABSORPTION: {
-		regex: /^The spell is absorbed. You gain (\d+) Magic Points\.$/,
+		regex: /^(.+?) casts (.+?)\, but is absorbed\. You gain (\d+(?:\.\d+)?) Magic Points\.$/,
 		relatedMessageTypeNames: null,
 		contentType: "text",
 		evaluationFn: function (message) {
 			if (hvStat.settings.isWarnAbsorbTrigger) {
 				hvStat.battle.warningSystem.enqueueAlert("Absorbing Ward has triggered.");
 			}
+			hvStat.roundContext.mSpells++;
 			hvStat.roundContext.absArry[1]++;
-			hvStat.roundContext.absArry[2] += Number(message.regexResult[1]);
+			hvStat.roundContext.absArry[2] += Number(message.regexResult[3]);
 		},
 	},
 	SPARK_OF_LIFE_SUCCESS: {
