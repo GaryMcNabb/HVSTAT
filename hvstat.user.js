@@ -539,6 +539,39 @@ hvStat.util = {
 	curativeSpells: [
 		"Cure", "Cure II", "Cure III", "Regen", "Regen II",
 	],
+	displayedItems: [
+		"[Lesser Health Potion]", "[Scroll of Swiftness]",
+		"[Average Health Potion]", "[Scroll of Shielding]",
+		"[Greater Health Potion]", "[Scroll of Warding]",
+		"[Superior Health Potion]", "[Scroll of the Avatar]",
+		"[Heroic Health Potion]", "[Scroll of Absorption]",
+		"[Health Elixir]", "[Scroll of Shadows]",
+		"[Lesser Mana Potion]", "[Scroll of Life]",
+		"[Average Mana Potion]", "[Scroll of the Gods]",
+		"[Greater Mana Potion]", "[Infusion of Flames]",
+		"[Superior Mana Potion]", "[Infusion of Frost]",
+		"[Heroic Mana Potion]", "[Infusion of Lightning]",
+		"[Mana Elixir]", "[Infusion of Storms]",
+		"[Lesser Spirit Potion]", "[Infusion of Divinity]",
+		"[Average Spirit Potion]", "[Infusion of Darkness]",
+		"[Greater Spirit Potion]", "[Infusion of Gaia]",
+		"[Superior Spirit Potion]", "[Soul Stone]",
+		"[Heroic Spirit Potion]", "[Flower Vase]",
+		"[Spirit Elixir]", "[Last Elixir]",
+		"[Token of Blood]", "[Bubble-Gum]",
+		"[Token of Healing]", "[Crystal of Flames]",
+		"[Chaos Token]", "[Crystal of Frost]",
+		"[Crystal of Vigor]", "[Crystal of Lightning]",
+		"[Crystal of Finesse]", "[Crystal of Tempest]",
+		"[Crystal of Swiftness]", "[Crystal of Devotion]",
+		"[Crystal of Fortitude]", "[Crystal of Corruption]",
+		"[Crystal of Cunning]", "[Crystal of Quintessence]",
+		"[Crystal of Knowledge]", " ",
+		"[Voidseeker Shard]", " ",
+		"[Aether Shard]", " ",
+		"[Featherweight Shard]", " ",
+		"[Amnesia Shard]", " "
+	],
 	isElementalSpell: function (spell) {
 		return this.elementalSpells.indexOf(spell) >= 0;
 	},
@@ -784,6 +817,7 @@ hvStat.storage.initialValue = {
 		isShowEndProfsMagic: true,
 		isShowEndProfsArmor: true,
 		isShowEndProfsWeapon: true,
+		isFixTurns: false,
 		autoAdvanceBattleRound: false,
 		autoAdvanceBattleRoundDelay: 500,
 
@@ -942,19 +976,19 @@ hvStat.storage.initialValue = {
 			"[Average Health Potion]", "[Scroll of Shielding]",
 			"[Greater Health Potion]", "[Scroll of Warding]",
 			"[Superior Health Potion]", "[Scroll of the Avatar]",
-			"[Godly Health Potion]", "[Scroll of Absorption]",
+			"[Heroic Health Potion]", "[Scroll of Absorption]",
 			"[Health Elixir]", "[Scroll of Shadows]",
 			"[Lesser Mana Potion]", "[Scroll of Life]",
 			"[Average Mana Potion]", "[Scroll of the Gods]",
 			"[Greater Mana Potion]", "[Infusion of Flames]",
 			"[Superior Mana Potion]", "[Infusion of Frost]",
-			"[Godly Mana Potion]", "[Infusion of Lightning]",
+			"[Heroic Mana Potion]", "[Infusion of Lightning]",
 			"[Mana Elixir]", "[Infusion of Storms]",
 			"[Lesser Spirit Potion]", "[Infusion of Divinity]",
 			"[Average Spirit Potion]", "[Infusion of Darkness]",
 			"[Greater Spirit Potion]", "[Infusion of Gaia]",
 			"[Superior Spirit Potion]", "[Soul Stone]",
-			"[Godly Spirit Potion]", "[Flower Vase]",
+			"[Heroic Spirit Potion]", "[Flower Vase]",
 			"[Spirit Elixir]", "[Last Elixir]",
 			"[Token of Blood]", "[Bubble-Gum]",
 			"[Token of Healing]", "[Crystal of Flames]",
@@ -971,6 +1005,7 @@ hvStat.storage.initialValue = {
 			"[Amnesia Shard]", " "
 		],
 		itemQtyArry: [],
+		itemQty: {},
 		itemDrop: 0,
 		eqArray: [],
 		eqDrop: 0,
@@ -1255,6 +1290,13 @@ hvStat.storage.Drops.prototype.getValue = function () {
 	for (var i = 0; i < obj.itemArry.length; i++) {
 		if (isNaN(parseFloat(obj.itemQtyArry[i]))) {
 			obj.itemQtyArry[i] = 0;
+		} else if (obj.itemArry[i].indexOf("[Godly ") >= 0) {
+			//Transition from Godly items to Heroic items
+			if (obj.itemQtyArry[i] !== 0)
+				obj.itemQty[hvStat.util.displayedItems[i]] = obj.itemQtyArry[i];
+			obj.itemQtyArry[i] = 0;
+		} else if (!(obj.itemArry[i] in obj.itemQty)) {
+			obj.itemQty[obj.itemArry[i]] = obj.itemQtyArry[i];
 		}
 	}
 	return obj;
@@ -1862,6 +1904,36 @@ hvStat.battle.eventLog = {
 		// Process events on the current turn
 		var turnEvents = new hvStat.battle.eventLog.TurnEvents();
 		console.debug(turnEvents);
+		if (hvStat.settings.isFixTurns) {
+			var turnMin;
+			if (turnEvents.turnNumber === hvStat.roundContext.lastTurn) {
+				//We have no unprocessed events, so we do nothing
+				return;
+			} else if (turnEvents.turnNumber < hvStat.roundContext.lastTurn) {
+				//We're in a new round, so start from the beginning
+				turnMin = 0;
+			} else {
+				//Start from where we left off
+				turnMin = hvStat.roundContext.lastTurn + 1;
+			}
+			var turnMax = turnEvents.turnNumber;
+
+			for (var i=turnMin; i<turnMax; ++i) {
+				var thisTurnEvents = new hvStat.battle.eventLog.TurnEvents(i);
+				console.debug(thisTurnEvents);
+				thisTurnEvents.process();
+				var meleeHitCount = thisTurnEvents.countOf("MELEE_HIT");
+				if (meleeHitCount >= 2) {
+					hvStat.roundContext.aDomino[0]++;
+					hvStat.roundContext.aDomino[1] += meleeHitCount;
+					hvStat.roundContext.aDomino[meleeHitCount]++
+				}
+				var counterCount = thisTurnEvents.countOf("COUNTER");
+				if (counterCount >= 1) {
+					hvStat.roundContext.aCounters[counterCount]++;
+				}
+			}
+		}
 		turnEvents.process();
 
 		if (turnEvents.turnNumber === 0) {
@@ -1968,6 +2040,36 @@ hvStat.battle.eventLog.messageTypeParams = {
 			}
 		},
 	},
+	SKILL_DEFENSE: {
+		regex: /^(.+?) (uses|casts) (.+?)\. You (evade|block|parry|resist) the attack\.$/,
+		relatedMessageTypeNames: null,
+		contentType: "text",
+		evaluationFn: function (message) {
+			var verb = message.regexResult[2];
+			if (verb === "uses") {
+				//TODO: pskills doesn't appear to be used anywhere; should it be removed?
+				hvStat.roundContext.pskills[0]++;
+			} else if (verb === "casts") {
+				hvStat.roundContext.mSpells++;
+			}
+
+			hvStat.roundContext.mAttempts++;
+			switch (message.regexResult[4]) {
+			case "evade":
+				hvStat.roundContext.pEvades++;
+				break;
+			case "block":
+				hvStat.roundContext.pBlocks++;
+				break;
+			case "parry":
+				hvStat.roundContext.pParries++;
+				break;
+			case "resist":
+				hvStat.roundContext.pResists++;
+				break;
+			}
+		},
+	},
 	MONSTER_MISS: {
 		regex: /^(.+?) misses the attack against you\.$/,
 		relatedMessageTypeNames: null,
@@ -1975,6 +2077,22 @@ hvStat.battle.eventLog.messageTypeParams = {
 		evaluationFn: function (message) {
 			hvStat.roundContext.mAttempts++;
 			hvStat.roundContext.pDodges++;	// correct?
+		},
+	},
+	MONSTER_SKILL_MISS: {
+		regex: /^(.+?) (uses|casts) (.+?), but misses the attack\.$/,
+		relatedMessageTypeNames: null,
+		contentType: "text",
+		evaluationFn: function (message) {
+			hvStat.roundContext.mAttempts++;
+			hvStat.roundContext.pDodges++;	// correct?
+
+			var verb = message.regexResult[2];
+			if (verb === "uses") {
+				hvStat.roundContext.pskills[0]++;
+			} else if (verb === "casts") {
+				hvStat.roundContext.mSpells++;
+			}
 		},
 	},
 	MONSTER_HIT: {
@@ -1989,27 +2107,32 @@ hvStat.battle.eventLog.messageTypeParams = {
 			hvStat.roundContext.mAttempts++;
 			hvStat.roundContext.mHits[critical ? 1 : 0]++;
 			hvStat.roundContext.dTaken[critical ? 1 : 0] += damageAmount;
-			if (message.relatedMessage) {
-				var skillUser = message.relatedMessage.regexResult[1];
-				var skillVerb = message.relatedMessage.regexResult[2];
-				var skillName = message.relatedMessage.regexResult[3];
-				if (damageSource === skillName) {
-					// Skill hit
-					hvStat.roundContext.pskills[1]++;
-					hvStat.roundContext.pskills[2] += damageAmount;
-					if (skillVerb === "uses") {
-						hvStat.roundContext.pskills[3]++;
-						hvStat.roundContext.pskills[4] += damageAmount;
-					} else if (skillVerb === "casts") {
-						hvStat.roundContext.pskills[5]++;
-						hvStat.roundContext.pskills[6] += damageAmount;
-					}
-					if (hvStat.settings.isRememberSkillsTypes && skillUser.indexOf("Unnamed ") !== 0) {
-						var monster = hvStat.battle.monster.findByName(skillUser);
-						if (monster) {
-//							alert(monster + ":" + skillName  + ":" + skillVerb  + ":" + damageType);
-							monster.storeSkill(skillName, skillVerb, damageType);
-						}
+
+			//This check can't be broken into its own property because
+			//properties are checked in unspecified order, and if this property
+			//were checked first it would override the more specific one.
+			var skillRegex=damageSource.match(/^(.+?) (uses|casts) (.+?), and$/);
+			if (skillRegex) {
+				var skillUser = skillRegex[1];
+				var skillVerb = skillRegex[2];
+				var skillName = skillRegex[3];
+				// Skill hit
+				hvStat.roundContext.pskills[1]++;
+				hvStat.roundContext.pskills[2] += damageAmount;
+				if (skillVerb === "uses") {
+					hvStat.roundContext.pskills[0]++;
+					hvStat.roundContext.pskills[3]++;
+					hvStat.roundContext.pskills[4] += damageAmount;
+				} else if (skillVerb === "casts") {
+					hvStat.roundContext.mSpells++;
+					hvStat.roundContext.pskills[5]++;
+					hvStat.roundContext.pskills[6] += damageAmount;
+				}
+				if (hvStat.settings.isRememberSkillsTypes && skillUser.indexOf("Unnamed ") !== 0) {
+					var monster = hvStat.battle.monster.findByName(skillUser);
+					if (monster) {
+//						alert(monster + ":" + skillName  + ":" + skillVerb  + ":" + damageType);
+						monster.storeSkill(skillName, skillVerb, damageType);
 					}
 				}
 			}
@@ -2252,20 +2375,6 @@ hvStat.battle.eventLog.messageTypeParams = {
 		relatedMessageTypeNames: null,
 		contentType: "text",
 		evaluationFn: function (message) {
-		},
-	},
-	MONSTER_SKILL: {
-		regex: /^(.+?) (uses|casts) (.+)$/,
-		relatedMessageTypeNames: null,
-		contentType: "text",
-		evaluationFn: function (message) {
-			var verb = message.regexResult[2];
-			if (verb === "uses") {
-				hvStat.roundContext.pskills[0]++;
-			} else if (verb === "casts") {
-				hvStat.roundContext.mAttempts++;
-				hvStat.roundContext.mSpells++;
-			}
 		},
 	},
 	CAST: {
@@ -2587,13 +2696,11 @@ hvStat.battle.eventLog.messageTypeParams = {
 						stuffName = regexResult[2];
 						hvStat.drops.crysDropbyBT[hvStat.roundContext.battleType]++;
 					}
-					var index = hvStat.drops.itemArry.indexOf("[" + stuffName + "]");	// Transitional
-					if (index >= 0) {
-						hvStat.drops.itemQtyArry[index] += qty;
-					} else {
-//						hvStat.drops.itemArry.push("[" + stuffName + "]");	// Transitional
-//						hvStat.drops.itemQtyArry.push(qty);
-					}
+					var bracketedName="[" + stuffName + "]";
+					if (!(bracketedName in hvStat.drops.itemQty))
+						hvStat.drops.itemQty[bracketedName] = qty;
+					else
+						hvStat.drops.itemQty[bracketedName] += qty;
 				}
 				break;
 			case "red":		// Equipment
@@ -5719,10 +5826,10 @@ function getReportItemHtml() {
 			+ '<tr><td colspan="4" style="padding-left:20px">Equipment: ' + hvStat.drops.eqDropbyBT[3] + " (" + (b3 === 0 ? 0 : (hvStat.drops.eqDropbyBT[3]*100 / b3).toFixed(2)) + "% of drops, " + (hvStat.drops.eqDropbyBT[3]*100/hvStat.drops.dropChancesbyBT[3]).toFixed(2) + '% drop chance)</td></tr>'
 			+ '<tr><td colspan="4" style="padding-left:20px">Artifacts: ' + hvStat.drops.artDropbyBT[3] + " (" + (b3 === 0 ? 0 : (hvStat.drops.artDropbyBT[3]*100 / b3).toFixed(2)) + "% of drops, " + (hvStat.drops.artDropbyBT[3]*100/hvStat.drops.dropChancesbyBT[3]).toFixed(2) + '% drop chance)</td></tr>'
 			+ '<tr><td colspan="4"><b>Item:</b></td></tr>';
-		for (var c = 0; c < hvStat.drops.itemArry.length; c = c + 2) {
-			e += "<tr><td style='width:25%;padding-left:10px'>" + hvStat.drops.itemArry[c] + "</td><td style='width:25%'>x " + hvStat.drops.itemQtyArry[c] + " (" + (hvStat.drops.itemDrop === 0 ? 0 : ((hvStat.drops.itemQtyArry[c] / hvStat.drops.itemDrop) * 100).toFixed(2)) + "%)</td>";
-			if (hvStat.drops.itemArry[c + 1] !== " ")
-				e += "<td style='width:25%;padding-left:10px'>" + hvStat.drops.itemArry[c + 1] + "</td><td style='width:25%'>x " + hvStat.drops.itemQtyArry[c + 1] + " (" + (hvStat.drops.itemDrop === 0 ? 0 : ((hvStat.drops.itemQtyArry[c + 1] / hvStat.drops.itemDrop) * 100).toFixed(2)) + "%)</td></tr>";
+		for (var c = 0; c < hvStat.util.displayedItems.length; c = c + 2) {
+			e += "<tr><td style='width:25%;padding-left:10px'>" + hvStat.util.displayedItems[c] + "</td><td style='width:25%'>x " + (hvStat.util.displayedItems[c] in hvStat.drops.itemQty ? hvStat.drops.itemQty[hvStat.util.displayedItems[c]] : 0)+ " (" + (hvStat.drops.itemDrop === 0 ? 0 : (((hvStat.util.displayedItems[c] in hvStat.drops.itemQty ? hvStat.drops.itemQty[hvStat.util.displayedItems[c]] : 0) / hvStat.drops.itemDrop) * 100).toFixed(2)) + "%)</td>";
+			if (hvStat.util.displayedItems[c + 1] !== " ")
+				e += "<td style='width:25%;padding-left:10px'>" + hvStat.util.displayedItems[c + 1] + "</td><td style='width:25%'>x " + (hvStat.util.displayedItems[c + 1] in hvStat.drops.itemQty ? hvStat.drops.itemQty[hvStat.util.displayedItems[c + 1]] : 0)+ " (" + (hvStat.drops.itemDrop === 0 ? 0 : (((hvStat.util.displayedItems[c + 1] in hvStat.drops.itemQty ? hvStat.drops.itemQty[hvStat.util.displayedItems[c + 1]] : 0) / hvStat.drops.itemDrop) * 100).toFixed(2)) + "%)</td></tr>";
 			else e += "<td></td><td></td></tr>";
 		}
 		e += '<tr><td colspan="4"><b>Equipment:</b></td></tr>';
@@ -6373,6 +6480,7 @@ function initSettingsPane() {
 		$("input[name=isShowEndProfsArmor]").removeAttr("checked");
 		$("input[name=isShowEndProfsWeapon]").removeAttr("checked");
 	}
+	if (hvStat.settings.isFixTurns) $("input[name=isFixTurns]").attr("checked", "checked");
 	if (hvStat.settings.autoAdvanceBattleRound) $("input[name=autoAdvanceBattleRound]").attr("checked", "checked");
 	$("input[name=autoAdvanceBattleRoundDelay]").attr("value", hvStat.settings.autoAdvanceBattleRoundDelay);
 
@@ -6556,6 +6664,7 @@ function initSettingsPane() {
 	$("input[name=isShowEndProfsMagic]").click(saveSettings); //isShowEndProfs added by Ilirith
 	$("input[name=isShowEndProfsArmor]").click(saveSettings); //isShowEndProfs added by Ilirith
 	$("input[name=isShowEndProfsWeapon]").click(saveSettings); //isShowEndProfs added by Ilirith
+	$("input[name=isFixTurns]").click(saveSettings);
 	$("input[name=autoAdvanceBattleRound]").click(saveSettings);
 	$("input[name=autoAdvanceBattleRoundDelay]").change(saveSettings);
 
@@ -6705,6 +6814,7 @@ function saveSettings() {
 	hvStat.settings.isShowEndProfsMagic = $("input[name=isShowEndProfsMagic]").get(0).checked; //isShowEndProfs added by Ilirith
 	hvStat.settings.isShowEndProfsArmor = $("input[name=isShowEndProfsArmor]").get(0).checked; //isShowEndProfs added by Ilirith
 	hvStat.settings.isShowEndProfsWeapon = $("input[name=isShowEndProfsWeapon]").get(0).checked; //isShowEndProfs added by Ilirith
+	hvStat.settings.isFixTurns = $("input[name=isFixTurns]").get(0).checked;
 	hvStat.settings.autoAdvanceBattleRound = $("input[name=autoAdvanceBattleRound]").get(0).checked;
 	hvStat.settings.autoAdvanceBattleRoundDelay = $("input[name=autoAdvanceBattleRoundDelay]").get(0).value;
 
