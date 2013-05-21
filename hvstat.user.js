@@ -2428,13 +2428,6 @@ hvStat.battle.eventLog.messageTypeParams = {
 			hvStat.roundContext.sResists++;	// correct?
 		},
 	},
-	SPELL_WEAVING_FAILURE: {
-		regex: /^You fail to weave the spell into the existing effects on the target\.$/,
-		relatedMessageTypeNames: null,
-		contentType: "text",
-		evaluationFn: function (message) {
-		},
-	},
 	DRAIN: {
 		regex: /^You drain (\d+|\d+\.\d+) (HP|MP|SP) from (.+)$/,
 		relatedMessageTypeNames: null,
