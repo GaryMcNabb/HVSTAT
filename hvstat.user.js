@@ -2409,7 +2409,7 @@ hvStat.battle.eventLog.messageTypeParams = {
 		},
 	},
 	MAGIC_MISS: {
-		regex: /^Your spell misses its mark\.$/,
+		regex: /^Your spell fails to connect\.$/,
 		relatedMessageTypeNames: ["CAST"],
 		contentType: "text",
 		evaluationFn: function (message) {
