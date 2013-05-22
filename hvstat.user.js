@@ -1372,6 +1372,66 @@ hvStat.storage.equipmentTags = new hvStat.storage.Item("HVTags", hvStat.storage.
 hvStat.storage.oldMonsterDatabase = new hvStat.storage.Item("HVDatabase", hvStat.storage.initialValue.oldMonsterDatabase);
 
 //------------------------------------
+// Version Checking Functions
+//------------------------------------
+hvStat.versions = {
+	checkVersion: function () {
+		var storedVersion = hvStat.storage.getItem("HVVersion");
+		if (storedVersion === null) {
+			//Oldest version since migration started
+			storedVersion = "5.5.5.1";
+		}
+		if (storedVersion === hvStat.version) {
+			return;
+		}
+		var functions=[];
+		for (var name in hvStat.versions.functions) {
+			if (name.indexOf("from_") === 0) {
+				var funcVer = hvStat.versions.versionStringToArray(name.substring(5));
+				if (hvStat.versions.versionCompare(storedVersion, funcVer) <= 0) {
+					functions.push({ver: funcVer, func: hvStat.versions.functions[name]});
+				}
+			}
+		}
+		functions.sort(hvStat.versions.versionCompare);
+		for (var i = 0; i < functions.length; ++i) {
+			functions[i].func();
+		}
+		hvStat.storage.setItem("HVVersion", hvStat.version);
+	},
+	versionStringToArray: function (ver) {
+		return ver.split(/[._]/).map(function (str){return Number(str);});
+	},
+	versionCompare: function (v1, v2) {
+		if (typeof(v1) === "string") {
+			v1 = hvStat.versions.versionStringToArray(v1);
+		}
+		if (typeof(v2) === "string") {
+			v2 = hvStat.versions.versionStringToArray(v2);
+		}
+		for (var i = 0; i < v2.length; ++i) {
+			if (v1.length <= i) {
+				//v1 is shorter than v2, and they have a matching initial sequence
+				return -1;
+			}
+			if (v1[i] < v2[i]) {
+				return -1;
+			}
+			if (v1[i] > v2[i]) {
+				return 1;
+			}
+		}
+		if (v1.length === v2.length) {
+			return 0;
+		}
+		return 1;
+	},
+};
+
+hvStat.versions.functions = {
+};
+
+//------------------------------------
 // Support Functions
 //------------------------------------
 hvStat.support = {
@@ -6964,6 +7024,7 @@ function HVMasterReset() {
 		"HVShrine",
 		"HVStats",
 		"HVTags",
+		"HVVersion",
 		"inventoryAlert",
 	];
 	var i = keys.length;
@@ -7136,6 +7197,8 @@ hvStat.startup = {
 		hvStat.database.openIndexedDB(function (event) {
 			hvStat.database.idbAccessQueue.execute();
 		});
+		//Version checking doesn't depend on the DOM, so do it early
+		hvStat.versions.checkVersion();
 		if (document.readyState !== "loading") {
 			hvStat.startup.phase2();
 		} else {
