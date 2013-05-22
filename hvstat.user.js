@@ -1215,12 +1215,6 @@ hvStat.storage.Item.prototype = {
 						storedValue[key] = util.clone(defaultValue[key]);
 					}
 				});
-				// Remove disused properties
-				hvStat.util.forEachProperty(this._defaultValue, this._value, function (defaultValue, storedValue, key) {
-					if (defaultValue[key] === undefined) {
-						delete storedValue[key];
-					}
-				});
 			}
 		}
 		return this._value;
