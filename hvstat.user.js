@@ -2191,7 +2191,7 @@ hvStat.battle.eventLog.messageTypeParams = {
 		},
 	},
 	MONSTER_EFFECT_EXPLOSION: {
-		regex: /^(.+?) explodes for (\d+) (.+?) damage$/,
+		regex: /^(.+?) explodes for (\d+(?:\.\d+)?) (.+?) damage$/,
 		relatedMessageTypeNames: ["HIT"],
 		contentType: "text",
 		evaluationFn: function (message) {
@@ -2208,7 +2208,7 @@ hvStat.battle.eventLog.messageTypeParams = {
 		},
 	},
 	MELEE_HIT: {
-		regex: /^You (hit|crit) (.+?) for (\d+) (.+?) damage\.$/,
+		regex: /^You (hit|crit) (.+?) for (\d+(?:\.\d+)?) (.+?) damage\.$/,
 		relatedMessageTypeNames: null,
 		contentType: "text",
 		evaluationFn: function (message) {
@@ -2225,7 +2225,7 @@ hvStat.battle.eventLog.messageTypeParams = {
 		},
 	},
 	HIT: {
-		regex: /^(.+?) (hits|crits|blasts) (?!you)(.+?) for (\d+)(?: (.+?))? damage\.$/,
+		regex: /^(.+?) (hits|crits|blasts) (?!you)(.+?) for (\d+(?:\.\d+)?)(?: (.+?))? damage\.$/,
 		relatedMessageTypeNames: null,
 		contentType: "text",
 		evaluationFn: function (message) {
@@ -2271,7 +2271,7 @@ hvStat.battle.eventLog.messageTypeParams = {
 		},
 	},
 	RESTORATION: {
-		regex: /^(.+?) restores (\d+) points of (.+?)\.$/,
+		regex: /^(.+?) restores (\d+(?:\.\d+)?) points of (.+?)\.$/,
 		relatedMessageTypeNames: null,
 		contentType: "text",
 		evaluationFn: function (message) {
@@ -2286,7 +2286,7 @@ hvStat.battle.eventLog.messageTypeParams = {
 		},
 	},
 	COUNTER: {
-		regex: /^You counter (.+?) for (\d+) points of (.+?) damage\.$/,
+		regex: /^You counter (.+?) for (\d+(?:\.\d+)?) points of (.+?) damage\.$/,
 		relatedMessageTypeNames: null,
 		contentType: "text",
 		evaluationFn: function (message) {
@@ -2304,7 +2304,7 @@ hvStat.battle.eventLog.messageTypeParams = {
 		},
 	},
 	SPIRIT_SHIELD_SUCCESS: {
-		regex: /^Your spirit shield absorbs (\d+) points of damage from the attack into (\d+|\d+\.\d+) points of spirit damage\.$/,
+		regex: /^Your spirit shield absorbs (\d+(?:\.\d+)?) points of damage from the attack into (\d+(?:\.\d+)?) points of spirit damage\.$/,
 		relatedMessageTypeNames: null,
 		contentType: "text",
 		evaluationFn: function (message) {
@@ -2432,7 +2432,7 @@ hvStat.battle.eventLog.messageTypeParams = {
 		},
 	},
 	DRAIN: {
-		regex: /^You drain (\d+|\d+\.\d+) (HP|MP|SP) from (.+)$/,
+		regex: /^You drain (\d+(?:\.\d+)?) (HP|MP|SP) from (.+)$/,
 		relatedMessageTypeNames: null,
 		contentType: "text",
 		evaluationFn: function (message) {
@@ -2534,14 +2534,14 @@ hvStat.battle.eventLog.messageTypeParams = {
 		},
 	},
 	RECOVERY: {
-		regex: /^Recovered (\d+) points of (.+)\.$/,
+		regex: /^Recovered (\d+(?:\.\d+)?) points of (.+)\.$/,
 		relatedMessageTypeNames: null,
 		contentType: "text",
 		evaluationFn: function (message) {
 		},
 	},
 	CURE: {
-		regex: /^You are healed for (\d+) Health Points\.$/,
+		regex: /^You are healed for (\d+(?:\.\d+)?) Health Points\.$/,
 		relatedMessageTypeNames: ["CAST"],
 		contentType: "text",
 		evaluationFn: function (message, relatedLog) {
@@ -2642,7 +2642,7 @@ hvStat.battle.eventLog.messageTypeParams = {
 		},
 	},
 	SPAWNING_MONSTER: {
-		regex: /^Spawned Monster ([A-J]): MID=(\d+) \((.+?)\) LV=(\d+) HP=(\d+|\d+\.\d+)$/,
+		regex: /^Spawned Monster ([A-J]): MID=(\d+) \((.+?)\) LV=(\d+) HP=(\d+(?:\.\d+)?)$/,
 		relatedMessageTypeNames: null,
 		contentType: "text",
 		evaluationFn: function (message) {
