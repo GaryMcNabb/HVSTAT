@@ -1429,6 +1429,13 @@ hvStat.versions = {
 };
 
 hvStat.versions.functions = {
+	from_5_5_5_1 : function () {
+		while (hvStat.overview.expbyBT.length < 4)
+			hvStat.overview.expbyBT.push(0);
+		while (hvStat.overview.creditsbyBT.length < 4)
+			hvStat.overview.creditsbyBT.push(0);
+		hvStat.storage.overview.save();
+	},
 };
 
 //------------------------------------
