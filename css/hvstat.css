@@ -316,6 +316,15 @@ input.hvstat-equipment-tag-new {
 	font-style: italic;
 }
 
+.hvstat-table-row-divider th,
+.hvstat-table-row-divider td {
+	border-top: 1px solid #5C0D11;
+}
+
+.hvstat-table-coloumn-total {
+	font-style: italic;
+}
+
 #hvstat-arena-rewards-pane ul,
 #hvstat-shrine-pane ul {
 	list-style-type: none;
@@ -323,6 +332,8 @@ input.hvstat-equipment-tag-new {
 
 #hvstat-arena-rewards-pane ul,
 #hvstat-arena-rewards-pane li,
+#hvstat-drops-pane ul,
+#hvstat-drops-pane li,
 #hvstat-shrine-pane ul,
 #hvstat-shrine-pane li {
 	margin: 0px;
@@ -330,12 +341,14 @@ input.hvstat-equipment-tag-new {
 }
 
 #hvstat-overview-pane table,
+#hvstat-drops-pane table,
 #hvstat-arena-rewards-pane table,
 #hvstat-shrine-artifact-trade {
 	border-collapse: collapse;
 }
 
 #hvstat-overview-pane thead th,
+#hvstat-drops-pane thead th,
 #hvstat-arena-rewards-pane thead th,
 #hvstat-shrine-artifact-trade thead th {
 	border-bottom: 1px solid #5C0D11;
@@ -343,6 +356,8 @@ input.hvstat-equipment-tag-new {
 
 #hvstat-overview-pane th,
 #hvstat-overview-pane td,
+#hvstat-drops-pane th,
+#hvstat-drops-pane td,
 #hvstat-arena-rewards-pane th,
 #hvstat-arena-rewards-pane td,
 #hvstat-shrine-artifact-trade th,
@@ -387,6 +402,41 @@ input.hvstat-equipment-tag-new {
 
 #hvstat-overview-drops-equipments span:nth-of-type(1) { color: Red; }
 #hvstat-overview-drops-artifacts span:nth-of-type(1) { color: Blue; }
+
+#hvstat-drops-pane h2 {
+	margin-top: 4px;
+	margin-bottom: 4px;
+}
+#hvstat-drops-overview > h2 + div,
+	margin-top: -30px;
+	margin-left: 150px;
+}
+
+#hvstat-drops-overview thead > tr:nth-of-type(1) > th:nth-of-type(2),
+#hvstat-drops-overview thead > tr:nth-of-type(1) > th:nth-of-type(3),
+#hvstat-drops-overview thead > tr:nth-of-type(1) > th:nth-of-type(4),
+#hvstat-drops-overview thead > tr:nth-of-type(1) > th:nth-of-type(5),
+#hvstat-drops-overview thead > tr:nth-of-type(1) > th:nth-of-type(6) {
+	border-left: 1px solid #5C0D11;
+	text-align: center;
+}
+
+#hvstat-drops-overview thead > tr:nth-of-type(2) > th:nth-of-type(4),
+#hvstat-drops-overview thead > tr:nth-of-type(2) > th:nth-of-type(7),
+#hvstat-drops-overview thead > tr:nth-of-type(2) > th:nth-of-type(10),
+#hvstat-drops-overview thead > tr:nth-of-type(2) > th:nth-of-type(13),
+#hvstat-drops-overview tbody td:nth-of-type(3n+1) {
+	border-left: 1px solid #5C0D11;
+}
+
+#hvstat-drops-equipments thead th:nth-child(2),
+#hvstat-drops-equipments thead th:nth-child(3),
+#hvstat-drops-equipments thead th:nth-child(6),
+#hvstat-drops-equipments tbody td:nth-child(2),
+#hvstat-drops-equipments tbody td:nth-child(3),
+#hvstat-drops-equipments tbody td:nth-child(6) {
+	text-align: left;
+}
 
 #hvstat-settings-pane .hvstat-vertical-top {
 	vertical-align: top;
