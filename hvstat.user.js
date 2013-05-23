@@ -971,40 +971,6 @@ hvStat.storage.initialValue = {
 	// Drops object
 	drops: {
 		dropChances: 0,
-		itemArry: [
-			"[Lesser Health Potion]", "[Scroll of Swiftness]",
-			"[Average Health Potion]", "[Scroll of Shielding]",
-			"[Greater Health Potion]", "[Scroll of Warding]",
-			"[Superior Health Potion]", "[Scroll of the Avatar]",
-			"[Heroic Health Potion]", "[Scroll of Absorption]",
-			"[Health Elixir]", "[Scroll of Shadows]",
-			"[Lesser Mana Potion]", "[Scroll of Life]",
-			"[Average Mana Potion]", "[Scroll of the Gods]",
-			"[Greater Mana Potion]", "[Infusion of Flames]",
-			"[Superior Mana Potion]", "[Infusion of Frost]",
-			"[Heroic Mana Potion]", "[Infusion of Lightning]",
-			"[Mana Elixir]", "[Infusion of Storms]",
-			"[Lesser Spirit Potion]", "[Infusion of Divinity]",
-			"[Average Spirit Potion]", "[Infusion of Darkness]",
-			"[Greater Spirit Potion]", "[Infusion of Gaia]",
-			"[Superior Spirit Potion]", "[Soul Stone]",
-			"[Heroic Spirit Potion]", "[Flower Vase]",
-			"[Spirit Elixir]", "[Last Elixir]",
-			"[Token of Blood]", "[Bubble-Gum]",
-			"[Token of Healing]", "[Crystal of Flames]",
-			"[Chaos Token]", "[Crystal of Frost]",
-			"[Crystal of Vigor]", "[Crystal of Lightning]",
-			"[Crystal of Finesse]", "[Crystal of Tempest]",
-			"[Crystal of Swiftness]", "[Crystal of Devotion]",
-			"[Crystal of Fortitude]", "[Crystal of Corruption]",
-			"[Crystal of Cunning]", "[Crystal of Quintessence]",
-			"[Crystal of Knowledge]", " ",
-			"[Voidseeker Shard]", " ",
-			"[Aether Shard]", " ",
-			"[Featherweight Shard]", " ",
-			"[Amnesia Shard]", " "
-		],
-		itemQtyArry: [],
 		itemQty: {},
 		itemDrop: 0,
 		eqArray: [],
@@ -1281,18 +1247,6 @@ hvStat.storage.Drops.prototype = Object.create(hvStat.storage.Item.prototype);
 hvStat.storage.Drops.prototype.constructor = hvStat.storage.Drops;
 hvStat.storage.Drops.prototype.getValue = function () {
 	var obj = hvStat.storage.Item.prototype.getValue.apply(this);
-	for (var i = 0; i < obj.itemArry.length; i++) {
-		if (isNaN(parseFloat(obj.itemQtyArry[i]))) {
-			obj.itemQtyArry[i] = 0;
-		} else if (obj.itemArry[i].indexOf("[Godly ") >= 0) {
-			//Transition from Godly items to Heroic items
-			if (obj.itemQtyArry[i] !== 0)
-				obj.itemQty[hvStat.util.displayedItems[i]] = obj.itemQtyArry[i];
-			obj.itemQtyArry[i] = 0;
-		} else if (!(obj.itemArry[i] in obj.itemQty)) {
-			obj.itemQty[obj.itemArry[i]] = obj.itemQtyArry[i];
-		}
-	}
 	return obj;
 };
 
@@ -1435,6 +1389,21 @@ hvStat.versions.functions = {
 		while (hvStat.overview.creditsbyBT.length < 4)
 			hvStat.overview.creditsbyBT.push(0);
 		hvStat.storage.overview.save();
+
+		if ("itemArry" in hvStat.drops) {
+			for (var i = 0; i < hvStat.drops.itemArry.length; ++i) {
+				var name = hvStat.drops.itemArry[i].replace("Godly", "Heroic");
+				var qty = hvStat.drops.itemQtyArry[i];
+				if (!(name in hvStat.drops.itemQty)) {
+					hvStat.drops.itemQty[name] = qty;
+				} else {
+					hvStat.drops.itemQty[name] += qty;
+				}
+			}
+			delete hvStat.drops.itemArry;
+			delete hvStat.drops.itemQtyArry;
+			hvStat.storage.drops.save();
+		}
 	},
 };
 
@@ -2755,10 +2724,11 @@ hvStat.battle.eventLog.messageTypeParams = {
 						hvStat.drops.crysDropbyBT[hvStat.roundContext.battleType]++;
 					}
 					var bracketedName="[" + stuffName + "]";
-					if (!(bracketedName in hvStat.drops.itemQty))
+					if (!(bracketedName in hvStat.drops.itemQty)) {
 						hvStat.drops.itemQty[bracketedName] = qty;
-					else
+					} else {
 						hvStat.drops.itemQty[bracketedName] += qty;
+					}
 				}
 				break;
 			case "red":		// Equipment
