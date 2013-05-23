@@ -541,36 +541,30 @@ hvStat.util = {
 	],
 	displayedItems: [
 		"[Lesser Health Potion]", "[Scroll of Swiftness]",
-		"[Average Health Potion]", "[Scroll of Shielding]",
-		"[Greater Health Potion]", "[Scroll of Warding]",
-		"[Superior Health Potion]", "[Scroll of the Avatar]",
-		"[Heroic Health Potion]", "[Scroll of Absorption]",
-		"[Health Elixir]", "[Scroll of Shadows]",
-		"[Lesser Mana Potion]", "[Scroll of Life]",
-		"[Average Mana Potion]", "[Scroll of the Gods]",
-		"[Greater Mana Potion]", "[Infusion of Flames]",
-		"[Superior Mana Potion]", "[Infusion of Frost]",
-		"[Heroic Mana Potion]", "[Infusion of Lightning]",
-		"[Mana Elixir]", "[Infusion of Storms]",
-		"[Lesser Spirit Potion]", "[Infusion of Divinity]",
-		"[Average Spirit Potion]", "[Infusion of Darkness]",
-		"[Greater Spirit Potion]", "[Infusion of Gaia]",
-		"[Superior Spirit Potion]", "[Soul Stone]",
-		"[Heroic Spirit Potion]", "[Flower Vase]",
-		"[Spirit Elixir]", "[Last Elixir]",
-		"[Token of Blood]", "[Bubble-Gum]",
-		"[Token of Healing]", "[Crystal of Flames]",
-		"[Chaos Token]", "[Crystal of Frost]",
-		"[Crystal of Vigor]", "[Crystal of Lightning]",
-		"[Crystal of Finesse]", "[Crystal of Tempest]",
-		"[Crystal of Swiftness]", "[Crystal of Devotion]",
-		"[Crystal of Fortitude]", "[Crystal of Corruption]",
-		"[Crystal of Cunning]", "[Crystal of Quintessence]",
-		"[Crystal of Knowledge]", " ",
-		"[Voidseeker Shard]", " ",
-		"[Aether Shard]", " ",
-		"[Featherweight Shard]", " ",
-		"[Amnesia Shard]", " "
+		"[Greater Health Potion]", "[Scroll of Protection]",
+		"[Heroic Health Potion]", "[Scroll of the Avatar]",
+		"[Health Elixir]", "[Scroll of Absorption]",
+		"[Lesser Mana Potion]", "[Scroll of Shadows]",
+		"[Greater Mana Potion]", "[Scroll of Life]",
+		"[Heroic Mana Potion]", "[Scroll of the Gods]",
+		"[Mana Elixir]", "[Infusion of Flames]",
+		"[Lesser Spirit Potion]", "[Infusion of Frost]",
+		"[Greater Spirit Potion]", "[Infusion of Lightning]",
+		"[Heroic Spirit Potion]", "[Infusion of Storms]",
+		"[Spirit Elixir]", "[Infusion of Divinity]",
+		"[Last Elixir]", "[Infusion of Darkness]",
+		"[Token of Blood]", "[Flower Vase]",
+		"[Chaos Token]", "[Bubble-Gum]",
+		"[Crystal of Vigor]", "[Crystal of Flames]",
+		"[Crystal of Finesse]", "[Crystal of Frost]",
+		"[Crystal of Swiftness]", "[Crystal of Lightning]",
+		"[Crystal of Fortitude]", "[Crystal of Tempest]",
+		"[Crystal of Cunning]", "[Crystal of Devotion]",
+		"[Crystal of Knowledge]", "[Crystal of Corruption]",
+		"[Voidseeker Shard]", "[Monster Chow]",
+		"[Aether Shard]", "[Monster Edibles]",
+		"[Featherweight Shard]", "[Monster Cuisine]",
+		"[Amnesia Shard]", "[Happy Pills]"
 	],
 	isElementalSpell: function (spell) {
 		return this.elementalSpells.indexOf(spell) >= 0;
@@ -971,40 +965,6 @@ hvStat.storage.initialValue = {
 	// Drops object
 	drops: {
 		dropChances: 0,
-		itemArry: [
-			"[Lesser Health Potion]", "[Scroll of Swiftness]",
-			"[Average Health Potion]", "[Scroll of Shielding]",
-			"[Greater Health Potion]", "[Scroll of Warding]",
-			"[Superior Health Potion]", "[Scroll of the Avatar]",
-			"[Heroic Health Potion]", "[Scroll of Absorption]",
-			"[Health Elixir]", "[Scroll of Shadows]",
-			"[Lesser Mana Potion]", "[Scroll of Life]",
-			"[Average Mana Potion]", "[Scroll of the Gods]",
-			"[Greater Mana Potion]", "[Infusion of Flames]",
-			"[Superior Mana Potion]", "[Infusion of Frost]",
-			"[Heroic Mana Potion]", "[Infusion of Lightning]",
-			"[Mana Elixir]", "[Infusion of Storms]",
-			"[Lesser Spirit Potion]", "[Infusion of Divinity]",
-			"[Average Spirit Potion]", "[Infusion of Darkness]",
-			"[Greater Spirit Potion]", "[Infusion of Gaia]",
-			"[Superior Spirit Potion]", "[Soul Stone]",
-			"[Heroic Spirit Potion]", "[Flower Vase]",
-			"[Spirit Elixir]", "[Last Elixir]",
-			"[Token of Blood]", "[Bubble-Gum]",
-			"[Token of Healing]", "[Crystal of Flames]",
-			"[Chaos Token]", "[Crystal of Frost]",
-			"[Crystal of Vigor]", "[Crystal of Lightning]",
-			"[Crystal of Finesse]", "[Crystal of Tempest]",
-			"[Crystal of Swiftness]", "[Crystal of Devotion]",
-			"[Crystal of Fortitude]", "[Crystal of Corruption]",
-			"[Crystal of Cunning]", "[Crystal of Quintessence]",
-			"[Crystal of Knowledge]", " ",
-			"[Voidseeker Shard]", " ",
-			"[Aether Shard]", " ",
-			"[Featherweight Shard]", " ",
-			"[Amnesia Shard]", " "
-		],
-		itemQtyArry: [],
 		itemQty: {},
 		itemDrop: 0,
 		eqArray: [],
@@ -1215,12 +1175,6 @@ hvStat.storage.Item.prototype = {
 						storedValue[key] = util.clone(defaultValue[key]);
 					}
 				});
-				// Remove disused properties
-				hvStat.util.forEachProperty(this._defaultValue, this._value, function (defaultValue, storedValue, key) {
-					if (defaultValue[key] === undefined) {
-						delete storedValue[key];
-					}
-				});
 			}
 		}
 		return this._value;
@@ -1287,18 +1241,6 @@ hvStat.storage.Drops.prototype = Object.create(hvStat.storage.Item.prototype);
 hvStat.storage.Drops.prototype.constructor = hvStat.storage.Drops;
 hvStat.storage.Drops.prototype.getValue = function () {
 	var obj = hvStat.storage.Item.prototype.getValue.apply(this);
-	for (var i = 0; i < obj.itemArry.length; i++) {
-		if (isNaN(parseFloat(obj.itemQtyArry[i]))) {
-			obj.itemQtyArry[i] = 0;
-		} else if (obj.itemArry[i].indexOf("[Godly ") >= 0) {
-			//Transition from Godly items to Heroic items
-			if (obj.itemQtyArry[i] !== 0)
-				obj.itemQty[hvStat.util.displayedItems[i]] = obj.itemQtyArry[i];
-			obj.itemQtyArry[i] = 0;
-		} else if (!(obj.itemArry[i] in obj.itemQty)) {
-			obj.itemQty[obj.itemArry[i]] = obj.itemQtyArry[i];
-		}
-	}
 	return obj;
 };
 
@@ -1376,6 +1318,88 @@ hvStat.storage.equipmentTags = new hvStat.storage.Item("HVTags", hvStat.storage.
 
 // Old Monster Database object
 hvStat.storage.oldMonsterDatabase = new hvStat.storage.Item("HVDatabase", hvStat.storage.initialValue.oldMonsterDatabase);
+
+//------------------------------------
+// Version Checking Functions
+//------------------------------------
+hvStat.versions = {
+	checkVersion: function () {
+		var storedVersion = hvStat.storage.getItem("HVVersion");
+		if (storedVersion === null) {
+			//Oldest version since migration started
+			storedVersion = "5.5.5.1";
+		}
+		if (storedVersion === hvStat.version) {
+			return;
+		}
+		var functions=[];
+		for (var name in hvStat.versions.functions) {
+			if (name.indexOf("from_") === 0) {
+				var funcVer = hvStat.versions.versionStringToArray(name.substring(5));
+				if (hvStat.versions.versionCompare(storedVersion, funcVer) <= 0) {
+					functions.push({ver: funcVer, func: hvStat.versions.functions[name]});
+				}
+			}
+		}
+		functions.sort(hvStat.versions.versionCompare);
+		for (var i = 0; i < functions.length; ++i) {
+			functions[i].func();
+		}
+		hvStat.storage.setItem("HVVersion", hvStat.version);
+	},
+	versionStringToArray: function (ver) {
+		return ver.split(/[._]/).map(function (str){return Number(str);});
+	},
+	versionCompare: function (v1, v2) {
+		if (typeof(v1) === "string") {
+			v1 = hvStat.versions.versionStringToArray(v1);
+		}
+		if (typeof(v2) === "string") {
+			v2 = hvStat.versions.versionStringToArray(v2);
+		}
+		for (var i = 0; i < v2.length; ++i) {
+			if (v1.length <= i) {
+				//v1 is shorter than v2, and they have a matching initial sequence
+				return -1;
+			}
+			if (v1[i] < v2[i]) {
+				return -1;
+			}
+			if (v1[i] > v2[i]) {
+				return 1;
+			}
+		}
+		if (v1.length === v2.length) {
+			return 0;
+		}
+		return 1;
+	},
+};
+
+hvStat.versions.functions = {
+	from_5_5_5_1 : function () {
+		while (hvStat.overview.expbyBT.length < 4)
+			hvStat.overview.expbyBT.push(0);
+		while (hvStat.overview.creditsbyBT.length < 4)
+			hvStat.overview.creditsbyBT.push(0);
+		hvStat.storage.overview.save();
+
+		if ("itemArry" in hvStat.drops) {
+			for (var i = 0; i < hvStat.drops.itemArry.length; ++i) {
+				var name = hvStat.drops.itemArry[i].replace("Godly", "Heroic");
+				var qty = hvStat.drops.itemQtyArry[i];
+				if (!(name in hvStat.drops.itemQty)) {
+					hvStat.drops.itemQty[name] = qty;
+				} else {
+					hvStat.drops.itemQty[name] += qty;
+				}
+			}
+			delete hvStat.drops.itemArry;
+			delete hvStat.drops.itemQtyArry;
+			hvStat.storage.drops.save();
+		}
+	},
+};
 
 //------------------------------------
 // Support Functions
@@ -2694,10 +2718,11 @@ hvStat.battle.eventLog.messageTypeParams = {
 						hvStat.drops.crysDropbyBT[hvStat.roundContext.battleType]++;
 					}
 					var bracketedName="[" + stuffName + "]";
-					if (!(bracketedName in hvStat.drops.itemQty))
+					if (!(bracketedName in hvStat.drops.itemQty)) {
 						hvStat.drops.itemQty[bracketedName] = qty;
-					else
+					} else {
 						hvStat.drops.itemQty[bracketedName] += qty;
+					}
 				}
 				break;
 			case "red":		// Equipment
@@ -6970,6 +6995,7 @@ function HVMasterReset() {
 		"HVShrine",
 		"HVStats",
 		"HVTags",
+		"HVVersion",
 		"inventoryAlert",
 	];
 	var i = keys.length;
@@ -7142,6 +7168,8 @@ hvStat.startup = {
 		hvStat.database.openIndexedDB(function (event) {
 			hvStat.database.idbAccessQueue.execute();
 		});
+		//Version checking doesn't depend on the DOM, so do it early
+		hvStat.versions.checkVersion();
 		if (document.readyState !== "loading") {
 			hvStat.startup.phase2();
 		} else {
