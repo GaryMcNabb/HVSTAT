@@ -1644,6 +1644,21 @@ hvStat.support = {
 			element.setAttribute("onclick", newOnClick);
 		}
 	},
+	createInventoryWarningIcon: function () {
+		var stuffBox = document.querySelector('div.stuffbox');
+		var icon = document.createElement("div");
+		icon.id = "hvstat-inventory-warning-icon";
+		icon.className = "ui-state-error ui-corner-all";
+		icon.innerHTML = '<span class="ui-icon ui-icon-alert" title="Reached equipment inventory limit."/>';
+		icon.addEventListener("click", function (event) {
+			if (confirm("Reached equipment inventory limit.\nClear warning?")) {
+				this.removeEventListener(event.type, arguments.callee);
+				hvStat.storage.removeItem(HV_EQUIP);
+				this.parentNode.removeChild(this);
+			}
+		});
+		stuffBox.insertBefore(icon, null);
+	},
 };
 
 //------------------------------------
@@ -5902,21 +5917,6 @@ function showBattleEndStats() {
 	var battleLog = document.getElementById("togpane_log");
 	battleLog.innerHTML = "<div class='ui-state-default ui-corner-bottom' style='padding:10px;margin-bottom:10px;text-align:left'>" + getBattleEndStatsHtml() + "</div>" + battleLog.innerHTML;
 }
-function inventoryWarning() {
-	var d = 4;
-	var rectObject = document.querySelector('div.stuffbox').getBoundingClientRect();
-	var c = rectObject.width - 85 - 4;
-	var div = document.createElement("div");
-	div.setAttribute("class", "ui-state-error ui-corner-all");
-	div.style.cssText = "position:absolute; top:" + d + "px; left: " + c + "px; z-index:1074; cursor:pointer";
-	div.innerHTML = '<span style="margin:3px" class="ui-icon ui-icon-alert" title="Inventory Limit Exceeded."/>';
-	document.body.insertBefore(div, null);
-	div.addEventListener("click", function (event) {
-		if (confirm("Reached equipment inventory limit (1000). Clear warning?")) {
-			hvStat.storage.removeItem(HV_EQUIP);
-		}
-	});
-}
 
 function saveStats() {
 	var a = (new Date()).getTime();
@@ -7565,7 +7565,7 @@ hvStat.startup = {
 		var invAlert = localStorage.getItem(HV_EQUIP);
 		var invFull = (invAlert === null) ? false : JSON.parse(invAlert);
 		if (invFull) {
-			inventoryWarning();
+			hvStat.support.createInventoryWarningIcon();
 		}
 		document.addEventListener("keydown", hvStat.keyboard.documentKeydown);
 		hvStat.ui.setup();

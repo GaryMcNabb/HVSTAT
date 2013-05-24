@@ -8,6 +8,15 @@
 #hvstat-icon span {
 	margin: 3px;
 }
+#hvstat-inventory-warning-icon {
+	position: absolute;
+	top: 4px;
+	left: 1125px;
+	cursor: pointer;
+}
+#hvstat-inventory-warning-icon span {
+	margin: 3px;
+}
 
 /* Proficiency popup icon */
 #hvstat-proficiency-popup-icon {
