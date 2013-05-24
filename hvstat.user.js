@@ -226,6 +226,60 @@ var hv = {
 		percent: function (value) {
 			return Math.floor(value * 100);
 		},
+		useHVFontEngine: null,
+		hvFontMap: "0123456789.,!?%+-=/\\'\":;()[]_           ABCDEFGHIJKLMNOPQRSTUVWXYZ ",
+		hvFontTextBlockSelector: 'div.fd2, div.fd4',
+		hvFontCharsLtoRSelector: 'div.f2lb, div.f2lg, div.f2lr, div.f2ly, div.f2la, div.f4lb, div.f4lg, div.f4lr, div.f4ly, div.f4la',
+		hvFontCharsRtoLSelector: 'div.f2rb, div.f2rg, div.f2rr, div.f2ry, div.f2ra, div.f4rb, div.f4rg, div.f4rr, div.f4ry, div.f4ra',
+		innerText: function (element) {
+			if (!this.useHVFontEngine) {
+				return util.innerText(element);
+			}
+			// Parse HV Font text
+			var innerText = "";
+			var textBlock, textBlocks;
+			var selfClassNames = element.className.split(' ');
+			//console.debug(selfClassNames);
+			if (selfClassNames.indexOf('fd2') >= 0 || selfClassNames.indexOf('fd4') >= 0) {
+				textBlocks = [element];
+			} else {
+				textBlocks = element.querySelectorAll(this.hvFontTextBlockSelector);
+			}
+			//console.debug(textBlocks);
+			var charDivsLtoR, charDivsRtoL, charDivs, charDiv, regexResult, index;
+			var i, j, len;
+			for (i = 0; i < textBlocks.length; i++) {
+				textBlock = textBlocks[i];
+				charDivsLtoR = textBlock.querySelectorAll(this.hvFontCharsLtoRSelector);
+				charDivsRtoL = textBlock.querySelectorAll(this.hvFontCharsRtoLSelector);
+				charDivs = [];
+				if (charDivsLtoR) {
+					len = charDivsLtoR.length;
+					for (j = 0; j < len; j++) {
+						charDivs[j] = charDivsLtoR[j];
+					}
+				}
+				if (charDivsRtoL) {
+					len = charDivsRtoL.length;
+					for (j = 0; j < len; j++) {
+						charDivs.unshift(charDivsRtoL[j]);
+					}
+				}
+				//console.debug(charDivs);
+				len = charDivs.length;
+				for (j = 0; j < len; j++) {
+					charDiv = charDivs[j];
+					regexResult = charDiv.className.match(/f(?:2|4)(\d+)/i);
+					//console.debug(regexResult);
+					if (regexResult) {
+						index = Number(regexResult[1]);
+						innerText += this.hvFontMap[index];
+					}
+				}
+				innerText += " ";	//	Separator between text blocks
+			}
+			return innerText;
+		}
 	},
 	setup: function () {
 		var location = {
