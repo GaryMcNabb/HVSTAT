@@ -300,16 +300,19 @@ var hv = {
 			popup: document.getElementById("popup_box"),
 		};
 
+		this.util.useHVFontEngine = document.getElementsByClassName('fd2')[0].textContent !== "Health points";
 		var settings = {
-			useHVFontEngine: document.getElementsByClassName('fd2')[0].textContent !== "Health points",
+			useHVFontEngine: this.util.useHVFontEngine,
 			difficulty: null,
 		};
-		var e = document.querySelectorAll('div.clb table.cit div.fd4 > div');
+		var e = document.querySelectorAll('div.clb table.cit div.fd4');
+		//console.debug(e);
 		var i, r;
 		for (i = 0; i < e.length; i++) {
-			r = /(Normal|Hard|Nightmare|Hell|Nintendo|Battletoads|IWBTH)/.exec(util.innerText(e[i]));
+			//console.debug(hv.util.innerText(e[i]));
+			r = /(Normal|Hard|Nightmare|Hell|Nintendo|Battletoads|IWBTH)/i.exec(hv.util.innerText(e[i]));
 			if (r) {
-				settings.difficulty = r[1];
+				settings.difficulty = r[1].toUpperCase();
 				break;
 			}
 		}
@@ -1551,11 +1554,11 @@ hvStat.versions.functions = {
 //------------------------------------
 hvStat.support = {
 	captureStatuses: function () {
-		var difficulties = ["", "Normal", "Hard", "Nightmare", "Hell", "Nintendo", "Battletoads", "IWBTH"];
+		var difficulties = ["", "NORMAL", "HARD", "NIGHTMARE", "HELL", "NINTENDO", "BATTLETOADS", "IWBTH"];
 		var difficulty = hv.settings.difficulty;
 		if (difficulty) {
-			hvStat.characterStatus.difficulty.id = hv.settings.difficulty.toUpperCase();
-			hvStat.characterStatus.difficulty.name = hv.settings.difficulty;
+			hvStat.characterStatus.difficulty.id = hv.settings.difficulty;
+			hvStat.characterStatus.difficulty.name = hvStat.constant.difficulty[hv.settings.difficulty].name;
 			hvStat.characterStatus.difficulty.index = difficulties.indexOf(difficulty);
 		}
 		elements = document.querySelectorAll('#setform img');
@@ -1572,18 +1575,18 @@ hvStat.support = {
 	captureProficiencies: function () {
 		var proficiencyTable = document.getElementById("leftpane").children[1].querySelectorAll('div.fd4');
 		var prof = hvStat.characterStatus.proficiencies;
-		prof.oneHanded = Number(util.innerText(proficiencyTable[2]));
-		prof.twoHanded = Number(util.innerText(proficiencyTable[4]));
-		prof.dualWielding = Number(util.innerText(proficiencyTable[6]));
-		prof.staff = Number(util.innerText(proficiencyTable[8]));
-		prof.clothArmor = Number(util.innerText(proficiencyTable[10]));
-		prof.lightArmor = Number(util.innerText(proficiencyTable[12]));
-		prof.heavyArmor = Number(util.innerText(proficiencyTable[14]));
-		prof.elemental = Number(util.innerText(proficiencyTable[17]));
-		prof.divine = Number(util.innerText(proficiencyTable[19]));
-		prof.forbidden = Number(util.innerText(proficiencyTable[21]));
-		prof.deprecating = Number(util.innerText(proficiencyTable[23]));
-		prof.supportive = Number(util.innerText(proficiencyTable[25]));
+		prof.oneHanded = Number(hv.util.innerText(proficiencyTable[2]));
+		prof.twoHanded = Number(hv.util.innerText(proficiencyTable[4]));
+		prof.dualWielding = Number(hv.util.innerText(proficiencyTable[6]));
+		prof.staff = Number(hv.util.innerText(proficiencyTable[8]));
+		prof.clothArmor = Number(hv.util.innerText(proficiencyTable[10]));
+		prof.lightArmor = Number(hv.util.innerText(proficiencyTable[12]));
+		prof.heavyArmor = Number(hv.util.innerText(proficiencyTable[14]));
+		prof.elemental = Number(hv.util.innerText(proficiencyTable[17]));
+		prof.divine = Number(hv.util.innerText(proficiencyTable[19]));
+		prof.forbidden = Number(hv.util.innerText(proficiencyTable[21]));
+		prof.deprecating = Number(hv.util.innerText(proficiencyTable[23]));
+		prof.supportive = Number(hv.util.innerText(proficiencyTable[25]));
 		hvStat.characterStatus.areProficienciesCaptured = true;
 		hvStat.storage.characterStatus.save();
 	},
@@ -1593,10 +1596,10 @@ hvStat.support = {
 			return;
 		}
 		var messageElements = messageBoxElement.querySelectorAll('div.cmb6');
-		var message0 = util.innerText(messageElements[0]);
+		var message0 = hv.util.innerText(messageElements[0]);
 		if (message0.match(/power/i)) {
 			hvStat.shrine.artifactsTraded++;
-			var message2 = util.innerText(messageElements[2]);
+			var message2 = hv.util.innerText(messageElements[2]);
 			if (message2.match(/ability point/i)) {
 				hvStat.shrine.artifactAP++;
 			} else if (message2.match(/crystal/i)) {
@@ -1610,7 +1613,7 @@ hvStat.support = {
 				hvStat.shrine.artifactItem++;
 			}
 		} else if (message0.match(/item/i)) {
-			var message3 = util.innerText(messageElements[3]);
+			var message3 = hv.util.innerText(messageElements[3]);
 			hvStat.shrine.trophyArray.push(message3);
 		}
 		hvStat.storage.shrine.save();
@@ -7500,7 +7503,7 @@ hvStat.startup = {
 			}
 		} else {
 			hvStat.storage.roundContext.remove();
-			if ((hvStat.settings.isStartAlert || hvStat.settings.isShowEquippedSet) && !hv.settings.useHVFontEngine) {
+			if (hvStat.settings.isStartAlert || hvStat.settings.isShowEquippedSet) {
 				hvStat.support.captureStatuses();
 			}
 			if (!hv.location.isRiddle) {
@@ -7537,7 +7540,7 @@ hvStat.startup = {
 			if (hv.location.isForge && hvStat.settings.isDisableForgeHotKeys) {
 				document.onkeypress = null;
 			}
-			if (hv.location.isCharacter && !hv.settings.useHVFontEngine) {
+			if (hv.location.isCharacter) {
 				hvStat.support.captureProficiencies();
 			}
 			if (hv.location.isShrine) {
@@ -7549,14 +7552,14 @@ hvStat.startup = {
 					hvStat.onkeydown = null;
 				}
 			}
-			if (hvStat.settings.isStartAlert && !hv.settings.useHVFontEngine) {
+			if (hvStat.settings.isStartAlert) {
 				hvStat.support.confirmBeforeBattle();
 			}
 		}
-		if (!hv.settings.useHVFontEngine && hvStat.settings.isShowEquippedSet) {
+		if (hvStat.settings.isShowEquippedSet) {
 			hvStat.gadget.equippedSet.create();
 		}
-		if (hvStat.settings.isShowSidebarProfs) {	// TODO: Disable if useHVFontEngine
+		if (hvStat.settings.isShowSidebarProfs) {
 			hvStat.gadget.proficiencyPopupIcon.create();
 		}
 		var invAlert = localStorage.getItem(HV_EQUIP);
