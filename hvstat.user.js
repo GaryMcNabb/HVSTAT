@@ -925,6 +925,7 @@ hvStat.storage.initialValue = {
 			supportive: 0,
 		},
 		overcharge: 100,
+		didReachInventoryLimit: false,
 	},
 	// Overview object
 	overview: {
@@ -1653,7 +1654,8 @@ hvStat.support = {
 		icon.addEventListener("click", function (event) {
 			if (confirm("Reached equipment inventory limit.\nClear warning?")) {
 				this.removeEventListener(event.type, arguments.callee);
-				hvStat.storage.removeItem(HV_EQUIP);
+				hvStat.characterStatus.didReachInventoryLimit = false;
+				hvStat.storage.characterStatus.save();
 				this.parentNode.removeChild(this);
 			}
 		});
@@ -2826,7 +2828,8 @@ hvStat.battle.eventLog.messageTypeParams = {
 		relatedMessageTypeNames: null,
 		contentType: "text",
 		evaluationFn: function (message) {
-			localStorage.setItem(HV_EQUIP, "true");
+			hvStat.characterStatus.didReachInventoryLimit = true;
+			hvStat.storage.characterStatus.save();
 		},
 	},
 	SPAWNING_MONSTER: {
@@ -5907,7 +5910,6 @@ hvStat.migration.monsterDatabase.deleteOldDatabase = function () {
 
 
 /* ========== GLOBAL VARIABLES ========== */
-HV_EQUIP = "inventoryAlert";
 HOURLY = 0;
 ARENA = 1;
 GRINDFEST = 2;
@@ -7562,9 +7564,7 @@ hvStat.startup = {
 		if (hvStat.settings.isShowSidebarProfs) {
 			hvStat.gadget.proficiencyPopupIcon.create();
 		}
-		var invAlert = localStorage.getItem(HV_EQUIP);
-		var invFull = (invAlert === null) ? false : JSON.parse(invAlert);
-		if (invFull) {
+		if (hvStat.characterStatus.didReachInventoryLimit) {
 			hvStat.support.createInventoryWarningIcon();
 		}
 		document.addEventListener("keydown", hvStat.keyboard.documentKeydown);
