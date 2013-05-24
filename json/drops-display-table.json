@@ -37,6 +37,7 @@
 		{"name": "Monster Chow", "className": "monsterFood"},
 		{"name": "Monster Edibles", "className": "monsterFood"},
 		{"name": "Monster Cuisine", "className": "monsterFood"},
+		{"name": "Happy Pills", "className": "monsterFood"},
 		{"name": "Voidseeker Shard", "className": "shard", "columnBreak": true},
 		{"name": "Aether Shard", "className": "shard"},
 		{"name": "Featherweight Shard", "className": "shard"},
