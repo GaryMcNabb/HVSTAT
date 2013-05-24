@@ -2806,7 +2806,6 @@ hvStat.battle.eventLog.messageTypeParams = {
 						stuffName = regexResult[2];
 					}
 					hvStat.storage.drops.addItemDrop(stuffName, qty, hvStat.characterStatus.difficulty.id, hvStat.roundContext.battleTypeName);
-					}
 				}
 				break;
 			case "#254117":	// Token
