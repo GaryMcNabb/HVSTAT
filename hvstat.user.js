@@ -253,7 +253,7 @@ var hv = {
 		var e = document.querySelectorAll('div.clb table.cit div.fd4 > div');
 		var i, r;
 		for (i = 0; i < e.length; i++) {
-			r = /(Easy|Normal|Hard|Heroic|Nightmare|Hell|Nintendo|Battletoads|IWBTH)/.exec(util.innerText(e[i]));
+			r = /(Normal|Hard|Nightmare|Hell|Nintendo|Battletoads|IWBTH)/.exec(util.innerText(e[i]));
 			if (r) {
 				settings.difficulty = r[1];
 				break;
@@ -1497,7 +1497,7 @@ hvStat.versions.functions = {
 //------------------------------------
 hvStat.support = {
 	captureStatuses: function () {
-		var difficulties = ["", "Easy", "Normal", "Hard", "Heroic", "Nightmare", "Hell", "Nintendo", "Battletoads", "IWBTH"];
+		var difficulties = ["", "Normal", "Hard", "Nightmare", "Hell", "Nintendo", "Battletoads", "IWBTH"];
 		var difficulty = hv.settings.difficulty;
 		if (difficulty) {
 			hvStat.characterStatus.difficulty.id = hv.settings.difficulty.toUpperCase();
