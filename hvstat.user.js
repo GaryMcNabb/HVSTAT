@@ -4974,21 +4974,21 @@ hvStat.database.openIndexedDB = function (callback) {
 	var errorMessage;
 
 	var idbVersion = 1; // Must be an integer
-	var reqOpen = indexedDB.open("HVStat", idbVersion);
-	reqOpen.onerror = function (event) {
+	var idbOpenDBRequest = indexedDB.open("HVStat", idbVersion);
+	idbOpenDBRequest.onerror = function (event) {
 		errorMessage = "Database open error: " + event.target.errorCode;
 		alert(errorMessage);
 		console.log(errorMessage);
 	};
 	// Latest W3C draft (Firefox and Chrome 23 or later)
-	reqOpen.onupgradeneeded = function (event) {
-		console.log("onupgradeneeded");
-		hvStat.database.idb = reqOpen.result;
+	idbOpenDBRequest.onupgradeneeded = function (event) {
+		console.log("onupgradeneeded: old version = " + event.oldVersion);
+		hvStat.database.idb = event.target.result;
 		hvStat.database.maintainObjectStores(event);
 		// Subsequently onsuccess event handler is called automatically
 	};
-	reqOpen.onsuccess = function (event) {
-		var idb = hvStat.database.idb = reqOpen.result;
+	idbOpenDBRequest.onsuccess = function (event) {
+		var idb = hvStat.database.idb = event.target.result;
 		if (Number(idb.version) === idbVersion) {
 			// Always come here if Firefox and Chrome 23 or later
 			if (callback instanceof Function) {
@@ -4997,17 +4997,17 @@ hvStat.database.openIndexedDB = function (callback) {
 		} else {
 			// Obsolete Chrome style (Chrome 22 or earlier)
 			console.debug("came setVersion route");
-			var reqVersion = idb.setVersion(idbVersion);
-			reqVersion.onerror = function (event) {
+			var versionChangeRequest = idb.setVersion(String(idbVersion));
+			versionChangeRequest.onerror = function (event) {
 				errorMessage = "Database setVersion error: " + event.target.errorCode;
 				alert(errorMessage);
 				console.log(errorMessage);
 			};
-			reqVersion.onsuccess = function (event) {
+			versionChangeRequest.onsuccess = function (event) {
 				hvStat.database.maintainObjectStores(event);
-				var tx = reqVersion.result;
+				var versionChangeTransaction = versionChangeRequest.result;
 				if (callback instanceof Function) {
-					tx.oncomplete = callback;
+					versionChangeTransaction.oncomplete = callback;
 				}
 			};
 		}
