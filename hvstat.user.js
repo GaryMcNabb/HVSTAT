@@ -4923,7 +4923,7 @@ hvStat.database.maintainObjectStores = function (oldVersion, versionChangeTransa
 	var store;
 	console.debug(event);
 
-	if (oldVersion === 0) {
+	if (oldVersion < 1) {
 		// MonsterScanResults
 		try {
 			store = idb.createObjectStore("MonsterScanResults", { keyPath: "id", autoIncrement: false });
@@ -4964,12 +4964,77 @@ hvStat.database.maintainObjectStores = function (oldVersion, versionChangeTransa
 			console.log(e.message + "\n" + e.stack);
 		}
 	}
+	if (oldVersion < 2) {
+		// ItemDrops
+		try {
+			store = idb.createObjectStore("ItemDrops", { keyPath: "key", autoIncrement: false });
+		} catch (e) {
+			alert(alertMessage);
+			console.log(e.message + "\n" + e.stack);
+		}
+		try {
+			store.createIndex("ix_key", "key", { unique: true });
+		} catch (e) {
+			alert(alertMessage);
+			console.log(e.message + "\n" + e.stack);
+		}
+		try {
+			store.createIndex("ix_name", "name", { unique: false });
+		} catch (e) {
+			alert(alertMessage);
+			console.log(e.message + "\n" + e.stack);
+		}
+		try {
+			store.createIndex("ix_difficulty", "difficulty", { unique: false });
+		} catch (e) {
+			alert(alertMessage);
+			console.log(e.message + "\n" + e.stack);
+		}
+		try {
+			store.createIndex("ix_battleType", "battleType", { unique: false });
+		} catch (e) {
+			alert(alertMessage);
+			console.log(e.message + "\n" + e.stack);
+		}
+
+		// EquipmentDrops
+		try {
+			store = idb.createObjectStore("EquipmentDrops", { keyPath: "id", autoIncrement: true });
+		} catch (e) {
+			alert(alertMessage);
+			console.log(e.message + "\n" + e.stack);
+		}
+		try {
+			store.createIndex("ix_id", "id", { unique: true });
+		} catch (e) {
+			alert(alertMessage);
+			console.log(e.message + "\n" + e.stack);
+		}
+		try {
+			store.createIndex("ix_name", "name", { unique: false });
+		} catch (e) {
+			alert(alertMessage);
+			console.log(e.message + "\n" + e.stack);
+		}
+		try {
+			store.createIndex("ix_difficulty", "difficulty", { unique: false });
+		} catch (e) {
+			alert(alertMessage);
+			console.log(e.message + "\n" + e.stack);
+		}
+		try {
+			store.createIndex("ix_battleType", "battleType", { unique: false });
+		} catch (e) {
+			alert(alertMessage);
+			console.log(e.message + "\n" + e.stack);
+		}
+	}
 };
 
 hvStat.database.openIndexedDB = function (callback) {
 	var errorMessage;
 
-	var idbVersion = 1; // Must be an integer
+	var idbVersion = 2; // Must be an integer
 	var idbOpenDBRequest = indexedDB.open("HVStat", idbVersion);
 	idbOpenDBRequest.onerror = function (event) {
 		errorMessage = "Database open error: " + event.target.errorCode;
