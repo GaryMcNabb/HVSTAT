@@ -2058,7 +2058,7 @@ hvStat.battle = {
 	},
 	setup: function () {
 		hvStat.database.idbAccessQueue.add(function () {
-			hvStat.database.transaction = hvStat.database.idb.transaction(["MonsterScanResults", "MonsterSkills"], "readwrite");
+			hvStat.database.transaction = hvStat.database.idb.transaction(["MonsterScanResults", "MonsterSkills", "ItemDrops", "EquipmentDrops"], "readwrite");
 		});
 		hvStat.battle.enhancement.setup();
 		hvStat.battle.monster.setup();
@@ -2880,29 +2880,39 @@ hvStat.battle.eventLog.messageTypeParams = {
 						}
 						stuffName = regexResult[2];
 					}
-					hvStat.storage.drops.addItemDrop(stuffName, qty, hvStat.characterStatus.difficulty.id, hvStat.roundContext.battleTypeName);
+//					hvStat.storage.drops.addItemDrop(stuffName, qty, hvStat.characterStatus.difficulty.id, hvStat.roundContext.battleTypeName);
+					hvStat.statistics.drops.addItemDrop(stuffName, qty,
+						hvStat.characterStatus.difficulty.id, hvStat.roundContext.battleTypeName);
 				}
 				break;
 			case "#254117":	// Token
 				if (hvStat.settings.isTrackItems) {
-					hvStat.storage.drops.addTokenDrop(stuffName,
-						hvStat.characterStatus.difficulty.id,
-						hvStat.roundContext.battleTypeName);
+// 					hvStat.storage.drops.addTokenDrop(stuffName,
+// 						hvStat.characterStatus.difficulty.id,
+// 						hvStat.roundContext.battleTypeName);
+					hvStat.statistics.drops.addTokenDrop(stuffName,
+						hvStat.characterStatus.difficulty.id, hvStat.roundContext.battleTypeName);
 				}
 				break;
 			case "red":		// Equipment
 				hvStat.roundContext.equips++;
 				hvStat.roundContext.lastEquipName = stuffName;
 				if (hvStat.settings.isTrackItems) {
-					hvStat.storage.drops.addEquipmentDrop(stuffName, hvStat.characterStatus.difficulty.id,
-						hvStat.roundContext.battleTypeName, hvStat.roundContext.arenaNum, hvStat.roundContext.currRound);
+// 					hvStat.storage.drops.addEquipmentDrop(stuffName,
+// 						hvStat.characterStatus.difficulty.id, hvStat.roundContext.battleTypeName,
+// 						hvStat.roundContext.arenaNum, hvStat.roundContext.currRound);
+					hvStat.statistics.drops.addEquipmentDrop(stuffName,
+						hvStat.characterStatus.difficulty.id, hvStat.roundContext.battleTypeName,
+						hvStat.roundContext.arenaNum, hvStat.roundContext.currRound);
 				}
 				break;
 			case "blue":	// Artifact or Collectable
 				hvStat.roundContext.artifacts++;
 				hvStat.roundContext.lastArtName = stuffName;
 				if (hvStat.settings.isTrackItems) {
-					hvStat.storage.drops.addArtifactDrop(stuffName, hvStat.characterStatus.difficulty.id, hvStat.roundContext.battleTypeName);
+//					hvStat.storage.drops.addArtifactDrop(stuffName, hvStat.characterStatus.difficulty.id, hvStat.roundContext.battleTypeName);
+					hvStat.statistics.drops.addArtifactDrop(stuffName,
+						hvStat.characterStatus.difficulty.id, hvStat.roundContext.battleTypeName);
 				}
 				break;
 			case "#461b7e":	// Trophy
@@ -4872,6 +4882,133 @@ hvStat.battle.warningSystem = {
 				}
 			}
 		}
+	},
+};
+
+//------------------------------------
+// Statistics
+//------------------------------------
+hvStat.statistics = {};
+hvStat.statistics.drops = {
+	storeItemDrop: function (name, qty, difficulty, battleType) {
+		var errorMessage;
+		var store = hvStat.database.transaction.objectStore("ItemDrops");
+		var itemDrop;
+		var key = [
+			name,
+			difficulty,
+			battleType,
+		];
+		var getRequest = store.get(key);
+		getRequest.onerror = function (event) {
+			errorMessage = "ItemDrops: get: error";
+			console.log(errorMessage);
+			console.debug(event);
+			alert(errorMessage);
+		};
+		getRequest.onsuccess = function (event) {
+			var timeStamp = (new Date()).toISOString();
+			if (event.target.result) {
+				// Update
+				itemDrop = event.target.result;
+				itemDrop.dropCount++;
+				itemDrop.qty += qty;
+				itemDrop.timeStamp = timeStamp;
+			} else {
+				// Create new
+				itemDrop = {
+					key: key,
+					name: name,
+					difficulty: difficulty,
+					battleType: battleType,
+					dropCount: 1,
+					qty: qty,
+					timeStamp: timeStamp,
+				};
+			}
+			var putRequest = store.put(itemDrop);
+			putRequest.onerror = function (event) {
+				errorMessage = "ItemDrops: put: error";
+				console.log(errorMessage);
+				console.debug(event);
+				alert(errorMessage);
+			};
+			putRequest.onsuccess = function (event) {
+				console.log("ItemDrops: put: success");
+				console.debug(event);
+			}
+		};
+	},
+	storeEquipmentDrop: function (name, difficulty, battleType, arenaNumber, roundNumber) {
+		var errorMessage;
+		var store = hvStat.database.transaction.objectStore("EquipmentDrops");
+		if (battleType !== hvStat.constant.battleType.ARENA.id) {
+			arenaNumber = null;
+		}
+		if (battleType === hvStat.constant.battleType.HOURLY_ENCOUNTER.id) {
+			roundNumber = null;
+		}
+		var equipmentDrop = {
+			name: name,
+			difficulty: difficulty,
+			battleType: battleType,
+			arenaNumber: arenaNumber,
+			roundNumber: roundNumber,
+			timeStamp: (new Date()).toISOString(),
+		};
+		var putRequest = store.put(equipmentDrop);
+		putRequest.onerror = function (event) {
+			errorMessage = "EquipmentDrops: put: error";
+			console.log(errorMessage);
+			console.debug(event);
+			alert(errorMessage);
+		};
+		putRequest.onsuccess = function (event) {
+			console.log("EquipmentDrops: put: success");
+			console.debug(event);
+		}
+	},
+	increaseChance: function (value, difficulty, battleType) {
+		hvStat.storage.drops.increaseChance(value, difficulty, battleType);
+	},
+	nChancesBy: function (difficulty, battleType) {
+		return hvStat.storage.drops.nChancesBy(difficulty, battleType);
+	},
+	addItemDrop: function (name, qty, difficulty, battleType) {
+		hvStat.storage.drops.addItemDrop(name, qty, difficulty, battleType);
+		hvStat.database.idbAccessQueue.add(function () {
+			hvStat.statistics.drops.storeItemDrop(name, qty, difficulty, battleType);
+		});
+	},
+	itemDropCountBy: function (difficulty, battleType) {
+		return hvStat.storage.drops.itemDropCountBy(difficulty, battleType);
+	},
+	addTokenDrop: function (name, difficulty, battleType) {
+		hvStat.storage.drops.addTokenDrop(name, difficulty, battleType);
+		hvStat.database.idbAccessQueue.add(function () {
+			hvStat.statistics.drops.storeItemDrop(name, qty, difficulty, battleType);
+		});
+	},
+	tokenDropCountBy: function (difficulty, battleType) {
+		return hvStat.storage.drops.tokenDropCountBy(difficulty, battleType);
+	},
+	addArtifactDrop: function (name, difficulty, battleType) {
+		hvStat.storage.drops.addArtifactDrop(name, difficulty, battleType);
+		hvStat.database.idbAccessQueue.add(function () {
+			hvStat.statistics.drops.storeItemDrop(name, qty, difficulty, battleType);
+		});
+	},
+	artifactDropCountBy: function (difficulty, battleType) {
+		return hvStat.storage.drops.artifactDropCountBy(difficulty, battleType);
+	},
+	addEquipmentDrop: function (name, difficulty, battleType, arenaNumber, roundNumber) {
+		hvStat.storage.drops.addEquipmentDrop(name, difficulty, battleType, arenaNumber, roundNumber);
+		hvStat.database.idbAccessQueue.add(function () {
+			hvStat.statistics.drops.storeEquipmentDrop(name, difficulty, battleType, arenaNumber, roundNumber);
+		});
+	},
+	equipmentDropCountBy: function (difficulty, battleType) {
+		return hvStat.storage.drops.equipmentDropCountBy(difficulty, battleType);
 	},
 };
 
