@@ -5763,46 +5763,56 @@ hvStat.ui.dropsPane = {
 		$('#hvstat-drops-items-tbody-2').html(itemsHTML[1]);
 	},
 	updateEquipments: function (difficulty, battleType) {
-		var i, equipment, battleType, arenaNumber, roundNumber, equipmentsHTML = "";
-		for (i = 0; i < hvStat.drops.equipments.length; i++) {
-			equipment = hvStat.drops.equipments[i];
-			equipmentDifficulty = hvStat.constant.difficulty[equipment.difficulty];
-			equipmentBattleType = hvStat.constant.battleType[equipment.battleType];
-			if ((difficulty === null || difficulty === equipmentDifficulty.id) &&
-					(battleType === null || battleType === equipmentBattleType.id)) {
-				if (equipmentBattleType !== hvStat.constant.battleType.ARENA) {
-					arenaNumber = "-";
-				} else {
-					arenaNumber = String(equipment.arenaNumber);
+		var tx = hvStat.database.idb.transaction(["EquipmentDrops"], "readonly");
+		var store = tx.objectStore("EquipmentDrops");
+		var range = null; // Select all
+		var cursorOpenRequest = store.openCursor(range, "next");
+		cursorOpenRequest.onerror = function (event) {
+			var errorMessage = "EquipmentDrops: openCursor: error";
+			console.log(errorMessage);
+			console.debug(event);
+			alert(errorMessage);
+		};
+		var equipmentsHTML = "";
+		cursorOpenRequest.onsuccess = function (event) {
+			//console.debug(event);
+			var cursor = this.result;
+			if (cursor) {
+				//console.debug(cursor);
+				var equipment = cursor.value;
+				var equipmentDifficulty = hvStat.constant.difficulty[equipment.difficulty];
+				var equipmentBattleType = hvStat.constant.battleType[equipment.battleType];
+				if ((difficulty === null || difficulty === equipmentDifficulty.id) &&
+						(battleType === null || battleType === equipmentBattleType.id)) {
+					var arenaNumber = (equipment.arenaNumber === null) ? "-" : String(equipment.arenaNumber);
+					var roundNumber = (equipment.roundNumber === null) ? "-" : String(equipment.roundNumber);
+					// Reverse order
+					equipmentsHTML = '<tr>' +
+						'<th>' + equipment.name + '</th>' +
+						'<td>' + hvStat.constant.difficulty[equipment.difficulty].name + '</td>' +
+						'<td>' + hvStat.constant.battleType[equipment.battleType].name + '</td>' +
+						'<td>' + arenaNumber + '</td>' +
+						'<td>' + roundNumber + '</td>' +
+						'<td>' + equipment.timeStamp.substring(0, 10) + '</td>' +
+						'</tr>\n' +
+						equipmentsHTML;
 				}
-				if (equipmentBattleType === hvStat.constant.battleType.HOURLY_ENCOUNTER) {
-					roundNumber = "-";
-				} else {
-					roundNumber = String(equipment.roundNumber);
+				cursor.continue();
+			} else {
+				if (equipmentsHTML === "") {
+					equipmentsHTML = '<tr>' +
+						'<th>' + 'None yet!' + '</th>' +
+						'<td>' + '-' + '</td>' +
+						'<td>' + '-' + '</td>' +
+						'<td>' + '-' + '</td>' +
+						'<td>' + '-' + '</td>' +
+						'<td>' + '-' + '</td>' +
+						'</tr>\n';
 				}
-				// Reverse order
-				equipmentsHTML = '<tr>' +
-					'<th>' + equipment.name + '</th>' +
-					'<td>' + hvStat.constant.difficulty[equipment.difficulty].name + '</td>' +
-					'<td>' + hvStat.constant.battleType[equipment.battleType].name + '</td>' +
-					'<td>' + arenaNumber + '</td>' +
-					'<td>' + roundNumber + '</td>' +
-					'<td>' + equipment.date.substring(0, 10) + '</td>' +
-					'</tr>\n' +
-					equipmentsHTML;
+				$('#hvstat-drops-equipments-tbody').html(equipmentsHTML);
 			}
-		}
-		if (equipmentsHTML === "") {
-			equipmentsHTML = '<tr>' +
-				'<th>' + 'None yet!' + '</th>' +
-				'<td>' + '-' + '</td>' +
-				'<td>' + '-' + '</td>' +
-				'<td>' + '-' + '</td>' +
-				'<td>' + '-' + '</td>' +
-				'<td>' + '-' + '</td>' +
-				'</tr>\n';
-		}
-		$('#hvstat-drops-equipments-tbody').html(equipmentsHTML);
+		};
+
 	},
 	onOverviewFilterChange: function () {
 		var difficulty = $('#hvstat-drops-overview-difficulty').val();
