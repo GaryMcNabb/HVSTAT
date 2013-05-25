@@ -689,6 +689,12 @@ hvStat.constant.battleType = hvStat.constant.factory([
 	new hvStat.C("ITEM_WORLD", "Item World"),
 ]);
 
+hvStat.constant.source = hvStat.constant.factory([
+	new hvStat.C("MONSTER_DROP", "Monster Drop"),
+	new hvStat.C("ARENA_CLEAR_BONUS", "Arena Clear Bonus"),
+	new hvStat.C("ARENA_TOKEN_BONUS", "Arena Token Bonus"),
+]);
+
 hvStat.constant.monsterClass = hvStat.constant.factory([
 	new hvStat.C("ARTHROPOD", "Arthropod", ["Arth", "Art"]),
 	new hvStat.C("AVION", "Avion", ["Avio", "Avi"]),
@@ -2881,7 +2887,7 @@ hvStat.battle.eventLog.messageTypeParams = {
 						stuffName = regexResult[2];
 					}
 //					hvStat.storage.drops.addItemDrop(stuffName, qty, hvStat.characterStatus.difficulty.id, hvStat.roundContext.battleTypeName);
-					hvStat.statistics.drops.addItemDrop(stuffName, qty,
+					hvStat.statistics.drops.addItemDrop(hvStat.constant.source.MONSTER_DROP.id, stuffName, qty,
 						hvStat.characterStatus.difficulty.id, hvStat.roundContext.battleTypeName);
 				}
 				break;
@@ -2890,7 +2896,7 @@ hvStat.battle.eventLog.messageTypeParams = {
 // 					hvStat.storage.drops.addTokenDrop(stuffName,
 // 						hvStat.characterStatus.difficulty.id,
 // 						hvStat.roundContext.battleTypeName);
-					hvStat.statistics.drops.addTokenDrop(stuffName,
+					hvStat.statistics.drops.addTokenDrop(hvStat.constant.source.MONSTER_DROP.id, stuffName,
 						hvStat.characterStatus.difficulty.id, hvStat.roundContext.battleTypeName);
 				}
 				break;
@@ -2901,7 +2907,7 @@ hvStat.battle.eventLog.messageTypeParams = {
 // 					hvStat.storage.drops.addEquipmentDrop(stuffName,
 // 						hvStat.characterStatus.difficulty.id, hvStat.roundContext.battleTypeName,
 // 						hvStat.roundContext.arenaNum, hvStat.roundContext.currRound);
-					hvStat.statistics.drops.addEquipmentDrop(stuffName,
+					hvStat.statistics.drops.addEquipmentDrop(hvStat.constant.source.MONSTER_DROP.id, stuffName,
 						hvStat.characterStatus.difficulty.id, hvStat.roundContext.battleTypeName,
 						hvStat.roundContext.arenaNum, hvStat.roundContext.currRound);
 				}
@@ -2911,7 +2917,7 @@ hvStat.battle.eventLog.messageTypeParams = {
 				hvStat.roundContext.lastArtName = stuffName;
 				if (hvStat.settings.isTrackItems) {
 //					hvStat.storage.drops.addArtifactDrop(stuffName, hvStat.characterStatus.difficulty.id, hvStat.roundContext.battleTypeName);
-					hvStat.statistics.drops.addArtifactDrop(stuffName,
+					hvStat.statistics.drops.addArtifactDrop(hvStat.constant.source.MONSTER_DROP.id, stuffName,
 						hvStat.characterStatus.difficulty.id, hvStat.roundContext.battleTypeName);
 				}
 				break;
@@ -4890,82 +4896,153 @@ hvStat.battle.warningSystem = {
 //------------------------------------
 hvStat.statistics = {};
 hvStat.statistics.drops = {
-	storeItemDrop: function (name, qty, difficulty, battleType) {
-		var errorMessage;
-		var store = hvStat.database.transaction.objectStore("ItemDrops");
-		var itemDrop;
-		var key = [
-			name,
-			difficulty,
-			battleType,
-		];
-		var getRequest = store.get(key);
-		getRequest.onerror = function (event) {
-			errorMessage = "ItemDrops: get: error";
-			console.log(errorMessage);
-			console.debug(event);
-			alert(errorMessage);
-		};
-		getRequest.onsuccess = function (event) {
-			var timeStamp = (new Date()).toISOString();
-			if (event.target.result) {
-				// Update
-				itemDrop = event.target.result;
-				itemDrop.dropCount++;
-				itemDrop.qty += qty;
-				itemDrop.timeStamp = timeStamp;
-			} else {
-				// Create new
-				itemDrop = {
-					key: key,
-					name: name,
-					difficulty: difficulty,
-					battleType: battleType,
-					dropCount: 1,
-					qty: qty,
-					timeStamp: timeStamp,
+	storeItemDrop: function (source, name, qty, difficulty, battleType) {
+		try {
+			var errorMessage;
+			var store = hvStat.database.transaction.objectStore("ItemDrops");
+			var itemDrop;
+			var key = [
+				name,
+				source,
+				difficulty,
+				battleType,
+			];
+			var getRequest = store.get(key);
+			getRequest.onerror = function (event) {
+				errorMessage = "ItemDrops: get: error";
+				console.log(errorMessage);
+				console.debug(event);
+				alert(errorMessage);
+			};
+			getRequest.onsuccess = function (event) {
+				var timeStamp = (new Date()).toISOString();
+				if (event.target.result) {
+					// Update
+					itemDrop = event.target.result;
+					itemDrop.dropCount++;
+					itemDrop.qty += qty;
+					itemDrop.timeStamp = timeStamp;
+				} else {
+					// Create new
+					itemDrop = {
+						key: key,
+						name: name,
+						source: source,
+						difficulty: difficulty,
+						battleType: battleType,
+						dropCount: 1,
+						qty: qty,
+						timeStamp: timeStamp,
+					};
+				}
+				var putRequest = store.put(itemDrop);
+				putRequest.onerror = function (event) {
+					errorMessage = "ItemDrops: put: error";
+					console.log(errorMessage);
+					console.debug(event);
+					alert(errorMessage);
 				};
+				putRequest.onsuccess = function (event) {
+					console.log("ItemDrops: put: success");
+					console.debug(event);
+				}
+			};
+		} catch (e) {
+			console.log(e);
+			alert(e);
+		}
+	},
+	deleteItemDrops: function (source, callback) {
+		try {
+			var tx = hvStat.database.idb.transaction(["ItemDrops"], "readwrite");
+			var store = tx.objectStore("ItemDrops");
+			var index = store.index("ix_source");
+			var range = IDBKeyRange.only(source);
+			var cursorOpenRequest = index.openCursor(range, "next");
+			cursorOpenRequest.onerror = function (event) {
+				errorMessage = "ItemDrops: openCursor: error";
+				console.log(errorMessage);
+				console.debug(event);
+				alert(errorMessage);
+			};
+			cursorOpenRequest.onsuccess = function (event) {
+				var cursor = this.result;
+				if (cursor) {
+					cursor.delete();
+					cursor.continue();
+				} else {
+					if (callback instanceof Function) {
+						callback(event);
+					}
+				}
+			};
+		} catch (e) {
+			console.log(e);
+			alert(e);
+		}
+	},
+	storeEquipmentDrop: function (source, name, difficulty, battleType, arenaNumber, roundNumber) {
+		try {
+			var errorMessage;
+			var store = hvStat.database.transaction.objectStore("EquipmentDrops");
+			if (battleType !== hvStat.constant.battleType.ARENA.id) {
+				arenaNumber = null;
 			}
-			var putRequest = store.put(itemDrop);
+			if (battleType === hvStat.constant.battleType.HOURLY_ENCOUNTER.id) {
+				roundNumber = null;
+			}
+			var equipmentDrop = {
+				name: name,
+				source: source,
+				difficulty: difficulty,
+				battleType: battleType,
+				arenaNumber: arenaNumber,
+				roundNumber: roundNumber,
+				timeStamp: (new Date()).toISOString(),
+			};
+			var putRequest = store.put(equipmentDrop);
 			putRequest.onerror = function (event) {
-				errorMessage = "ItemDrops: put: error";
+				errorMessage = "EquipmentDrops: put: error";
 				console.log(errorMessage);
 				console.debug(event);
 				alert(errorMessage);
 			};
 			putRequest.onsuccess = function (event) {
-				console.log("ItemDrops: put: success");
+				console.log("EquipmentDrops: put: success");
 				console.debug(event);
 			}
-		};
+		} catch (e) {
+			console.log(e);
+			alert(e);
+		}
 	},
-	storeEquipmentDrop: function (name, difficulty, battleType, arenaNumber, roundNumber) {
-		var errorMessage;
-		var store = hvStat.database.transaction.objectStore("EquipmentDrops");
-		if (battleType !== hvStat.constant.battleType.ARENA.id) {
-			arenaNumber = null;
-		}
-		if (battleType === hvStat.constant.battleType.HOURLY_ENCOUNTER.id) {
-			roundNumber = null;
-		}
-		var equipmentDrop = {
-			name: name,
-			difficulty: difficulty,
-			battleType: battleType,
-			arenaNumber: arenaNumber,
-			roundNumber: roundNumber,
-			timeStamp: (new Date()).toISOString(),
-		};
-		var putRequest = store.put(equipmentDrop);
-		putRequest.onerror = function (event) {
-			errorMessage = "EquipmentDrops: put: error";
-			console.log(errorMessage);
-			console.debug(event);
-			alert(errorMessage);
-		};
-		putRequest.onsuccess = function (event) {
-			console.log("EquipmentDrops: put: success");
-			console.debug(event);
+	deleteEquipmentDrops: function (source, callback) {
+		try {
+			var tx = hvStat.database.idb.transaction(["EquipmentDrops"], "readwrite");
+			var store = tx.objectStore("EquipmentDrops");
+			var index = store.index("ix_source");
+			var range = IDBKeyRange.only(source);
+			var cursorOpenRequest = index.openCursor(range, "next");
+			cursorOpenRequest.onerror = function (event) {
+				errorMessage = "EquipmentDrops: openCursor: error";
+				console.log(errorMessage);
+				console.debug(event);
+				alert(errorMessage);
+			};
+			cursorOpenRequest.onsuccess = function (event) {
+				var cursor = this.result;
+				if (cursor) {
+					cursor.delete();
+					cursor.continue();
+				} else {
+					if (callback instanceof Function) {
+						callback(event);
+					}
+				}
+			};
+		} catch (e) {
+			console.log(e);
+			alert(e);
 		}
 	},
 	increaseChance: function (value, difficulty, battleType) {
@@ -4974,37 +5051,37 @@ hvStat.statistics.drops = {
 	nChancesBy: function (difficulty, battleType) {
 		return hvStat.storage.drops.nChancesBy(difficulty, battleType);
 	},
-	addItemDrop: function (name, qty, difficulty, battleType) {
+	addItemDrop: function (source, name, qty, difficulty, battleType) {
 		hvStat.storage.drops.addItemDrop(name, qty, difficulty, battleType);
 		hvStat.database.idbAccessQueue.add(function () {
-			hvStat.statistics.drops.storeItemDrop(name, qty, difficulty, battleType);
+			hvStat.statistics.drops.storeItemDrop(source, name, qty, difficulty, battleType);
 		});
 	},
 	itemDropCountBy: function (difficulty, battleType) {
 		return hvStat.storage.drops.itemDropCountBy(difficulty, battleType);
 	},
-	addTokenDrop: function (name, difficulty, battleType) {
+	addTokenDrop: function (source, name, difficulty, battleType) {
 		hvStat.storage.drops.addTokenDrop(name, difficulty, battleType);
 		hvStat.database.idbAccessQueue.add(function () {
-			hvStat.statistics.drops.storeItemDrop(name, qty, difficulty, battleType);
+			hvStat.statistics.drops.storeItemDrop(source, name, qty, difficulty, battleType);
 		});
 	},
 	tokenDropCountBy: function (difficulty, battleType) {
 		return hvStat.storage.drops.tokenDropCountBy(difficulty, battleType);
 	},
-	addArtifactDrop: function (name, difficulty, battleType) {
+	addArtifactDrop: function (source, name, difficulty, battleType) {
 		hvStat.storage.drops.addArtifactDrop(name, difficulty, battleType);
 		hvStat.database.idbAccessQueue.add(function () {
-			hvStat.statistics.drops.storeItemDrop(name, qty, difficulty, battleType);
+			hvStat.statistics.drops.storeItemDrop(source, name, qty, difficulty, battleType);
 		});
 	},
 	artifactDropCountBy: function (difficulty, battleType) {
 		return hvStat.storage.drops.artifactDropCountBy(difficulty, battleType);
 	},
-	addEquipmentDrop: function (name, difficulty, battleType, arenaNumber, roundNumber) {
+	addEquipmentDrop: function (source, name, difficulty, battleType, arenaNumber, roundNumber) {
 		hvStat.storage.drops.addEquipmentDrop(name, difficulty, battleType, arenaNumber, roundNumber);
 		hvStat.database.idbAccessQueue.add(function () {
-			hvStat.statistics.drops.storeEquipmentDrop(name, difficulty, battleType, arenaNumber, roundNumber);
+			hvStat.statistics.drops.storeEquipmentDrop(source, name, difficulty, battleType, arenaNumber, roundNumber);
 		});
 	},
 	equipmentDropCountBy: function (difficulty, battleType) {
@@ -5116,19 +5193,13 @@ hvStat.database.maintainObjectStores = function (oldVersion, versionChangeTransa
 			console.log(e.message + "\n" + e.stack);
 		}
 		try {
+			store.createIndex("ix_source", "source", { unique: false });
+		} catch (e) {
+			alert(alertMessage);
+			console.log(e.message + "\n" + e.stack);
+		}
+		try {
 			store.createIndex("ix_name", "name", { unique: false });
-		} catch (e) {
-			alert(alertMessage);
-			console.log(e.message + "\n" + e.stack);
-		}
-		try {
-			store.createIndex("ix_difficulty", "difficulty", { unique: false });
-		} catch (e) {
-			alert(alertMessage);
-			console.log(e.message + "\n" + e.stack);
-		}
-		try {
-			store.createIndex("ix_battleType", "battleType", { unique: false });
 		} catch (e) {
 			alert(alertMessage);
 			console.log(e.message + "\n" + e.stack);
@@ -5148,19 +5219,13 @@ hvStat.database.maintainObjectStores = function (oldVersion, versionChangeTransa
 			console.log(e.message + "\n" + e.stack);
 		}
 		try {
+			store.createIndex("ix_source", "source", { unique: false });
+		} catch (e) {
+			alert(alertMessage);
+			console.log(e.message + "\n" + e.stack);
+		}
+		try {
 			store.createIndex("ix_name", "name", { unique: false });
-		} catch (e) {
-			alert(alertMessage);
-			console.log(e.message + "\n" + e.stack);
-		}
-		try {
-			store.createIndex("ix_difficulty", "difficulty", { unique: false });
-		} catch (e) {
-			alert(alertMessage);
-			console.log(e.message + "\n" + e.stack);
-		}
-		try {
-			store.createIndex("ix_battleType", "battleType", { unique: false });
 		} catch (e) {
 			alert(alertMessage);
 			console.log(e.message + "\n" + e.stack);
@@ -5684,9 +5749,12 @@ hvStat.ui.dropsPane = {
 		$('#hvstat-drops-equipments-battle-type').change(this.onEquipmentFilterChange).change();
 		$('#hvstat-drops-equipments-clear').click(function () {
 			if (confirm("Clear Equipment list?")) {
-				hvStat.drops.equipments = [];
-				hvStat.storage.drops.save();
-				$('#hvstat-drops-equipments-difficulty').change();
+// 				hvStat.drops.equipments = [];
+// 				hvStat.storage.drops.save();
+				hvStat.statistics.drops.deleteEquipmentDrops(hvStat.constant.source.MONSTER_DROP.id, function () {
+					$('#hvstat-drops-equipments-difficulty').change();
+				});
+//				$('#hvstat-drops-equipments-difficulty').change();
 			}
 		});
 		// Footer
@@ -5727,92 +5795,135 @@ hvStat.ui.dropsPane = {
 		$(columns[12]).text(nChances);
 	},
 	updateItems: function (difficulty, battleType) {
-		var itemDropCount = hvStat.storage.drops.itemDropCountBy(difficulty, battleType);
-		var equipmentDropCount = hvStat.storage.drops.equipmentDropCountBy(difficulty, battleType);
-		var artifactDropCount = hvStat.storage.drops.artifactDropCountBy(difficulty, battleType);
-		var tokenDropCount = hvStat.storage.drops.tokenDropCountBy(difficulty, battleType);
-		var totalDropCount = itemDropCount + equipmentDropCount + artifactDropCount + tokenDropCount;
-		var chanceTotal = hvStat.storage.drops.nChancesBy(difficulty, battleType);
+		try {
+			var itemDropCount = hvStat.storage.drops.itemDropCountBy(difficulty, battleType);
+			var equipmentDropCount = hvStat.storage.drops.equipmentDropCountBy(difficulty, battleType);
+			var artifactDropCount = hvStat.storage.drops.artifactDropCountBy(difficulty, battleType);
+			var tokenDropCount = hvStat.storage.drops.tokenDropCountBy(difficulty, battleType);
+			var totalDropCount = itemDropCount + equipmentDropCount + artifactDropCount + tokenDropCount;
+			var chanceTotal = hvStat.storage.drops.nChancesBy(difficulty, battleType);
 
-		var itemDropMap = hvStat.storage.drops.getItemMapBy(difficulty, battleType);
-		//console.debug(itemDropMap);
-		var i, item, qty, dropCount, itemsHTML = ["", ""], itemsHTMLIndex = 0, prevClassName = "";
-		var dropsDisplayTable = hvStat.ui.dropsPane.dropsDisplayTable;
-		for (i = 0; i < dropsDisplayTable.items.length; i++) {
-			item = dropsDisplayTable.items[i];
-			if (item.name in itemDropMap) {
-				qty = itemDropMap[item.name].qty;
-				dropCount = itemDropMap[item.name].dropCount;
-			} else {
-				qty = 0;
-				dropCount = 0;
-			}
-			if (item.columnBreak === true) {
-				itemsHTMLIndex++;
-			}
-			itemsHTML[itemsHTMLIndex] += '<tr' + ((prevClassName != item.className) ? ' class="hvstat-table-row-divider"' : '') + '>' +
-				'<th>' + item.name + '</th>' +
-				'<td>' + qty + '</td>' +
-				'<td>' + dropCount + '</td>' +
-				'<td>' + hvStat.util.percentRatio(dropCount, chanceTotal, 2) + "%" + '</td>' +
-				'<td>' + hvStat.util.percentRatio(dropCount, totalDropCount, 2) + "%" + '</td>' +
-				'</tr>\n';
-			prevClassName = item.className;
+			var tx = hvStat.database.idb.transaction(["ItemDrops"], "readonly");
+			var store = tx.objectStore("ItemDrops");
+			var index = store.index("ix_source");
+			var range = IDBKeyRange.only(hvStat.constant.source.MONSTER_DROP.id);
+			var cursorOpenRequest = index.openCursor(range, "next");
+			cursorOpenRequest.onerror = function (event) {
+				var errorMessage = "ItemDrops: openCursor: error";
+				console.log(errorMessage);
+				console.debug(event);
+				alert(errorMessage);
+			};
+			var itemMap = {};
+			cursorOpenRequest.onsuccess = function (event) {
+				//console.debug(event);
+				var cursor = this.result;
+				if (cursor) {
+					//console.debug(cursor);
+					var item = cursor.value;
+					if ((difficulty === null || difficulty === item.difficulty) &&
+							(battleType === null || battleType === item.battleType)) {
+						var name = item.name;
+						if (name in itemMap) {
+							itemMap[name].dropCount += item.dropCount;
+							itemMap[name].qty += item.qty;
+						} else {
+							itemMap[name] = {
+								dropCount: item.dropCount,
+								qty: item.qty
+							};
+						}
+					}
+					cursor.continue();
+				} else {
+					var i, item, qty, dropCount, itemsHTML = ["", ""], itemsHTMLIndex = 0, prevClassName = "";
+					var dropsDisplayTable = hvStat.ui.dropsPane.dropsDisplayTable;
+					for (i = 0; i < dropsDisplayTable.items.length; i++) {
+						item = dropsDisplayTable.items[i];
+						if (item.name in itemMap) {
+							qty = itemMap[item.name].qty;
+							dropCount = itemMap[item.name].dropCount;
+						} else {
+							qty = 0;
+							dropCount = 0;
+						}
+						if (item.columnBreak === true) {
+							itemsHTMLIndex++;
+						}
+						itemsHTML[itemsHTMLIndex] += '<tr' + ((prevClassName != item.className) ? ' class="hvstat-table-row-divider"' : '') + '>' +
+							'<th>' + item.name + '</th>' +
+							'<td>' + qty + '</td>' +
+							'<td>' + dropCount + '</td>' +
+							'<td>' + hvStat.util.percentRatio(dropCount, chanceTotal, 2) + "%" + '</td>' +
+							'<td>' + hvStat.util.percentRatio(dropCount, totalDropCount, 2) + "%" + '</td>' +
+							'</tr>\n';
+						prevClassName = item.className;
+					}
+					$('#hvstat-drops-items-tbody-1').html(itemsHTML[0]);
+					$('#hvstat-drops-items-tbody-2').html(itemsHTML[1]);
+				}
+			};
+		} catch (e) {
+			console.log(e);
+			alert(e);
 		}
-		$('#hvstat-drops-items-tbody-1').html(itemsHTML[0]);
-		$('#hvstat-drops-items-tbody-2').html(itemsHTML[1]);
 	},
 	updateEquipments: function (difficulty, battleType) {
-		var tx = hvStat.database.idb.transaction(["EquipmentDrops"], "readonly");
-		var store = tx.objectStore("EquipmentDrops");
-		var range = null; // Select all
-		var cursorOpenRequest = store.openCursor(range, "next");
-		cursorOpenRequest.onerror = function (event) {
-			var errorMessage = "EquipmentDrops: openCursor: error";
-			console.log(errorMessage);
-			console.debug(event);
-			alert(errorMessage);
-		};
-		var equipmentsHTML = "";
-		cursorOpenRequest.onsuccess = function (event) {
-			//console.debug(event);
-			var cursor = this.result;
-			if (cursor) {
-				//console.debug(cursor);
-				var equipment = cursor.value;
-				var equipmentDifficulty = hvStat.constant.difficulty[equipment.difficulty];
-				var equipmentBattleType = hvStat.constant.battleType[equipment.battleType];
-				if ((difficulty === null || difficulty === equipmentDifficulty.id) &&
-						(battleType === null || battleType === equipmentBattleType.id)) {
-					var arenaNumber = (equipment.arenaNumber === null) ? "-" : String(equipment.arenaNumber);
-					var roundNumber = (equipment.roundNumber === null) ? "-" : String(equipment.roundNumber);
-					// Reverse order
-					equipmentsHTML = '<tr>' +
-						'<th>' + equipment.name + '</th>' +
-						'<td>' + hvStat.constant.difficulty[equipment.difficulty].name + '</td>' +
-						'<td>' + hvStat.constant.battleType[equipment.battleType].name + '</td>' +
-						'<td>' + arenaNumber + '</td>' +
-						'<td>' + roundNumber + '</td>' +
-						'<td>' + equipment.timeStamp.substring(0, 10) + '</td>' +
-						'</tr>\n' +
-						equipmentsHTML;
+		try {
+			var tx = hvStat.database.idb.transaction(["EquipmentDrops"], "readonly");
+			var store = tx.objectStore("EquipmentDrops");
+			var index = store.index("ix_source");
+			var range = IDBKeyRange.only(hvStat.constant.source.MONSTER_DROP.id);
+			var cursorOpenRequest = index.openCursor(range, "next");
+			cursorOpenRequest.onerror = function (event) {
+				var errorMessage = "EquipmentDrops: openCursor: error";
+				console.log(errorMessage);
+				console.debug(event);
+				alert(errorMessage);
+			};
+			var equipmentsHTML = "";
+			cursorOpenRequest.onsuccess = function (event) {
+				//console.debug(event);
+				var cursor = this.result;
+				if (cursor) {
+					//console.debug(cursor);
+					var equipment = cursor.value;
+					var equipmentDifficulty = hvStat.constant.difficulty[equipment.difficulty];
+					var equipmentBattleType = hvStat.constant.battleType[equipment.battleType];
+					if ((difficulty === null || difficulty === equipmentDifficulty.id) &&
+							(battleType === null || battleType === equipmentBattleType.id)) {
+						var arenaNumber = (equipment.arenaNumber === null) ? "-" : String(equipment.arenaNumber);
+						var roundNumber = (equipment.roundNumber === null) ? "-" : String(equipment.roundNumber);
+						// Reverse order
+						equipmentsHTML = '<tr>' +
+							'<th>' + equipment.name + '</th>' +
+							'<td>' + hvStat.constant.difficulty[equipment.difficulty].name + '</td>' +
+							'<td>' + hvStat.constant.battleType[equipment.battleType].name + '</td>' +
+							'<td>' + arenaNumber + '</td>' +
+							'<td>' + roundNumber + '</td>' +
+							'<td>' + equipment.timeStamp.substring(0, 10) + '</td>' +
+							'</tr>\n' +
+							equipmentsHTML;
+					}
+					cursor.continue();
+				} else {
+					if (equipmentsHTML === "") {
+						equipmentsHTML = '<tr>' +
+							'<th>' + 'None yet!' + '</th>' +
+							'<td>' + '-' + '</td>' +
+							'<td>' + '-' + '</td>' +
+							'<td>' + '-' + '</td>' +
+							'<td>' + '-' + '</td>' +
+							'<td>' + '-' + '</td>' +
+							'</tr>\n';
+					}
+					$('#hvstat-drops-equipments-tbody').html(equipmentsHTML);
 				}
-				cursor.continue();
-			} else {
-				if (equipmentsHTML === "") {
-					equipmentsHTML = '<tr>' +
-						'<th>' + 'None yet!' + '</th>' +
-						'<td>' + '-' + '</td>' +
-						'<td>' + '-' + '</td>' +
-						'<td>' + '-' + '</td>' +
-						'<td>' + '-' + '</td>' +
-						'<td>' + '-' + '</td>' +
-						'</tr>\n';
-				}
-				$('#hvstat-drops-equipments-tbody').html(equipmentsHTML);
-			}
-		};
-
+			};
+		} catch (e) {
+			console.log(e);
+			alert(e);
+		}
 	},
 	onOverviewFilterChange: function () {
 		var difficulty = $('#hvstat-drops-overview-difficulty').val();
