@@ -4917,17 +4917,13 @@ hvStat.database.deleteIndexedDB = function () {
 	};
 };
 
-hvStat.database.maintainObjectStores = function (event) {
+hvStat.database.maintainObjectStores = function (oldVersion, versionChangeTransaction) {
 	var alertMessage = "IndexDB database operation has failed; see console log";
-//	var idb = event.target.source;  // does not work with Firefox
-	var idb = hvStat.database.idb;
-	var tx = event.target.transaction;
-	var oldVer = event.oldVersion;	// does not work with Chrome
-	var newVer = event.newVersion || Number(idb.version);
+	var idb = versionChangeTransaction.db;
 	var store;
-//	console.debug(event);
+	console.debug(event);
 
-	if (newVer >= 1) {
+	if (oldVersion === 0) {
 		// MonsterScanResults
 		try {
 			store = idb.createObjectStore("MonsterScanResults", { keyPath: "id", autoIncrement: false });
@@ -4984,7 +4980,8 @@ hvStat.database.openIndexedDB = function (callback) {
 	idbOpenDBRequest.onupgradeneeded = function (event) {
 		console.log("onupgradeneeded: old version = " + event.oldVersion);
 		hvStat.database.idb = event.target.result;
-		hvStat.database.maintainObjectStores(event);
+		var versionChangeTransaction = event.target.transaction;
+		hvStat.database.maintainObjectStores(event.oldVersion, versionChangeTransaction);
 		// Subsequently onsuccess event handler is called automatically
 	};
 	idbOpenDBRequest.onsuccess = function (event) {
@@ -4996,7 +4993,11 @@ hvStat.database.openIndexedDB = function (callback) {
 			}
 		} else {
 			// Obsolete Chrome style (Chrome 22 or earlier)
-			console.debug("came setVersion route");
+			var oldVersion = idb.version;
+			if (oldVersion === "") {
+				oldVersion = 0;
+			}
+			console.debug("setVersion: old version = " + oldVersion);
 			var versionChangeRequest = idb.setVersion(String(idbVersion));
 			versionChangeRequest.onerror = function (event) {
 				errorMessage = "Database setVersion error: " + event.target.errorCode;
@@ -5004,10 +5005,12 @@ hvStat.database.openIndexedDB = function (callback) {
 				console.log(errorMessage);
 			};
 			versionChangeRequest.onsuccess = function (event) {
-				hvStat.database.maintainObjectStores(event);
 				var versionChangeTransaction = versionChangeRequest.result;
+				hvStat.database.maintainObjectStores(oldVersion, versionChangeTransaction);
 				if (callback instanceof Function) {
-					versionChangeTransaction.oncomplete = callback;
+					versionChangeTransaction.oncomplete = function (event) {
+						callback(event);
+					};
 				}
 			};
 		}
