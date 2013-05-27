@@ -809,7 +809,6 @@ hvStat.storage.initialValue = {
 
 		// Tracking
 		isTrackStats: true,
-//		isTrackRewards: false,
 		isTrackShrine: false,
 		isTrackItems: false,
 
@@ -922,7 +921,6 @@ hvStat.storage.initialValue = {
 			elemental: 0,
 			divine: 0,
 			forbidden: 0,
-//			spiritual: 0,
 			deprecating: 0,
 			supportive: 0,
 		},
@@ -1436,9 +1434,27 @@ hvStat.versions.functions = {
 			hvStat.overview.creditsbyBT.push(0);
 		hvStat.storage.overview.save();
 
-		localStorage.removeItem("HVDrops");
-		localStorage.removeItem("HVRewards");
-		localStorage.removeItem("inventoryAlert");
+		delete hvStat.characterStatus.proficiencies.spiritual;
+		hvStat.storage.characterStatus.save();
+
+		delete hvStat.settings.isTrackRewards;
+		hvStat.storage.settings.save();
+
+		// Remove obsolete items on local storage
+		var keys = [
+			"HVCharacterSettingsandStats",
+			"HVCollectData",
+			"HVDrops",
+			"HVLoadTimeCounters",
+			"HVProf",
+			"HVRewards",
+			"HVRound",
+			"inventoryAlert",
+		];
+		var i = keys.length;
+		while (i--) {
+			localStorage.removeItem(keys[i]);
+		}
 	},
 };
 
@@ -4796,14 +4812,14 @@ hvStat.statistics.drops = {
 	},
 	addToken: function (name, dropType, difficulty, battleType) {
 		hvStat.storage.dropStats.addToken(name, dropType, difficulty, battleType);
-		this.storeItem(name, qty, dropType, difficulty, battleType);
+		this.storeItem(name, 1, dropType, difficulty, battleType);
 	},
 	tokenCount: function (dropType, difficulty, battleType) {
 		return hvStat.storage.dropStats.tokenCount(dropType, difficulty, battleType);
 	},
 	addArtifact: function (name, dropType, difficulty, battleType) {
 		hvStat.storage.dropStats.addArtifact(name, dropType, difficulty, battleType);
-		this.storeItem(name, qty, dropType, difficulty, battleType);
+		this.storeItem(name, 1, dropType, difficulty, battleType);
 	},
 	artifactCount: function (dropType, difficulty, battleType) {
 		return hvStat.storage.dropStats.artifactCount(dropType, difficulty, battleType);
@@ -6856,7 +6872,6 @@ function initSettingsPane() {
 
 	// Tracking
 	if (hvStat.settings.isTrackStats) $("input[name=isTrackStats]").attr("checked", "checked");
-//	if (hvStat.settings.isTrackRewards) $("input[name=isTrackRewards]").attr("checked", "checked");
 	if (hvStat.settings.isTrackShrine) $("input[name=isTrackShrine]").attr("checked", "checked");
 	if (hvStat.settings.isTrackItems) $("input[name=isTrackItems]").attr("checked", "checked");
 
@@ -7046,7 +7061,6 @@ function initSettingsPane() {
 
 	// Tracking Functions
 	$("input[name=isTrackStats]").click(saveSettings);
-//	$("input[name=isTrackRewards]").click(saveSettings);
 	$("input[name=isTrackShrine]").click(saveSettings);
 	$("input[name=isTrackItems]").click(saveSettings);
 
@@ -7196,7 +7210,6 @@ function saveSettings() {
 
 	// Tracking
 	hvStat.settings.isTrackStats = $("input[name=isTrackStats]").get(0).checked;
-//	hvStat.settings.isTrackRewards = $("input[name=isTrackRewards]").get(0).checked;
 	hvStat.settings.isTrackShrine = $("input[name=isTrackShrine]").get(0).checked;
 	hvStat.settings.isTrackItems = $("input[name=isTrackItems]").get(0).checked;
 
@@ -7376,20 +7389,12 @@ function HVMasterReset() {
 		"HVBackup3",
 		"HVBackup4",
 		"HVBackup5",
-		"HVCharacterSettingsandStats",	// Obsolete
-		"HVCollectData",		// Obsolete
-		"HVDrops",				// Obsolete
-		"HVLoadTimeCounters",	// Obsolete
 		"HVMonsterDatabase",	// Old monster data
 		"HVOverview",
-		"HVProf",				// Obsolete
-		"HVRewards",			// Obsolete
-		"HVRound",				// Obsolete
 		"HVSettings",
 		"HVShrine",
 		"HVStats",
 		"HVTags",
-		"inventoryAlert",		// Obsolete
 	];
 	var i = keys.length;
 	while (i--) {
