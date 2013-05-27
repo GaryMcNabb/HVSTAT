@@ -23,7 +23,6 @@
 // @resource        ui-icons_2e83ff_256x240.png                 css/images/ui-icons_2e83ff_256x240.png
 // @resource        ui-icons_5c0d11_256x240.png                 css/images/ui-icons_5c0d11_256x240.png
 // @resource        ui-icons_cd0a0a_256x240.png                 css/images/ui-icons_cd0a0a_256x240.png
-// @resource        arena-rewards-pane.html                     html/arena-rewards-pane.html
 // @resource        battle-stats-pane.html                      html/battle-stats-pane.html
 // @resource        drops-pane.html                             html/drops-pane.html
 // @resource        main.html                                   html/main.html
@@ -416,9 +415,6 @@ var hvStat = {
 	get dropStats() {
 		return hvStat.storage.dropStats.value;
 	},
-// 	get arenaRewards() {
-// 		return hvStat.storage.arenaRewards.value;
-// 	},
 	get shrine() {
 		return hvStat.storage.shrine.value;
 	},
@@ -813,7 +809,7 @@ hvStat.storage.initialValue = {
 
 		// Tracking
 		isTrackStats: true,
-		isTrackRewards: false,
+//		isTrackRewards: false,
 		isTrackShrine: false,
 		isTrackItems: false,
 
@@ -1007,18 +1003,6 @@ hvStat.storage.initialValue = {
 		artifactCount: [],	// Array of { key:Object { type:String, difficulty:String, battleType:String }, count:Number }
 		equipmentCount: [],	// Array of { key:Object { type:String, difficulty:String, battleType:String }, count:Number }
 	},
-	// Arena Rewards object
-// 	arenaRewards: {
-// 		eqRwrd: 0,
-// 		eqRwrdArry: [],
-// 		itemsRwrd: 0,
-// 		itemRwrdArry: [],
-// 		itemRwrdQtyArry: [],
-// 		artRwrd: 0,
-// 		artRwrdArry: [],
-// 		artRwrdQtyArry: [],
-// 		tokenDrops: [0, 0, 0],
-// 	},
 	// Shrine object
 	shrine: {
 		artifactsTraded: 0,
@@ -1142,7 +1126,6 @@ hvStat.storage.initialValue = {
 		lastEquipName: "",
 		artifacts: 0,
 		lastArtName: "",
-		tokenDrops: [0, 0, 0],
 	},
 	// Warning State object
 	warningState: {
@@ -1339,29 +1322,6 @@ hvStat.storage.DropStats.prototype.equipmentCount = function (dropType, difficul
 // Drop Statistics object
 hvStat.storage.dropStats = new hvStat.storage.DropStats("hvStat.dropStats", hvStat.storage.initialValue.dropStats);
 
-// Arena Rewards constructor inherits Item
-// hvStat.storage.ArenaRewards = function (key, defaultValue) {
-// 	hvStat.storage.Item.apply(this, [key, defaultValue]);
-// };
-// hvStat.storage.ArenaRewards.prototype = Object.create(hvStat.storage.Item.prototype);
-// hvStat.storage.ArenaRewards.prototype.constructor = hvStat.storage.ArenaRewards;
-// hvStat.storage.ArenaRewards.prototype.getValue = function () {
-// 	var obj = hvStat.storage.Item.prototype.getValue.apply(this);
-// 	if (!Object.getOwnPropertyDescriptor(obj, "totalRwrds")) {
-// 		Object.defineProperty(obj, "totalRwrds", {
-// 			get: function () {
-// 				return this.artRwrd + this.eqRwrd + this.itemsRwrd;
-// 			},
-// 			enumerable: false,
-// 			configurable: false
-// 		});
-// 	}
-// 	return obj;
-// };
-
-// Arena Rewards object
-// hvStat.storage.arenaRewards = new hvStat.storage.ArenaRewards("HVRewards", hvStat.storage.initialValue.arenaRewards);
-
 // Shrine constructor inherits Item
 hvStat.storage.Shrine = function (key, defaultValue) {
 	hvStat.storage.Item.apply(this, [key, defaultValue]);
@@ -1416,7 +1376,7 @@ hvStat.storage.oldMonsterDatabase = new hvStat.storage.Item("HVDatabase", hvStat
 //------------------------------------
 hvStat.versions = {
 	checkVersion: function () {
-		var storedVersion = hvStat.storage.getItem("HVVersion");
+		var storedVersion = hvStat.storage.getItem("hvStat.version");
 		if (storedVersion === null) {
 			//Oldest version since migration started
 			storedVersion = "5.5.5.1";
@@ -1437,7 +1397,7 @@ hvStat.versions = {
 		for (var i = 0; i < functions.length; ++i) {
 			functions[i].func();
 		}
-		hvStat.storage.setItem("HVVersion", hvStat.version);
+		hvStat.storage.setItem("hvStat.version", hvStat.version);
 	},
 	versionStringToArray: function (ver) {
 		return ver.split(/[._]/).map(function (str){return Number(str);});
@@ -1476,21 +1436,9 @@ hvStat.versions.functions = {
 			hvStat.overview.creditsbyBT.push(0);
 		hvStat.storage.overview.save();
 
-// 		if ("itemArry" in hvStat.drops) {
-// 			for (var i = 0; i < hvStat.drops.itemArry.length; ++i) {
-// 				var name = hvStat.drops.itemArry[i].replace("Godly", "Heroic");
-// 				var qty = hvStat.drops.itemQtyArry[i];
-// 				if (!(name in hvStat.drops.itemQty)) {
-// 					hvStat.drops.itemQty[name] = qty;
-// 				} else {
-// 					hvStat.drops.itemQty[name] += qty;
-// 				}
-// 			}
-// 			delete hvStat.drops.itemArry;
-// 			delete hvStat.drops.itemQtyArry;
-// 			hvStat.storage.dropStats.save();
-// 		}
 		localStorage.removeItem("HVDrops");
+		localStorage.removeItem("HVRewards");
+		localStorage.removeItem("inventoryAlert");
 	},
 };
 
@@ -2951,8 +2899,7 @@ hvStat.battle.eventLog.messageTypeParams = {
 			var stuffName = message.regexResult[2];
 			switch (styleColor.toLowerCase()) {
 			case "green":	// Item
-				if (hvStat.settings.isTrackRewards) {
-// 					hvStat.arenaRewards.itemsRwrd++;
+				if (hvStat.settings.isTrackItems) {
 					var regexResult = stuffName.match(/(?:(\d+)x\s*)?(Crystal of .+)/);
 					var qty = 1;
 					if (regexResult) {
@@ -2967,7 +2914,7 @@ hvStat.battle.eventLog.messageTypeParams = {
 				}
 				break;
 			case "#254117":	// Token
-				if (hvStat.settings.isTrackRewards) {
+				if (hvStat.settings.isTrackItems) {
 					hvStat.statistics.drops.addToken(stuffName, hvStat.constant.dropType.ARENA_CLEAR_BONUS.id,
 						hvStat.characterStatus.difficulty.id, hvStat.roundContext.battleTypeName);
 				}
@@ -2975,7 +2922,7 @@ hvStat.battle.eventLog.messageTypeParams = {
 			case "blue":	// Artifact or Collectable
 				hvStat.roundContext.artifacts++;
 				hvStat.roundContext.lastArtName = stuffName;
-				if (hvStat.settings.isTrackRewards) {
+				if (hvStat.settings.isTrackItems) {
 					hvStat.statistics.drops.addArtifact(stuffName, hvStat.constant.dropType.ARENA_CLEAR_BONUS.id,
 						hvStat.characterStatus.difficulty.id, hvStat.roundContext.battleTypeName);
 				}
@@ -2983,7 +2930,7 @@ hvStat.battle.eventLog.messageTypeParams = {
 			case "red":		// Equipment
 				hvStat.roundContext.equips++;
 				hvStat.roundContext.lastEquipName = stuffName;
-				if (hvStat.settings.isTrackRewards) {
+				if (hvStat.settings.isTrackItems) {
 					hvStat.statistics.drops.addEquipment(stuffName, hvStat.constant.dropType.ARENA_CLEAR_BONUS.id,
 						hvStat.characterStatus.difficulty.id, hvStat.roundContext.battleTypeName,
 						hvStat.roundContext.arenaNum, hvStat.roundContext.currRound);
@@ -3001,7 +2948,7 @@ hvStat.battle.eventLog.messageTypeParams = {
 			var stuffName = message.regexResult[2];
 			switch (styleColor.toLowerCase()) {
 			case "#254117":	// Token
-				if (hvStat.settings.isTrackRewards) {
+				if (hvStat.settings.isTrackItems) {
 					hvStat.statistics.drops.addToken(stuffName, hvStat.constant.dropType.ARENA_TOKEN_BONUS.id,
 						hvStat.characterStatus.difficulty.id, hvStat.roundContext.battleTypeName);
 				}
@@ -5633,7 +5580,6 @@ hvStat.ui = {
 		initOverviewPane();
 		initBattleStatsPane();
 		hvStat.ui.dropsPane.initialize();
-		initRewardsPane();
 		initShrinePane();
 		initSettingsPane();
 		initMonsterDatabasePane();
@@ -6331,14 +6277,9 @@ function saveStats() {
 		hvStat.stats.pskills[6] += hvStat.roundContext.pskills[6];
 		if (hvStat.stats.datestart === 0) hvStat.stats.datestart = (new Date()).getTime();
 	}
-// 	hvStat.arenaRewards.tokenDrops[0] += hvStat.roundContext.tokenDrops[0];
-// 	hvStat.arenaRewards.tokenDrops[2] += hvStat.roundContext.tokenDrops[2];
 	hvStat.storage.overview.save();
 	if (hvStat.settings.isTrackStats) {
 		hvStat.storage.stats.save();
-	}
-	if (hvStat.settings.isTrackRewards) {
-// 		hvStat.storage.arenaRewards.save();
 	}
 	if (hvStat.settings.isTrackItems) {
 		hvStat.storage.dropStats.save();
@@ -6747,92 +6688,6 @@ function initBattleStatsPane() {
 		}
 	});
 }
-function initRewardsPane() {
-return;
-	var innerHTML;
-	if (hvStat.arenaRewards.totalRwrds === 0) {
-		innerHTML = "No data found. Complete an arena to begin tracking.";
-	} else {
-		innerHTML = browser.extension.getResourceText("html/", "arena-rewards-pane.html");
-	}
-	$('#hvstat-arena-rewards-pane').html(innerHTML);
-	if (hvStat.arenaRewards.totalRwrds > 0) {
-		if (!hvStat.settings.isTrackRewards) {
-			$('#hvstat-arena-rewards-pane .hvstat-tracking-paused').show();
-		}
-		// Total Rewards
-		$('#hvstat-arena-rewards-total-number').text(hvStat.arenaRewards.totalRwrds);
-		var tdTotalArtifact = $('#hvstat-arena-rewards-total-artifact td');
-		var tdTotalEquipment = $('#hvstat-arena-rewards-total-equipment td');
-		var tdTotalItem = $('#hvstat-arena-rewards-total-item td');
-		var tdTotalTotal = $('#hvstat-arena-rewards-total-total td');
-		$(tdTotalArtifact[0]).text(hvStat.arenaRewards.artRwrd);
-		$(tdTotalArtifact[1]).text(hvStat.util.percentRatio(hvStat.arenaRewards.artRwrd, hvStat.arenaRewards.totalRwrds, 2) + "%");
-		$(tdTotalEquipment[0]).text(hvStat.arenaRewards.eqRwrd);
-		$(tdTotalEquipment[1]).text(hvStat.util.percentRatio(hvStat.arenaRewards.eqRwrd, hvStat.arenaRewards.totalRwrds, 2) + "%");
-		$(tdTotalItem[0]).text(hvStat.arenaRewards.itemsRwrd);
-		$(tdTotalItem[1]).text(hvStat.util.percentRatio(hvStat.arenaRewards.itemsRwrd, hvStat.arenaRewards.totalRwrds, 2) + "%");
-		$(tdTotalTotal[0]).text(hvStat.arenaRewards.totalRwrds);
-		// Token Bonuses
-		var totalTokenDrops = hvStat.arenaRewards.tokenDrops[0] + hvStat.arenaRewards.tokenDrops[2];
-		$('#hvstat-arena-rewards-token-bonuses-number').text(totalTokenDrops);
-		var tdTokenBlood = $('#hvstat-arena-rewards-token-bonuses-blood td');
-		var tdTokenChaos = $('#hvstat-arena-rewards-token-bonuses-chaos td');
-		var tdTokenTotal = $('#hvstat-arena-rewards-token-bonuses-total td');
-		$(tdTokenBlood[0]).text(hvStat.arenaRewards.tokenDrops[0]);
-		$(tdTokenBlood[1]).text(hvStat.util.percentRatio(hvStat.arenaRewards.tokenDrops[0], totalTokenDrops, 2) + "%");
-		$(tdTokenChaos[0]).text(hvStat.arenaRewards.tokenDrops[2]);
-		$(tdTokenChaos[1]).text(hvStat.util.percentRatio(hvStat.arenaRewards.tokenDrops[2], totalTokenDrops, 2) + "%");
-		$(tdTokenTotal[0]).text(hvStat.arenaRewards.tokenDrops[0] + hvStat.arenaRewards.tokenDrops[2]);
-		// Artifacts
-		var i = hvStat.arenaRewards.artRwrdArry.length;
-		var artifactsHTML = "";
-		while (i--) {
-			artifactsHTML += '<li>' + hvStat.arenaRewards.artRwrdArry[i] + ' x ' + hvStat.arenaRewards.artRwrdQtyArry[i] + '</li>';
-		}
-		$('#hvstat-arena-rewards-artifacts').html(artifactsHTML);
-		// Equipments
-		i = hvStat.arenaRewards.eqRwrdArry.length;
-		var equipmentsHTML = "";
-		while (i--) {
-			equipmentsHTML += '<li>' + hvStat.arenaRewards.eqRwrdArry[i] + '</li>';
-		}
-		$('#hvstat-arena-rewards-equipments').html(equipmentsHTML);
-		// Items
-		i = hvStat.arenaRewards.itemRwrdArry.length;
-		var itemsHTML = "";
-		while (i--) {
-			itemsHTML += '<li>' + hvStat.arenaRewards.itemRwrdArry[i] + ' x ' + hvStat.arenaRewards.itemRwrdQtyArry[i] + '</li>';
-		}
-		$('#hvstat-arena-rewards-items').html(itemsHTML);
-		// Buttons
-		$('#hvstat-arena-rewards-artifacts-clear').click(function () {
-			if (confirm("Clear Artifact list?")) {
-				hvStat.arenaRewards.artRwrdArry = [];
-				hvStat.arenaRewards.artRwrdQtyArry = [];
-				hvStat.storage.arenaRewards.save();
-			}
-		});
-		$('#hvstat-arena-rewards-equipments-clear').click(function () {
-			if (confirm("Clear Equipment list?")) {
-				hvStat.arenaRewards.eqRwrdArry = [];
-				hvStat.storage.arenaRewards.save();
-			}
-		});
-		$('#hvstat-arena-rewards-items-clear').click(function () {
-			if (confirm("Clear Item list?")) {
-				hvStat.arenaRewards.itemRwrdArry = [];
-				hvStat.arenaRewards.itemRwrdQtyArry = [];
-				hvStat.storage.arenaRewards.save();
-			}
-		});
-		$('#hvstat-arena-rewards-reset').click(function () {
-			if (confirm("Reset Arena Rewards tab?")) {
-				hvStat.storage.arenaRewards.reset();
-			}
-		});
-	}
-}
 function initShrinePane() {
 	var innerHTML;
 	if (hvStat.shrine.totalRewards === 0) {
@@ -7001,7 +6856,7 @@ function initSettingsPane() {
 
 	// Tracking
 	if (hvStat.settings.isTrackStats) $("input[name=isTrackStats]").attr("checked", "checked");
-	if (hvStat.settings.isTrackRewards) $("input[name=isTrackRewards]").attr("checked", "checked");
+//	if (hvStat.settings.isTrackRewards) $("input[name=isTrackRewards]").attr("checked", "checked");
 	if (hvStat.settings.isTrackShrine) $("input[name=isTrackShrine]").attr("checked", "checked");
 	if (hvStat.settings.isTrackItems) $("input[name=isTrackItems]").attr("checked", "checked");
 
@@ -7191,7 +7046,7 @@ function initSettingsPane() {
 
 	// Tracking Functions
 	$("input[name=isTrackStats]").click(saveSettings);
-	$("input[name=isTrackRewards]").click(saveSettings);
+//	$("input[name=isTrackRewards]").click(saveSettings);
 	$("input[name=isTrackShrine]").click(saveSettings);
 	$("input[name=isTrackItems]").click(saveSettings);
 
@@ -7341,7 +7196,7 @@ function saveSettings() {
 
 	// Tracking
 	hvStat.settings.isTrackStats = $("input[name=isTrackStats]").get(0).checked;
-	hvStat.settings.isTrackRewards = $("input[name=isTrackRewards]").get(0).checked;
+//	hvStat.settings.isTrackRewards = $("input[name=isTrackRewards]").get(0).checked;
 	hvStat.settings.isTrackShrine = $("input[name=isTrackShrine]").get(0).checked;
 	hvStat.settings.isTrackItems = $("input[name=isTrackItems]").get(0).checked;
 
@@ -7509,11 +7364,12 @@ function reminderAndSaveSettings() {
 function HVResetTracking() {
 	hvStat.storage.overview.reset();
 	hvStat.storage.stats.reset();
-//	hvStat.storage.arenaRewards.reset();
 	hvStat.storage.shrine.reset();
 	hvStat.storage.dropStats.reset();
 }
 function HVMasterReset() {
+	// Local storage keys starting with "HV" should not be used to avoid conflicts with other scripts.
+	// They will be phased out. Use the prefix "hvStat." instead.
 	var keys = [
 		"HVBackup1",
 		"HVBackup2",
@@ -7522,19 +7378,18 @@ function HVMasterReset() {
 		"HVBackup5",
 		"HVCharacterSettingsandStats",	// Obsolete
 		"HVCollectData",		// Obsolete
-		"HVDrops",
+		"HVDrops",				// Obsolete
 		"HVLoadTimeCounters",	// Obsolete
 		"HVMonsterDatabase",	// Old monster data
 		"HVOverview",
 		"HVProf",				// Obsolete
-		"HVRewards",
+		"HVRewards",			// Obsolete
 		"HVRound",				// Obsolete
 		"HVSettings",
 		"HVShrine",
 		"HVStats",
 		"HVTags",
-		"HVVersion",
-		"inventoryAlert",
+		"inventoryAlert",		// Obsolete
 	];
 	var i = keys.length;
 	while (i--) {
