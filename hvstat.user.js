@@ -5665,17 +5665,17 @@ hvStat.ui.dropsPane = {
 		var total = itemCount + equipmentCount + artifactCount + tokenCount;
 		var columns = $(cssSelecter);
 		$(columns[0]).text(itemCount);
-		$(columns[1]).text(hvStat.util.percentRatio(itemCount, nChances, 2) + "%");
-		$(columns[2]).text(hvStat.util.percentRatio(itemCount, total, 2) + "%");
+		$(columns[1]).text(hvStat.util.percentRatio(itemCount, total, 2) + "%");
+		$(columns[2]).text(hvStat.util.percentRatio(itemCount, nChances, 2) + "%");
 		$(columns[3]).text(tokenCount);
-		$(columns[4]).text(hvStat.util.percentRatio(tokenCount, nChances, 2) + "%");
-		$(columns[5]).text(hvStat.util.percentRatio(tokenCount, total, 2) + "%");
+		$(columns[4]).text(hvStat.util.percentRatio(tokenCount, total, 2) + "%");
+		$(columns[5]).text(hvStat.util.percentRatio(tokenCount, nChances, 2) + "%");
 		$(columns[6]).text(artifactCount);
-		$(columns[7]).text(hvStat.util.percentRatio(artifactCount, nChances, 2) + "%");
-		$(columns[8]).text(hvStat.util.percentRatio(artifactCount, total, 2) + "%");
+		$(columns[7]).text(hvStat.util.percentRatio(artifactCount, total, 2) + "%");
+		$(columns[8]).text(hvStat.util.percentRatio(artifactCount, nChances, 2) + "%");
 		$(columns[9]).text(equipmentCount);
-		$(columns[10]).text(hvStat.util.percentRatio(equipmentCount, nChances, 2) + "%");
-		$(columns[11]).text(hvStat.util.percentRatio(equipmentCount, total, 2) + "%");
+		$(columns[10]).text(hvStat.util.percentRatio(equipmentCount, total, 2) + "%");
+		$(columns[11]).text(hvStat.util.percentRatio(equipmentCount, nChances, 2) + "%");
 		$(columns[12]).text(nChances);
 	},
 	updateItems: function (dropType, difficulty, battleType) {
@@ -5738,8 +5738,8 @@ hvStat.ui.dropsPane = {
 							'<th>' + item.name + '</th>' +
 							'<td>' + qty + '</td>' +
 							'<td>' + dropCount + '</td>' +
-							'<td>' + hvStat.util.percentRatio(dropCount, chanceTotal, 2) + "%" + '</td>' +
 							'<td>' + hvStat.util.percentRatio(dropCount, total, 2) + "%" + '</td>' +
+							'<td>' + hvStat.util.percentRatio(dropCount, chanceTotal, 2) + "%" + '</td>' +
 							'</tr>\n';
 						prevClassName = item.className;
 					}
