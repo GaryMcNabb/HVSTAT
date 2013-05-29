@@ -4826,32 +4826,19 @@ hvStat.statistics.drops = {
 	},
 	storeItem: function (name, qty, dropType, difficulty, battleType) {
 		hvStat.database.idbAccessQueue.add(function () {
-			hvStat.statistics.drops._storeItem(name, qty, dropType, difficulty, battleType);
-		});
-	},
-	_storeItem: function (name, qty, dropType, difficulty, battleType) {
-		try {
-			var errorMessage;
-			var store = hvStat.database.transaction.objectStore("ItemDrops");
-			var itemDrop;
+			var tx = hvStat.database.transaction;
 			var key = [
 				name,
 				dropType,
 				difficulty,
 				battleType,
 			];
-			var getRequest = store.get(key);
-			getRequest.onerror = function (event) {
-				errorMessage = "ItemDrops: get: error";
-				console.log(errorMessage);
-				console.debug(event);
-				alert(errorMessage);
-			};
-			getRequest.onsuccess = function (event) {
+			hvStat.database.itemDrops.get(tx, key, function (obj) {
 				var timeStamp = (new Date()).toISOString();
-				if (event.target.result) {
+				var itemDrop;
+				if (obj) {
 					// Update
-					itemDrop = event.target.result;
+					itemDrop = obj;
 					itemDrop.dropCount++;
 					itemDrop.qty += qty;
 					itemDrop.timeStamp = timeStamp;
@@ -4868,22 +4855,9 @@ hvStat.statistics.drops = {
 						timeStamp: timeStamp,
 					};
 				}
-				var putRequest = store.put(itemDrop);
-				putRequest.onerror = function (event) {
-					errorMessage = "ItemDrops: put: error";
-					console.log(errorMessage);
-					console.debug(event);
-					alert(errorMessage);
-				};
-				putRequest.onsuccess = function (event) {
-					console.log("ItemDrops: put: success");
-					console.debug(event);
-				}
-			};
-		} catch (e) {
-			console.log(e);
-			alert(e);
-		}
+				hvStat.database.itemDrops.put(tx, itemDrop);
+			});
+		});
 	},
 	addEquipment: function (name, dropType, difficulty, battleType, arenaNumber, roundNumber) {
 		hvStat.storage.dropStats.addEquipment(name, dropType, difficulty, battleType, arenaNumber, roundNumber);
@@ -4894,13 +4868,7 @@ hvStat.statistics.drops = {
 	},
 	storeEquipment: function (name, dropType, difficulty, battleType, arenaNumber, roundNumber) {
 		hvStat.database.idbAccessQueue.add(function () {
-			hvStat.statistics.drops._storeEquipment(name, dropType, difficulty, battleType, arenaNumber, roundNumber);
-		});
-	},
-	_storeEquipment: function (name, dropType, difficulty, battleType, arenaNumber, roundNumber) {
-		try {
-			var errorMessage;
-			var store = hvStat.database.transaction.objectStore("EquipmentDrops");
+			var tx = hvStat.database.transaction;
 			if (battleType !== hvStat.constant.battleType.ARENA.id) {
 				arenaNumber = null;
 			}
@@ -4916,21 +4884,8 @@ hvStat.statistics.drops = {
 				roundNumber: roundNumber,
 				timeStamp: (new Date()).toISOString(),
 			};
-			var putRequest = store.put(equipmentDrop);
-			putRequest.onerror = function (event) {
-				errorMessage = "EquipmentDrops: put: error";
-				console.log(errorMessage);
-				console.debug(event);
-				alert(errorMessage);
-			};
-			putRequest.onsuccess = function (event) {
-				console.log("EquipmentDrops: put: success");
-				console.debug(event);
-			}
-		} catch (e) {
-			console.log(e);
-			alert(e);
-		}
+			hvStat.database.equipmentDrops.put(hvStat.database.transaction, equipmentDrop);
+		});
 	},
 };
 
@@ -5477,6 +5432,49 @@ hvStat.database.ObjectStoreDelegate = function (spec) {
 hvStat.database.ObjectStoreDelegate.prototype = {
 	get textHeader() {
 		return this.headerLabels.join(this.columnSeparator);
+	},
+	get: function (tx, key, callback) {
+		try {
+			this._get(tx, key, callback);
+		} catch (e) {
+			console.log(e);
+			alert(e);
+		}
+	},
+	_get: function (tx, key, callback) {
+		var store = tx.objectStore(this.objectStoreName);
+		var getRequest = store.get(key);
+		getRequest.onerror = function (event) {
+			console.log(event);
+			alert(event);
+		};
+		getRequest.onsuccess = function (event) {
+			if (callback instanceof Function) {
+				callback(event.target.result);
+			}
+		};
+	},
+	put: function (tx, obj, callback) {
+		try {
+			this._put(tx, obj, callback);
+		} catch (e) {
+			console.log(e);
+			alert(e);
+		}
+	},
+	_put: function (tx, obj, callback) {
+		var that = this;
+		var store = tx.objectStore(this.objectStoreName);
+		var putRequest = store.put(obj);
+		putRequest.onerror = function (event) {
+			console.log(event);
+			alert(event);
+		};
+		putRequest.onsuccess = function (event) {
+			if (callback instanceof Function) {
+				callback(obj);
+			}
+		}
 	},
 	export: function (callback) {
 		try {
