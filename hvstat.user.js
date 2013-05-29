@@ -4912,7 +4912,6 @@ hvStat.database.maintainObjectStores = function (oldVersion, versionChangeTransa
 	var alertMessage = "IndexDB database operation has failed; see console log";
 	var idb = versionChangeTransaction.db;
 	var store;
-	console.debug(event);
 
 	if (oldVersion < 1) {
 		// MonsterScanResults
@@ -5006,7 +5005,7 @@ hvStat.database.openIndexedDB = function (callback) {
 	idbOpenDBRequest.onerror = function (event) {
 		errorMessage = "Database open error: " + event.target.errorCode;
 		alert(errorMessage);
-		console.log(errorMessage);
+		console.log(event);
 	};
 	// Latest W3C draft (Firefox and Chrome 23 or later)
 	idbOpenDBRequest.onupgradeneeded = function (event) {
