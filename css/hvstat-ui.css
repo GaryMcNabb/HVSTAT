@@ -118,6 +118,7 @@
 	text-align: center;
 }
 
+#hvstat-drops-overview thead > tr:nth-of-type(2) > th:nth-of-type(1),
 #hvstat-drops-overview thead > tr:nth-of-type(2) > th:nth-of-type(4),
 #hvstat-drops-overview thead > tr:nth-of-type(2) > th:nth-of-type(7),
 #hvstat-drops-overview thead > tr:nth-of-type(2) > th:nth-of-type(10),
