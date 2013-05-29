@@ -1007,12 +1007,12 @@ hvStat.storage.initialValue = {
 	// Shrine object
 	shrine: {
 		artifactsTraded: 0,
-		artifactStat: 0,
-		artifactAP: 0,
-		artifactHath: 0,
+		artifactStat: 0,		// Primary Attributes
+		artifactHath: 0,		// Hath
 		artifactHathTotal: 0,
-		artifactCrystal: 0,
-		artifactItem: 0,
+		artifactCrystal: 0,		// Crystals
+		artifactItem: 0,		// Energy Drinks
+		artifactElixer: 0,		// Elixers
 		trophyArray: [],
 	},
 	// Statistics Backup object
@@ -1443,6 +1443,9 @@ hvStat.versions.functions = {
 		delete hvStat.settings.isTrackRewards;
 		hvStat.storage.settings.save();
 
+		delete hvStat.shrine.artifactAP;
+		hvStat.storage.shrine.save();
+
 		// Remove obsolete items on local storage
 		var keys = [
 			"HVCharacterSettingsandStats",
@@ -1512,8 +1515,8 @@ hvStat.support = {
 		if (message0.match(/power/i)) {
 			hvStat.shrine.artifactsTraded++;
 			var message2 = hv.util.innerText(messageElements[2]);
-			if (message2.match(/ability point/i)) {
-				hvStat.shrine.artifactAP++;
+			if (message2.match(/Elixir/i)) {
+				hvStat.shrine.artifactElixer++;
 			} else if (message2.match(/crystal/i)) {
 				hvStat.shrine.artifactCrystal++;
 			} else if (message2.match(/increased/i)) {
@@ -1526,7 +1529,7 @@ hvStat.support = {
 			}
 		} else if (message0.match(/item/i)) {
 			var message3 = hv.util.innerText(messageElements[3]);
-			hvStat.shrine.trophyArray.push(message3);
+			hvStat.shrine.trophyArray.push(hvStat.util.capitalizeEquipmentName(message3));
 		}
 		hvStat.storage.shrine.save();
 	},
@@ -6999,14 +7002,12 @@ function initShrinePane() {
 		if (!hvStat.settings.isTrackShrine) {
 			$('#hvstat-shrine-pane .hvstat-tracking-paused').show();
 		}
-		var tdAbilityPoints = $('#hvstat-shrine-artifact-ability-points td');
 		var tdAttributes = $('#hvstat-shrine-artifact-attributes td');
 		var tdHath = $('#hvstat-shrine-artifact-hath td');
 		var tdCrystals = $('#hvstat-shrine-artifact-crystals td');
 		var tdEnergyDrinks = $('#hvstat-shrine-artifact-energy-drinks td');
+		var tdElixers = $('#hvstat-shrine-artifact-elixers td');
 		var tdTotal = $('#hvstat-shrine-artifact-total td');
-		$(tdAbilityPoints[0]).text(hvStat.shrine.artifactAP);
-		$(tdAbilityPoints[1]).text(hvStat.util.percentRatio(hvStat.shrine.artifactAP, hvStat.shrine.artifactsTraded, 2) + "%");
 		$(tdAttributes[0]).text(hvStat.shrine.artifactStat);
 		$(tdAttributes[1]).text(hvStat.util.percentRatio(hvStat.shrine.artifactStat, hvStat.shrine.artifactsTraded, 2) + "%");
 		$(tdHath[0]).text(hvStat.shrine.artifactHath);
@@ -7016,6 +7017,8 @@ function initShrinePane() {
 		$(tdCrystals[1]).text(hvStat.util.percentRatio(hvStat.shrine.artifactCrystal, hvStat.shrine.artifactsTraded, 2) + "%");
 		$(tdEnergyDrinks[0]).text(hvStat.shrine.artifactItem);
 		$(tdEnergyDrinks[1]).text(hvStat.util.percentRatio(hvStat.shrine.artifactItem, hvStat.shrine.artifactsTraded, 2) + "%");
+		$(tdElixers[0]).text(hvStat.shrine.artifactElixer);
+		$(tdElixers[1]).text(hvStat.util.percentRatio(hvStat.shrine.artifactElixer, hvStat.shrine.artifactsTraded, 2) + "%");
 		$(tdTotal[0]).text(hvStat.shrine.artifactsTraded);
 
 		var i = hvStat.shrine.trophyArray.length;
