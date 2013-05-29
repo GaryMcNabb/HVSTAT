@@ -5864,24 +5864,10 @@ hvStat.ui.dropsPane = {
 		$('#hvstat-drops-items-drop-type').change(this.onItemFilterChange);
 		$('#hvstat-drops-items-difficulty').change(this.onItemFilterChange);
 		$('#hvstat-drops-items-battle-type').change(this.onItemFilterChange).change();
-		$('#hvstat-drops-items-clear').click(function () {
-			if (confirm("Clear Items?")) {
-				hvStat.statistics.drops.deleteItemDrops(hvStat.constant.dropType.MONSTER_DROP.id, function () {
-					$('#hvstat-drops-items-battle-type').change();
-				});
-			}
-		});
 		// Equipments
 		$('#hvstat-drops-equipments-drop-type').change(this.onEquipmentFilterChange);
 		$('#hvstat-drops-equipments-difficulty').change(this.onEquipmentFilterChange);
 		$('#hvstat-drops-equipments-battle-type').change(this.onEquipmentFilterChange).change();
-		$('#hvstat-drops-equipments-clear').click(function () {
-			if (confirm("Clear Equipment list?")) {
-				hvStat.statistics.drops.deleteEquipmentDrops(hvStat.constant.dropType.MONSTER_DROP.id, function () {
-					$('#hvstat-drops-equipments-battle-type').change();
-				});
-			}
-		});
 		// Footer
 		$('#hvstat-drops-reset').click(function () {
 			if (confirm("Reset Drops tab?")) {
