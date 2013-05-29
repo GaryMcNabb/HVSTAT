@@ -437,27 +437,6 @@ var hvStat = {
 // Utilities
 //------------------------------------
 hvStat.util = {
-	percent: function (value, digits) {
-		var v = value * 100;
-		if (digits) {
-			v = v.toFixed(digits);
-		}
-		return v;
-	},
-	ratio: function (numerator, denominator) {
-		if (denominator === 0) {
-			return 0;
-		} else {
-			return numerator / denominator;
-		}
-	},
-	percentRatio: function (numerator, denominator, digits) {
-		return this.percent(this.ratio(numerator, denominator), digits);
-	},
-	numberWithCommas: function (n) {
-		var parts = n.toString().split(".");
-		return parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",") + (parts[1] ? "." + parts[1] : "");
-	},
 	forEachProperty: function (target, base, callback) {
 		var primitives = [ "boolean", "number", "string", "undefined" ];
 		for (var key in base) {
@@ -5767,6 +5746,30 @@ hvStat.ui = {
 	},
 };
 
+hvStat.ui.util = {
+	percent: function (value, digits) {
+		var v = value * 100;
+		if (digits) {
+			v = v.toFixed(digits);
+		}
+		return v;
+	},
+	ratio: function (numerator, denominator) {
+		if (denominator === 0) {
+			return 0;
+		} else {
+			return numerator / denominator;
+		}
+	},
+	percentRatio: function (numerator, denominator, digits) {
+		return this.percent(this.ratio(numerator, denominator), digits);
+	},
+	numberWithCommas: function (n) {
+		var parts = n.toString().split(".");
+		return parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",") + (parts[1] ? "." + parts[1] : "");
+	},
+};
+
 hvStat.ui.dropsPane = {
 	dropsDisplayTable: null,
 	initialize: function () {
@@ -5824,17 +5827,17 @@ hvStat.ui.dropsPane = {
 		var total = itemCount + equipmentCount + artifactCount + tokenCount;
 		var columns = $(cssSelecter);
 		$(columns[0]).text(itemCount);
-		$(columns[1]).text(hvStat.util.percentRatio(itemCount, total, 2) + "%");
-		$(columns[2]).text(hvStat.util.percentRatio(itemCount, nChances, 2) + "%");
+		$(columns[1]).text(hvStat.ui.util.percentRatio(itemCount, total, 2) + "%");
+		$(columns[2]).text(hvStat.ui.util.percentRatio(itemCount, nChances, 2) + "%");
 		$(columns[3]).text(tokenCount);
-		$(columns[4]).text(hvStat.util.percentRatio(tokenCount, total, 2) + "%");
-		$(columns[5]).text(hvStat.util.percentRatio(tokenCount, nChances, 2) + "%");
+		$(columns[4]).text(hvStat.ui.util.percentRatio(tokenCount, total, 2) + "%");
+		$(columns[5]).text(hvStat.ui.util.percentRatio(tokenCount, nChances, 2) + "%");
 		$(columns[6]).text(artifactCount);
-		$(columns[7]).text(hvStat.util.percentRatio(artifactCount, total, 2) + "%");
-		$(columns[8]).text(hvStat.util.percentRatio(artifactCount, nChances, 2) + "%");
+		$(columns[7]).text(hvStat.ui.util.percentRatio(artifactCount, total, 2) + "%");
+		$(columns[8]).text(hvStat.ui.util.percentRatio(artifactCount, nChances, 2) + "%");
 		$(columns[9]).text(equipmentCount);
-		$(columns[10]).text(hvStat.util.percentRatio(equipmentCount, total, 2) + "%");
-		$(columns[11]).text(hvStat.util.percentRatio(equipmentCount, nChances, 2) + "%");
+		$(columns[10]).text(hvStat.ui.util.percentRatio(equipmentCount, total, 2) + "%");
+		$(columns[11]).text(hvStat.ui.util.percentRatio(equipmentCount, nChances, 2) + "%");
 		$(columns[12]).text(nChances);
 	},
 	updateItems: function (dropType, difficulty, battleType) {
@@ -5897,8 +5900,8 @@ hvStat.ui.dropsPane = {
 							'<th>' + item.name + '</th>' +
 							'<td>' + qty + '</td>' +
 							'<td>' + dropCount + '</td>' +
-							'<td>' + hvStat.util.percentRatio(dropCount, total, 2) + "%" + '</td>' +
-							'<td>' + hvStat.util.percentRatio(dropCount, chanceTotal, 2) + "%" + '</td>' +
+							'<td>' + hvStat.ui.util.percentRatio(dropCount, total, 2) + "%" + '</td>' +
+							'<td>' + hvStat.ui.util.percentRatio(dropCount, chanceTotal, 2) + "%" + '</td>' +
 							'</tr>\n';
 						prevClassName = item.className;
 					}
@@ -6466,7 +6469,6 @@ function saveStats() {
 	}
 	if (hvStat.roundContext.exp > 0) {
 		hvStat.overview.roundArray[hvStat.roundContext.battleType]++;
-// 		hvStat.storage.dropStats.increaseChance(hvStat.roundContext.dropChances, hvStat.characterStatus.difficulty.id, hvStat.roundContext.battleTypeName);
 	}
 	if (hvStat.settings.isTrackStats) {
 		hvStat.stats.kills += hvStat.roundContext.kills;
@@ -6590,7 +6592,7 @@ function saveStats() {
 function getBattleEndStatsHtml() {
 	function formatProbability(numerator, denominator, digits) {
 		return String(numerator) + "/" + String(denominator)
-			+ " (" + String(hvStat.util.percentRatio(numerator, denominator, digits)) + "%)";
+			+ " (" + String(hvStat.ui.util.percentRatio(numerator, denominator, digits)) + "%)";
 	}
 
 	var f = hvStat.roundContext.sHits[0] + hvStat.roundContext.sHits[1] + hvStat.roundContext.depSpells[1] + hvStat.roundContext.sResists;
@@ -6607,9 +6609,9 @@ function getBattleEndStatsHtml() {
 		+ "<b>Coalesce</b>: " + formatProbability(hvStat.roundContext.coalesce, e, 2) + ", "
 		+ "<b>M. Accuracy</b>: " + formatProbability(e, f, 2) + ", "
 		+ "<b>Spell Crits</b>: " + formatProbability(hvStat.roundContext.sHits[1], c, 2) + ", "
-		+ "<b>Avg hit dmg</b>: " + hvStat.util.ratio(hvStat.roundContext.dDealt[0], hvStat.roundContext.aHits[0]).toFixed(2) + "|" + hvStat.util.ratio(hvStat.roundContext.dDealtSp[0], hvStat.roundContext.sHits[0]).toFixed(2) + ", "
-		+ "<b>Avg crit dmg</b>: " + hvStat.util.ratio(hvStat.roundContext.dDealt[1], hvStat.roundContext.aHits[1]).toFixed(2) + "|" + hvStat.util.ratio(hvStat.roundContext.dDealtSp[1], hvStat.roundContext.sHits[1]).toFixed(2) + ", "
-		+ "<b>Avg dmg</b>: " + hvStat.util.ratio(hvStat.roundContext.dDealt[0] + hvStat.roundContext.dDealt[1], d).toFixed(2) + "|" + hvStat.util.ratio(hvStat.roundContext.dDealtSp[0] + hvStat.roundContext.dDealtSp[1], c).toFixed(2)
+		+ "<b>Avg hit dmg</b>: " + hvStat.ui.util.ratio(hvStat.roundContext.dDealt[0], hvStat.roundContext.aHits[0]).toFixed(2) + "|" + hvStat.ui.util.ratio(hvStat.roundContext.dDealtSp[0], hvStat.roundContext.sHits[0]).toFixed(2) + ", "
+		+ "<b>Avg crit dmg</b>: " + hvStat.ui.util.ratio(hvStat.roundContext.dDealt[1], hvStat.roundContext.aHits[1]).toFixed(2) + "|" + hvStat.ui.util.ratio(hvStat.roundContext.dDealtSp[1], hvStat.roundContext.sHits[1]).toFixed(2) + ", "
+		+ "<b>Avg dmg</b>: " + hvStat.ui.util.ratio(hvStat.roundContext.dDealt[0] + hvStat.roundContext.dDealt[1], d).toFixed(2) + "|" + hvStat.ui.util.ratio(hvStat.roundContext.dDealtSp[0] + hvStat.roundContext.dDealtSp[1], c).toFixed(2)
 		+ "<hr style='height:1px;border:0;background-color:#333333;color:#333333' />"
 		+ "<b>Hits taken</b>: " + formatProbability(b, hvStat.roundContext.mAttempts, 2) + ", "
 		+ "<b>Missed</b>: " + formatProbability(hvStat.roundContext.pDodges, hvStat.roundContext.mAttempts, 2) + ", "
@@ -6619,7 +6621,7 @@ function getBattleEndStatsHtml() {
 		+ "<b>Resisted</b>: " + formatProbability(hvStat.roundContext.pResists, hvStat.roundContext.mAttempts, 2) + ", "
 		+ "<b>Crits taken</b>: " + formatProbability(hvStat.roundContext.mHits[1], b, 2) + ", "
 		+ "<b>Total dmg taken</b>: " + (hvStat.roundContext.dTaken[0] + hvStat.roundContext.dTaken[1]) + ", "
-		+ "<b>Avg dmg taken</b>: " + hvStat.util.ratio(hvStat.roundContext.dTaken[0] + hvStat.roundContext.dTaken[1], b).toFixed(2);
+		+ "<b>Avg dmg taken</b>: " + hvStat.ui.util.ratio(hvStat.roundContext.dTaken[0] + hvStat.roundContext.dTaken[1], b).toFixed(2);
 	if (hvStat.settings.isShowEndProfs && (hvStat.settings.isShowEndProfsMagic || hvStat.settings.isShowEndProfsArmor || hvStat.settings.isShowEndProfsWeapon)) { //isShowEndProfs added by Ilirith
 		if (hvStat.settings.isShowEndProfsMagic) {
 			a += "<hr style='height:1px;border:0;background-color:#333333;color:#333333' />"
@@ -6684,10 +6686,10 @@ function initOverviewPane() {
  	var tdRoundsItemWorlds = $('#hvstat-overview-rounds-item-worlds td');
  	var tdRoundsTotal = $('#hvstat-overview-rounds-total td');
 
-	$(tdRoundsHourlyEncounters[0]).text(hvStat.util.numberWithCommas(hvStat.overview.roundArray[0]));
-	$(tdRoundsHourlyEncounters[1]).text(hvStat.util.percentRatio(hvStat.overview.roundArray[0], hvStat.overview.totalRounds, 2) + "%");
-	$(tdRoundsHourlyEncounters[2]).text(hvStat.util.numberWithCommas(hvStat.util.ratio(hvStat.overview.roundArray[0], elapsedHours).toFixed(2)));
-	$(tdRoundsHourlyEncounters[3]).text(hvStat.util.numberWithCommas(hvStat.util.ratio(hvStat.overview.roundArray[0], elapsedDays).toFixed(2)));
+	$(tdRoundsHourlyEncounters[0]).text(hvStat.ui.util.numberWithCommas(hvStat.overview.roundArray[0]));
+	$(tdRoundsHourlyEncounters[1]).text(hvStat.ui.util.percentRatio(hvStat.overview.roundArray[0], hvStat.overview.totalRounds, 2) + "%");
+	$(tdRoundsHourlyEncounters[2]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.roundArray[0], elapsedHours).toFixed(2)));
+	$(tdRoundsHourlyEncounters[3]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.roundArray[0], elapsedDays).toFixed(2)));
 
 	var lastHourlyEncounter;
 	if (hvStat.overview.lastHourlyTime === 0) {
@@ -6697,24 +6699,24 @@ function initOverviewPane() {
 	}
 	$(tdRoundsHourlyEncounters[4]).children('span').text(lastHourlyEncounter);
 
-	$(tdRoundsArena[0]).text(hvStat.util.numberWithCommas(hvStat.overview.roundArray[1]));
-	$(tdRoundsArena[1]).text(hvStat.util.percentRatio(hvStat.overview.roundArray[1], hvStat.overview.totalRounds, 2) + "%");
-	$(tdRoundsArena[2]).text(hvStat.util.numberWithCommas(hvStat.util.ratio(hvStat.overview.roundArray[1], elapsedHours).toFixed(2)));
-	$(tdRoundsArena[3]).text(hvStat.util.numberWithCommas(hvStat.util.ratio(hvStat.overview.roundArray[1], elapsedDays).toFixed(2)));
+	$(tdRoundsArena[0]).text(hvStat.ui.util.numberWithCommas(hvStat.overview.roundArray[1]));
+	$(tdRoundsArena[1]).text(hvStat.ui.util.percentRatio(hvStat.overview.roundArray[1], hvStat.overview.totalRounds, 2) + "%");
+	$(tdRoundsArena[2]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.roundArray[1], elapsedHours).toFixed(2)));
+	$(tdRoundsArena[3]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.roundArray[1], elapsedDays).toFixed(2)));
 
-	$(tdRoundsGrindfests[0]).text(hvStat.util.numberWithCommas(hvStat.overview.roundArray[2]));
-	$(tdRoundsGrindfests[1]).text(hvStat.util.percentRatio(hvStat.overview.roundArray[2], hvStat.overview.totalRounds, 2) + "%");
-	$(tdRoundsGrindfests[2]).text(hvStat.util.numberWithCommas(hvStat.util.ratio(hvStat.overview.roundArray[2], elapsedHours).toFixed(2)));
-	$(tdRoundsGrindfests[3]).text(hvStat.util.numberWithCommas(hvStat.util.ratio(hvStat.overview.roundArray[2], elapsedDays).toFixed(2)));
+	$(tdRoundsGrindfests[0]).text(hvStat.ui.util.numberWithCommas(hvStat.overview.roundArray[2]));
+	$(tdRoundsGrindfests[1]).text(hvStat.ui.util.percentRatio(hvStat.overview.roundArray[2], hvStat.overview.totalRounds, 2) + "%");
+	$(tdRoundsGrindfests[2]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.roundArray[2], elapsedHours).toFixed(2)));
+	$(tdRoundsGrindfests[3]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.roundArray[2], elapsedDays).toFixed(2)));
 
-	$(tdRoundsItemWorlds[0]).text(hvStat.util.numberWithCommas(hvStat.overview.roundArray[3]));
-	$(tdRoundsItemWorlds[1]).text(hvStat.util.percentRatio(hvStat.overview.roundArray[3], hvStat.overview.totalRounds, 2) + "%");
-	$(tdRoundsItemWorlds[2]).text(hvStat.util.numberWithCommas(hvStat.util.ratio(hvStat.overview.roundArray[3], elapsedHours).toFixed(2)));
-	$(tdRoundsItemWorlds[3]).text(hvStat.util.numberWithCommas(hvStat.util.ratio(hvStat.overview.roundArray[3], elapsedDays).toFixed(2)));
+	$(tdRoundsItemWorlds[0]).text(hvStat.ui.util.numberWithCommas(hvStat.overview.roundArray[3]));
+	$(tdRoundsItemWorlds[1]).text(hvStat.ui.util.percentRatio(hvStat.overview.roundArray[3], hvStat.overview.totalRounds, 2) + "%");
+	$(tdRoundsItemWorlds[2]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.roundArray[3], elapsedHours).toFixed(2)));
+	$(tdRoundsItemWorlds[3]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.roundArray[3], elapsedDays).toFixed(2)));
 
-	$(tdRoundsTotal[0]).text(hvStat.util.numberWithCommas(hvStat.overview.totalRounds));
-	$(tdRoundsTotal[2]).text(hvStat.util.numberWithCommas(hvStat.util.ratio(hvStat.overview.totalRounds, elapsedHours).toFixed(2)));
-	$(tdRoundsTotal[3]).text(hvStat.util.numberWithCommas(hvStat.util.ratio(hvStat.overview.totalRounds, elapsedDays).toFixed(2)));
+	$(tdRoundsTotal[0]).text(hvStat.ui.util.numberWithCommas(hvStat.overview.totalRounds));
+	$(tdRoundsTotal[2]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.totalRounds, elapsedHours).toFixed(2)));
+	$(tdRoundsTotal[3]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.totalRounds, elapsedDays).toFixed(2)));
 
  	var tdExpHourlyEncounters = $('#hvstat-overview-exp-hourly-encounters td');
  	var tdExpArena = $('#hvstat-overview-exp-arenas td');
@@ -6722,68 +6724,68 @@ function initOverviewPane() {
  	var tdExpItemWorlds = $('#hvstat-overview-exp-item-worlds td');
  	var tdExpTotal = $('#hvstat-overview-exp-total td');
 
-	$(tdExpHourlyEncounters[0]).text(hvStat.util.numberWithCommas(hvStat.overview.expbyBT[0]));
-	$(tdExpHourlyEncounters[1]).text(hvStat.util.percentRatio(hvStat.overview.expbyBT[0], hvStat.overview.exp, 2) + "%");
-	$(tdExpHourlyEncounters[2]).text(hvStat.util.numberWithCommas(hvStat.util.ratio(hvStat.overview.expbyBT[0], hvStat.overview.roundArray[0]).toFixed()));
-	$(tdExpHourlyEncounters[3]).text(hvStat.util.numberWithCommas(hvStat.util.ratio(hvStat.overview.expbyBT[0], elapsedHours).toFixed()));
-	$(tdExpHourlyEncounters[4]).text(hvStat.util.numberWithCommas(hvStat.util.ratio(hvStat.overview.expbyBT[0], elapsedDays).toFixed()));
+	$(tdExpHourlyEncounters[0]).text(hvStat.ui.util.numberWithCommas(hvStat.overview.expbyBT[0]));
+	$(tdExpHourlyEncounters[1]).text(hvStat.ui.util.percentRatio(hvStat.overview.expbyBT[0], hvStat.overview.exp, 2) + "%");
+	$(tdExpHourlyEncounters[2]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.expbyBT[0], hvStat.overview.roundArray[0]).toFixed()));
+	$(tdExpHourlyEncounters[3]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.expbyBT[0], elapsedHours).toFixed()));
+	$(tdExpHourlyEncounters[4]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.expbyBT[0], elapsedDays).toFixed()));
 
-	$(tdExpArena[0]).text(hvStat.util.numberWithCommas(hvStat.overview.expbyBT[1]));
-	$(tdExpArena[1]).text(hvStat.util.percentRatio(hvStat.overview.expbyBT[1], hvStat.overview.exp, 2) + "%");
-	$(tdExpArena[2]).text(hvStat.util.numberWithCommas(hvStat.util.ratio(hvStat.overview.expbyBT[1], hvStat.overview.roundArray[1]).toFixed()));
-	$(tdExpArena[3]).text(hvStat.util.numberWithCommas(hvStat.util.ratio(hvStat.overview.expbyBT[1], elapsedHours).toFixed()));
-	$(tdExpArena[4]).text(hvStat.util.numberWithCommas(hvStat.util.ratio(hvStat.overview.expbyBT[1], elapsedDays).toFixed()));
+	$(tdExpArena[0]).text(hvStat.ui.util.numberWithCommas(hvStat.overview.expbyBT[1]));
+	$(tdExpArena[1]).text(hvStat.ui.util.percentRatio(hvStat.overview.expbyBT[1], hvStat.overview.exp, 2) + "%");
+	$(tdExpArena[2]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.expbyBT[1], hvStat.overview.roundArray[1]).toFixed()));
+	$(tdExpArena[3]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.expbyBT[1], elapsedHours).toFixed()));
+	$(tdExpArena[4]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.expbyBT[1], elapsedDays).toFixed()));
 
-	$(tdExpGrindfests[0]).text(hvStat.util.numberWithCommas(hvStat.overview.expbyBT[2]));
-	$(tdExpGrindfests[1]).text(hvStat.util.percentRatio(hvStat.overview.expbyBT[2], hvStat.overview.exp, 2) + "%");
-	$(tdExpGrindfests[2]).text(hvStat.util.numberWithCommas(hvStat.util.ratio(hvStat.overview.expbyBT[2], hvStat.overview.roundArray[2]).toFixed()));
-	$(tdExpGrindfests[3]).text(hvStat.util.numberWithCommas(hvStat.util.ratio(hvStat.overview.expbyBT[2], elapsedHours).toFixed()));
-	$(tdExpGrindfests[4]).text(hvStat.util.numberWithCommas(hvStat.util.ratio(hvStat.overview.expbyBT[2], elapsedDays).toFixed()));
+	$(tdExpGrindfests[0]).text(hvStat.ui.util.numberWithCommas(hvStat.overview.expbyBT[2]));
+	$(tdExpGrindfests[1]).text(hvStat.ui.util.percentRatio(hvStat.overview.expbyBT[2], hvStat.overview.exp, 2) + "%");
+	$(tdExpGrindfests[2]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.expbyBT[2], hvStat.overview.roundArray[2]).toFixed()));
+	$(tdExpGrindfests[3]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.expbyBT[2], elapsedHours).toFixed()));
+	$(tdExpGrindfests[4]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.expbyBT[2], elapsedDays).toFixed()));
 
-	$(tdExpItemWorlds[0]).text(hvStat.util.numberWithCommas(hvStat.overview.expbyBT[3]));
-	$(tdExpItemWorlds[1]).text(hvStat.util.percentRatio(hvStat.overview.expbyBT[3], hvStat.overview.exp, 2) + "%");
-	$(tdExpItemWorlds[2]).text(hvStat.util.numberWithCommas(hvStat.util.ratio(hvStat.overview.expbyBT[3], hvStat.overview.roundArray[3]).toFixed()));
-	$(tdExpItemWorlds[3]).text(hvStat.util.numberWithCommas(hvStat.util.ratio(hvStat.overview.expbyBT[3], elapsedHours).toFixed()));
-	$(tdExpItemWorlds[4]).text(hvStat.util.numberWithCommas(hvStat.util.ratio(hvStat.overview.expbyBT[3], elapsedDays).toFixed()));
+	$(tdExpItemWorlds[0]).text(hvStat.ui.util.numberWithCommas(hvStat.overview.expbyBT[3]));
+	$(tdExpItemWorlds[1]).text(hvStat.ui.util.percentRatio(hvStat.overview.expbyBT[3], hvStat.overview.exp, 2) + "%");
+	$(tdExpItemWorlds[2]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.expbyBT[3], hvStat.overview.roundArray[3]).toFixed()));
+	$(tdExpItemWorlds[3]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.expbyBT[3], elapsedHours).toFixed()));
+	$(tdExpItemWorlds[4]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.expbyBT[3], elapsedDays).toFixed()));
 
-	$(tdExpTotal[0]).text(hvStat.util.numberWithCommas(hvStat.overview.exp));
-	$(tdExpTotal[2]).text(hvStat.util.numberWithCommas(hvStat.util.ratio(hvStat.overview.exp, hvStat.overview.totalRounds).toFixed()));
-	$(tdExpTotal[3]).text(hvStat.util.numberWithCommas(hvStat.util.ratio(hvStat.overview.exp, elapsedHours).toFixed()));
-	$(tdExpTotal[4]).text(hvStat.util.numberWithCommas(hvStat.util.ratio(hvStat.overview.exp, elapsedDays).toFixed()));
+	$(tdExpTotal[0]).text(hvStat.ui.util.numberWithCommas(hvStat.overview.exp));
+	$(tdExpTotal[2]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.exp, hvStat.overview.totalRounds).toFixed()));
+	$(tdExpTotal[3]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.exp, elapsedHours).toFixed()));
+	$(tdExpTotal[4]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.exp, elapsedDays).toFixed()));
 
 	var tdCreditsHourlyEncounters = $('#hvstat-overview-credits-hourly-encounters td');
 	var tdCreditsArena = $('#hvstat-overview-credits-arenas td');
 	var tdCreditsTotal = $('#hvstat-overview-credits-total td');
 
-	$(tdCreditsHourlyEncounters[0]).text(hvStat.util.numberWithCommas(hvStat.overview.creditsbyBT[0]));
-	$(tdCreditsHourlyEncounters[1]).text(hvStat.util.percentRatio(hvStat.overview.creditsbyBT[0], hvStat.overview.credits, 2) + "%");
-	$(tdCreditsHourlyEncounters[2]).text(hvStat.util.numberWithCommas(hvStat.util.ratio(hvStat.overview.creditsbyBT[0], hvStat.overview.roundArray[0]).toFixed()));
-	$(tdCreditsHourlyEncounters[3]).text(hvStat.util.numberWithCommas(hvStat.util.ratio(hvStat.overview.creditsbyBT[0], elapsedHours).toFixed()));
-	$(tdCreditsHourlyEncounters[4]).text(hvStat.util.numberWithCommas(hvStat.util.ratio(hvStat.overview.creditsbyBT[0], elapsedDays).toFixed()));
+	$(tdCreditsHourlyEncounters[0]).text(hvStat.ui.util.numberWithCommas(hvStat.overview.creditsbyBT[0]));
+	$(tdCreditsHourlyEncounters[1]).text(hvStat.ui.util.percentRatio(hvStat.overview.creditsbyBT[0], hvStat.overview.credits, 2) + "%");
+	$(tdCreditsHourlyEncounters[2]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.creditsbyBT[0], hvStat.overview.roundArray[0]).toFixed()));
+	$(tdCreditsHourlyEncounters[3]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.creditsbyBT[0], elapsedHours).toFixed()));
+	$(tdCreditsHourlyEncounters[4]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.creditsbyBT[0], elapsedDays).toFixed()));
 
-	$(tdCreditsArena[0]).text(hvStat.util.numberWithCommas(hvStat.overview.creditsbyBT[1]));
-	$(tdCreditsArena[1]).text(hvStat.util.percentRatio(hvStat.overview.creditsbyBT[1], hvStat.overview.credits, 2) + "%");
-	$(tdCreditsArena[2]).text(hvStat.util.numberWithCommas(hvStat.util.ratio(hvStat.overview.creditsbyBT[1], hvStat.overview.roundArray[1]).toFixed()));
-	$(tdCreditsArena[3]).text(hvStat.util.numberWithCommas(hvStat.util.ratio(hvStat.overview.creditsbyBT[1], elapsedHours).toFixed()));
-	$(tdCreditsArena[4]).text(hvStat.util.numberWithCommas(hvStat.util.ratio(hvStat.overview.creditsbyBT[1], elapsedDays).toFixed()));
+	$(tdCreditsArena[0]).text(hvStat.ui.util.numberWithCommas(hvStat.overview.creditsbyBT[1]));
+	$(tdCreditsArena[1]).text(hvStat.ui.util.percentRatio(hvStat.overview.creditsbyBT[1], hvStat.overview.credits, 2) + "%");
+	$(tdCreditsArena[2]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.creditsbyBT[1], hvStat.overview.roundArray[1]).toFixed()));
+	$(tdCreditsArena[3]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.creditsbyBT[1], elapsedHours).toFixed()));
+	$(tdCreditsArena[4]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.creditsbyBT[1], elapsedDays).toFixed()));
 
-	$(tdCreditsTotal[0]).text(hvStat.util.numberWithCommas(hvStat.overview.credits));
-	$(tdCreditsTotal[2]).text(hvStat.util.numberWithCommas(hvStat.util.ratio(hvStat.overview.credits, hvStat.overview.roundArray[0] + hvStat.overview.roundArray[1]).toFixed()));
-	$(tdCreditsTotal[3]).text(hvStat.util.numberWithCommas(hvStat.util.ratio(hvStat.overview.credits, elapsedHours).toFixed()));
-	$(tdCreditsTotal[4]).text(hvStat.util.numberWithCommas(hvStat.util.ratio(hvStat.overview.credits, elapsedDays).toFixed()));
+	$(tdCreditsTotal[0]).text(hvStat.ui.util.numberWithCommas(hvStat.overview.credits));
+	$(tdCreditsTotal[2]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.credits, hvStat.overview.roundArray[0] + hvStat.overview.roundArray[1]).toFixed()));
+	$(tdCreditsTotal[3]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.credits, elapsedHours).toFixed()));
+	$(tdCreditsTotal[4]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.credits, elapsedDays).toFixed()));
 
 	var tdDropsEquipments = $('#hvstat-overview-drops-equipments td');
 	var tdDropsArtifacts = $('#hvstat-overview-drops-artifacts td');
 
-	$(tdDropsEquipments[0]).text(hvStat.util.numberWithCommas(hvStat.overview.equips));
-	$(tdDropsEquipments[1]).text(hvStat.util.numberWithCommas(hvStat.util.ratio(hvStat.overview.equips, elapsedHours).toFixed(2)));
-	$(tdDropsEquipments[2]).text(hvStat.util.numberWithCommas(hvStat.util.ratio(hvStat.overview.equips, elapsedDays).toFixed(2)));
-	$(tdDropsEquipments[3]).text(hvStat.util.numberWithCommas(hvStat.util.ratio(hvStat.overview.totalRounds, hvStat.overview.equips).toFixed(2)));
+	$(tdDropsEquipments[0]).text(hvStat.ui.util.numberWithCommas(hvStat.overview.equips));
+	$(tdDropsEquipments[1]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.equips, elapsedHours).toFixed(2)));
+	$(tdDropsEquipments[2]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.equips, elapsedDays).toFixed(2)));
+	$(tdDropsEquipments[3]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.totalRounds, hvStat.overview.equips).toFixed(2)));
 
 	$(tdDropsArtifacts[0]).text(hvStat.overview.artifacts);
-	$(tdDropsArtifacts[1]).text(hvStat.util.ratio(hvStat.overview.artifacts, elapsedHours).toFixed(2));
-	$(tdDropsArtifacts[2]).text(hvStat.util.ratio(hvStat.overview.artifacts, elapsedDays).toFixed(2));
-	$(tdDropsArtifacts[3]).text(hvStat.util.ratio(hvStat.overview.totalRounds, hvStat.overview.artifacts).toFixed(2));
+	$(tdDropsArtifacts[1]).text(hvStat.ui.util.ratio(hvStat.overview.artifacts, elapsedHours).toFixed(2));
+	$(tdDropsArtifacts[2]).text(hvStat.ui.util.ratio(hvStat.overview.artifacts, elapsedDays).toFixed(2));
+	$(tdDropsArtifacts[3]).text(hvStat.ui.util.ratio(hvStat.overview.totalRounds, hvStat.overview.artifacts).toFixed(2));
 
 	var spanDropsEquipmentLastFound = $('#hvstat-overview-drops-equipments span');
 	var spanDropsArtifactLastFound = $('#hvstat-overview-drops-artifacts span');
@@ -7009,16 +7011,16 @@ function initShrinePane() {
 		var tdElixers = $('#hvstat-shrine-artifact-elixers td');
 		var tdTotal = $('#hvstat-shrine-artifact-total td');
 		$(tdAttributes[0]).text(hvStat.shrine.artifactStat);
-		$(tdAttributes[1]).text(hvStat.util.percentRatio(hvStat.shrine.artifactStat, hvStat.shrine.artifactsTraded, 2) + "%");
+		$(tdAttributes[1]).text(hvStat.ui.util.percentRatio(hvStat.shrine.artifactStat, hvStat.shrine.artifactsTraded, 2) + "%");
 		$(tdHath[0]).text(hvStat.shrine.artifactHath);
-		$(tdHath[1]).text(hvStat.util.percentRatio(hvStat.shrine.artifactHath, hvStat.shrine.artifactsTraded, 2) + "%");
-		$(tdHath[2]).text("(" + hvStat.util.ratio(hvStat.shrine.artifactHathTotal, hvStat.shrine.artifactsTraded).toFixed(2) + " Hath per Artifact)");
+		$(tdHath[1]).text(hvStat.ui.util.percentRatio(hvStat.shrine.artifactHath, hvStat.shrine.artifactsTraded, 2) + "%");
+		$(tdHath[2]).text("(" + hvStat.ui.util.ratio(hvStat.shrine.artifactHathTotal, hvStat.shrine.artifactsTraded).toFixed(2) + " Hath per Artifact)");
 		$(tdCrystals[0]).text(hvStat.shrine.artifactCrystal);
-		$(tdCrystals[1]).text(hvStat.util.percentRatio(hvStat.shrine.artifactCrystal, hvStat.shrine.artifactsTraded, 2) + "%");
+		$(tdCrystals[1]).text(hvStat.ui.util.percentRatio(hvStat.shrine.artifactCrystal, hvStat.shrine.artifactsTraded, 2) + "%");
 		$(tdEnergyDrinks[0]).text(hvStat.shrine.artifactItem);
-		$(tdEnergyDrinks[1]).text(hvStat.util.percentRatio(hvStat.shrine.artifactItem, hvStat.shrine.artifactsTraded, 2) + "%");
+		$(tdEnergyDrinks[1]).text(hvStat.ui.util.percentRatio(hvStat.shrine.artifactItem, hvStat.shrine.artifactsTraded, 2) + "%");
 		$(tdElixers[0]).text(hvStat.shrine.artifactElixer);
-		$(tdElixers[1]).text(hvStat.util.percentRatio(hvStat.shrine.artifactElixer, hvStat.shrine.artifactsTraded, 2) + "%");
+		$(tdElixers[1]).text(hvStat.ui.util.percentRatio(hvStat.shrine.artifactElixer, hvStat.shrine.artifactsTraded, 2) + "%");
 		$(tdTotal[0]).text(hvStat.shrine.artifactsTraded);
 
 		var i = hvStat.shrine.trophyArray.length;
