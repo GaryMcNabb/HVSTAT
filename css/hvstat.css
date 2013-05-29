@@ -334,13 +334,10 @@ input.hvstat-equipment-tag-new {
 	font-style: italic;
 }
 
-#hvstat-arena-rewards-pane ul,
 #hvstat-shrine-pane ul {
 	list-style-type: none;
 }
 
-#hvstat-arena-rewards-pane ul,
-#hvstat-arena-rewards-pane li,
 #hvstat-drops-pane ul,
 #hvstat-drops-pane li,
 #hvstat-shrine-pane ul,
@@ -351,14 +348,12 @@ input.hvstat-equipment-tag-new {
 
 #hvstat-overview-pane table,
 #hvstat-drops-pane table,
-#hvstat-arena-rewards-pane table,
 #hvstat-shrine-artifact-trade {
 	border-collapse: collapse;
 }
 
 #hvstat-overview-pane thead th,
 #hvstat-drops-pane thead th,
-#hvstat-arena-rewards-pane thead th,
 #hvstat-shrine-artifact-trade thead th {
 	border-bottom: 1px solid #5C0D11;
 }
@@ -367,8 +362,6 @@ input.hvstat-equipment-tag-new {
 #hvstat-overview-pane td,
 #hvstat-drops-pane th,
 #hvstat-drops-pane td,
-#hvstat-arena-rewards-pane th,
-#hvstat-arena-rewards-pane td,
 #hvstat-shrine-artifact-trade th,
 #hvstat-shrine-artifact-trade td {
 	text-align: right;
