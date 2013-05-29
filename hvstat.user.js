@@ -5665,12 +5665,12 @@ hvStat.database.equipmentDrops = new hvStat.database.ObjectStoreDelegate({
 });
 
 //------------------------------------
-// Dialog User Interface
+// HV STAT Icon
 //------------------------------------
-hvStat.ui = {
+hvStat.icon = {
 	setup: function () {
 		this.addStyle();
-		this.createIcon();
+		this.create();
 	},
 	addStyle: function () {
 		var C = browser.extension.style.ImageResourceInfo;
@@ -5686,9 +5686,8 @@ hvStat.ui = {
 			new C("images/", "ui-icons_cd0a0a_256x240.png", "css/images/"),
 		];
 		browser.extension.style.addFromResource("css/", "jquery-ui-1.9.2.custom.min.css", imageResouces);
-		browser.extension.style.addFromResource("css/", "hvstat-ui.css");
 	},
-	createIcon: function () {
+	create: function () {
 		var stuffBox = document.querySelector('div.stuffbox');
 		var icon = document.createElement("div");
 		icon.id = "hvstat-icon";
@@ -5707,11 +5706,19 @@ hvStat.ui = {
 		});
 		stuffBox.insertBefore(icon, null);
 	},
+};
+
+//------------------------------------
+// Dialog User Interface
+//------------------------------------
+hvStat.ui = {
 	// jQuery and jQuery UI must not be used except on the dialog panel for performance reason.
 	createDialog: function () {
 		// Load jQuery and jQuery UI
 		browser.extension.loadScript("scripts/", "jquery-1.8.3.min.js");
 		browser.extension.loadScript("scripts/", "jquery-ui-1.9.2.custom.min.js");
+		// Load CSS for the dialog
+		browser.extension.style.addFromResource("css/", "hvstat-ui.css");
 
 		var panel = document.createElement("div");
 		panel.id = "hvstat-panel";
@@ -7908,7 +7915,7 @@ hvStat.startup = {
 			hvStat.support.createInventoryWarningIcon();
 		}
 		document.addEventListener("keydown", hvStat.keyboard.documentKeydown);
-		hvStat.ui.setup();
+		hvStat.icon.setup();
 		if (hvStat.settings.adjustKeyEventHandling) {
 			document.onkeydown = hvStat.onkeydown;
 		}
