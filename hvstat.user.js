@@ -9,6 +9,7 @@
 // @resource        battle-log-type0.css                        css/battle-log-type0.css
 // @resource        battle-log-type1.css                        css/battle-log-type1.css
 // @resource        hvstat.css                                  css/hvstat.css
+// @resource        hvstat-ui.css                               css/hvstat-ui.css
 // @resource        jquery-ui-1.9.2.custom.min.css              css/jquery-ui-1.9.2.custom.min.css
 // @resource        channeling.png                              css/images/channeling.png
 // @resource        healthpot.png                               css/images/healthpot.png
@@ -5703,6 +5704,7 @@ hvStat.ui = {
 			new C("images/", "ui-icons_cd0a0a_256x240.png", "css/images/"),
 		];
 		browser.extension.style.addFromResource("css/", "jquery-ui-1.9.2.custom.min.css", imageResouces);
+		browser.extension.style.addFromResource("css/", "hvstat-ui.css");
 	},
 	createIcon: function () {
 		var stuffBox = document.querySelector('div.stuffbox');
