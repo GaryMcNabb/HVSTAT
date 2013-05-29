@@ -4885,39 +4885,6 @@ hvStat.statistics.drops = {
 			alert(e);
 		}
 	},
-	deleteItems: function (callback) {
-		hvStat.database.idbAccessQueue.add(function () {
-			hvStat.statistics.drops._deleteItems(callback);
-		});
-	},
-	_deleteItems: function (callback) {
-		try {
-			var tx = hvStat.database.idb.transaction(["ItemDrops"], "readwrite");
-			var store = tx.objectStore("ItemDrops");
-			var range = null;	// Select all
-			var cursorOpenRequest = store.openCursor(range, "next");
-			cursorOpenRequest.onerror = function (event) {
-				errorMessage = "ItemDrops: openCursor: error";
-				console.log(errorMessage);
-				console.debug(event);
-				alert(errorMessage);
-			};
-			cursorOpenRequest.onsuccess = function (event) {
-				var cursor = this.result;
-				if (cursor) {
-					cursor.delete();
-					cursor.continue();
-				} else {
-					if (callback instanceof Function) {
-						callback(event);
-					}
-				}
-			};
-		} catch (e) {
-			console.log(e);
-			alert(e);
-		}
-	},
 	addEquipment: function (name, dropType, difficulty, battleType, arenaNumber, roundNumber) {
 		hvStat.storage.dropStats.addEquipment(name, dropType, difficulty, battleType, arenaNumber, roundNumber);
 		this.storeEquipment(name, dropType, difficulty, battleType, arenaNumber, roundNumber);
@@ -4960,39 +4927,6 @@ hvStat.statistics.drops = {
 				console.log("EquipmentDrops: put: success");
 				console.debug(event);
 			}
-		} catch (e) {
-			console.log(e);
-			alert(e);
-		}
-	},
-	deleteEquipments: function (callback) {
-		hvStat.database.idbAccessQueue.add(function () {
-			hvStat.statistics.drops._deleteEquipments(callback);
-		});
-	},
-	_deleteEquipments: function (callback) {
-		try {
-			var tx = hvStat.database.idb.transaction(["EquipmentDrops"], "readwrite");
-			var store = tx.objectStore("EquipmentDrops");
-			var range = null	// Select all
-			var cursorOpenRequest = store.openCursor(range, "next");
-			cursorOpenRequest.onerror = function (event) {
-				errorMessage = "EquipmentDrops: openCursor: error";
-				console.log(errorMessage);
-				console.debug(event);
-				alert(errorMessage);
-			};
-			cursorOpenRequest.onsuccess = function (event) {
-				var cursor = this.result;
-				if (cursor) {
-					cursor.delete();
-					cursor.continue();
-				} else {
-					if (callback instanceof Function) {
-						callback(event);
-					}
-				}
-			};
 		} catch (e) {
 			console.log(e);
 			alert(e);
@@ -5843,7 +5777,7 @@ hvStat.ui.dropsPane = {
 		var nChances = hvStat.statistics.drops.nChances(null, null, null);
 		var innerHTML;
 		if (nChances === 0) {
-			innerHTML = "No data found. Complete an arena to begin tracking.";
+			innerHTML = "No data found. Complete a round to begin tracking.";
 		} else {
 			innerHTML = browser.extension.getResourceText("html/", "drops-pane.html");
 		}
@@ -5870,10 +5804,10 @@ hvStat.ui.dropsPane = {
 		$('#hvstat-drops-equipments-battle-type').change(this.onEquipmentFilterChange).change();
 		// Footer
 		$('#hvstat-drops-reset').click(function () {
-			if (confirm("Reset Drops tab?")) {
+			if (confirm("Are you sure to reset Drops tab?\nThe data of Item Drops and Equipment Drops on the database will also be deleted.")) {
 				hvStat.storage.dropStats.reset();
-				hvStat.statistics.drops.deleteItems();
-				hvStat.statistics.drops.deleteEquipments();
+				hvStat.database.itemDrops.delete(hvStat.ui.dropsPane.initialize);
+				hvStat.database.equipmentDrops.delete(hvStat.ui.dropsPane.initialize);
 				hvStat.ui.dropsPane.initialize();
 			}
 		});
