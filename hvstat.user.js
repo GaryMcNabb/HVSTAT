@@ -566,6 +566,9 @@ hvStat.util = {
 		if (c < (48 * 60 * 60)) return "1 day ago";
 		return (parseInt(c / 86400, 10)).toString() + " days ago";
 	},
+	capitalizeEquipmentName: function (name) {
+		return name.toLowerCase().replace(/(?:^|\s)(?!of )(?!the )\S/g, function (c) { return c.toUpperCase(); });
+	},
 	elementalSpells: [
 		"Fireball", "Inferno", "Flare", "Meteor", "Nova", "Flames of Loki",
 		"Icestrike", "Snowstorm", "Freeze", "Blizzard", "Cryostasis", "Fimbulvetr",
