@@ -2604,7 +2604,10 @@ hvStat.battle.eventLog.messageTypeParams = {
 		evaluationFn: function (message) {
 			var effectName = message.regexResult[1];
 			if (hvStat.settings.alertWhenChannelingIsGained && effectName === "Channeling") {
-				hvStat.battle.warningSystem.enqueueAlert("You gained the effect Channeling.");
+				var relatedMessage = message.relatedMessage;
+				if (!relatedMessage || relatedMessage.regexResult[1] !== "Mystic Gem") {
+					hvStat.battle.warningSystem.enqueueAlert("You gained the effect Channeling.");
+				}
 			}
 			switch (effectName) {
 			case "Channeling":
