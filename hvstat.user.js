@@ -24,9 +24,9 @@
 // @resource        ui-icons_5c0d11_256x240.png                 css/images/ui-icons_5c0d11_256x240.png
 // @resource        ui-icons_cd0a0a_256x240.png                 css/images/ui-icons_cd0a0a_256x240.png
 // @resource        battle-stats-pane.html                      html/battle-stats-pane.html
+// @resource        database-pane.html                          html/database-pane.html
 // @resource        drops-pane.html                             html/drops-pane.html
 // @resource        main.html                                   html/main.html
-// @resource        monster-database-pane.html                  html/monster-database-pane.html
 // @resource        overview-pane.html                          html/overview-pane.html
 // @resource        proficiency-table.html                      html/proficiency-table.html
 // @resource        settings-pane.html                          html/settings-pane.html
@@ -6015,7 +6015,7 @@ hvStat.ui.dropsPane = {
 
 hvStat.ui.databasePane = {
 	initialize: function () {
-		$('#hvstat-monster-database-pane').html(browser.extension.getResourceText("html/", "monster-database-pane.html"));
+		$('#hvstat-database-pane').html(browser.extension.getResourceText("html/", "database-pane.html"));
 		this.showSizeOfOldMonsterDatabase();
 		$('#hvstat-database-monster-scan-results-export').click(function () {
 			hvStat.database.exportMonsterScanResults(function () {
