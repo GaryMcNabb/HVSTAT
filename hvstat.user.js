@@ -5824,8 +5824,8 @@ hvStat.ui = {
 		initBattleStatsPane();
 		hvStat.ui.dropsPane.initialize();
 		initShrinePane();
+		hvStat.ui.databasePane.initialize();
 		initSettingsPane();
-		initMonsterDatabasePane();
 		$('#hvstat-icon').click(function () {
 			if ($(panel).dialog("isOpen")) {
 				$(panel).dialog("close");
@@ -6076,6 +6076,149 @@ hvStat.ui.dropsPane = {
 			battleType = null;
 		}
 		hvStat.ui.dropsPane.updateEquipments(dropType, difficulty, battleType);
+	},
+};
+
+hvStat.ui.databasePane = {
+	initialize: function () {
+		$('#hvstat-monster-database-pane').html(browser.extension.getResourceText("html/", "monster-database-pane.html"));
+		this.showSizeOfOldMonsterDatabase();
+		$('#hvstat-database-monster-scan-results-export').click(function () {
+			hvStat.database.exportMonsterScanResults(function () {
+				if (hvStat.database.nRowsMonsterScanResultsTSV === 0) {
+					alert("There are no data.");
+				} else {
+					var downloadLink = $('#hvstat-database-monster-scan-results-download');
+					downloadLink.attr("href", hvStat.database.dataURIMonsterScanResults);
+					downloadLink.attr("download", "hvstat_monster_scan.tsv");
+					downloadLink.css("visibility", "visible");
+					alert("Ready to export.\nClick the download link.");
+				}
+			});
+		});
+		$('#hvstat-database-monster-skills-export').click(function () {
+			hvStat.database.exportMonsterSkills(function () {
+				var downloadLink = $('#hvstat-database-monster-skills-download');
+				if (hvStat.database.nRowsMonsterSkillsTSV === 0) {
+					alert("There are no data.");
+				} else {
+					downloadLink.attr("href", hvStat.database.dataURIMonsterSkills);
+					downloadLink.attr("download", "hvstat_monster_skill.tsv");
+					downloadLink.css("visibility", "visible");
+					alert("Ready to export.\nClick the download link.");
+				}
+			});
+		});
+		$('#hvstat-database-item-drops-export').click(function () {
+			hvStat.database.itemDrops.export(function (result) {
+				var downloadLink = $('#hvstat-database-item-drops-download');
+				if (result.rowCount === 0) {
+					alert("There are no data.");
+				} else {
+					downloadLink.attr("href", result.dataURI);
+					downloadLink.attr("download", "hvstat_item_drops.tsv");
+					downloadLink.css("visibility", "visible");
+					alert("Ready to export.\nClick the download link.");
+				}
+			});
+		});
+		$('#hvstat-database-equipment-drops-export').click(function () {
+			hvStat.database.equipmentDrops.export(function (result) {
+				var downloadLink = $('#hvstat-database-equipment-drops-download');
+				if (result.rowCount === 0) {
+					alert("There are no data.");
+				} else {
+					downloadLink.attr("href", result.dataURI);
+					downloadLink.attr("download", "hvstat_equipment_drops.tsv");
+					downloadLink.css("visibility", "visible");
+					alert("Ready to export.\nClick the download link.");
+				}
+			});
+		});
+		$('#hvstat-database-monster-scan-results-import').change(function (event) {
+			var file = event.target.files[0];
+			if (!file) {
+				alert("Failed to load file");
+			} else {
+				if (confirm("Are you sure to import the data of monster scan results?")) {
+					hvStat.database.importMonsterScanResults(file);
+				}
+			}
+		});
+		$('#hvstat-database-monster-skills-import').change(function (event) {
+			var file = event.target.files[0];
+			if (!file) {
+				alert("Failed to load file");
+			} else {
+				if (confirm("Are you sure to import the data of monster skills?")) {
+					hvStat.database.importMonsterSkills(file);
+				}
+			}
+		});
+		$('#hvstat-database-item-drops-import').change(function (event) {
+			var file = event.target.files[0];
+			if (!file) {
+				alert("Failed to load file");
+			} else {
+				if (confirm("Are you sure to import the data of item drops?")) {
+					hvStat.database.itemDrops.import(file);
+				}
+			}
+		});
+		$('#hvstat-database-equipment-drops-import').change(function (event) {
+			var file = event.target.files[0];
+			if (!file) {
+				alert("Failed to load file");
+			} else {
+				if (confirm("Are you sure to import the data of equipment drops?")) {
+					hvStat.database.equipmentDrops.import(file);
+				}
+			}
+		});
+		$('#hvstat-database-monster-scan-results-delete').click(function () {
+			if (confirm("Are you sure to delete the data of monster scan results?")) {
+				hvStat.database.deleteAllObjectsInMonsterScanResults();
+			}
+		});
+		$('#hvstat-database-monster-skills-delete').click(function () {
+			if (confirm("Are you sure to delete the data of monster skills?")) {
+				hvStat.database.deleteAllObjectsInMonsterSkills();
+			}
+		});
+		$('#hvstat-database-item-drops-delete').click(function () {
+			if (confirm("Are you sure to delete the data of item drops?")) {
+				hvStat.database.itemDrops.delete(function (result) {
+					alert("Your data of item drops have been deleted.\nCount: " + result.count);
+				});
+			}
+		});
+		$('#hvstat-database-equipment-drops-delete').click(function () {
+			if (confirm("Are you sure to delete the data of equipment drops?")) {
+				hvStat.database.equipmentDrops.delete(function (result) {
+					alert("Your data of equipment drops have been deleted.\nCount: " + result.count);
+				});
+			}
+		});
+		$('#hvstat-database-delete').click(function () {
+			if (confirm("Are you really sure to delete your database?")) {
+				hvStat.database.deleteIndexedDB();
+			}
+		});
+		$('#hvstat-database-migrate-monster-database').click(function () {
+			if (confirm("Are you sure to migrate your monster database?")) {
+				hvStat.migration.monsterDatabase.migrateDatabase();
+			}
+		});
+		$('#hvstat-database-delete-old-monster-database').click(function () {
+			if (confirm("Are you really sure to delete your old monster database?")) {
+				hvStat.migration.monsterDatabase.deleteOldDatabase();
+				hvStat.ui.databasePane.showSizeOfOldMonsterDatabase();
+			}
+		});
+	},
+	showSizeOfOldMonsterDatabase: function () {
+		var size = ((localStorage.HVMonsterDatabase ? localStorage.HVMonsterDatabase.length : 0) / 1024 / 1024 * (browser.isChrome ? 2 : 1)).toFixed(2);
+		$('#hvstat-database-old-monster-database-size').text(size);
 	},
 };
 
@@ -6967,87 +7110,7 @@ function initShrinePane() {
 		});
 	}
 }
-function initMonsterDatabasePane() {
-	$("#hvstat-monster-database-pane").html(browser.extension.getResourceText("html/", "monster-database-pane.html"));
-	function showOldDatabaseSize() {
-		var oldDatabaseSize = ((localStorage.HVMonsterDatabase ? localStorage.HVMonsterDatabase.length : 0) / 1024 / 1024 * (browser.isChrome ? 2 : 1)).toFixed(2);
-		var e = document.getElementById("hvstat-monster-database-old-database-size");
-		e.textContent = String(oldDatabaseSize);
-	}
-	showOldDatabaseSize();
-	$("#importMonsterScanResults").change(function (event) {
-		var file = event.target.files[0];
-		if (!file) {
-			alert("Failed to load file");
-		} else {
-			if (confirm("Are you sure to import the monster scan results?")) {
-				hvStat.database.importMonsterScanResults(file);
-			}
-		}
-	});
-	$("#importMonsterSkills").change(function (event) {
-		var file = event.target.files[0];
-		if (!file) {
-			alert("Failed to load file");
-		} else {
-			if (confirm("Are you sure to import the monster skill data?")) {
-				hvStat.database.importMonsterSkills(file);
-			}
-		}
-	});
-	$("#exportMonsterScanResults").click(function () {
-		hvStat.database.exportMonsterScanResults(function () {
-			if (hvStat.database.nRowsMonsterScanResultsTSV === 0) {
-				alert("There is no monster scan result.");
-			} else {
-				var downloadLink = $("#downloadLinkMonsterScanResults");
-				downloadLink.attr("href", hvStat.database.dataURIMonsterScanResults);
-				downloadLink.attr("download", "hvstat_monster_scan.tsv");
-				downloadLink.css("visibility", "visible");
-				alert("Ready to export your monster scan results.\nClick the download link.");
-			}
-		});
-	});
-	$("#exportMonsterSkills").click(function () {
-		hvStat.database.exportMonsterSkills(function () {
-			var downloadLink = $("#downloadLinkMonsterSkills");
-			if (hvStat.database.nRowsMonsterSkillsTSV === 0) {
-				alert("There is no monster skill data.");
-			} else {
-				downloadLink.attr("href", hvStat.database.dataURIMonsterSkills);
-				downloadLink.attr("download", "hvstat_monster_skill.tsv");
-				downloadLink.css("visibility", "visible");
-				alert("Ready to export your monster skill data.\nClick the download link.");
-			}
-		});
-	});
-	$("#deleteMonsterScanResults").click(function () {
-		if (confirm("Are you sure to delete your monster scan results?")) {
-			hvStat.database.deleteAllObjectsInMonsterScanResults();
-		}
-	});
-	$("#deleteMonsterSkills").click(function () {
-		if (confirm("Are you sure to delete your monster skill data?")) {
-			hvStat.database.deleteAllObjectsInMonsterSkills();
-		}
-	});
-	$("#deleteDatabase").click(function () {
-		if (confirm("Are you really sure to delete your database?")) {
-			hvStat.database.deleteIndexedDB();
-		}
-	});
-	$("#migrateDatabase").click(function () {
-		if (confirm("Are you sure to migrate your monster database?")) {
-			hvStat.migration.monsterDatabase.migrateDatabase();
-		}
-	});
-	$("#deleteOldDatabase").click(function () {
-		if (confirm("Are you really sure to delete your old monster database?")) {
-			hvStat.migration.monsterDatabase.deleteOldDatabase();
-			showOldDatabaseSize();
-		}
-	});
-}
+
 function initSettingsPane() {
 	$("#hvstat-settings-pane").html(browser.extension.getResourceText("html/", "settings-pane.html"));
 
