@@ -44,8 +44,6 @@
 	list-style-type: none;
 }
 
-#hvstat-drops-pane ul,
-#hvstat-drops-pane li,
 #hvstat-shrine-pane ul,
 #hvstat-shrine-pane li {
 	margin: 0px;
@@ -111,19 +109,6 @@
 #hvstat-overview-drops-equipments span:nth-of-type(1) { color: Red; }
 #hvstat-overview-drops-artifacts span:nth-of-type(1) { color: Blue; }
 
-#hvstat-drops-pane h2 {
-	margin-top: 4px;
-	margin-bottom: 4px;
-}
-
-#hvstat-drops-overview > h2 + div,
-#hvstat-drops-items > h2 + div,
-#hvstat-drops-equipments > h2 + div {
-	margin-top: -20px;
-	margin-left: 150px;
-	margin-bottom: 4px;
-}
-
 #hvstat-drops-overview thead > tr:nth-of-type(1) > th:nth-of-type(2),
 #hvstat-drops-overview thead > tr:nth-of-type(1) > th:nth-of-type(3),
 #hvstat-drops-overview thead > tr:nth-of-type(1) > th:nth-of-type(4),
@@ -141,9 +126,13 @@
 	border-left: 1px solid #5C0D11;
 }
 
+#hvstat-drops-items thead th:nth-child(1),
+#hvstat-drops-items tbody th:nth-child(1),
+#hvstat-drops-equipments thead th:nth-child(1),
 #hvstat-drops-equipments thead th:nth-child(2),
 #hvstat-drops-equipments thead th:nth-child(3),
 #hvstat-drops-equipments thead th:nth-child(6),
+#hvstat-drops-equipments tbody th:nth-child(1),
 #hvstat-drops-equipments tbody td:nth-child(2),
 #hvstat-drops-equipments tbody td:nth-child(3),
 #hvstat-drops-equipments tbody td:nth-child(6) {
