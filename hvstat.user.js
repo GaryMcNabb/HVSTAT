@@ -6026,7 +6026,7 @@ hvStat.ui.dropsPane = {
 							'<td>' + hvStat.constant.battleType[equipment.battleType].name + '</td>' +
 							'<td>' + arenaNumber + '</td>' +
 							'<td>' + roundNumber + '</td>' +
-							'<td>' + equipment.timeStamp.substring(0, 10) + '</td>' +
+							'<td>' + hvStat.util.getDateTimeString(new Date(equipment.timeStamp)) + '</td>' +
 							'</tr>\n' +
 							equipmentsHTML;
 					}
