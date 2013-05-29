@@ -844,7 +844,6 @@ hvStat.storage.initialValue = {
 		isShowEndProfsMagic: true,
 		isShowEndProfsArmor: true,
 		isShowEndProfsWeapon: true,
-		isFixTurns: false,
 		autoAdvanceBattleRound: false,
 		autoAdvanceBattleRoundDelay: 500,
 
@@ -2002,65 +2001,53 @@ hvStat.battle.eventLog = {
 		this.buildMessageTypes();
 	},
 	processEvents: function () {
-		// Process events on the current turn
-		var turnEvents = new hvStat.battle.eventLog.TurnEvents();
-		console.debug(turnEvents);
-		if (hvStat.settings.isFixTurns) {
-			var turnMin;
-			if (turnEvents.turnNumber === hvStat.roundContext.lastTurn) {
-				//We have no unprocessed events, so we do nothing
-				return;
-			} else if (turnEvents.turnNumber < hvStat.roundContext.lastTurn) {
-				//We're in a new round, so start from the beginning
-				turnMin = 0;
+		var currentTurnEvents = new hvStat.battle.eventLog.TurnEvents();
+		var turnMin;
+		if (currentTurnEvents.turnNumber === hvStat.roundContext.lastTurn) {
+			//We have no unprocessed events, so we do nothing
+			return;
+		} else if (currentTurnEvents.turnNumber < hvStat.roundContext.lastTurn) {
+			//We're in a new round, so start from the beginning
+			turnMin = 0;
+		} else {
+			//Start from where we left off
+			turnMin = hvStat.roundContext.lastTurn + 1;
+		}
+		var turnMax = currentTurnEvents.turnNumber;
+
+		for (var i = turnMin; i <= turnMax; i++) {
+			var turnEvents;
+			if (i < currentTurnEvents.turnNumber) {
+				turnEvents = new hvStat.battle.eventLog.TurnEvents(i);
 			} else {
-				//Start from where we left off
-				turnMin = hvStat.roundContext.lastTurn + 1;
+				turnEvents = currentTurnEvents;
 			}
-			var turnMax = turnEvents.turnNumber;
+			console.debug(turnEvents);
+			turnEvents.process();
+			if (i === 0) {
+				if (hvStat.settings.isShowRoundReminder &&
+						hvStat.roundContext.maxRound >= hvStat.settings.reminderMinRounds &&
+						hvStat.roundContext.currRound === hvStat.roundContext.maxRound - hvStat.settings.reminderBeforeEnd) {
+					if (hvStat.settings.reminderBeforeEnd === 0) {
+						hvStat.battle.warningSystem.enqueueAlert("This is final round");
+					} else {
+						hvStat.battle.warningSystem.enqueueAlert("The final round is approaching.");
+					}
+				}
+			}
+			var meleeHitCount = turnEvents.countOf("MELEE_HIT");
+			if (meleeHitCount >= 2) {
+				hvStat.roundContext.aDomino[0]++;
+				hvStat.roundContext.aDomino[1] += meleeHitCount;
+				hvStat.roundContext.aDomino[meleeHitCount]++
+			}
+			var counterCount = turnEvents.countOf("COUNTER");
+			if (counterCount >= 1) {
+				hvStat.roundContext.aCounters[counterCount]++;
+			}
+		}
 
-			for (var i=turnMin; i<turnMax; ++i) {
-				var thisTurnEvents = new hvStat.battle.eventLog.TurnEvents(i);
-				console.debug(thisTurnEvents);
-				thisTurnEvents.process();
-				var meleeHitCount = thisTurnEvents.countOf("MELEE_HIT");
-				if (meleeHitCount >= 2) {
-					hvStat.roundContext.aDomino[0]++;
-					hvStat.roundContext.aDomino[1] += meleeHitCount;
-					hvStat.roundContext.aDomino[meleeHitCount]++
-				}
-				var counterCount = thisTurnEvents.countOf("COUNTER");
-				if (counterCount >= 1) {
-					hvStat.roundContext.aCounters[counterCount]++;
-				}
-			}
-		}
-		turnEvents.process();
-
-		if (turnEvents.turnNumber === 0) {
-			if (hvStat.settings.isShowRoundReminder &&
-					hvStat.roundContext.maxRound >= hvStat.settings.reminderMinRounds &&
-					hvStat.roundContext.currRound === hvStat.roundContext.maxRound - hvStat.settings.reminderBeforeEnd) {
-				if (hvStat.settings.reminderBeforeEnd === 0) {
-					hvStat.battle.warningSystem.enqueueAlert("This is final round");
-				} else {
-					hvStat.battle.warningSystem.enqueueAlert("The final round is approaching.");
-				}
-			}
-		}
-		var meleeHitCount = turnEvents.countOf("MELEE_HIT");
-		if (meleeHitCount >= 2) {
-			hvStat.roundContext.aDomino[0]++;
-			hvStat.roundContext.aDomino[1] += meleeHitCount;
-			hvStat.roundContext.aDomino[meleeHitCount]++
-		}
-		var counterCount = turnEvents.countOf("COUNTER");
-		if (counterCount >= 1) {
-			hvStat.roundContext.aCounters[counterCount]++;
-		}
-		if (hvStat.roundContext.lastTurn < turnEvents.lastTurnNumber) {
-			hvStat.roundContext.lastTurn = turnEvents.lastTurnNumber;
-		}
+		hvStat.roundContext.lastTurn = currentTurnEvents.lastTurnNumber;
 		hvStat.storage.roundContext.save();
 	},
 };
@@ -7124,7 +7111,6 @@ function initSettingsPane() {
 		$("input[name=isShowEndProfsArmor]").removeAttr("checked");
 		$("input[name=isShowEndProfsWeapon]").removeAttr("checked");
 	}
-	if (hvStat.settings.isFixTurns) $("input[name=isFixTurns]").attr("checked", "checked");
 	if (hvStat.settings.autoAdvanceBattleRound) $("input[name=autoAdvanceBattleRound]").attr("checked", "checked");
 	$("input[name=autoAdvanceBattleRoundDelay]").attr("value", hvStat.settings.autoAdvanceBattleRoundDelay);
 
@@ -7307,7 +7293,6 @@ function initSettingsPane() {
 	$("input[name=isShowEndProfsMagic]").click(saveSettings); //isShowEndProfs added by Ilirith
 	$("input[name=isShowEndProfsArmor]").click(saveSettings); //isShowEndProfs added by Ilirith
 	$("input[name=isShowEndProfsWeapon]").click(saveSettings); //isShowEndProfs added by Ilirith
-	$("input[name=isFixTurns]").click(saveSettings);
 	$("input[name=autoAdvanceBattleRound]").click(saveSettings);
 	$("input[name=autoAdvanceBattleRoundDelay]").change(saveSettings);
 
@@ -7456,7 +7441,6 @@ function saveSettings() {
 	hvStat.settings.isShowEndProfsMagic = $("input[name=isShowEndProfsMagic]").get(0).checked; //isShowEndProfs added by Ilirith
 	hvStat.settings.isShowEndProfsArmor = $("input[name=isShowEndProfsArmor]").get(0).checked; //isShowEndProfs added by Ilirith
 	hvStat.settings.isShowEndProfsWeapon = $("input[name=isShowEndProfsWeapon]").get(0).checked; //isShowEndProfs added by Ilirith
-	hvStat.settings.isFixTurns = $("input[name=isFixTurns]").get(0).checked;
 	hvStat.settings.autoAdvanceBattleRound = $("input[name=autoAdvanceBattleRound]").get(0).checked;
 	hvStat.settings.autoAdvanceBattleRoundDelay = $("input[name=autoAdvanceBattleRoundDelay]").get(0).value;
 
