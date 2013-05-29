@@ -2994,7 +2994,7 @@ hvStat.battle.eventLog.TurnEvents = function (targetTurnNumber) {
 	this.lastTurnNumber = -1;
 	this.messages = [];
 
-	var turnNumberElements = document.querySelectorAll('#togpane_log td:first-child');
+	var turnNumberElements = hv.battle.elementCache.battleLog.querySelectorAll('td:first-child');
 	this.lastTurnNumber = Number(util.innerText(turnNumberElements[0]));
 	if (isNaN(parseFloat(targetTurnNumber))) {
 		targetTurnNumber = this.lastTurnNumber;
@@ -6438,7 +6438,7 @@ GRINDFEST = 2;
 ITEM_WORLD = 3;
 
 function showBattleEndStats() {
-	var battleLog = document.getElementById("togpane_log");
+	var battleLog = hv.battle.elementCache.battleLog;
 	battleLog.innerHTML = "<div class='ui-state-default ui-corner-bottom' style='padding:10px;margin-bottom:10px;text-align:left'>" + getBattleEndStatsHtml() + "</div>" + battleLog.innerHTML;
 }
 
