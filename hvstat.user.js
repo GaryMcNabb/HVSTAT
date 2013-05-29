@@ -5529,6 +5529,233 @@ hvStat.database.importMonsterSkills = function (file, callback) {
 	reader.readAsText(file, 'UTF-8');
 };
 
+hvStat.database.ObjectStoreDelegate = function (spec) {
+	this.objectStoreName = spec.objectStoreName;
+	this.columnSeparator = spec.columnSeparator || "%09";
+	this.lineSeparator = spec.lineSeparator || "%0A";
+	this.regex = spec.regex;
+	this.headerLabels = spec.headerLabels;
+	this.keyPropertyName = spec.keyPropertyName || "key";
+	this.timeStampPropertyName = spec.timeStampPropertyName || "timeStamp";
+	this.objectToTextArrayFn = spec.objectToTextArrayFn;
+	this.regexResultToObjectFn = spec.regexResultToObjectFn;
+};
+hvStat.database.ObjectStoreDelegate.prototype = {
+	get textHeader() {
+		return this.headerLabels.join(this.columnSeparator);
+	},
+	export: function (callback) {
+		try {
+			this._export(callback);
+		} catch (e) {
+			console.log(e);
+			alert(e);
+		}
+	},
+	_export: function (callback) {
+		var that = this;
+		var tx = hvStat.database.idb.transaction([this.objectStoreName], "readonly");
+		var store = tx.objectStore(this.objectStoreName);
+		var count = 0;
+		var texts = [];
+		texts[count++] = this.textHeader;
+		var cursorOpenRequest = store.openCursor(null, "next");
+		cursorOpenRequest.onerror = function (event) {
+			console.log(event);
+			alert(event);
+		};
+		cursorOpenRequest.onsuccess = function (event) {
+			var cursor = this.result;
+			var obj, text, result;
+			if (cursor) {
+				obj = cursor.value;
+				texts[count++] = that.objectToTextArrayFn(obj).join(that.columnSeparator);
+				cursor.continue();
+			} else {
+				if (callback instanceof Function) {
+					result = {
+						dataURI: "data:text/tsv;charset=utf-8," + texts.join(that.lineSeparator),
+						rowCount: count,
+					}
+					callback(result);
+				}
+			}
+		};
+	},
+	import: function (callback) {
+		try {
+			this._import(callback);
+		} catch (e) {
+			console.log(e);
+			alert(e);
+		}
+	},
+	_import: function (file, callback) {
+		var that = this;
+		var reader = new FileReader();
+		reader.onerror = function (event) {
+			console.log(event);
+			alert(event);
+		};
+		reader.onload = function (event) {
+			var contents = event.target.result;
+			var rowCount, procCount;
+			var regexResult;
+			var tx = hvStat.database.idb.transaction([that.objectStoreName], "readwrite");
+			var store = tx.objectStore(that.objectStoreName);
+			var skipCount = 0;
+			var successCount = 0;
+			var errorCount = 0;
+			var obj;
+
+			var report = function () {
+				if (procCount >= rowCount) {
+					alert(rowCount + " row(s) found,\n" + successCount + " row(s) imported,\n" + skipCount + " row(s) skipped,\n" + errorCount + " error(s)");
+				}
+			};
+
+			// Prescan
+			that.regex.lastIndex = 0;
+			rowCount = 0;
+			while ((regexResult = that.regex.exec(contents)) !== null) {
+				rowCount++;
+			}
+
+			// Import
+			procCount = 0;
+			that.regex.lastIndex = 0;
+			while ((regexResult = that.regex.exec(contents)) !== null) {
+				obj = that.regexResultToObjectFn(regexResult);
+				(function (obj) {
+					var getRequest = store.get(obj[that.keyPropertyName]);
+					getRequest.onerror = function (event) {
+						console.debug(event);
+						alert(event);
+						errorCount++;
+						procCount++;
+						report();
+					};
+					getRequest.onsuccess = function (event) {
+						var existingObj = event.target.result;
+						var doPut = (existingObj === undefined || obj[that.timeStampPropertyName] >= existingObj[that.timeStampPropertyName]);
+						if (!doPut) {
+							skipCount++;
+							procCount++;
+						} else {
+							var putRequest = store.put(obj);
+							putRequest.onerror = function (event) {
+								console.debug(event);
+								alert(event);
+								errorCount++;
+								procCount++;
+								report();
+							};
+							putRequest.onsuccess = function (event) {
+								successCount++;
+								procCount++;
+								report();
+							};
+						}
+					};
+				})(obj);
+			}
+		};
+		reader.readAsText(file, 'UTF-8');
+	},
+	delete: function (callback) {
+		var that = this;
+		var tx = hvStat.database.idb.transaction([that.objectStoreName], "readwrite");
+		var store = tx.objectStore(that.objectStoreName);
+		var count = 0;
+		var cursorOpenRequest = store.openCursor(null, "next");
+		cursorOpenRequest.onerror = function (event) {
+			console.log(event);
+			alert(event);
+		};
+		cursorOpenRequest.onsuccess = function (event) {
+			var cursor = this.result;
+			if (cursor) {
+				cursor.delete();
+				count++;
+				cursor.continue();
+			} else {
+				if (callback instanceof Function) {
+					var result = {
+						count: count,
+					}
+					callback(result);
+				}
+			}
+		};
+	},
+};
+
+
+hvStat.database.itemDrops = new hvStat.database.ObjectStoreDelegate({
+	objectStoreName: "ItemDrops",
+	regex: /^(.+?)\t(.+?)\t(.+?)\t(.+?)\t(\d+)\t(\d+)\t([-0-9TZ\:\.]+?)$/gm,
+	headerLabels: ["NAME", "DROP_TYPE", "DIFFICULTY", "BATTLE_TYPE", "DROP_COUNT", "QTY", "TIME_STAMP"],
+	objectToTextArrayFn: function (obj) {
+		return [
+			obj.name,
+			obj.dropType,
+			obj.difficulty,
+			obj.battleType,
+			obj.dropCount,
+			obj.qty,
+			obj.timeStamp,
+		];
+	},
+	regexResultToObjectFn: function (regexResult) {
+		return {
+			key: [
+				regexResult[1],
+				regexResult[2],
+				regexResult[3],
+				regexResult[4],
+			],
+			name: regexResult[1],
+			dropType: regexResult[2],
+			difficulty: regexResult[3],
+			battleType: regexResult[4],
+			dropCount: Number(regexResult[5]),
+			qty: Number(regexResult[6]),
+			timeStamp: regexResult[7],
+		};
+	},
+});
+
+hvStat.database.equipmentDrops = new hvStat.database.ObjectStoreDelegate({
+	objectStoreName: "EquipmentDrops",
+	regex: /^(\d+)\t(.+?)\t(.+?)\t(.+?)\t(.+?)\t(\d*)\t(\d*)\t([-0-9TZ\:\.]+?)$/gm,
+	headerLabels: ["ID", "NAME", "DROP_TYPE", "DIFFICULTY", "BATTLE_TYPE", "ARENA_NUMBER", "ROUND_NUMBER", "TIME_STAMP"],
+	keyPropertyName: "id",
+	objectToTextArrayFn: function (obj) {
+		return [
+			obj.id,
+			obj.name,
+			obj.dropType,
+			obj.difficulty,
+			obj.battleType,
+			(obj.arenaNumber === null ? "" : obj.arenaNumber),
+			(obj.roundNumber === null ? "" : obj.roundNumber),
+			obj.timeStamp,
+		];
+	},
+	regexResultToObjectFn: function (regexResult) {
+		return {
+			id: Number(regexResult[1]),
+			name: regexResult[2],
+			dropType: regexResult[3],
+			difficulty: regexResult[4],
+			battleType: regexResult[5],
+			arenaNumber: regexResult[6] === "" ? null : Number(regexResult[6]),
+			roundNumber: regexResult[7] === "" ? null : Number(regexResult[7]),
+			timeStamp: regexResult[8],
+		};
+	},
+});
+
 //------------------------------------
 // Dialog User Interface
 //------------------------------------
