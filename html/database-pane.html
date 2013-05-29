@@ -1,14 +1,6 @@
 <div>
 
 <h2>Administration</h2>
-<h3>Export</h3>
-<div>
-<p>The following data can be exported as a TSV (tab-separated-values) format text file.</p>
-<h3>Import</h3>
-<p>An exported TSV file can be merged into the database. The rows in a TSV file which have older date will be skipped.</p>
-<h3>Delete Data</h3>
-<p>You can delete specific data if you want to clean them.</p>
-</div>
 
 <div>
 <table>
@@ -50,21 +42,27 @@
 </table>
 </div>
 
-<h2>Delete Database</h3>
+<p><em>Export</em>:
+The data can be exported as a TSV (tab-separated-values) format text file.</p>
+<p><em>Import</em>:
+An exported TSV file can be merged into the database. The rows in the file that have older date will be skipped.</p>
+<p><em>Delete Data</em>:
+You can delete specific data if you want to clean them.</p>
+
+<h2>Delete IndexedDB Database</h3>
 <div>
-<p>If you are facing a problem with the database, and the problem cannot be resolved, delete the database.</p>
-<p>In order to re-create the database, reload the page. After that, you can import data previously exported.</p>
-<input type="button" id="hvstat-database-delete" value="Delete Database" />
+<p>Delete if there is a problem with the database. The database will be re-created after the next page load. Then you can import the data previously exported.</p>
+<input type="button" id="hvstat-database-delete" value="Delete IndexedDB Database" />
 </div>
 
 <h2>Monster Database Migration</h2>
 <h3>Migrate to New Database</h3>
 <div>
-<p>HVSTAT will now use the new IndexedDB database instead of the localStorage database. You can migrate your old database into the new database.</p>
+<p>HV STAT will now use the new IndexedDB database instead of the localStorage database. You can migrate your old database into the new database.</p>
 <p><span style="color: red;">If you have already scanned, note that this operation will overwrite existing data on the new database.</span></p>
 <input type="button" id="hvstat-database-migrate-monster-database" value="Migrate" />
 </div>
-<h3>Delete Old Monster Database (localStorage)</h3>
+<h3>Delete Old Monster Database on localStorage</h3>
 <div>
 <p>Currently your old monster database occupies <span id="hvstat-database-old-monster-database-size" style="font-weight: bold;" /> MB on the localStorage. In order to free up space for other HV scripts, delete the old database after migration.</p>
 <p><span style="color: red;"></span></p>
