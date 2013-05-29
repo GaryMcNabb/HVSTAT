@@ -42,12 +42,10 @@
 </table>
 </div>
 
-<p><em>Export</em>:
-The data can be exported as a TSV (tab-separated-values) format text file.</p>
-<p><em>Import</em>:
-An exported TSV file can be merged into the database. The rows in the file that have older date will be skipped.</p>
-<p><em>Delete Data</em>:
-You can delete specific data if you want to clean them.</p>
+<p>Export: The data can be exported as a TSV (tab-separated-values) format text file.</p>
+<p>Import: An exported TSV file can be merged into the database. The rows in the file that have older date will be skipped.</p>
+<p>Delete Data: You can delete specific data if you want to clean them.</p>
+<p><em><span style="color: red;">Note: 'Chance PCT.' values on Drops tab will be incorrect if you will import the data of Item Drops after resetting Drops tab.</span></em></p>
 
 <h2>Delete IndexedDB Database</h3>
 <div>
@@ -59,7 +57,7 @@ You can delete specific data if you want to clean them.</p>
 <h3>Migrate to New Database</h3>
 <div>
 <p>HV STAT will now use the new IndexedDB database instead of the localStorage database. You can migrate your old database into the new database.</p>
-<p><span style="color: red;">If you have already scanned, note that this operation will overwrite existing data on the new database.</span></p>
+<p><em><span style="color: red;">Note: If you have already scanned, note that this operation will overwrite existing data on the new database.</span></em></p>
 <input type="button" id="hvstat-database-migrate-monster-database" value="Migrate" />
 </div>
 <h3>Delete Old Monster Database on localStorage</h3>
