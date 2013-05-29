@@ -977,11 +977,12 @@ hvStat.storage.initialValue = {
 	},
 	// Drop Statistics object
 	dropStats: {
-		nChances: [],		// Array of { key:Object { type:String, difficulty:String, battleType:String }, count:Number }
-		itemCount: [],		// Array of { key:Object { type:String, difficulty:String, battleType:String }, count:Number }
-		tokenCount: [],		// Array of { key:Object { type:String, difficulty:String, battleType:String }, count:Number }
-		artifactCount: [],	// Array of { key:Object { type:String, difficulty:String, battleType:String }, count:Number }
-		equipmentCount: [],	// Array of { key:Object { type:String, difficulty:String, battleType:String }, count:Number }
+		// Array of { key:Object { type:String, difficulty:String, battleType:String }, count:Number }
+		nChances: [],
+		itemCount: [],
+		tokenCount: [],
+		artifactCount: [],
+		equipmentCount: [],
 	},
 	// Shrine object
 	shrine: {
