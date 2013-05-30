@@ -4743,6 +4743,11 @@ hvStat.battle.warningSystem = {
 				if (hvStat.settings.isEffectsAlertSelf[j] &&
 						(effectName + " ").indexOf(this.selfEffectNames[j] + " ") >= 0 &&	// To match "Regen" and "Regen II", not "Regeneration"
 						String(hvStat.settings.EffectsAlertSelfRounds[j]) === duration) {
+					// Suppress useless warnings
+					if (effectName === "Chain 1" && !hvStat.battle.command.subMenuItemMap["Skill2"].available ||
+							effectName === "Chain 2" && !hvStat.battle.command.subMenuItemMap["Skill3"].available) {
+						continue;
+					}
 					this.enqueueAlert(effectName + " is expiring");
 				}
 			}
