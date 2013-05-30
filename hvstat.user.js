@@ -3185,16 +3185,18 @@ hvStat.battle.command.SubMenuItem = function (spec) {
 };
 hvStat.battle.command.SubMenuItem.prototype = {
 	get available() {
-		return !this.element.style.cssText.match(/opacity\s*:\s*0/);
+		return !this.element.style.cssText.match(/opacity\s*:\s*0/i);
+	},
+	get selected() {
+		return !!this.element.children[0].style.cssText.match(/color\s*:\s*rgb\(0\s*\,\s*48\s*,\s*203\s*\)/i);
 	},
 	select: function () {
 		if (this.available) {
 			if (!this.parent.opened) {
 				this.parent.open();
 			}
-			this.element.onclick();	// select
-			if (this.commandTarget === "self") {
-				this.element.onclick();	// commit
+			if (!this.selected) {
+				this.element.onclick();	// select
 			}
 		}
 	},
