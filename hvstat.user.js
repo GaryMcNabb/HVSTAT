@@ -1668,6 +1668,7 @@ hvStat.keyboard = {
 		}
 		var boundKeys, i, j;
 		if (hv.battle.active) {
+			var attackCommand = hvStat.battle.command.commandMap["Attack"];	// Used to close Skillbook menu
 			var miScan = hvStat.battle.command.subMenuItemMap["Scan"];
 			var miSkill1 = hvStat.battle.command.subMenuItemMap["Skill1"];
 			var miSkill2 = hvStat.battle.command.subMenuItemMap["Skill2"];
@@ -1679,7 +1680,9 @@ hvStat.keyboard = {
 				for (i = 0; i < boundKeys.length; i++) {
 					if (boundKeys[i].matches(event)) {
 						if (hvStat.battle.command.commandMap["Skillbook"].menuOpened) {
-							hvStat.battle.command.commandMap["Skillbook"].close();
+							// Close Skillbook menu
+							attackCommand.select();
+							attackCommand.select();
 						} else {
 							miScan.select();
 						}
@@ -1713,7 +1716,9 @@ hvStat.keyboard = {
 				for (i = 0; i < boundKeys.length; i++) {
 					if (boundKeys[i].matches(event)) {
 						if (traversalFinished) {
-							hvStat.battle.command.commandMap["Skillbook"].close();
+							// Close Skillbook menu
+							attackCommand.select();
+							attackCommand.select();
 							hvStat.keyboard.selectedSkillIndex = -1;
 						} else {
 							for (j = startIndex + increment;
@@ -1735,7 +1740,9 @@ hvStat.keyboard = {
 				for (i = 0; i < boundKeys.length; i++) {
 					if (boundKeys[i].matches(event)) {
 						if (hvStat.battle.command.commandMap["Skillbook"].menuOpened) {
-							hvStat.battle.command.commandMap["Skillbook"].close();
+							// Close Skillbook menu
+							attackCommand.select();
+							attackCommand.select();
 						} else {
 							miOFC.select();
 						}
