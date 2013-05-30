@@ -303,19 +303,17 @@ var hv = {
 		this.util.useHVFontEngine = document.getElementsByClassName('fd2')[0].textContent !== "Health points";
 		var settings = {
 			useHVFontEngine: this.util.useHVFontEngine,
-			difficulty: null,
+			get difficulty() {
+				var e = document.querySelectorAll('div.clb table.cit div.fd4');
+				for (var i = 0; i < e.length; i++) {
+					var r = /(Normal|Hard|Nightmare|Hell|Nintendo|Battletoads|IWBTH)/i.exec(hv.util.innerText(e[i]));
+					if (r) {
+						return r[1].toUpperCase();
+					}
+				}
+				return "";
+			},
 		};
-		var e = document.querySelectorAll('div.clb table.cit div.fd4');
-		//console.debug(e);
-		var i, r;
-		for (i = 0; i < e.length; i++) {
-			//console.debug(hv.util.innerText(e[i]));
-			r = /(Normal|Hard|Nightmare|Hell|Nintendo|Battletoads|IWBTH)/i.exec(hv.util.innerText(e[i]));
-			if (r) {
-				settings.difficulty = r[1].toUpperCase();
-				break;
-			}
-		}
 
 		var character = {
 			healthRate: hv.util.getCharacterGaugeRate(document.querySelector('img[alt="health"]')),
