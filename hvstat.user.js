@@ -7852,7 +7852,8 @@ hvStat.startup = {
 			}
 		} else {
 			hvStat.storage.roundContext.remove();
-			if (hvStat.settings.isStartAlert || hvStat.settings.isShowEquippedSet) {
+			if (hvStat.settings.isStartAlert || hvStat.settings.isShowEquippedSet ||
+					hvStat.settings.isTrackItems || hvStat.settings.isTrackShrine) {
 				hvStat.support.captureStatuses();
 			}
 			if (!hv.location.isRiddle) {
