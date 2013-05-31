@@ -8,6 +8,15 @@
 #hvstat-icon span {
 	margin: 3px;
 }
+#hvstat-inventory-warning-icon {
+	position: absolute;
+	top: 4px;
+	left: 1125px;
+	cursor: pointer;
+}
+#hvstat-inventory-warning-icon span {
+	margin: 3px;
+}
 
 /* Proficiency popup icon */
 #hvstat-proficiency-popup-icon {
@@ -281,120 +290,4 @@ input.hvstat-equipment-tag {
 }
 input.hvstat-equipment-tag-new {
 	color: Red;
-}
-
-/*** Dialog UI ***/
-#hvstat-panel {
-	text-align: left;
-}
-
-#hvstat-tabs > div {
-	height: 512px;
-	overflow: auto;
-}
-
-.hvstat-tracking-paused {
-	display: none;
-	padding: 4px;
-	margin: 4px;
-	font-weight: bold;
-	text-align: center;
-}
-
-.hvstat-box {
-	display: box;
-	display: -moz-box;
-	display: -webkit-box;
-}
-.hvstat-box > div {
-	margin: 4px 8px;
-}
-
-.hvstat-table-total th,
-.hvstat-table-total td {
-	border-top: 1px solid #5C0D11;
-	font-style: italic;
-}
-
-#hvstat-arena-rewards-pane ul,
-#hvstat-shrine-pane ul {
-	list-style-type: none;
-}
-
-#hvstat-arena-rewards-pane ul,
-#hvstat-arena-rewards-pane li,
-#hvstat-shrine-pane ul,
-#hvstat-shrine-pane li {
-	margin: 0px;
-	padding: 0px;
-}
-
-#hvstat-overview-pane table,
-#hvstat-arena-rewards-pane table,
-#hvstat-shrine-artifact-trade {
-	border-collapse: collapse;
-}
-
-#hvstat-overview-pane thead th,
-#hvstat-arena-rewards-pane thead th,
-#hvstat-shrine-artifact-trade thead th {
-	border-bottom: 1px solid #5C0D11;
-}
-
-#hvstat-overview-pane th,
-#hvstat-overview-pane td,
-#hvstat-arena-rewards-pane th,
-#hvstat-arena-rewards-pane td,
-#hvstat-shrine-artifact-trade th,
-#hvstat-shrine-artifact-trade td {
-	text-align: right;
-	padding: 1px 5px;
-	white-space: nowrap;
-}
-
-#hvstat-overview-reporting-period > h2 {
-	margin-top: 0px;
-}
-
-#hvstat-overview-rounds > h2,
-#hvstat-overview-exp > h2,
-#hvstat-overview-credits > h2,
-#hvstat-overview-drops > h2 {
-	margin-top: 12px;
-}
-
-#hvstat-overview-rounds > h2 + table,
-#hvstat-overview-exp > h2 + table,
-#hvstat-overview-credits > h2 + table,
-#hvstat-overview-drops > h2 + table {
-	margin-top: -35px;
-	margin-left: 15px;
-}
-
-#hvstat-overview-reporting-period > table {
-	margin-top: -32px;
-	margin-left: 140px;
-}
-
-#hvstat-overview-reporting-period td {
-	text-align: left;
-}
-
-#hvstat-overview-drops th:nth-child(6),
-#hvstat-overview-drops td:nth-child(6) {
-	text-align: left;
-}
-
-#hvstat-overview-drops-equipments span:nth-of-type(1) { color: Red; }
-#hvstat-overview-drops-artifacts span:nth-of-type(1) { color: Blue; }
-
-#hvstat-settings-pane .hvstat-vertical-top {
-	vertical-align: top;
-	padding-top: 3px;
-}
-
-#hvstat-settings-effect-expiring-warnings {
-	display: box;
-	display: -moz-box;
-	display: -webkit-box;
 }
