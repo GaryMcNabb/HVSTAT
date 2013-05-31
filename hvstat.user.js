@@ -5,10 +5,11 @@
 // @include         http://hentaiverse.org/*
 // @exclude         http://hentaiverse.org/pages/showequip*
 // @author          Various (http://forums.e-hentai.org/index.php?showtopic=79552)
-// @version         5.5.5.1
+// @version         5.6.0
 // @resource        battle-log-type0.css                        css/battle-log-type0.css
 // @resource        battle-log-type1.css                        css/battle-log-type1.css
 // @resource        hvstat.css                                  css/hvstat.css
+// @resource        hvstat-ui.css                               css/hvstat-ui.css
 // @resource        jquery-ui-1.9.2.custom.min.css              css/jquery-ui-1.9.2.custom.min.css
 // @resource        channeling.png                              css/images/channeling.png
 // @resource        healthpot.png                               css/images/healthpot.png
@@ -23,14 +24,15 @@
 // @resource        ui-icons_2e83ff_256x240.png                 css/images/ui-icons_2e83ff_256x240.png
 // @resource        ui-icons_5c0d11_256x240.png                 css/images/ui-icons_5c0d11_256x240.png
 // @resource        ui-icons_cd0a0a_256x240.png                 css/images/ui-icons_cd0a0a_256x240.png
-// @resource        arena-rewards-pane.html                     html/arena-rewards-pane.html
 // @resource        battle-stats-pane.html                      html/battle-stats-pane.html
+// @resource        database-pane.html                          html/database-pane.html
+// @resource        drops-pane.html                             html/drops-pane.html
 // @resource        main.html                                   html/main.html
-// @resource        monster-database-pane.html                  html/monster-database-pane.html
 // @resource        overview-pane.html                          html/overview-pane.html
 // @resource        proficiency-table.html                      html/proficiency-table.html
 // @resource        settings-pane.html                          html/settings-pane.html
 // @resource        shrine-pane.html                            html/shrine-pane.html
+// @resource        drops-display-table.json                    json/drops-display-table.json
 // @resource        jquery-1.8.3.min.js                         scripts/jquery-1.8.3.min.js
 // @resource        jquery-ui-1.9.2.custom.min.js               scripts/jquery-ui-1.9.2.custom.min.js
 // @run-at          document-start
@@ -224,6 +226,60 @@ var hv = {
 		percent: function (value) {
 			return Math.floor(value * 100);
 		},
+		useHVFontEngine: null,
+		hvFontMap: "0123456789.,!?%+-=/\\'\":;()[]_           ABCDEFGHIJKLMNOPQRSTUVWXYZ ",
+		hvFontTextBlockSelector: 'div.fd2, div.fd4',
+		hvFontCharsLtoRSelector: 'div.f2lb, div.f2lg, div.f2lr, div.f2ly, div.f2la, div.f4lb, div.f4lg, div.f4lr, div.f4ly, div.f4la',
+		hvFontCharsRtoLSelector: 'div.f2rb, div.f2rg, div.f2rr, div.f2ry, div.f2ra, div.f4rb, div.f4rg, div.f4rr, div.f4ry, div.f4ra',
+		innerText: function (element) {
+			if (!this.useHVFontEngine) {
+				return util.innerText(element);
+			}
+			// Parse HV Font text
+			var innerText = "";
+			var textBlock, textBlocks;
+			var selfClassNames = element.className.split(' ');
+			//console.debug(selfClassNames);
+			if (selfClassNames.indexOf('fd2') >= 0 || selfClassNames.indexOf('fd4') >= 0) {
+				textBlocks = [element];
+			} else {
+				textBlocks = element.querySelectorAll(this.hvFontTextBlockSelector);
+			}
+			//console.debug(textBlocks);
+			var charDivsLtoR, charDivsRtoL, charDivs, charDiv, regexResult, index;
+			var i, j, len;
+			for (i = 0; i < textBlocks.length; i++) {
+				textBlock = textBlocks[i];
+				charDivsLtoR = textBlock.querySelectorAll(this.hvFontCharsLtoRSelector);
+				charDivsRtoL = textBlock.querySelectorAll(this.hvFontCharsRtoLSelector);
+				charDivs = [];
+				if (charDivsLtoR) {
+					len = charDivsLtoR.length;
+					for (j = 0; j < len; j++) {
+						charDivs[j] = charDivsLtoR[j];
+					}
+				}
+				if (charDivsRtoL) {
+					len = charDivsRtoL.length;
+					for (j = 0; j < len; j++) {
+						charDivs.unshift(charDivsRtoL[j]);
+					}
+				}
+				//console.debug(charDivs);
+				len = charDivs.length;
+				for (j = 0; j < len; j++) {
+					charDiv = charDivs[j];
+					regexResult = charDiv.className.match(/f(?:2|4)(\d+)/i);
+					//console.debug(regexResult);
+					if (regexResult) {
+						index = Number(regexResult[1]);
+						innerText += this.hvFontMap[index];
+					}
+				}
+				innerText += " ";	//	Separator between text blocks
+			}
+			return innerText;
+		}
 	},
 	setup: function () {
 		var location = {
@@ -244,19 +300,20 @@ var hv = {
 			popup: document.getElementById("popup_box"),
 		};
 
+		this.util.useHVFontEngine = document.getElementsByClassName('fd2')[0].textContent !== "Health points";
 		var settings = {
-			useHVFontEngine: document.getElementsByClassName('fd2')[0].textContent !== "Health points",
-			difficulty: null,
+			useHVFontEngine: this.util.useHVFontEngine,
+			get difficulty() {
+				var e = document.querySelectorAll('div.clb table.cit div.fd4');
+				for (var i = 0; i < e.length; i++) {
+					var r = /(Normal|Hard|Nightmare|Hell|Nintendo|Battletoads|IWBTH)/i.exec(hv.util.innerText(e[i]));
+					if (r) {
+						return r[1].toUpperCase();
+					}
+				}
+				return "";
+			},
 		};
-		var e = document.querySelectorAll('div.clb table.cit div.fd4 > div');
-		var i, r;
-		for (i = 0; i < e.length; i++) {
-			r = /(Easy|Normal|Hard|Heroic|Nightmare|Hell|Nintendo|Battletoads|IWBTH)/.exec(util.innerText(e[i]));
-			if (r) {
-				settings.difficulty = r[1];
-				break;
-			}
-		}
 
 		var character = {
 			healthRate: hv.util.getCharacterGaugeRate(document.querySelector('img[alt="health"]')),
@@ -317,7 +374,7 @@ var hv = {
 // HV STAT object
 //------------------------------------
 var hvStat = {
-	version: "5.5.5.1",
+	version: "5.6.0",
 	setup: function () {
 		this.addStyle();
 	},
@@ -354,11 +411,8 @@ var hvStat = {
 			hvStat.storage.statsBackups[5].value,
 		];
 	},
-	get drops() {
-		return hvStat.storage.drops.value;
-	},
-	get arenaRewards() {
-		return hvStat.storage.arenaRewards.value;
+	get dropStats() {
+		return hvStat.storage.dropStats.value;
 	},
 	get shrine() {
 		return hvStat.storage.shrine.value;
@@ -381,27 +435,6 @@ var hvStat = {
 // Utilities
 //------------------------------------
 hvStat.util = {
-	percent: function (value, digits) {
-		var v = value * 100;
-		if (digits) {
-			v = v.toFixed(digits);
-		}
-		return v;
-	},
-	ratio: function (numerator, denominator) {
-		if (denominator === 0) {
-			return 0;
-		} else {
-			return numerator / denominator;
-		}
-	},
-	percentRatio: function (numerator, denominator, digits) {
-		return this.percent(this.ratio(numerator, denominator), digits);
-	},
-	numberWithCommas: function (n) {
-		var parts = n.toString().split(".");
-		return parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",") + (parts[1] ? "." + parts[1] : "");
-	},
 	forEachProperty: function (target, base, callback) {
 		var primitives = [ "boolean", "number", "string", "undefined" ];
 		for (var key in base) {
@@ -511,6 +544,9 @@ hvStat.util = {
 		if (c < (48 * 60 * 60)) return "1 day ago";
 		return (parseInt(c / 86400, 10)).toString() + " days ago";
 	},
+	capitalizeEquipmentName: function (name) {
+		return name.toLowerCase().replace(/(?:^|\s)(?!of )(?!the )\S/g, function (c) { return c.toUpperCase(); });
+	},
 	elementalSpells: [
 		"Fireball", "Inferno", "Flare", "Meteor", "Nova", "Flames of Loki",
 		"Icestrike", "Snowstorm", "Freeze", "Blizzard", "Cryostasis", "Fimbulvetr",
@@ -614,10 +650,8 @@ hvStat.constant.Keyword.prototype = {
 hvStat.C = hvStat.constant.Keyword;	// Shortcut
 
 hvStat.constant.difficulty = hvStat.constant.factory([
-	new hvStat.C("EASY", "Easy"),
 	new hvStat.C("NORMAL", "Normal"),
 	new hvStat.C("HARD", "Hard"),
-	new hvStat.C("HEROIC", "Heroic"),
 	new hvStat.C("NIGHTMARE", "Nightmare"),
 	new hvStat.C("HELL", "Hell"),
 	new hvStat.C("NINTENDO", "Nintendo"),
@@ -628,9 +662,14 @@ hvStat.constant.difficulty = hvStat.constant.factory([
 hvStat.constant.battleType = hvStat.constant.factory([
 	new hvStat.C("HOURLY_ENCOUNTER", "Hourly Encounter"),
 	new hvStat.C("ARENA", "Arena"),
-	new hvStat.C("RING_OF_BLOOD", "Ring of Blood"),
 	new hvStat.C("GRINDFEST", "GrindFest"),
 	new hvStat.C("ITEM_WORLD", "Item World"),
+]);
+
+hvStat.constant.dropType = hvStat.constant.factory([
+	new hvStat.C("MONSTER_DROP", "Monster Drop"),
+	new hvStat.C("ARENA_CLEAR_BONUS", "Arena Clear Bonus"),
+	new hvStat.C("ARENA_TOKEN_BONUS", "Arena Token Bonus"),
 ]);
 
 hvStat.constant.monsterClass = hvStat.constant.factory([
@@ -751,7 +790,6 @@ hvStat.storage.initialValue = {
 
 		// Tracking
 		isTrackStats: true,
-		isTrackRewards: false,
 		isTrackShrine: false,
 		isTrackItems: false,
 
@@ -846,6 +884,7 @@ hvStat.storage.initialValue = {
 	// Character Status object
 	characterStatus: {
 		difficulty: {
+			id: "",
 			name: "",
 			index: 0,
 		},
@@ -862,11 +901,11 @@ hvStat.storage.initialValue = {
 			elemental: 0,
 			divine: 0,
 			forbidden: 0,
-//			spiritual: 0,
 			deprecating: 0,
 			supportive: 0,
 		},
 		overcharge: 100,
+		didReachInventoryLimit: false,
 	},
 	// Overview object
 	overview: {
@@ -934,76 +973,24 @@ hvStat.storage.initialValue = {
 		pskills: [0, 0, 0, 0, 0, 0, 0],
 		datestart: 0,
 	},
-	// Drops object
-	drops: {
-		dropChances: 0,
-		itemArry: [
-			"[Lesser Health Potion]", "[Scroll of Swiftness]",
-			"[Average Health Potion]", "[Scroll of Shielding]",
-			"[Greater Health Potion]", "[Scroll of Warding]",
-			"[Superior Health Potion]", "[Scroll of the Avatar]",
-			"[Godly Health Potion]", "[Scroll of Absorption]",
-			"[Health Elixir]", "[Scroll of Shadows]",
-			"[Lesser Mana Potion]", "[Scroll of Life]",
-			"[Average Mana Potion]", "[Scroll of the Gods]",
-			"[Greater Mana Potion]", "[Infusion of Flames]",
-			"[Superior Mana Potion]", "[Infusion of Frost]",
-			"[Godly Mana Potion]", "[Infusion of Lightning]",
-			"[Mana Elixir]", "[Infusion of Storms]",
-			"[Lesser Spirit Potion]", "[Infusion of Divinity]",
-			"[Average Spirit Potion]", "[Infusion of Darkness]",
-			"[Greater Spirit Potion]", "[Infusion of Gaia]",
-			"[Superior Spirit Potion]", "[Soul Stone]",
-			"[Godly Spirit Potion]", "[Flower Vase]",
-			"[Spirit Elixir]", "[Last Elixir]",
-			"[Token of Blood]", "[Bubble-Gum]",
-			"[Token of Healing]", "[Crystal of Flames]",
-			"[Chaos Token]", "[Crystal of Frost]",
-			"[Crystal of Vigor]", "[Crystal of Lightning]",
-			"[Crystal of Finesse]", "[Crystal of Tempest]",
-			"[Crystal of Swiftness]", "[Crystal of Devotion]",
-			"[Crystal of Fortitude]", "[Crystal of Corruption]",
-			"[Crystal of Cunning]", "[Crystal of Quintessence]",
-			"[Crystal of Knowledge]", " ",
-			"[Voidseeker Shard]", " ",
-			"[Aether Shard]", " ",
-			"[Featherweight Shard]", " ",
-			"[Amnesia Shard]", " "
-		],
-		itemQtyArry: [],
-		itemDrop: 0,
-		eqArray: [],
-		eqDrop: 0,
-		artArry: [],
-		artQtyArry: [],
-		artDrop: 0,
-		eqDropbyBT: [0, 0, 0, 0, 0],
-		artDropbyBT: [0, 0, 0, 0, 0],
-		itemDropbyBT: [0, 0, 0, 0, 0],
-		crysDropbyBT: [0, 0, 0, 0, 0],
-		dropChancesbyBT: [0, 0, 0, 0, 0],
-	},
-	// Arena Rewards object
-	arenaRewards: {
-		eqRwrd: 0,
-		eqRwrdArry: [],
-		itemsRwrd: 0,
-		itemRwrdArry: [],
-		itemRwrdQtyArry: [],
-		artRwrd: 0,
-		artRwrdArry: [],
-		artRwrdQtyArry: [],
-		tokenDrops: [0, 0, 0],
+	// Drop Statistics object
+	dropStats: {
+		// Array of { key:Object { type:String, difficulty:String, battleType:String }, count:Number }
+		nChances: [],
+		itemCount: [],
+		tokenCount: [],
+		artifactCount: [],
+		equipmentCount: [],
 	},
 	// Shrine object
 	shrine: {
 		artifactsTraded: 0,
-		artifactStat: 0,
-		artifactAP: 0,
-		artifactHath: 0,
+		artifactStat: 0,		// Primary Attributes
+		artifactHath: 0,		// Hath
 		artifactHathTotal: 0,
-		artifactCrystal: 0,
-		artifactItem: 0,
+		artifactCrystal: 0,		// Crystals
+		artifactItem: 0,		// Energy Drinks
+		artifactElixer: 0,		// Elixers
 		trophyArray: [],
 	},
 	// Statistics Backup object
@@ -1065,6 +1052,7 @@ hvStat.storage.initialValue = {
 		arenaNum: 0,
 		dropChances: 0,
 		battleType: 0,
+		battleTypeName: "",
 		lastTurn: -1,
 		kills: 0,	// stats
 		aAttempts: 0,	// stats
@@ -1117,7 +1105,6 @@ hvStat.storage.initialValue = {
 		lastEquipName: "",
 		artifacts: 0,
 		lastArtName: "",
-		tokenDrops: [0, 0, 0],
 	},
 	// Warning State object
 	warningState: {
@@ -1180,12 +1167,6 @@ hvStat.storage.Item.prototype = {
 						storedValue[key] = util.clone(defaultValue[key]);
 					}
 				});
-				// Remove disused properties
-				hvStat.util.forEachProperty(this._defaultValue, this._value, function (defaultValue, storedValue, key) {
-					if (defaultValue[key] === undefined) {
-						delete storedValue[key];
-					}
-				});
 			}
 		}
 		return this._value;
@@ -1194,7 +1175,7 @@ hvStat.storage.Item.prototype = {
 		hvStat.storage.setItem(this._key, this.value);
 	},
 	reset: function () {
-		this._value = this._defaultValue;
+		this._value = Object.create(this._defaultValue);
 		this.save();
 	},
 	remove: function () {
@@ -1244,47 +1225,81 @@ hvStat.storage.statsBackups = [
 	new hvStat.storage.Item("HVBackup5", hvStat.storage.initialValue.statsBackup),
 ];
 
-// Drops constructor inherits Item
-hvStat.storage.Drops = function (key, defaultValue) {
+// DropStats constructor inherits Item
+hvStat.storage.DropStats = function (key, defaultValue) {
 	hvStat.storage.Item.apply(this, [key, defaultValue]);
 };
-hvStat.storage.Drops.prototype = Object.create(hvStat.storage.Item.prototype);
-hvStat.storage.Drops.prototype.constructor = hvStat.storage.Drops;
-hvStat.storage.Drops.prototype.getValue = function () {
-	var obj = hvStat.storage.Item.prototype.getValue.apply(this);
-	for (var i = 0; i < obj.itemArry.length; i++) {
-		if (isNaN(parseFloat(obj.itemQtyArry[i]))) {
-			obj.itemQtyArry[i] = 0;
+hvStat.storage.DropStats.prototype = Object.create(hvStat.storage.Item.prototype);
+hvStat.storage.DropStats.prototype.constructor = hvStat.storage.DropStats;
+hvStat.storage.DropStats.prototype.addCount = function (value, targetArray, dropType, difficulty, battleType) {
+	var elem, found = false;
+	for (var i = 0; i < targetArray.length; i++) {
+		elem = targetArray[i];
+		if (elem.key.dropType === dropType &&
+				elem.key.difficulty === difficulty &&
+				elem.key.battleType === battleType) {
+			found = true;
+			break;
 		}
 	}
-	return obj;
-};
-
-// Drops object
-hvStat.storage.drops = new hvStat.storage.Drops("HVDrops", hvStat.storage.initialValue.drops);
-
-// Arena Rewards constructor inherits Item
-hvStat.storage.ArenaRewards = function (key, defaultValue) {
-	hvStat.storage.Item.apply(this, [key, defaultValue]);
-};
-hvStat.storage.ArenaRewards.prototype = Object.create(hvStat.storage.Item.prototype);
-hvStat.storage.ArenaRewards.prototype.constructor = hvStat.storage.ArenaRewards;
-hvStat.storage.ArenaRewards.prototype.getValue = function () {
-	var obj = hvStat.storage.Item.prototype.getValue.apply(this);
-	if (!Object.getOwnPropertyDescriptor(obj, "totalRwrds")) {
-		Object.defineProperty(obj, "totalRwrds", {
-			get: function () {
-				return this.artRwrd + this.eqRwrd + this.itemsRwrd;
+	if (found) {
+		elem.count += value;
+	} else {
+		targetArray[i] = {
+			key: {
+				dropType: dropType,
+				difficulty: difficulty,
+				battleType: battleType,
 			},
-			enumerable: false,
-			configurable: false
-		});
+			count: value,
+		};
 	}
-	return obj;
+};
+hvStat.storage.DropStats.prototype.getCount = function (targetArray, dropType, difficulty, battleType) {
+	var count = 0;
+	for (var i = 0; i < targetArray.length; i++) {
+		elem = targetArray[i];
+		if ((dropType === null || elem.key.dropType === dropType) &&
+				(difficulty === null || elem.key.difficulty === difficulty) &&
+				(battleType === null || elem.key.battleType === battleType)) {
+			count += elem.count;
+		}
+	}
+	return count;
+};
+hvStat.storage.DropStats.prototype.increaseChance = function (value, dropType, difficulty, battleType) {
+	this.addCount(value, this.value.nChances, dropType, difficulty, battleType);
+};
+hvStat.storage.DropStats.prototype.nChances = function (dropType, difficulty, battleType) {
+	return this.getCount(this.value.nChances, dropType, difficulty, battleType);
+};
+hvStat.storage.DropStats.prototype.addItem = function (name, qty, dropType, difficulty, battleType) {
+	this.addCount(1, this.value.itemCount, dropType, difficulty, battleType);
+};
+hvStat.storage.DropStats.prototype.itemCount = function (dropType, difficulty, battleType) {
+	return this.getCount(this.value.itemCount, dropType, difficulty, battleType);
+};
+hvStat.storage.DropStats.prototype.addToken = function (name, dropType, difficulty, battleType) {
+	this.addCount(1, this.value.tokenCount, dropType, difficulty, battleType);
+};
+hvStat.storage.DropStats.prototype.tokenCount = function (dropType, difficulty, battleType) {
+	return this.getCount(this.value.tokenCount, dropType, difficulty, battleType);
+};
+hvStat.storage.DropStats.prototype.addArtifact = function (name, dropType, difficulty, battleType) {
+	this.addCount(1, this.value.artifactCount, dropType, difficulty, battleType);
+};
+hvStat.storage.DropStats.prototype.artifactCount = function (dropType, difficulty, battleType) {
+	return this.getCount(this.value.artifactCount, dropType, difficulty, battleType);
+};
+hvStat.storage.DropStats.prototype.addEquipment = function (name, dropType, difficulty, battleType, arenaNumber, roundNumber) {
+	this.addCount(1, this.value.equipmentCount, dropType, difficulty, battleType);
+};
+hvStat.storage.DropStats.prototype.equipmentCount = function (dropType, difficulty, battleType) {
+	return this.getCount(this.value.equipmentCount, dropType, difficulty, battleType);
 };
 
-// Arena Rewards object
-hvStat.storage.arenaRewards = new hvStat.storage.ArenaRewards("HVRewards", hvStat.storage.initialValue.arenaRewards);
+// Drop Statistics object
+hvStat.storage.dropStats = new hvStat.storage.DropStats("hvStat.dropStats", hvStat.storage.initialValue.dropStats);
 
 // Shrine constructor inherits Item
 hvStat.storage.Shrine = function (key, defaultValue) {
@@ -1336,14 +1351,107 @@ hvStat.storage.equipmentTags = new hvStat.storage.Item("HVTags", hvStat.storage.
 hvStat.storage.oldMonsterDatabase = new hvStat.storage.Item("HVDatabase", hvStat.storage.initialValue.oldMonsterDatabase);
 
 //------------------------------------
+// Version Checking Functions
+//------------------------------------
+hvStat.versions = {
+	checkVersion: function () {
+		var storedVersion = hvStat.storage.getItem("hvStat.version");
+		if (storedVersion === null) {
+			//Oldest version since migration started
+			storedVersion = "5.5.5.1";
+		}
+		if (storedVersion === hvStat.version) {
+			return;
+		}
+		var functions=[];
+		for (var name in hvStat.versions.functions) {
+			if (name.indexOf("from_") === 0) {
+				var funcVer = hvStat.versions.versionStringToArray(name.substring(5));
+				if (hvStat.versions.versionCompare(storedVersion, funcVer) <= 0) {
+					functions.push({ver: funcVer, func: hvStat.versions.functions[name]});
+				}
+			}
+		}
+		functions.sort(hvStat.versions.versionCompare);
+		for (var i = 0; i < functions.length; ++i) {
+			functions[i].func();
+		}
+		hvStat.storage.setItem("hvStat.version", hvStat.version);
+	},
+	versionStringToArray: function (ver) {
+		return ver.split(/[._]/).map(function (str){return Number(str);});
+	},
+	versionCompare: function (v1, v2) {
+		if (typeof(v1) === "string") {
+			v1 = hvStat.versions.versionStringToArray(v1);
+		}
+		if (typeof(v2) === "string") {
+			v2 = hvStat.versions.versionStringToArray(v2);
+		}
+		for (var i = 0; i < v2.length; ++i) {
+			if (v1.length <= i) {
+				//v1 is shorter than v2, and they have a matching initial sequence
+				return -1;
+			}
+			if (v1[i] < v2[i]) {
+				return -1;
+			}
+			if (v1[i] > v2[i]) {
+				return 1;
+			}
+		}
+		if (v1.length === v2.length) {
+			return 0;
+		}
+		return 1;
+	},
+};
+
+hvStat.versions.functions = {
+	from_5_5_5_1 : function () {
+		while (hvStat.overview.expbyBT.length < 4)
+			hvStat.overview.expbyBT.push(0);
+		while (hvStat.overview.creditsbyBT.length < 4)
+			hvStat.overview.creditsbyBT.push(0);
+		hvStat.storage.overview.save();
+
+		delete hvStat.characterStatus.proficiencies.spiritual;
+		hvStat.storage.characterStatus.save();
+
+		delete hvStat.settings.isTrackRewards;
+		hvStat.storage.settings.save();
+
+		delete hvStat.shrine.artifactAP;
+		hvStat.storage.shrine.save();
+
+		// Remove obsolete items on local storage
+		var keys = [
+			"HVCharacterSettingsandStats",
+			"HVCollectData",
+			"HVDrops",
+			"HVLoadTimeCounters",
+			"HVProf",
+			"HVRewards",
+			"HVRound",
+			"inventoryAlert",
+		];
+		var i = keys.length;
+		while (i--) {
+			localStorage.removeItem(keys[i]);
+		}
+	},
+};
+
+//------------------------------------
 // Support Functions
 //------------------------------------
 hvStat.support = {
 	captureStatuses: function () {
-		var difficulties = ["", "Easy", "Normal", "Hard", "Heroic", "Nightmare", "Hell", "Nintendo", "Battletoads", "IWBTH"];
+		var difficulties = ["", "NORMAL", "HARD", "NIGHTMARE", "HELL", "NINTENDO", "BATTLETOADS", "IWBTH"];
 		var difficulty = hv.settings.difficulty;
 		if (difficulty) {
-			hvStat.characterStatus.difficulty.name = hv.settings.difficulty;
+			hvStat.characterStatus.difficulty.id = hv.settings.difficulty;
+			hvStat.characterStatus.difficulty.name = hvStat.constant.difficulty[hv.settings.difficulty].name;
 			hvStat.characterStatus.difficulty.index = difficulties.indexOf(difficulty);
 		}
 		elements = document.querySelectorAll('#setform img');
@@ -1360,18 +1468,18 @@ hvStat.support = {
 	captureProficiencies: function () {
 		var proficiencyTable = document.getElementById("leftpane").children[1].querySelectorAll('div.fd4');
 		var prof = hvStat.characterStatus.proficiencies;
-		prof.oneHanded = Number(util.innerText(proficiencyTable[2]));
-		prof.twoHanded = Number(util.innerText(proficiencyTable[4]));
-		prof.dualWielding = Number(util.innerText(proficiencyTable[6]));
-		prof.staff = Number(util.innerText(proficiencyTable[8]));
-		prof.clothArmor = Number(util.innerText(proficiencyTable[10]));
-		prof.lightArmor = Number(util.innerText(proficiencyTable[12]));
-		prof.heavyArmor = Number(util.innerText(proficiencyTable[14]));
-		prof.elemental = Number(util.innerText(proficiencyTable[17]));
-		prof.divine = Number(util.innerText(proficiencyTable[19]));
-		prof.forbidden = Number(util.innerText(proficiencyTable[21]));
-		prof.deprecating = Number(util.innerText(proficiencyTable[23]));
-		prof.supportive = Number(util.innerText(proficiencyTable[25]));
+		prof.oneHanded = Number(hv.util.innerText(proficiencyTable[2]));
+		prof.twoHanded = Number(hv.util.innerText(proficiencyTable[4]));
+		prof.dualWielding = Number(hv.util.innerText(proficiencyTable[6]));
+		prof.staff = Number(hv.util.innerText(proficiencyTable[8]));
+		prof.clothArmor = Number(hv.util.innerText(proficiencyTable[10]));
+		prof.lightArmor = Number(hv.util.innerText(proficiencyTable[12]));
+		prof.heavyArmor = Number(hv.util.innerText(proficiencyTable[14]));
+		prof.elemental = Number(hv.util.innerText(proficiencyTable[17]));
+		prof.divine = Number(hv.util.innerText(proficiencyTable[19]));
+		prof.forbidden = Number(hv.util.innerText(proficiencyTable[21]));
+		prof.deprecating = Number(hv.util.innerText(proficiencyTable[23]));
+		prof.supportive = Number(hv.util.innerText(proficiencyTable[25]));
 		hvStat.characterStatus.areProficienciesCaptured = true;
 		hvStat.storage.characterStatus.save();
 	},
@@ -1381,12 +1489,12 @@ hvStat.support = {
 			return;
 		}
 		var messageElements = messageBoxElement.querySelectorAll('div.cmb6');
-		var message0 = util.innerText(messageElements[0]);
+		var message0 = hv.util.innerText(messageElements[0]);
 		if (message0.match(/power/i)) {
 			hvStat.shrine.artifactsTraded++;
-			var message2 = util.innerText(messageElements[2]);
-			if (message2.match(/ability point/i)) {
-				hvStat.shrine.artifactAP++;
+			var message2 = hv.util.innerText(messageElements[2]);
+			if (message2.match(/Elixir/i)) {
+				hvStat.shrine.artifactElixer++;
 			} else if (message2.match(/crystal/i)) {
 				hvStat.shrine.artifactCrystal++;
 			} else if (message2.match(/increased/i)) {
@@ -1398,13 +1506,13 @@ hvStat.support = {
 				hvStat.shrine.artifactItem++;
 			}
 		} else if (message0.match(/item/i)) {
-			var message3 = util.innerText(messageElements[3]);
-			hvStat.shrine.trophyArray.push(message3);
+			var message3 = hv.util.innerText(messageElements[3]);
+			hvStat.shrine.trophyArray.push(hvStat.util.capitalizeEquipmentName(message3));
 		}
 		hvStat.storage.shrine.save();
 	},
 	confirmBeforeBattle: function () {
-		var elements = document.querySelectorAll('#arenaform img[onclick*="arenaform"]');
+		var elements = document.querySelectorAll('#mainpane img[onclick*="arenaform"]');
 		var i, element;
 		for (i = 0; i < elements.length; i++) {
 			element = elements[i];
@@ -1428,6 +1536,22 @@ hvStat.support = {
 			newOnClick += '")) {'+ oldOnClick+ '}';
 			element.setAttribute("onclick", newOnClick);
 		}
+	},
+	createInventoryWarningIcon: function () {
+		var stuffBox = document.querySelector('div.stuffbox');
+		var icon = document.createElement("div");
+		icon.id = "hvstat-inventory-warning-icon";
+		icon.className = "ui-state-error ui-corner-all";
+		icon.innerHTML = '<span class="ui-icon ui-icon-alert" title="Reached equipment inventory limit."/>';
+		icon.addEventListener("click", function (event) {
+			if (confirm("Reached equipment inventory limit.\nClear warning?")) {
+				this.removeEventListener(event.type, arguments.callee);
+				hvStat.characterStatus.didReachInventoryLimit = false;
+				hvStat.storage.characterStatus.save();
+				this.parentNode.removeChild(this);
+			}
+		});
+		stuffBox.insertBefore(icon, null);
 	},
 };
 
@@ -1544,6 +1668,7 @@ hvStat.keyboard = {
 		}
 		var boundKeys, i, j;
 		if (hv.battle.active) {
+			var attackCommand = hvStat.battle.command.commandMap["Attack"];	// Used to close Skillbook menu
 			var miScan = hvStat.battle.command.subMenuItemMap["Scan"];
 			var miSkill1 = hvStat.battle.command.subMenuItemMap["Skill1"];
 			var miSkill2 = hvStat.battle.command.subMenuItemMap["Skill2"];
@@ -1555,7 +1680,9 @@ hvStat.keyboard = {
 				for (i = 0; i < boundKeys.length; i++) {
 					if (boundKeys[i].matches(event)) {
 						if (hvStat.battle.command.commandMap["Skillbook"].menuOpened) {
-							hvStat.battle.command.commandMap["Skillbook"].close();
+							// Close Skillbook menu
+							attackCommand.select();
+							attackCommand.select();
 						} else {
 							miScan.select();
 						}
@@ -1589,7 +1716,9 @@ hvStat.keyboard = {
 				for (i = 0; i < boundKeys.length; i++) {
 					if (boundKeys[i].matches(event)) {
 						if (traversalFinished) {
-							hvStat.battle.command.commandMap["Skillbook"].close();
+							// Close Skillbook menu
+							attackCommand.select();
+							attackCommand.select();
 							hvStat.keyboard.selectedSkillIndex = -1;
 						} else {
 							for (j = startIndex + increment;
@@ -1611,7 +1740,9 @@ hvStat.keyboard = {
 				for (i = 0; i < boundKeys.length; i++) {
 					if (boundKeys[i].matches(event)) {
 						if (hvStat.battle.command.commandMap["Skillbook"].menuOpened) {
-							hvStat.battle.command.commandMap["Skillbook"].close();
+							// Close Skillbook menu
+							attackCommand.select();
+							attackCommand.select();
 						} else {
 							miOFC.select();
 						}
@@ -1826,7 +1957,7 @@ hvStat.battle = {
 	},
 	setup: function () {
 		hvStat.database.idbAccessQueue.add(function () {
-			hvStat.database.transaction = hvStat.database.idb.transaction(["MonsterScanResults", "MonsterSkills"], "readwrite");
+			hvStat.database.transaction = hvStat.database.idb.transaction(["MonsterScanResults", "MonsterSkills", "ItemDrops", "EquipmentDrops"], "readwrite");
 		});
 		hvStat.battle.enhancement.setup();
 		hvStat.battle.monster.setup();
@@ -1859,35 +1990,53 @@ hvStat.battle.eventLog = {
 		this.buildMessageTypes();
 	},
 	processEvents: function () {
-		// Process events on the current turn
-		var turnEvents = new hvStat.battle.eventLog.TurnEvents();
-		console.debug(turnEvents);
-		turnEvents.process();
+		var currentTurnEvents = new hvStat.battle.eventLog.TurnEvents();
+		var turnMin;
+		if (currentTurnEvents.turnNumber === hvStat.roundContext.lastTurn) {
+			//We have no unprocessed events, so we do nothing
+			return;
+		} else if (currentTurnEvents.turnNumber < hvStat.roundContext.lastTurn) {
+			//We're in a new round, so start from the beginning
+			turnMin = 0;
+		} else {
+			//Start from where we left off
+			turnMin = hvStat.roundContext.lastTurn + 1;
+		}
+		var turnMax = currentTurnEvents.turnNumber;
 
-		if (turnEvents.turnNumber === 0) {
-			if (hvStat.settings.isShowRoundReminder &&
-					hvStat.roundContext.maxRound >= hvStat.settings.reminderMinRounds &&
-					hvStat.roundContext.currRound === hvStat.roundContext.maxRound - hvStat.settings.reminderBeforeEnd) {
-				if (hvStat.settings.reminderBeforeEnd === 0) {
-					hvStat.battle.warningSystem.enqueueAlert("This is final round");
-				} else {
-					hvStat.battle.warningSystem.enqueueAlert("The final round is approaching.");
+		for (var i = turnMin; i <= turnMax; i++) {
+			var turnEvents;
+			if (i < currentTurnEvents.turnNumber) {
+				turnEvents = new hvStat.battle.eventLog.TurnEvents(i);
+			} else {
+				turnEvents = currentTurnEvents;
+			}
+			console.debug(turnEvents);
+			turnEvents.process();
+			if (i === 0) {
+				if (hvStat.settings.isShowRoundReminder &&
+						hvStat.roundContext.maxRound >= hvStat.settings.reminderMinRounds &&
+						hvStat.roundContext.currRound === hvStat.roundContext.maxRound - hvStat.settings.reminderBeforeEnd) {
+					if (hvStat.settings.reminderBeforeEnd === 0) {
+						hvStat.battle.warningSystem.enqueueAlert("This is final round");
+					} else {
+						hvStat.battle.warningSystem.enqueueAlert("The final round is approaching.");
+					}
 				}
 			}
+			var meleeHitCount = turnEvents.countOf("MELEE_HIT");
+			if (meleeHitCount >= 2) {
+				hvStat.roundContext.aDomino[0]++;
+				hvStat.roundContext.aDomino[1] += meleeHitCount;
+				hvStat.roundContext.aDomino[meleeHitCount]++
+			}
+			var counterCount = turnEvents.countOf("COUNTER");
+			if (counterCount >= 1) {
+				hvStat.roundContext.aCounters[counterCount]++;
+			}
 		}
-		var meleeHitCount = turnEvents.countOf("MELEE_HIT");
-		if (meleeHitCount >= 2) {
-			hvStat.roundContext.aDomino[0]++;
-			hvStat.roundContext.aDomino[1] += meleeHitCount;
-			hvStat.roundContext.aDomino[meleeHitCount]++
-		}
-		var counterCount = turnEvents.countOf("COUNTER");
-		if (counterCount >= 1) {
-			hvStat.roundContext.aCounters[counterCount]++;
-		}
-		if (hvStat.roundContext.lastTurn < turnEvents.lastTurnNumber) {
-			hvStat.roundContext.lastTurn = turnEvents.lastTurnNumber;
-		}
+
+		hvStat.roundContext.lastTurn = currentTurnEvents.lastTurnNumber;
 		hvStat.storage.roundContext.save();
 	},
 };
@@ -1968,6 +2117,36 @@ hvStat.battle.eventLog.messageTypeParams = {
 			}
 		},
 	},
+	SKILL_DEFENSE: {
+		regex: /^(.+?) (uses|casts) (.+?)\. You (evade|block|parry|resist) the attack\.$/,
+		relatedMessageTypeNames: null,
+		contentType: "text",
+		evaluationFn: function (message) {
+			var verb = message.regexResult[2];
+			if (verb === "uses") {
+				//TODO: pskills doesn't appear to be used anywhere; should it be removed?
+				hvStat.roundContext.pskills[0]++;
+			} else if (verb === "casts") {
+				hvStat.roundContext.mSpells++;
+			}
+
+			hvStat.roundContext.mAttempts++;
+			switch (message.regexResult[4]) {
+			case "evade":
+				hvStat.roundContext.pEvades++;
+				break;
+			case "block":
+				hvStat.roundContext.pBlocks++;
+				break;
+			case "parry":
+				hvStat.roundContext.pParries++;
+				break;
+			case "resist":
+				hvStat.roundContext.pResists++;
+				break;
+			}
+		},
+	},
 	MONSTER_MISS: {
 		regex: /^(.+?) misses the attack against you\.$/,
 		relatedMessageTypeNames: null,
@@ -1977,40 +2156,64 @@ hvStat.battle.eventLog.messageTypeParams = {
 			hvStat.roundContext.pDodges++;	// correct?
 		},
 	},
-	MONSTER_HIT: {
-		regex: /^(.+?) (hits|crits) you for (\d+) (.+?) damage\.$/,
-		relatedMessageTypeNames: ["MONSTER_SKILL"],
+	MONSTER_SKILL_MISS: {
+		regex: /^(.+?) (uses|casts) (.+?), but misses the attack\.$/,
+		relatedMessageTypeNames: null,
 		contentType: "text",
 		evaluationFn: function (message) {
-			var damageSource = message.regexResult[1];
+			hvStat.roundContext.mAttempts++;
+			hvStat.roundContext.pDodges++;	// correct?
+
+			var verb = message.regexResult[2];
+			if (verb === "uses") {
+				hvStat.roundContext.pskills[0]++;
+			} else if (verb === "casts") {
+				hvStat.roundContext.mSpells++;
+			}
+		},
+	},
+	MONSTER_HIT: {
+		regex: /^((?:.(?!\, and))+?.) (hits|crits) you for (\d+(?:\.\d+)?) (.+?) damage\.$/,
+		relatedMessageTypeNames: null,
+		contentType: "text",
+		evaluationFn: function (message) {
 			var damageAmount = Number(message.regexResult[3]);
-			var damageType = message.regexResult[4];
 			var critical = message.regexResult[2] === "crits";
 			hvStat.roundContext.mAttempts++;
 			hvStat.roundContext.mHits[critical ? 1 : 0]++;
 			hvStat.roundContext.dTaken[critical ? 1 : 0] += damageAmount;
-			if (message.relatedMessage) {
-				var skillUser = message.relatedMessage.regexResult[1];
-				var skillVerb = message.relatedMessage.regexResult[2];
-				var skillName = message.relatedMessage.regexResult[3];
-				if (damageSource === skillName) {
-					// Skill hit
-					hvStat.roundContext.pskills[1]++;
-					hvStat.roundContext.pskills[2] += damageAmount;
-					if (skillVerb === "uses") {
-						hvStat.roundContext.pskills[3]++;
-						hvStat.roundContext.pskills[4] += damageAmount;
-					} else if (skillVerb === "casts") {
-						hvStat.roundContext.pskills[5]++;
-						hvStat.roundContext.pskills[6] += damageAmount;
-					}
-					if (hvStat.settings.isRememberSkillsTypes && skillUser.indexOf("Unnamed ") !== 0) {
-						var monster = hvStat.battle.monster.findByName(skillUser);
-						if (monster) {
-//							alert(monster + ":" + skillName  + ":" + skillVerb  + ":" + damageType);
-							monster.storeSkill(skillName, skillVerb, damageType);
-						}
-					}
+		},
+	},
+	MONSTER_SKILL_HIT: {
+		regex: /^(.+?) (uses|casts) (.+?)\, and (hits|crits) you for (\d+(?:\.\d+)?) (.+?) damage\.$/,
+		relatedMessageTypeNames: null,
+		contentType: "text",
+		evaluationFn: function (message) {
+			var monsterName = message.regexResult[1];
+			var skillVerb = message.regexResult[2];
+			var skillName = message.regexResult[3];
+			var critical = message.regexResult[4] === "crits";
+			var damageAmount = Number(message.regexResult[5]);
+			var damageType = message.regexResult[6];
+
+			hvStat.roundContext.mAttempts++;
+			hvStat.roundContext.mHits[critical ? 1 : 0]++;
+			hvStat.roundContext.dTaken[critical ? 1 : 0] += damageAmount;
+
+			hvStat.roundContext.pskills[1]++;
+			hvStat.roundContext.pskills[2] += damageAmount;
+			if (skillVerb === "uses") {
+				hvStat.roundContext.pskills[3]++;
+				hvStat.roundContext.pskills[4] += damageAmount;
+			} else if (skillVerb === "casts") {
+				hvStat.roundContext.pskills[5]++;
+				hvStat.roundContext.pskills[6] += damageAmount;
+			}
+			if (hvStat.settings.isRememberSkillsTypes && monsterName.indexOf("Unnamed ") !== 0) {
+				var monster = hvStat.battle.monster.findByName(monsterName);
+				if (monster) {
+//					alert(monster + ":" + skillName  + ":" + skillVerb  + ":" + damageType);
+					monster.storeSkill(skillName, skillVerb, damageType);
 				}
 			}
 		},
@@ -2065,7 +2268,7 @@ hvStat.battle.eventLog.messageTypeParams = {
 		},
 	},
 	MONSTER_EFFECT_EXPLOSION: {
-		regex: /^(.+?) explodes for (\d+) (.+?) damage$/,
+		regex: /^(.+?) explodes for (\d+(?:\.\d+)?) (.+?) damage$/,
 		relatedMessageTypeNames: ["HIT"],
 		contentType: "text",
 		evaluationFn: function (message) {
@@ -2082,7 +2285,7 @@ hvStat.battle.eventLog.messageTypeParams = {
 		},
 	},
 	MELEE_HIT: {
-		regex: /^You (hit|crit) (.+?) for (\d+) (.+?) damage\.$/,
+		regex: /^You (hit|crit) (.+?) for (\d+(?:\.\d+)?) (.+?) damage\.$/,
 		relatedMessageTypeNames: null,
 		contentType: "text",
 		evaluationFn: function (message) {
@@ -2099,7 +2302,7 @@ hvStat.battle.eventLog.messageTypeParams = {
 		},
 	},
 	HIT: {
-		regex: /^(.+?) (hits|crits|blasts) (?!you)(.+?) for (\d+)(?: (.+?))? damage\.$/,
+		regex: /^(.+?) (hits|crits|blasts) (?!you)(.+?) for (\d+(?:\.\d+)?)(?: (.+?))? damage\.$/,
 		relatedMessageTypeNames: null,
 		contentType: "text",
 		evaluationFn: function (message) {
@@ -2145,7 +2348,7 @@ hvStat.battle.eventLog.messageTypeParams = {
 		},
 	},
 	RESTORATION: {
-		regex: /^(.+?) restores (\d+) points of (.+?)\.$/,
+		regex: /^(.+?) restores (\d+(?:\.\d+)?) points of (.+?)\.$/,
 		relatedMessageTypeNames: null,
 		contentType: "text",
 		evaluationFn: function (message) {
@@ -2160,7 +2363,7 @@ hvStat.battle.eventLog.messageTypeParams = {
 		},
 	},
 	COUNTER: {
-		regex: /^You counter (.+?) for (\d+) points of (.+?) damage\.$/,
+		regex: /^You counter (.+?) for (\d+(?:\.\d+)?) points of (.+?) damage\.$/,
 		relatedMessageTypeNames: null,
 		contentType: "text",
 		evaluationFn: function (message) {
@@ -2178,7 +2381,7 @@ hvStat.battle.eventLog.messageTypeParams = {
 		},
 	},
 	SPIRIT_SHIELD_SUCCESS: {
-		regex: /^Your spirit shield absorbs (\d+) points of damage from the attack into (\d+|\d+\.\d+) points of spirit damage\.$/,
+		regex: /^Your spirit shield absorbs (\d+(?:\.\d+)?) points of damage from the attack into (\d+(?:\.\d+)?) points of spirit damage\.$/,
 		relatedMessageTypeNames: null,
 		contentType: "text",
 		evaluationFn: function (message) {
@@ -2254,20 +2457,6 @@ hvStat.battle.eventLog.messageTypeParams = {
 		evaluationFn: function (message) {
 		},
 	},
-	MONSTER_SKILL: {
-		regex: /^(.+?) (uses|casts) (.+)$/,
-		relatedMessageTypeNames: null,
-		contentType: "text",
-		evaluationFn: function (message) {
-			var verb = message.regexResult[2];
-			if (verb === "uses") {
-				hvStat.roundContext.pskills[0]++;
-			} else if (verb === "casts") {
-				hvStat.roundContext.mAttempts++;
-				hvStat.roundContext.mSpells++;
-			}
-		},
-	},
 	CAST: {
 		regex: /^You cast (.+?)\.$/,
 		relatedMessageTypeNames: null,
@@ -2300,7 +2489,7 @@ hvStat.battle.eventLog.messageTypeParams = {
 		},
 	},
 	MAGIC_MISS: {
-		regex: /^Your spell misses its mark\.$/,
+		regex: /^Your spell fails to connect\.$/,
 		relatedMessageTypeNames: ["CAST"],
 		contentType: "text",
 		evaluationFn: function (message) {
@@ -2319,15 +2508,8 @@ hvStat.battle.eventLog.messageTypeParams = {
 			hvStat.roundContext.sResists++;	// correct?
 		},
 	},
-	SPELL_WEAVING_FAILURE: {
-		regex: /^You fail to weave the spell into the existing effects on the target\.$/,
-		relatedMessageTypeNames: null,
-		contentType: "text",
-		evaluationFn: function (message) {
-		},
-	},
 	DRAIN: {
-		regex: /^You drain (\d+|\d+\.\d+) (HP|MP|SP) from (.+)$/,
+		regex: /^You drain (\d+(?:\.\d+)?) (HP|MP|SP) from (.+)$/,
 		relatedMessageTypeNames: null,
 		contentType: "text",
 		evaluationFn: function (message) {
@@ -2356,13 +2538,13 @@ hvStat.battle.eventLog.messageTypeParams = {
 			}
 		},
 	},
-	LIFESTREAM_DRAIN: {
-		regex: /^Lifestream drains (\d+|\d+\.\d+) points of health from (.+?)\.$/,
+	MONSTER_HEALTH_DRAIN: {
+		regex: /^(.+?) drains (\d+(?:\.\d+)?) points of health from (.+?)\.$/,
 		relatedMessageTypeNames: null,
 		contentType: "text",
 		evaluationFn: function (message) {
-			var drainAmount = Number(message.regexResult[1]);
-			var targetMonsterName = message.regexResult[2];
+			var drainAmount = Number(message.regexResult[2]);
+			var targetMonsterName = message.regexResult[3];
 			var monster = hvStat.battle.monster.findByName(targetMonsterName);
 			if (monster) {
 				monster.takeDamage(drainAmount);
@@ -2398,7 +2580,10 @@ hvStat.battle.eventLog.messageTypeParams = {
 		evaluationFn: function (message) {
 			var effectName = message.regexResult[1];
 			if (hvStat.settings.alertWhenChannelingIsGained && effectName === "Channeling") {
-				hvStat.battle.warningSystem.enqueueAlert("You gained the effect Channeling.");
+				var relatedMessage = message.relatedMessage;
+				if (!relatedMessage || relatedMessage.regexResult[1] !== "Mystic Gem") {
+					hvStat.battle.warningSystem.enqueueAlert("You gained the effect Channeling.");
+				}
 			}
 			switch (effectName) {
 			case "Channeling":
@@ -2429,14 +2614,14 @@ hvStat.battle.eventLog.messageTypeParams = {
 		},
 	},
 	RECOVERY: {
-		regex: /^Recovered (\d+) points of (.+)\.$/,
+		regex: /^Recovered (\d+(?:\.\d+)?) points of (.+)\.$/,
 		relatedMessageTypeNames: null,
 		contentType: "text",
 		evaluationFn: function (message) {
 		},
 	},
 	CURE: {
-		regex: /^You are healed for (\d+) Health Points\.$/,
+		regex: /^You are healed for (\d+(?:\.\d+)?) Health Points\.$/,
 		relatedMessageTypeNames: ["CAST"],
 		contentType: "text",
 		evaluationFn: function (message, relatedLog) {
@@ -2461,15 +2646,16 @@ hvStat.battle.eventLog.messageTypeParams = {
 		},
 	},
 	ABSORPTION: {
-		regex: /^The spell is absorbed. You gain (\d+) Magic Points\.$/,
+		regex: /^(.+?) casts (.+?)\, but is absorbed\. You gain (\d+(?:\.\d+)?) Magic Points\.$/,
 		relatedMessageTypeNames: null,
 		contentType: "text",
 		evaluationFn: function (message) {
 			if (hvStat.settings.isWarnAbsorbTrigger) {
 				hvStat.battle.warningSystem.enqueueAlert("Absorbing Ward has triggered.");
 			}
+			hvStat.roundContext.mSpells++;
 			hvStat.roundContext.absArry[1]++;
-			hvStat.roundContext.absArry[2] += Number(message.regexResult[1]);
+			hvStat.roundContext.absArry[2] += Number(message.regexResult[3]);
 		},
 	},
 	SPARK_OF_LIFE_SUCCESS: {
@@ -2515,12 +2701,12 @@ hvStat.battle.eventLog.messageTypeParams = {
 		},
 	},
 	MONSTER_HEAL: {
-		regex: /^(.+?) heals (.+?) for (\d+|\d+\.\d+) points of health\.$/,
+		regex: /^(.+?) casts (.+?)\, healing (.+?) for (\d+(?:\.\d+)?) points of health\.$/,
 		relatedMessageTypeNames: null,
 		contentType: "text",
 		evaluationFn: function (message) {
-			var targetMonsterName = message.regexResult[2];
-			var healingAmount = Number(message.regexResult[3]);
+			var targetMonsterName = message.regexResult[3];
+			var healingAmount = Number(message.regexResult[4]);
 			var monster = hvStat.battle.monster.findByName(targetMonsterName);
 			if (monster) {
 				monster.restoreHealthPoint(healingAmount);
@@ -2532,11 +2718,12 @@ hvStat.battle.eventLog.messageTypeParams = {
 		relatedMessageTypeNames: null,
 		contentType: "text",
 		evaluationFn: function (message) {
-			localStorage.setItem(HV_EQUIP, "true");
+			hvStat.characterStatus.didReachInventoryLimit = true;
+			hvStat.storage.characterStatus.save();
 		},
 	},
 	SPAWNING_MONSTER: {
-		regex: /^Spawned Monster ([A-J]): MID=(\d+) \((.+?)\) LV=(\d+) HP=(\d+|\d+\.\d+)$/,
+		regex: /^Spawned Monster ([A-J]): MID=(\d+) \((.+?)\) LV=(\d+) HP=(\d+(?:\.\d+)?)$/,
 		relatedMessageTypeNames: null,
 		contentType: "text",
 		evaluationFn: function (message) {
@@ -2573,10 +2760,7 @@ hvStat.battle.eventLog.messageTypeParams = {
 			var stuffName = message.regexResult[3];
 			switch (styleColor.toLowerCase()) {
 			case "green":	// Item
-			case "#254117":	// Token
 				if (hvStat.settings.isTrackItems) {
-					hvStat.drops.itemDrop++;
-					hvStat.drops.itemDropbyBT[hvStat.roundContext.battleType]++;
 					var regexResult = stuffName.match(/(?:(\d+)x\s*)?(Crystal of .+)/);
 					var qty = 1;
 					if (regexResult) {
@@ -2585,45 +2769,39 @@ hvStat.battle.eventLog.messageTypeParams = {
 							qty = Number(regexResult[1]);
 						}
 						stuffName = regexResult[2];
-						hvStat.drops.crysDropbyBT[hvStat.roundContext.battleType]++;
 					}
-					var index = hvStat.drops.itemArry.indexOf("[" + stuffName + "]");	// Transitional
-					if (index >= 0) {
-						hvStat.drops.itemQtyArry[index] += qty;
-					} else {
-//						hvStat.drops.itemArry.push("[" + stuffName + "]");	// Transitional
-//						hvStat.drops.itemQtyArry.push(qty);
-					}
+					hvStat.statistics.drops.addItem(stuffName, qty, hvStat.constant.dropType.MONSTER_DROP.id,
+						hvStat.characterStatus.difficulty.id, hvStat.roundContext.battleTypeName);
+				}
+				break;
+			case "#254117":	// Token
+				if (hvStat.settings.isTrackItems) {
+					hvStat.statistics.drops.addToken(stuffName, hvStat.constant.dropType.MONSTER_DROP.id,
+						hvStat.characterStatus.difficulty.id, hvStat.roundContext.battleTypeName);
+				}
+				break;
+			case "blue":	// Artifact or Collectable
+				hvStat.roundContext.artifacts++;
+				hvStat.roundContext.lastArtName = stuffName;
+				if (hvStat.settings.isTrackItems) {
+					hvStat.statistics.drops.addArtifact(stuffName, hvStat.constant.dropType.MONSTER_DROP.id,
+						hvStat.characterStatus.difficulty.id, hvStat.roundContext.battleTypeName);
 				}
 				break;
 			case "red":		// Equipment
 				hvStat.roundContext.equips++;
 				hvStat.roundContext.lastEquipName = stuffName;
 				if (hvStat.settings.isTrackItems) {
-					hvStat.drops.eqDrop++;
-					hvStat.drops.eqArray.push("[" + stuffName + "]");	// Transitional
-					hvStat.drops.eqDropbyBT[hvStat.roundContext.battleType]++;
-				}
-				break;
-			case "blue":	// Artifact and Figurine
-				hvStat.roundContext.artifacts++;
-				hvStat.roundContext.lastArtName = stuffName;
-				if (hvStat.settings.isTrackItems) {
-					hvStat.drops.artDrop++;
-					hvStat.drops.artDropbyBT[hvStat.roundContext.battleType]++;
-					var index = hvStat.drops.artArry.indexOf("[" + stuffName + "]");	// Transitional
-					if (index >= 0) {
-						hvStat.drops.artQtyArry[index]++;
-					} else {
-						hvStat.drops.artQtyArry.push(1);
-						hvStat.drops.artArry.push("[" + stuffName + "]");	// Transitional
-					}
+					hvStat.statistics.drops.addEquipment(stuffName, hvStat.constant.dropType.MONSTER_DROP.id,
+						hvStat.characterStatus.difficulty.id, hvStat.roundContext.battleTypeName,
+						hvStat.roundContext.arenaNum, hvStat.roundContext.currRound);
 				}
 				break;
 			case "#461b7e":	// Trophy
 				if (hvStat.settings.isTrackItems) {
-					hvStat.drops.dropChances--;
-					hvStat.drops.dropChancesbyBT[hvStat.roundContext.battleType]--;
+					// Decrease number of chances
+					hvStat.statistics.drops.increaseChance(-1, hvStat.constant.dropType.MONSTER_DROP.id,
+						hvStat.characterStatus.difficulty.id, hvStat.roundContext.battleTypeName);
 				}
 				break;
 			}
@@ -2642,6 +2820,7 @@ hvStat.battle.eventLog.messageTypeParams = {
 		contentType: "text",
 		evaluationFn: function (message) {
 			hvStat.roundContext.battleType = HOURLY;
+			hvStat.roundContext.battleTypeName = hvStat.constant.battleType.HOURLY_ENCOUNTER.id;
 		},
 	},
 	ARENA_INITIALIZATION: {
@@ -2650,6 +2829,7 @@ hvStat.battle.eventLog.messageTypeParams = {
 		contentType: "text",
 		evaluationFn: function (message) {
 			hvStat.roundContext.battleType = ARENA;
+			hvStat.roundContext.battleTypeName = hvStat.constant.battleType.ARENA.id;
 			hvStat.roundContext.arenaNum = Number(message.regexResult[1]);
 			hvStat.roundContext.currRound = Number(message.regexResult[2]);
 			hvStat.roundContext.maxRound = Number(message.regexResult[3]);
@@ -2661,6 +2841,7 @@ hvStat.battle.eventLog.messageTypeParams = {
 		contentType: "text",
 		evaluationFn: function (message) {
 			hvStat.roundContext.battleType = ITEM_WORLD;
+			hvStat.roundContext.battleTypeName = hvStat.constant.battleType.ITEM_WORLD.id;
 			hvStat.roundContext.currRound = Number(message.regexResult[1]);
 			hvStat.roundContext.maxRound = Number(message.regexResult[2]);
 		},
@@ -2671,6 +2852,7 @@ hvStat.battle.eventLog.messageTypeParams = {
 		contentType: "text",
 		evaluationFn: function (message) {
 			hvStat.roundContext.battleType = GRINDFEST;
+			hvStat.roundContext.battleTypeName = hvStat.constant.battleType.GRINDFEST.id;
 			hvStat.roundContext.currRound = Number(message.regexResult[1]);
 		},
 	},
@@ -2693,6 +2875,17 @@ hvStat.battle.eventLog.messageTypeParams = {
 		relatedMessageTypeNames: null,
 		contentType: "text",
 		evaluationFn: function (message) {
+			hvStat.statistics.drops.increaseChance(hv.battle.elementCache.monsters.length,
+				hvStat.constant.dropType.MONSTER_DROP.id,
+				hvStat.characterStatus.difficulty.id, hvStat.roundContext.battleTypeName);
+			if (hvStat.roundContext.battleTypeName === hvStat.constant.battleType.ARENA.id &&
+					hvStat.roundContext.currRound === hvStat.roundContext.maxRound) {
+				/* Final round of arenas */
+				hvStat.statistics.drops.increaseChance(1, hvStat.constant.dropType.ARENA_CLEAR_BONUS.id,
+					hvStat.characterStatus.difficulty.id, hvStat.roundContext.battleTypeName);
+				hvStat.statistics.drops.increaseChance(1, hvStat.constant.dropType.ARENA_TOKEN_BONUS.id,
+					hvStat.characterStatus.difficulty.id, hvStat.roundContext.battleTypeName);
+			}
 		},
 	},
 	ARENA_CLEAR_BONUS: {
@@ -2704,9 +2897,7 @@ hvStat.battle.eventLog.messageTypeParams = {
 			var stuffName = message.regexResult[2];
 			switch (styleColor.toLowerCase()) {
 			case "green":	// Item
-			case "#254117":	// Token
-				if (hvStat.settings.isTrackRewards) {
-					hvStat.arenaRewards.itemsRwrd++;
+				if (hvStat.settings.isTrackItems) {
 					var regexResult = stuffName.match(/(?:(\d+)x\s*)?(Crystal of .+)/);
 					var qty = 1;
 					if (regexResult) {
@@ -2716,35 +2907,31 @@ hvStat.battle.eventLog.messageTypeParams = {
 						}
 						stuffName = regexResult[2];
 					}
-					var index = hvStat.arenaRewards.itemRwrdArry.indexOf("[" + stuffName + "]");	// Transitional
-					if (index >= 0) {
-						hvStat.arenaRewards.itemRwrdQtyArry[index] += qty;
-					} else {
-//						hvStat.arenaRewards.itemRwrdQtyArry.push(1);
-//						hvStat.arenaRewards.itemRwrdArry.push("[" + stuffName + "]");	// Transitional
-					}
+					hvStat.statistics.drops.addItem(stuffName, qty, hvStat.constant.dropType.ARENA_CLEAR_BONUS.id,
+						hvStat.characterStatus.difficulty.id, hvStat.roundContext.battleTypeName);
+				}
+				break;
+			case "#254117":	// Token
+				if (hvStat.settings.isTrackItems) {
+					hvStat.statistics.drops.addToken(stuffName, hvStat.constant.dropType.ARENA_CLEAR_BONUS.id,
+						hvStat.characterStatus.difficulty.id, hvStat.roundContext.battleTypeName);
+				}
+				break;
+			case "blue":	// Artifact or Collectable
+				hvStat.roundContext.artifacts++;
+				hvStat.roundContext.lastArtName = stuffName;
+				if (hvStat.settings.isTrackItems) {
+					hvStat.statistics.drops.addArtifact(stuffName, hvStat.constant.dropType.ARENA_CLEAR_BONUS.id,
+						hvStat.characterStatus.difficulty.id, hvStat.roundContext.battleTypeName);
 				}
 				break;
 			case "red":		// Equipment
 				hvStat.roundContext.equips++;
 				hvStat.roundContext.lastEquipName = stuffName;
-				if (hvStat.settings.isTrackRewards) {
-					hvStat.arenaRewards.eqRwrd++;
-					hvStat.arenaRewards.eqRwrdArry.push("[" + stuffName + "]");	// Transitional
-				}
-				break;
-			case "blue":	// Artifact and Figurine
-				hvStat.roundContext.artifacts++;
-				hvStat.roundContext.lastArtName = stuffName;
-				if (hvStat.settings.isTrackRewards) {
-					hvStat.arenaRewards.artRwrd++;
-					var index = hvStat.arenaRewards.artRwrdArry.indexOf("[" + stuffName + "]");	// Transitional
-					if (index >= 0) {
-						hvStat.arenaRewards.artRwrdQtyArry[index]++;
-					} else {
-						hvStat.arenaRewards.artRwrdQtyArry.push(1);
-						hvStat.arenaRewards.artRwrdArry.push("[" + stuffName + "]");	// Transitional
-					}
+				if (hvStat.settings.isTrackItems) {
+					hvStat.statistics.drops.addEquipment(stuffName, hvStat.constant.dropType.ARENA_CLEAR_BONUS.id,
+						hvStat.characterStatus.difficulty.id, hvStat.roundContext.battleTypeName,
+						hvStat.roundContext.arenaNum, hvStat.roundContext.currRound);
 				}
 				break;
 			}
@@ -2755,13 +2942,14 @@ hvStat.battle.eventLog.messageTypeParams = {
 		relatedMessageTypeNames: null,
 		contentType: "html",
 		evaluationFn: function (message) {
+			var styleColor = message.regexResult[1];
 			var stuffName = message.regexResult[2];
-			switch (stuffName) {
-			case "Token of Blood":
-				hvStat.roundContext.tokenDrops[0]++;
-				break;
-			case "Chaos Token":
-				hvStat.roundContext.tokenDrops[2]++;
+			switch (styleColor.toLowerCase()) {
+			case "#254117":	// Token
+				if (hvStat.settings.isTrackItems) {
+					hvStat.statistics.drops.addToken(stuffName, hvStat.constant.dropType.ARENA_TOKEN_BONUS.id,
+						hvStat.characterStatus.difficulty.id, hvStat.roundContext.battleTypeName);
+				}
 				break;
 			}
 		},
@@ -2791,7 +2979,7 @@ hvStat.battle.eventLog.TurnEvents = function (targetTurnNumber) {
 	this.lastTurnNumber = -1;
 	this.messages = [];
 
-	var turnNumberElements = document.querySelectorAll('#togpane_log td:first-child');
+	var turnNumberElements = hv.battle.elementCache.battleLog.querySelectorAll('td:first-child');
 	this.lastTurnNumber = Number(util.innerText(turnNumberElements[0]));
 	if (isNaN(parseFloat(targetTurnNumber))) {
 		targetTurnNumber = this.lastTurnNumber;
@@ -2997,16 +3185,18 @@ hvStat.battle.command.SubMenuItem = function (spec) {
 };
 hvStat.battle.command.SubMenuItem.prototype = {
 	get available() {
-		return !this.element.style.cssText.match(/opacity\s*:\s*0/);
+		return !this.element.style.cssText.match(/opacity\s*:\s*0/i);
+	},
+	get selected() {
+		return !!this.element.children[0].style.cssText.match(/color\s*:\s*rgb\(0\s*\,\s*48\s*,\s*203\s*\)/i);
 	},
 	select: function () {
 		if (this.available) {
 			if (!this.parent.opened) {
 				this.parent.open();
 			}
-			this.element.onclick();	// select
-			if (this.commandTarget === "self") {
-				this.element.onclick();	// commit
+			if (!this.selected) {
+				this.element.onclick();	// select
 			}
 		}
 	},
@@ -4553,6 +4743,11 @@ hvStat.battle.warningSystem = {
 				if (hvStat.settings.isEffectsAlertSelf[j] &&
 						(effectName + " ").indexOf(this.selfEffectNames[j] + " ") >= 0 &&	// To match "Regen" and "Regen II", not "Regeneration"
 						String(hvStat.settings.EffectsAlertSelfRounds[j]) === duration) {
+					// Suppress useless warnings
+					if (effectName === "Chain 1" && !hvStat.battle.command.subMenuItemMap["Skill2"].available ||
+							effectName === "Chain 2" && !hvStat.battle.command.subMenuItemMap["Skill3"].available) {
+						continue;
+					}
 					this.enqueueAlert(effectName + " is expiring");
 				}
 			}
@@ -4583,6 +4778,103 @@ hvStat.battle.warningSystem = {
 				}
 			}
 		}
+	},
+};
+
+//------------------------------------
+// Statistics
+//------------------------------------
+hvStat.statistics = {};
+hvStat.statistics.drops = {
+	increaseChance: function (value, dropType, difficulty, battleType) {
+		hvStat.storage.dropStats.increaseChance(value, dropType, difficulty, battleType);
+	},
+	nChances: function (dropType, difficulty, battleType) {
+		return hvStat.storage.dropStats.nChances(dropType, difficulty, battleType);
+	},
+	addItem: function (name, qty, dropType, difficulty, battleType) {
+		hvStat.storage.dropStats.addItem(name, qty, dropType, difficulty, battleType);
+		this.storeItem(name, qty, dropType, difficulty, battleType);
+	},
+	itemCount: function (dropType, difficulty, battleType) {
+		return hvStat.storage.dropStats.itemCount(dropType, difficulty, battleType);
+	},
+	addToken: function (name, dropType, difficulty, battleType) {
+		hvStat.storage.dropStats.addToken(name, dropType, difficulty, battleType);
+		this.storeItem(name, 1, dropType, difficulty, battleType);
+	},
+	tokenCount: function (dropType, difficulty, battleType) {
+		return hvStat.storage.dropStats.tokenCount(dropType, difficulty, battleType);
+	},
+	addArtifact: function (name, dropType, difficulty, battleType) {
+		hvStat.storage.dropStats.addArtifact(name, dropType, difficulty, battleType);
+		this.storeItem(name, 1, dropType, difficulty, battleType);
+	},
+	artifactCount: function (dropType, difficulty, battleType) {
+		return hvStat.storage.dropStats.artifactCount(dropType, difficulty, battleType);
+	},
+	storeItem: function (name, qty, dropType, difficulty, battleType) {
+		hvStat.database.idbAccessQueue.add(function () {
+			var tx = hvStat.database.transaction;
+			var key = [
+				name,
+				dropType,
+				difficulty,
+				battleType,
+			];
+			hvStat.database.itemDrops.get(tx, key, function (obj) {
+				var timeStamp = (new Date()).toISOString();
+				var itemDrop;
+				if (obj) {
+					// Update
+					itemDrop = obj;
+					itemDrop.dropCount++;
+					itemDrop.qty += qty;
+					itemDrop.timeStamp = timeStamp;
+				} else {
+					// Create new
+					itemDrop = {
+						key: key,
+						name: name,
+						dropType: dropType,
+						difficulty: difficulty,
+						battleType: battleType,
+						dropCount: 1,
+						qty: qty,
+						timeStamp: timeStamp,
+					};
+				}
+				hvStat.database.itemDrops.put(tx, itemDrop);
+			});
+		});
+	},
+	addEquipment: function (name, dropType, difficulty, battleType, arenaNumber, roundNumber) {
+		hvStat.storage.dropStats.addEquipment(name, dropType, difficulty, battleType, arenaNumber, roundNumber);
+		this.storeEquipment(name, dropType, difficulty, battleType, arenaNumber, roundNumber);
+	},
+	equipmentCount: function (dropType, difficulty, battleType) {
+		return hvStat.storage.dropStats.equipmentCount(dropType, difficulty, battleType);
+	},
+	storeEquipment: function (name, dropType, difficulty, battleType, arenaNumber, roundNumber) {
+		hvStat.database.idbAccessQueue.add(function () {
+			var tx = hvStat.database.transaction;
+			if (battleType !== hvStat.constant.battleType.ARENA.id) {
+				arenaNumber = null;
+			}
+			if (battleType === hvStat.constant.battleType.HOURLY_ENCOUNTER.id) {
+				roundNumber = null;
+			}
+			var equipmentDrop = {
+				name: name,
+				dropType: dropType,
+				difficulty: difficulty,
+				battleType: battleType,
+				arenaNumber: arenaNumber,
+				roundNumber: roundNumber,
+				timeStamp: (new Date()).toISOString(),
+			};
+			hvStat.database.equipmentDrops.put(hvStat.database.transaction, equipmentDrop);
+		});
 	},
 };
 
@@ -4628,17 +4920,12 @@ hvStat.database.deleteIndexedDB = function () {
 	};
 };
 
-hvStat.database.maintainObjectStores = function (event) {
+hvStat.database.maintainObjectStores = function (oldVersion, versionChangeTransaction) {
 	var alertMessage = "IndexDB database operation has failed; see console log";
-//	var idb = event.target.source;  // does not work with Firefox
-	var idb = hvStat.database.idb;
-	var tx = event.target.transaction;
-	var oldVer = event.oldVersion;	// does not work with Chrome
-	var newVer = event.newVersion || Number(idb.version);
+	var idb = versionChangeTransaction.db;
 	var store;
-//	console.debug(event);
 
-	if (newVer >= 1) {
+	if (oldVersion < 1) {
 		// MonsterScanResults
 		try {
 			store = idb.createObjectStore("MonsterScanResults", { keyPath: "id", autoIncrement: false });
@@ -4679,27 +4966,69 @@ hvStat.database.maintainObjectStores = function (event) {
 			console.log(e.message + "\n" + e.stack);
 		}
 	}
+	if (oldVersion < 2) {
+		// ItemDrops
+		try {
+			store = idb.createObjectStore("ItemDrops", { keyPath: "key", autoIncrement: false });
+		} catch (e) {
+			alert(alertMessage);
+			console.log(e.message + "\n" + e.stack);
+		}
+		try {
+			store.createIndex("ix_key", "key", { unique: true });
+		} catch (e) {
+			alert(alertMessage);
+			console.log(e.message + "\n" + e.stack);
+		}
+		try {
+			store.createIndex("ix_name", "name", { unique: false });
+		} catch (e) {
+			alert(alertMessage);
+			console.log(e.message + "\n" + e.stack);
+		}
+
+		// EquipmentDrops
+		try {
+			store = idb.createObjectStore("EquipmentDrops", { keyPath: "id", autoIncrement: true });
+		} catch (e) {
+			alert(alertMessage);
+			console.log(e.message + "\n" + e.stack);
+		}
+		try {
+			store.createIndex("ix_id", "id", { unique: true });
+		} catch (e) {
+			alert(alertMessage);
+			console.log(e.message + "\n" + e.stack);
+		}
+		try {
+			store.createIndex("ix_name", "name", { unique: false });
+		} catch (e) {
+			alert(alertMessage);
+			console.log(e.message + "\n" + e.stack);
+		}
+	}
 };
 
 hvStat.database.openIndexedDB = function (callback) {
 	var errorMessage;
 
-	var idbVersion = 1; // Must be an integer
-	var reqOpen = indexedDB.open("HVStat", idbVersion);
-	reqOpen.onerror = function (event) {
+	var idbVersion = 2; // Must be an integer
+	var idbOpenDBRequest = indexedDB.open("HVStat", idbVersion);
+	idbOpenDBRequest.onerror = function (event) {
 		errorMessage = "Database open error: " + event.target.errorCode;
 		alert(errorMessage);
-		console.log(errorMessage);
+		console.log(event);
 	};
 	// Latest W3C draft (Firefox and Chrome 23 or later)
-	reqOpen.onupgradeneeded = function (event) {
-		console.log("onupgradeneeded");
-		hvStat.database.idb = reqOpen.result;
-		hvStat.database.maintainObjectStores(event);
+	idbOpenDBRequest.onupgradeneeded = function (event) {
+		console.log("onupgradeneeded: old version = " + event.oldVersion);
+		hvStat.database.idb = event.target.result;
+		var versionChangeTransaction = event.target.transaction;
+		hvStat.database.maintainObjectStores(event.oldVersion, versionChangeTransaction);
 		// Subsequently onsuccess event handler is called automatically
 	};
-	reqOpen.onsuccess = function (event) {
-		var idb = hvStat.database.idb = reqOpen.result;
+	idbOpenDBRequest.onsuccess = function (event) {
+		var idb = hvStat.database.idb = event.target.result;
 		if (Number(idb.version) === idbVersion) {
 			// Always come here if Firefox and Chrome 23 or later
 			if (callback instanceof Function) {
@@ -4707,377 +5036,395 @@ hvStat.database.openIndexedDB = function (callback) {
 			}
 		} else {
 			// Obsolete Chrome style (Chrome 22 or earlier)
-			console.debug("came setVersion route");
-			var reqVersion = idb.setVersion(idbVersion);
-			reqVersion.onerror = function (event) {
+			var oldVersion = idb.version;
+			if (oldVersion === "") {
+				oldVersion = 0;
+			}
+			console.debug("setVersion: old version = " + oldVersion);
+			var versionChangeRequest = idb.setVersion(String(idbVersion));
+			versionChangeRequest.onerror = function (event) {
 				errorMessage = "Database setVersion error: " + event.target.errorCode;
 				alert(errorMessage);
 				console.log(errorMessage);
 			};
-			reqVersion.onsuccess = function (event) {
-				hvStat.database.maintainObjectStores(event);
-				var tx = reqVersion.result;
+			versionChangeRequest.onsuccess = function (event) {
+				var versionChangeTransaction = versionChangeRequest.result;
+				hvStat.database.maintainObjectStores(oldVersion, versionChangeTransaction);
 				if (callback instanceof Function) {
-					tx.oncomplete = callback;
+					versionChangeTransaction.oncomplete = function (event) {
+						callback(event);
+					};
 				}
 			};
 		}
 	};
 };
 
-hvStat.database.deleteAllObjectsInMonsterScanResults = function () {
-	var tx = hvStat.database.idb.transaction(["MonsterScanResults"], "readwrite");
-	var store = tx.objectStore("MonsterScanResults");
-	var range = null; // Select all
-	var count = 0;
-
-	var req = store.openCursor(range, "next");
-	req.onsuccess = function () {
-		var cursor = this.result;
-		if (cursor) {
-			cursor.delete();
-			count++;
-			cursor.continue();
-		} else {
-			alert("Your monster scan results has been deleted.\nsuccess(es): " + count);
-		}
-	};
-	req.onerror = function () {
-		console.log('request error.');
-		alert('request error.');
-	};
+hvStat.database.ObjectStoreDelegate = function (spec) {
+	this.objectStoreName = spec.objectStoreName;
+	this.columnSeparator = spec.columnSeparator || "%09";
+	this.lineSeparator = spec.lineSeparator || "%0A";
+	this.regex = spec.regex;
+	this.headerLabels = spec.headerLabels;
+	this.keyPropertyName = spec.keyPropertyName || "key";
+	this.timeStampPropertyName = spec.timeStampPropertyName || "timeStamp";
+	this.objectToTextArrayFn = spec.objectToTextArrayFn;
+	this.regexResultToObjectFn = spec.regexResultToObjectFn;
 };
-
-hvStat.database.deleteAllObjectsInMonsterSkills = function () {
-	var tx = hvStat.database.idb.transaction(["MonsterSkills"], "readwrite");
-	var store = tx.objectStore("MonsterSkills");
-	var range = null; // Select all
-	var count = 0;
-
-	var req = store.openCursor(range, "next");
-	req.onsuccess = function () {
-		var cursor = this.result;
-		if (cursor) {
-			cursor.delete();
-			count++;
-			cursor.continue();
-		} else {
-			alert("Your monster skill data has been deleted.\nsuccess(es): " + count);
+hvStat.database.ObjectStoreDelegate.prototype = {
+	get textHeader() {
+		return this.headerLabels.join(this.columnSeparator);
+	},
+	get: function (tx, key, callback) {
+		try {
+			this._get(tx, key, callback);
+		} catch (e) {
+			console.log(e);
+			alert(e);
 		}
-	};
-	req.onerror = function () {
-		console.log('request error.');
-		alert('request error.');
-	};
-};
-
-hvStat.database.exportMonsterScanResults = function (callback) {
-	var tx = hvStat.database.idb.transaction(["MonsterScanResults"], "readonly");
-	var store = tx.objectStore("MonsterScanResults");
-	var range = null; // Select all
-	var count = 0;
-	var texts = [];
-	var tab = "%09";
-	var newline = "%0A";
-	texts[0] = "ID" +
-		tab + "LAST_SCAN_DATE" +
-		tab + "NAME" +
-		tab + "MONSTER_CLASS" +
-		tab + "POWER_LEVEL" +
-		tab + "TRAINER" +
-		tab + "MELEE_ATTACK" +
-		tab + "DEF_CRUSHING" +
-		tab + "DEF_SLASHING" +
-		tab + "DEF_PIERCING" +
-		tab + "DEF_FIRE" +
-		tab + "DEF_COLD" +
-		tab + "DEF_ELEC" +
-		tab + "DEF_WIND" +
-		tab + "DEF_HOLY" +
-		tab + "DEF_DARK" +
-		tab + "DEF_SOUL" +
-		tab + "DEF_VOID" +
-		tab + "DEBUFFS_AFFECTED";
-
-	var req = store.openCursor(range, "next");
-	req.onsuccess = function (event) {
-		var cursor = this.result;
-		var vo;
-		var text;
-		if (cursor) {
-			vo = cursor.value;
-			count++;
-			vo.defenseLevel = vo.defenseLevel || vo.defenceLevel;	// Patch
-			texts[count] = vo.id +
-				tab + (vo.lastScanDate !== null ? vo.lastScanDate : "") +
-				tab + (vo.name !== null ? vo.name : "") +
-				tab + (vo.monsterClass !== null ? vo.monsterClass : "") +
-				tab + (vo.powerLevel !== null ? vo.powerLevel : "") +
-				tab + (vo.trainer !== null ? vo.trainer : "") +
-				tab + (vo.meleeAttack !== null ? vo.meleeAttack : "") +
-				tab + (vo.defenseLevel && vo.defenseLevel.CRUSHING ? vo.defenseLevel.CRUSHING : "") +
-				tab + (vo.defenseLevel && vo.defenseLevel.SLASHING ? vo.defenseLevel.SLASHING : "") +
-				tab + (vo.defenseLevel && vo.defenseLevel.PIERCING ? vo.defenseLevel.PIERCING : "") +
-				tab + (vo.defenseLevel && vo.defenseLevel.FIRE ? vo.defenseLevel.FIRE : "") +
-				tab + (vo.defenseLevel && vo.defenseLevel.COLD ? vo.defenseLevel.COLD : "") +
-				tab + (vo.defenseLevel && vo.defenseLevel.ELEC ? vo.defenseLevel.ELEC : "") +
-				tab + (vo.defenseLevel && vo.defenseLevel.WIND ? vo.defenseLevel.WIND : "") +
-				tab + (vo.defenseLevel && vo.defenseLevel.HOLY ? vo.defenseLevel.HOLY : "") +
-				tab + (vo.defenseLevel && vo.defenseLevel.DARK ? vo.defenseLevel.DARK : "") +
-				tab + (vo.defenseLevel && vo.defenseLevel.SOUL ? vo.defenseLevel.SOUL : "") +
-				tab + (vo.defenseLevel && vo.defenseLevel.VOID ? vo.defenseLevel.VOID : "") +
-				tab + (vo.debuffsAffected ? vo.debuffsAffected.join(", ") : "");
-			cursor.continue();
-		} else {
-			hvStat.database.dataURIMonsterScanResults = "data:text/tsv;charset=utf-8," + texts.join(newline);
-			hvStat.database.nRowsMonsterScanResultsTSV = count;
+	},
+	_get: function (tx, key, callback) {
+		var store = tx.objectStore(this.objectStoreName);
+		var getRequest = store.get(key);
+		getRequest.onerror = function (event) {
+			console.log(event);
+			alert(event);
+		};
+		getRequest.onsuccess = function (event) {
 			if (callback instanceof Function) {
-				callback(event);
-			}
-		}
-	};
-	req.onerror = function (event) {
-		console.log('request error.');
-		alert('request error.');
-	};
-};
-
-hvStat.database.exportMonsterSkills = function (callback) {
-	var tx = hvStat.database.idb.transaction(["MonsterSkills"], "readonly");
-	var store = tx.objectStore("MonsterSkills");
-	var range = null; // Select all
-	var count = 0;
-	var texts = [];
-	var tab = "%09";
-	var newline = "%0A";
-	texts[0] = "ID" +
-		tab + "NAME" +
-		tab + "SKILL_TYPE" +
-		tab + "ATTACK_TYPE" +
-		tab + "DAMAGE_TYPE" +
-		tab + "LAST_USED_DATE";
-
-	var req = store.openCursor(range, "next");
-	req.onsuccess = function (event) {
-		var cursor = this.result;
-		var vo;
-		var text;
-		if (cursor) {
-			vo = cursor.value;
-			count++;
-			texts[count] = vo.id +
-				tab + (vo.name !== null ? vo.name : "") +
-				tab + (vo.skillType !== null ? vo.skillType : "") +
-				tab + (vo.attackType !== null ? vo.attackType : "") +
-				tab + (vo.damageType !== null ? vo.damageType : "") +
-				tab + (vo.lastUsedDate !== null ? vo.lastUsedDate : "");
-			cursor.continue();
-		} else {
-			hvStat.database.dataURIMonsterSkills = "data:text/tsv;charset=utf-8," + texts.join(newline);
-			hvStat.database.nRowsMonsterSkillsTSV = count;
-			if (callback instanceof Function) {
-				callback(event);
-			}
-		}
-	};
-	req.onerror = function (event) {
-		console.log('request error.');
-		alert('request error.');
-	};
-};
-
-hvStat.database.importMonsterScanResults = function (file, callback) {
-	var reader = new FileReader();
-	reader.onload = function (event) {
-		var contents = event.target.result;
-		var rowCount, procCount;
-		var result;
-		var tx = hvStat.database.idb.transaction(["MonsterScanResults"], "readwrite");
-		var store = tx.objectStore("MonsterScanResults");
-		var skipCount = 0;
-		var successCount = 0;
-		var errorCount = 0;
-		var voExisting, voToPut, reqPut;
-
-		var report = function () {
-			if (procCount >= rowCount) {
-				alert(rowCount + " row(s) found, " + successCount + " row(s) imported, " + skipCount + " row(s) skipped, " + errorCount + " error(s)");
+				callback(event.target.result);
 			}
 		};
-
-		// Prescan
-		hvStat.database.reMonsterScanResultsTSV.lastIndex = 0;
-		rowCount = 0;
-		while ((result = hvStat.database.reMonsterScanResultsTSV.exec(contents)) !== null) {
-			rowCount++;
+	},
+	put: function (tx, obj, callback) {
+		try {
+			this._put(tx, obj, callback);
+		} catch (e) {
+			console.log(e);
+			alert(e);
 		}
-
-		// Import
-		procCount = 0;
-		hvStat.database.reMonsterScanResultsTSV.lastIndex = 0;
-		while ((result = hvStat.database.reMonsterScanResultsTSV.exec(contents)) !== null) {
-			voToPut = new hvStat.vo.MonsterScanResultsVO({
-				id: result[1],
-				lastScanDate: result[2],
-				name: result[3],
-				monsterClass: result[4],
-				powerLevel: result[5],
-				trainer: result[6],
-				meleeAttack: result[7],
-				defCrushing: result[8],
-				defSlashing: result[9],
-				defPiercing: result[10],
-				defFire: result[11],
-				defCold: result[12],
-				defElec: result[13],
-				defWind: result[14],
-				defHoly: result[15],
-				defDark: result[16],
-				defSoul: result[17],
-				defVoid: result[18],
-				debuffsAffected: result[19],
-			});
-			(function (voToPut) {
-				reqGet = store.get(voToPut.id);
-				reqGet.onsuccess = function (event) {
-					var doPut = false;
-					if (event.target.result === undefined) {
-						doPut = true;
-					} else {
-						voExisting = event.target.result;
-						if (voExisting.lastScanDate === null || voToPut.lastScanDate >= voExisting.lastScanDate) {
-							doPut = true;
-						} else {
-							//console.log("importMonsterScanResults: voToPut.id = [" + voToPut.id + "], voExisting.id  [" + voExisting.id + "]");
-							//console.log("importMonsterScanResults: voToPut.lastScanDate = [" + voToPut.lastScanDate + "], voExisting.lastScanDate  [" + voExisting.lastScanDate + "]");
-						}
-					}
-					if (!doPut) {
-						skipCount++;
-						procCount++;
-					} else {
-						reqPut = store.put(voToPut);
-						reqPut.onsuccess = function (event) {
-							successCount++;
-							procCount++;
-							report();
-						};
-						reqPut.onerror = function (event) {
-							console.log("importMonsterScanResults: put: error");
-							errorCount++;
-							procCount++;
-							report();
-						};
-					}
-				};
-				reqGet.onerror = function (event) {
-					console.log("importMonsterScanResults: get: error");
-					errorCount++;
-					procCount++;
-					report();
-				};
-			})(voToPut);
+	},
+	_put: function (tx, obj, callback) {
+		var that = this;
+		var store = tx.objectStore(this.objectStoreName);
+		var putRequest = store.put(obj);
+		putRequest.onerror = function (event) {
+			console.log(event);
+			alert(event);
+		};
+		putRequest.onsuccess = function (event) {
+			if (callback instanceof Function) {
+				callback(obj);
+			}
 		}
-	};
-	reader.onerror = function (event) {
-		alert("Failed to read file");
-	};
-	reader.readAsText(file, 'UTF-8');
-};
-
-hvStat.database.importMonsterSkills = function (file, callback) {
-	var reader = new FileReader();
-	reader.onload = function (event) {
-		var contents = event.target.result;
-		var rowCount, procCount;
-		var result;
-		var tx = hvStat.database.idb.transaction(["MonsterSkills"], "readwrite");
-		var store = tx.objectStore("MonsterSkills");
-		var skipCount = 0;
-		var successCount = 0;
-		var errorCount = 0;
-		var voExisting, voToPut, reqPut;
-
-		var report = function () {
-			if (procCount >= rowCount) {
-				alert(rowCount + " row(s) found, " + successCount + " row(s) imported, " + skipCount + " row(s) skipped, " + errorCount + " error(s)");
+	},
+	export: function (callback) {
+		try {
+			this._export(callback);
+		} catch (e) {
+			console.log(e);
+			alert(e);
+		}
+	},
+	_export: function (callback) {
+		var that = this;
+		var tx = hvStat.database.idb.transaction([this.objectStoreName], "readonly");
+		var store = tx.objectStore(this.objectStoreName);
+		var count = 0;
+		var texts = [];
+		texts[count++] = this.textHeader;
+		var cursorOpenRequest = store.openCursor(null, "next");
+		cursorOpenRequest.onerror = function (event) {
+			console.log(event);
+			alert(event);
+		};
+		cursorOpenRequest.onsuccess = function (event) {
+			var cursor = this.result;
+			var obj, text, result;
+			if (cursor) {
+				obj = cursor.value;
+				texts[count++] = that.objectToTextArrayFn(obj).join(that.columnSeparator);
+				cursor.continue();
+			} else {
+				if (callback instanceof Function) {
+					result = {
+						dataURI: "data:text/tsv;charset=utf-8," + texts.join(that.lineSeparator),
+						rowCount: count,
+					}
+					callback(result);
+				}
 			}
 		};
-
-		// Prescan
-		hvStat.database.reMonsterSkillsTSV.lastIndex = 0;
-		rowCount = 0;
-		while ((result = hvStat.database.reMonsterSkillsTSV.exec(contents)) !== null) {
-			rowCount++;
+	},
+	import: function (callback) {
+		try {
+			this._import(callback);
+		} catch (e) {
+			console.log(e);
+			alert(e);
 		}
+	},
+	_import: function (file, callback) {
+		var that = this;
+		var reader = new FileReader();
+		reader.onerror = function (event) {
+			console.log(event);
+			alert(event);
+		};
+		reader.onload = function (event) {
+			var contents = event.target.result;
+			var rowCount, procCount;
+			var regexResult;
+			var tx = hvStat.database.idb.transaction([that.objectStoreName], "readwrite");
+			var store = tx.objectStore(that.objectStoreName);
+			var skipCount = 0;
+			var successCount = 0;
+			var errorCount = 0;
+			var obj;
 
-		// Import
-		procCount = 0;
-		hvStat.database.reMonsterSkillsTSV.lastIndex = 0;
-		while ((result = hvStat.database.reMonsterSkillsTSV.exec(contents)) !== null) {
-			voToPut = new hvStat.vo.MonsterSkillVO({
-				id: result[1],
-				name: result[2],
-				skillType: result[3],
-				attackType: result[4],
-				damageType: result[5],
-				lastUsedDate: result[6]
-			});
-			(function (voToPut) {
-				reqGet = store.get(voToPut.id);
-				reqGet.onsuccess = function (event) {
-					var doPut = false;
-					if (event.target.result === undefined) {
-						doPut = true;
-					} else {
-						voExisting = event.target.result;
-						if (voExisting.lastUsedDate === null || voToPut.lastUsedDate >= voExisting.lastUsedDate) {
-							doPut = true;
-						} else {
-							//console.log("importMonsterSkills: voToPut.id = [" + voToPut.id + "], voExisting.id  [" + voExisting.id + "]");
-							//console.log("importMonsterSkills: voToPut.lastUsedDate = [" + voToPut.lastUsedDate + "], voExisting.lastUsedDate  [" + voExisting.lastUsedDate + "]");
-						}
-					}
-					if (!doPut) {
-						skipCount++;
+			var report = function () {
+				if (procCount >= rowCount) {
+					alert(rowCount + " row(s) found,\n" + successCount + " row(s) imported,\n" + skipCount + " row(s) skipped,\n" + errorCount + " error(s)");
+				}
+			};
+
+			// Prescan
+			that.regex.lastIndex = 0;
+			rowCount = 0;
+			while ((regexResult = that.regex.exec(contents)) !== null) {
+				rowCount++;
+			}
+
+			// Import
+			procCount = 0;
+			that.regex.lastIndex = 0;
+			while ((regexResult = that.regex.exec(contents)) !== null) {
+				obj = that.regexResultToObjectFn(regexResult);
+				(function (obj) {
+					var getRequest = store.get(obj[that.keyPropertyName]);
+					getRequest.onerror = function (event) {
+						console.debug(event);
+						alert(event);
+						errorCount++;
 						procCount++;
-					} else {
-						reqPut = store.put(voToPut);
-						reqPut.onsuccess = function (event) {
-							successCount++;
+						report();
+					};
+					getRequest.onsuccess = function (event) {
+						var existingObj = event.target.result;
+						var doPut = (existingObj === undefined ||
+							obj[that.timeStampPropertyName] === null ||
+							obj[that.timeStampPropertyName] >= existingObj[that.timeStampPropertyName]);
+						if (!doPut) {
+							skipCount++;
 							procCount++;
-							report();
-						};
-						reqPut.onerror = function (event) {
-							console.log("importMonsterSkills: put: error");
-							errorCount++;
-							procCount++;
-							report();
-						};
+						} else {
+							var putRequest = store.put(obj);
+							putRequest.onerror = function (event) {
+								console.debug(event);
+								alert(event);
+								errorCount++;
+								procCount++;
+								report();
+							};
+							putRequest.onsuccess = function (event) {
+								successCount++;
+								procCount++;
+								report();
+							};
+						}
+					};
+				})(obj);
+			}
+		};
+		reader.readAsText(file, 'UTF-8');
+	},
+	delete: function (callback) {
+		var that = this;
+		var tx = hvStat.database.idb.transaction([that.objectStoreName], "readwrite");
+		var store = tx.objectStore(that.objectStoreName);
+		var count = 0;
+		var cursorOpenRequest = store.openCursor(null, "next");
+		cursorOpenRequest.onerror = function (event) {
+			console.log(event);
+			alert(event);
+		};
+		cursorOpenRequest.onsuccess = function (event) {
+			var cursor = this.result;
+			if (cursor) {
+				cursor.delete();
+				count++;
+				cursor.continue();
+			} else {
+				if (callback instanceof Function) {
+					var result = {
+						count: count,
 					}
-				};
-				reqGet.onerror = function (event) {
-					console.log("importMonsterSkills: get: error");
-					errorCount++;
-					procCount++;
-					report();
-				};
-			})(voToPut);
-		}
-	};
-	reader.onerror = function (event) {
-		alert("Failed to read file");
-	};
-	reader.readAsText(file, 'UTF-8');
+					callback(result);
+				}
+			}
+		};
+	},
 };
 
+
+hvStat.database.monsterScanResults = new hvStat.database.ObjectStoreDelegate({
+	objectStoreName: "MonsterScanResults",
+	regex: /^(\d+?)\t(.*?)\t(.*?)\t(.*?)\t(\d*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)$/gm,
+	headerLabels:[
+		"ID", "LAST_SCAN_DATE", "NAME", "MONSTER_CLASS", "POWER_LEVEL", "TRAINER", "MELEE_ATTACK",
+		"DEF_CRUSHING", "DEF_SLASHING", "DEF_PIERCING", "DEF_FIRE", "DEF_COLD", "DEF_ELEC", "DEF_WIND",
+		"DEF_HOLY", "DEF_DARK", "DEF_SOUL", "DEF_VOID", "DEBUFFS_AFFECTED",
+	],
+	keyPropertyName: "id",
+	timeStampPropertyName: "lastScanDate",
+	objectToTextArrayFn: function (obj) {
+		obj.defenseLevel = obj.defenseLevel || obj.defenceLevel;	// Patch
+		return [
+			obj.id,
+			obj.lastScanDate !== null ? obj.lastScanDate : "",
+			obj.name !== null ? obj.name : "",
+			obj.monsterClass !== null ? obj.monsterClass : "",
+			obj.powerLevel !== null ? obj.powerLevel : "",
+			obj.trainer !== null ? obj.trainer : "",
+			obj.meleeAttack !== null ? obj.meleeAttack : "",
+			obj.defenseLevel && obj.defenseLevel.CRUSHING ? obj.defenseLevel.CRUSHING : "",
+			obj.defenseLevel && obj.defenseLevel.SLASHING ? obj.defenseLevel.SLASHING : "",
+			obj.defenseLevel && obj.defenseLevel.PIERCING ? obj.defenseLevel.PIERCING : "",
+			obj.defenseLevel && obj.defenseLevel.FIRE ? obj.defenseLevel.FIRE : "",
+			obj.defenseLevel && obj.defenseLevel.COLD ? obj.defenseLevel.COLD : "",
+			obj.defenseLevel && obj.defenseLevel.ELEC ? obj.defenseLevel.ELEC : "",
+			obj.defenseLevel && obj.defenseLevel.WIND ? obj.defenseLevel.WIND : "",
+			obj.defenseLevel && obj.defenseLevel.HOLY ? obj.defenseLevel.HOLY : "",
+			obj.defenseLevel && obj.defenseLevel.DARK ? obj.defenseLevel.DARK : "",
+			obj.defenseLevel && obj.defenseLevel.SOUL ? obj.defenseLevel.SOUL : "",
+			obj.defenseLevel && obj.defenseLevel.VOID ? obj.defenseLevel.VOID : "",
+			obj.debuffsAffected ? obj.debuffsAffected.join(", ") : "",
+		];
+	},
+	regexResultToObjectFn: function (regexResult) {
+		return new hvStat.vo.MonsterScanResultsVO({
+			id: regexResult[1],
+			lastScanDate: regexResult[2],
+			name: regexResult[3],
+			monsterClass: regexResult[4],
+			powerLevel: regexResult[5],
+			trainer: regexResult[6],
+			meleeAttack: regexResult[7],
+			defCrushing: regexResult[8],
+			defSlashing: regexResult[9],
+			defPiercing: regexResult[10],
+			defFire: regexResult[11],
+			defCold: regexResult[12],
+			defElec: regexResult[13],
+			defWind: regexResult[14],
+			defHoly: regexResult[15],
+			defDark: regexResult[16],
+			defSoul: regexResult[17],
+			defVoid: regexResult[18],
+			debuffsAffected: regexResult[19],
+		});
+	},
+});
+
+hvStat.database.monsterSkills = new hvStat.database.ObjectStoreDelegate({
+	objectStoreName: "MonsterSkills",
+	regex: /^(\d+?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)$/gm,
+	headerLabels: ["ID", "NAME", "SKILL_TYPE", "ATTACK_TYPE", "DAMAGE_TYPE", "LAST_USED_DATE"],
+	timeStampPropertyName: "lastScanDate",
+	objectToTextArrayFn: function (obj) {
+		return [
+			obj.id,
+			obj.name !== null ? obj.name : "",
+			obj.skillType !== null ? obj.skillType : "",
+			obj.attackType !== null ? obj.attackType : "",
+			obj.damageType !== null ? obj.damageType : "",
+			obj.lastUsedDate !== null ? obj.lastUsedDate : "",
+		];
+	},
+	regexResultToObjectFn: function (regexResult) {
+		return new hvStat.vo.MonsterSkillVO({
+			id: regexResult[1],
+			name: regexResult[2],
+			skillType: regexResult[3],
+			attackType: regexResult[4],
+			damageType: regexResult[5],
+			lastUsedDate: regexResult[6]
+		});
+	},
+});
+
+hvStat.database.itemDrops = new hvStat.database.ObjectStoreDelegate({
+	objectStoreName: "ItemDrops",
+	regex: /^(.+?)\t(.+?)\t(.+?)\t(.+?)\t(\d+)\t(\d+)\t([-0-9TZ\:\.]+?)$/gm,
+	headerLabels: ["NAME", "DROP_TYPE", "DIFFICULTY", "BATTLE_TYPE", "DROP_COUNT", "QTY", "TIME_STAMP"],
+	objectToTextArrayFn: function (obj) {
+		return [
+			obj.name,
+			obj.dropType,
+			obj.difficulty,
+			obj.battleType,
+			obj.dropCount,
+			obj.qty,
+			obj.timeStamp,
+		];
+	},
+	regexResultToObjectFn: function (regexResult) {
+		return {
+			key: [
+				regexResult[1],
+				regexResult[2],
+				regexResult[3],
+				regexResult[4],
+			],
+			name: regexResult[1],
+			dropType: regexResult[2],
+			difficulty: regexResult[3],
+			battleType: regexResult[4],
+			dropCount: Number(regexResult[5]),
+			qty: Number(regexResult[6]),
+			timeStamp: regexResult[7],
+		};
+	},
+});
+
+hvStat.database.equipmentDrops = new hvStat.database.ObjectStoreDelegate({
+	objectStoreName: "EquipmentDrops",
+	regex: /^(\d+)\t(.+?)\t(.+?)\t(.+?)\t(.+?)\t(\d*)\t(\d*)\t([-0-9TZ\:\.]+?)$/gm,
+	headerLabels: ["ID", "NAME", "DROP_TYPE", "DIFFICULTY", "BATTLE_TYPE", "ARENA_NUMBER", "ROUND_NUMBER", "TIME_STAMP"],
+	keyPropertyName: "id",
+	objectToTextArrayFn: function (obj) {
+		return [
+			obj.id,
+			obj.name,
+			obj.dropType,
+			obj.difficulty,
+			obj.battleType,
+			(obj.arenaNumber === null ? "" : obj.arenaNumber),
+			(obj.roundNumber === null ? "" : obj.roundNumber),
+			obj.timeStamp,
+		];
+	},
+	regexResultToObjectFn: function (regexResult) {
+		return {
+			id: Number(regexResult[1]),
+			name: regexResult[2],
+			dropType: regexResult[3],
+			difficulty: regexResult[4],
+			battleType: regexResult[5],
+			arenaNumber: regexResult[6] === "" ? null : Number(regexResult[6]),
+			roundNumber: regexResult[7] === "" ? null : Number(regexResult[7]),
+			timeStamp: regexResult[8],
+		};
+	},
+});
+
 //------------------------------------
-// Dialog User Interface
+// HV STAT Icon
 //------------------------------------
-hvStat.ui = {
+hvStat.icon = {
 	setup: function () {
 		this.addStyle();
-		this.createIcon();
+		this.create();
 	},
 	addStyle: function () {
 		var C = browser.extension.style.ImageResourceInfo;
@@ -5094,7 +5441,7 @@ hvStat.ui = {
 		];
 		browser.extension.style.addFromResource("css/", "jquery-ui-1.9.2.custom.min.css", imageResouces);
 	},
-	createIcon: function () {
+	create: function () {
 		var stuffBox = document.querySelector('div.stuffbox');
 		var icon = document.createElement("div");
 		icon.id = "hvstat-icon";
@@ -5113,11 +5460,19 @@ hvStat.ui = {
 		});
 		stuffBox.insertBefore(icon, null);
 	},
+};
+
+//------------------------------------
+// Dialog User Interface
+//------------------------------------
+hvStat.ui = {
 	// jQuery and jQuery UI must not be used except on the dialog panel for performance reason.
 	createDialog: function () {
 		// Load jQuery and jQuery UI
 		browser.extension.loadScript("scripts/", "jquery-1.8.3.min.js");
 		browser.extension.loadScript("scripts/", "jquery-ui-1.9.2.custom.min.js");
+		// Load CSS for the dialog
+		browser.extension.style.addFromResource("css/", "hvstat-ui.css");
 
 		var panel = document.createElement("div");
 		panel.id = "hvstat-panel";
@@ -5129,7 +5484,7 @@ hvStat.ui = {
 			draggable: false,
 			resizable: false,
 			height: 620,
-			width: 850,
+			width: 950,
 			modal: true,
 			position: ["center", "center"],
 			title: "[STAT] HentaiVerse Statistics, Tracking, and Analysis Tool v." + hvStat.version,
@@ -5137,11 +5492,10 @@ hvStat.ui = {
 		$('#hvstat-tabs').tabs();
 		initOverviewPane();
 		initBattleStatsPane();
-		initItemPane();
-		initRewardsPane();
+		hvStat.ui.dropsPane.initialize();
 		initShrinePane();
+		hvStat.ui.databasePane.initialize();
 		initSettingsPane();
-		initMonsterDatabasePane();
 		$('#hvstat-icon').click(function () {
 			if ($(panel).dialog("isOpen")) {
 				$(panel).dialog("close");
@@ -5153,6 +5507,418 @@ hvStat.ui = {
 	},
 };
 
+hvStat.ui.util = {
+	percent: function (value, digits) {
+		var v = value * 100;
+		if (digits) {
+			v = v.toFixed(digits);
+		}
+		return v;
+	},
+	ratio: function (numerator, denominator) {
+		if (denominator === 0) {
+			return 0;
+		} else {
+			return numerator / denominator;
+		}
+	},
+	percentRatio: function (numerator, denominator, digits) {
+		return this.percent(this.ratio(numerator, denominator), digits);
+	},
+	numberWithCommas: function (n) {
+		var parts = n.toString().split(".");
+		return parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",") + (parts[1] ? "." + parts[1] : "");
+	},
+};
+
+hvStat.ui.dropsPane = {
+	dropsDisplayTable: null,
+	initialize: function () {
+		var nChances = hvStat.statistics.drops.nChances(null, null, null);
+		var innerHTML;
+		if (nChances === 0) {
+			innerHTML = "No data found. Complete a round to begin tracking.";
+		} else {
+			innerHTML = browser.extension.getResourceText("html/", "drops-pane.html");
+		}
+		$('#hvstat-drops-pane').html(innerHTML);
+		if (nChances === 0) {
+			return;
+		}
+
+		if (!hvStat.settings.isTrackItems) {
+			$('#hvstat-drops-pane .hvstat-tracking-paused').show();
+		}
+		this.dropsDisplayTable = JSON.parse(browser.extension.getResourceText("json/", "drops-display-table.json"));
+
+		// Overview
+		$('#hvstat-drops-overview-drop-type').change(this.onOverviewFilterChange);
+		$('#hvstat-drops-overview-difficulty').change(this.onOverviewFilterChange).change();
+		// Items
+		$('#hvstat-drops-items-drop-type').change(this.onItemFilterChange);
+		$('#hvstat-drops-items-difficulty').change(this.onItemFilterChange);
+		$('#hvstat-drops-items-battle-type').change(this.onItemFilterChange).change();
+		// Equipments
+		$('#hvstat-drops-equipments-drop-type').change(this.onEquipmentFilterChange);
+		$('#hvstat-drops-equipments-difficulty').change(this.onEquipmentFilterChange);
+		$('#hvstat-drops-equipments-battle-type').change(this.onEquipmentFilterChange).change();
+		// Footer
+		$('#hvstat-drops-reset').click(function () {
+			if (confirm("Are you sure to reset Drops tab?\nThe data of Item Drops and Equipment Drops on the database will also be deleted.")) {
+				hvStat.storage.dropStats.reset();
+				hvStat.database.itemDrops.delete(hvStat.ui.dropsPane.initialize);
+				hvStat.database.equipmentDrops.delete(hvStat.ui.dropsPane.initialize);
+				hvStat.ui.dropsPane.initialize();
+			}
+		});
+	},
+	updateOverview: function (dropType, difficulty) {
+		this.updateOverviewRow('#hvstat-drops-overview-hourly-encounters td', dropType, difficulty, hvStat.constant.battleType.HOURLY_ENCOUNTER.id);
+		this.updateOverviewRow('#hvstat-drops-overview-arenas td', dropType, difficulty, hvStat.constant.battleType.ARENA.id);
+		this.updateOverviewRow('#hvstat-drops-overview-grindfests td', dropType, difficulty, hvStat.constant.battleType.GRINDFEST.id);
+		this.updateOverviewRow('#hvstat-drops-overview-item-worlds td', dropType, difficulty, hvStat.constant.battleType.ITEM_WORLD.id);
+		this.updateOverviewRow('#hvstat-drops-overview-total td', dropType, difficulty, null);
+	},
+	updateOverviewRow: function (cssSelecter, dropType, difficulty, battleType) {
+		var nChances = hvStat.storage.dropStats.nChances(dropType, difficulty, battleType);
+		var itemCount = hvStat.storage.dropStats.itemCount(dropType, difficulty, battleType);
+		var tokenCount = hvStat.storage.dropStats.tokenCount(dropType, difficulty, battleType);
+		var artifactCount = hvStat.storage.dropStats.artifactCount(dropType, difficulty, battleType);
+		var equipmentCount = hvStat.storage.dropStats.equipmentCount(dropType, difficulty, battleType);
+		var total = itemCount + equipmentCount + artifactCount + tokenCount;
+		var columns = $(cssSelecter);
+		$(columns[0]).text(itemCount);
+		$(columns[1]).text(hvStat.ui.util.percentRatio(itemCount, total, 2) + "%");
+		$(columns[2]).text(hvStat.ui.util.percentRatio(itemCount, nChances, 2) + "%");
+		$(columns[3]).text(tokenCount);
+		$(columns[4]).text(hvStat.ui.util.percentRatio(tokenCount, total, 2) + "%");
+		$(columns[5]).text(hvStat.ui.util.percentRatio(tokenCount, nChances, 2) + "%");
+		$(columns[6]).text(artifactCount);
+		$(columns[7]).text(hvStat.ui.util.percentRatio(artifactCount, total, 2) + "%");
+		$(columns[8]).text(hvStat.ui.util.percentRatio(artifactCount, nChances, 2) + "%");
+		$(columns[9]).text(equipmentCount);
+		$(columns[10]).text(hvStat.ui.util.percentRatio(equipmentCount, total, 2) + "%");
+		$(columns[11]).text(hvStat.ui.util.percentRatio(equipmentCount, nChances, 2) + "%");
+		$(columns[12]).text(nChances);
+	},
+	updateItems: function (dropType, difficulty, battleType) {
+		try {
+			var itemCount = hvStat.storage.dropStats.itemCount(dropType, difficulty, battleType);
+			var equipmentCount = hvStat.storage.dropStats.equipmentCount(dropType, difficulty, battleType);
+			var artifactCount = hvStat.storage.dropStats.artifactCount(dropType, difficulty, battleType);
+			var tokenCount = hvStat.storage.dropStats.tokenCount(dropType, difficulty, battleType);
+			var total = itemCount + equipmentCount + artifactCount + tokenCount;
+			var chanceTotal = hvStat.storage.dropStats.nChances(dropType, difficulty, battleType);
+
+			var tx = hvStat.database.idb.transaction(["ItemDrops"], "readonly");
+			var store = tx.objectStore("ItemDrops");
+			var range = null;	// Select all
+			var cursorOpenRequest = store.openCursor(range, "next");
+			cursorOpenRequest.onerror = function (event) {
+				var errorMessage = "ItemDrops: openCursor: error";
+				console.log(errorMessage);
+				console.debug(event);
+				alert(errorMessage);
+			};
+			var itemMap = {};
+			cursorOpenRequest.onsuccess = function (event) {
+				//console.debug(event);
+				var cursor = this.result;
+				if (cursor) {
+					//console.debug(cursor);
+					var item = cursor.value;
+					if ((dropType === null || dropType === item.dropType) &&
+							(difficulty === null || difficulty === item.difficulty) &&
+							(battleType === null || battleType === item.battleType)) {
+						var name = item.name;
+						if (name in itemMap) {
+							itemMap[name].dropCount += item.dropCount;
+							itemMap[name].qty += item.qty;
+						} else {
+							itemMap[name] = {
+								dropCount: item.dropCount,
+								qty: item.qty
+							};
+						}
+					}
+					cursor.continue();
+				} else {
+					var i, item, qty, dropCount, itemsHTML = ["", ""], itemsHTMLIndex = 0, prevClassName = "";
+					var dropsDisplayTable = hvStat.ui.dropsPane.dropsDisplayTable;
+					for (i = 0; i < dropsDisplayTable.items.length; i++) {
+						item = dropsDisplayTable.items[i];
+						if (item.name in itemMap) {
+							qty = itemMap[item.name].qty;
+							dropCount = itemMap[item.name].dropCount;
+						} else {
+							qty = 0;
+							dropCount = 0;
+						}
+						if (item.columnBreak === true) {
+							itemsHTMLIndex++;
+						}
+						itemsHTML[itemsHTMLIndex] += '<tr' + ((prevClassName != item.className) ? ' class="hvstat-table-row-divider"' : '') + '>' +
+							'<th>' + item.name + '</th>' +
+							'<td>' + qty + '</td>' +
+							'<td>' + dropCount + '</td>' +
+							'<td>' + hvStat.ui.util.percentRatio(dropCount, total, 2) + "%" + '</td>' +
+							'<td>' + hvStat.ui.util.percentRatio(dropCount, chanceTotal, 2) + "%" + '</td>' +
+							'</tr>\n';
+						prevClassName = item.className;
+					}
+					$('#hvstat-drops-items-tbody-1').html(itemsHTML[0]);
+					$('#hvstat-drops-items-tbody-2').html(itemsHTML[1]);
+				}
+			};
+		} catch (e) {
+			console.log(e);
+			alert(e);
+		}
+	},
+	updateEquipments: function (dropType, difficulty, battleType) {
+		try {
+			var tx = hvStat.database.idb.transaction(["EquipmentDrops"], "readonly");
+			var store = tx.objectStore("EquipmentDrops");
+			var range = null;	// Select all
+			var cursorOpenRequest = store.openCursor(range, "next");
+			cursorOpenRequest.onerror = function (event) {
+				var errorMessage = "EquipmentDrops: openCursor: error";
+				console.log(errorMessage);
+				console.debug(event);
+				alert(errorMessage);
+			};
+			var equipmentsHTML = "";
+			cursorOpenRequest.onsuccess = function (event) {
+				//console.debug(event);
+				var cursor = this.result;
+				if (cursor) {
+					//console.debug(cursor);
+					var equipment = cursor.value;
+					if ((dropType === null || dropType === equipment.dropType) &&
+							(difficulty === null || difficulty === equipment.difficulty) &&
+							(battleType === null || battleType === equipment.battleType)) {
+						var arenaNumber = (equipment.arenaNumber === null) ? "-" : String(equipment.arenaNumber);
+						var roundNumber = (equipment.roundNumber === null) ? "-" : String(equipment.roundNumber);
+						// Reverse order
+						equipmentsHTML = '<tr>' +
+							'<th>' + equipment.name + '</th>' +
+							'<td>' + hvStat.constant.difficulty[equipment.difficulty].name + '</td>' +
+							'<td>' + hvStat.constant.battleType[equipment.battleType].name + '</td>' +
+							'<td>' + arenaNumber + '</td>' +
+							'<td>' + roundNumber + '</td>' +
+							'<td>' + hvStat.util.getDateTimeString(new Date(equipment.timeStamp)) + '</td>' +
+							'</tr>\n' +
+							equipmentsHTML;
+					}
+					cursor.continue();
+				} else {
+					if (equipmentsHTML === "") {
+						equipmentsHTML = '<tr>' +
+							'<th>' + 'None yet!' + '</th>' +
+							'<td>' + '-' + '</td>' +
+							'<td>' + '-' + '</td>' +
+							'<td>' + '-' + '</td>' +
+							'<td>' + '-' + '</td>' +
+							'<td>' + '-' + '</td>' +
+							'</tr>\n';
+					}
+					$('#hvstat-drops-equipments-tbody').html(equipmentsHTML);
+				}
+			};
+		} catch (e) {
+			console.log(e);
+			alert(e);
+		}
+	},
+	onOverviewFilterChange: function () {
+		var dropType = $('#hvstat-drops-overview-drop-type').val();
+		if (dropType === "_ALL_") {
+			dropType = null;
+		}
+		var difficulty = $('#hvstat-drops-overview-difficulty').val();
+		if (difficulty === "_ALL_") {
+			difficulty = null;
+		}
+		hvStat.ui.dropsPane.updateOverview(dropType, difficulty);
+	},
+	onItemFilterChange: function () {
+		var dropType = $('#hvstat-drops-items-drop-type').val();
+		if (dropType === "_ALL_") {
+			dropType = null;
+		}
+		var difficulty = $('#hvstat-drops-items-difficulty').val();
+		if (difficulty === "_ALL_") {
+			difficulty = null;
+		}
+		var battleType = $('#hvstat-drops-items-battle-type').val();
+		if (battleType === "_ALL_") {
+			battleType = null;
+		}
+		hvStat.ui.dropsPane.updateItems(dropType, difficulty, battleType);
+	},
+	onEquipmentFilterChange: function () {
+		var dropType = $('#hvstat-drops-equipments-drop-type').val();
+		if (dropType === "_ALL_") {
+			dropType = null;
+		}
+		var difficulty = $('#hvstat-drops-equipments-difficulty').val();
+		if (difficulty === "_ALL_") {
+			difficulty = null;
+		}
+		var battleType = $('#hvstat-drops-equipments-battle-type').val();
+		if (battleType === "_ALL_") {
+			battleType = null;
+		}
+		hvStat.ui.dropsPane.updateEquipments(dropType, difficulty, battleType);
+	},
+};
+
+hvStat.ui.databasePane = {
+	initialize: function () {
+		$('#hvstat-database-pane').html(browser.extension.getResourceText("html/", "database-pane.html"));
+		this.showSizeOfOldMonsterDatabase();
+		$('#hvstat-database-monster-scan-results-export').click(function () {
+			hvStat.database.monsterScanResults.export(function (result) {
+				if (result.rowCount === 0) {
+					alert("There are no data.");
+				} else {
+					var downloadLink = $('#hvstat-database-monster-scan-results-download');
+					downloadLink.attr("href", result.dataURI);
+					downloadLink.attr("download", "hvstat_monster_scan.tsv");
+					downloadLink.css("visibility", "visible");
+					alert("Ready to export.\nClick the download link.");
+				}
+			});
+		});
+		$('#hvstat-database-monster-skills-export').click(function () {
+			hvStat.database.monsterSkills.export(function (result) {
+				var downloadLink = $('#hvstat-database-monster-skills-download');
+				if (result.rowCount === 0) {
+					alert("There are no data.");
+				} else {
+					downloadLink.attr("href", result.dataURI);
+					downloadLink.attr("download", "hvstat_monster_skill.tsv");
+					downloadLink.css("visibility", "visible");
+					alert("Ready to export.\nClick the download link.");
+				}
+			});
+		});
+		$('#hvstat-database-item-drops-export').click(function () {
+			hvStat.database.itemDrops.export(function (result) {
+				var downloadLink = $('#hvstat-database-item-drops-download');
+				if (result.rowCount === 0) {
+					alert("There are no data.");
+				} else {
+					downloadLink.attr("href", result.dataURI);
+					downloadLink.attr("download", "hvstat_item_drops.tsv");
+					downloadLink.css("visibility", "visible");
+					alert("Ready to export.\nClick the download link.");
+				}
+			});
+		});
+		$('#hvstat-database-equipment-drops-export').click(function () {
+			hvStat.database.equipmentDrops.export(function (result) {
+				var downloadLink = $('#hvstat-database-equipment-drops-download');
+				if (result.rowCount === 0) {
+					alert("There are no data.");
+				} else {
+					downloadLink.attr("href", result.dataURI);
+					downloadLink.attr("download", "hvstat_equipment_drops.tsv");
+					downloadLink.css("visibility", "visible");
+					alert("Ready to export.\nClick the download link.");
+				}
+			});
+		});
+		$('#hvstat-database-monster-scan-results-import').change(function (event) {
+			var file = event.target.files[0];
+			if (!file) {
+				alert("Failed to load file");
+			} else {
+				if (confirm("Are you sure to import the data of monster scan results?")) {
+					hvStat.database.monsterScanResults.import(file);
+				}
+			}
+		});
+		$('#hvstat-database-monster-skills-import').change(function (event) {
+			var file = event.target.files[0];
+			if (!file) {
+				alert("Failed to load file");
+			} else {
+				if (confirm("Are you sure to import the data of monster skills?")) {
+					hvStat.database.monsterSkills.import(file);
+				}
+			}
+		});
+		$('#hvstat-database-item-drops-import').change(function (event) {
+			var file = event.target.files[0];
+			if (!file) {
+				alert("Failed to load file");
+			} else {
+				if (confirm("Are you sure to import the data of item drops?")) {
+					hvStat.database.itemDrops.import(file);
+				}
+			}
+		});
+		$('#hvstat-database-equipment-drops-import').change(function (event) {
+			var file = event.target.files[0];
+			if (!file) {
+				alert("Failed to load file");
+			} else {
+				if (confirm("Are you sure to import the data of equipment drops?")) {
+					hvStat.database.equipmentDrops.import(file);
+				}
+			}
+		});
+		$('#hvstat-database-monster-scan-results-delete').click(function () {
+			if (confirm("Are you sure to delete the data of monster scan results?")) {
+				hvStat.database.monsterScanResults.delete(function (result) {
+					alert("Your data of monster scan results have been deleted.\nCount: " + result.count);
+				});
+			}
+		});
+		$('#hvstat-database-monster-skills-delete').click(function () {
+			if (confirm("Are you sure to delete the data of monster skills?")) {
+				hvStat.database.monsterSkills.delete(function (result) {
+					alert("Your data of monster skills have been deleted.\nCount: " + result.count);
+				});
+			}
+		});
+		$('#hvstat-database-item-drops-delete').click(function () {
+			if (confirm("Are you sure to delete the data of item drops?")) {
+				hvStat.database.itemDrops.delete(function (result) {
+					alert("Your data of item drops have been deleted.\nCount: " + result.count);
+				});
+			}
+		});
+		$('#hvstat-database-equipment-drops-delete').click(function () {
+			if (confirm("Are you sure to delete the data of equipment drops?")) {
+				hvStat.database.equipmentDrops.delete(function (result) {
+					alert("Your data of equipment drops have been deleted.\nCount: " + result.count);
+				});
+			}
+		});
+		$('#hvstat-database-delete').click(function () {
+			if (confirm("Are you really sure to delete your database?")) {
+				hvStat.database.deleteIndexedDB();
+			}
+		});
+		$('#hvstat-database-migrate-monster-database').click(function () {
+			if (confirm("Are you sure to migrate your monster database?")) {
+				hvStat.migration.monsterDatabase.migrateDatabase();
+			}
+		});
+		$('#hvstat-database-delete-old-monster-database').click(function () {
+			if (confirm("Are you really sure to delete your old monster database?")) {
+				hvStat.migration.monsterDatabase.deleteOldDatabase();
+				hvStat.ui.databasePane.showSizeOfOldMonsterDatabase();
+			}
+		});
+	},
+	showSizeOfOldMonsterDatabase: function () {
+		var size = ((localStorage.HVMonsterDatabase ? localStorage.HVMonsterDatabase.length : 0) / 1024 / 1024 * (browser.isChrome ? 2 : 1)).toFixed(2);
+		$('#hvstat-database-old-monster-database-size').text(size);
+	},
+};
 
 //------------------------------------
 // Migration Functions
@@ -5434,30 +6200,14 @@ hvStat.migration.monsterDatabase.deleteOldDatabase = function () {
 
 
 /* ========== GLOBAL VARIABLES ========== */
-HV_EQUIP = "inventoryAlert";
 HOURLY = 0;
 ARENA = 1;
 GRINDFEST = 2;
 ITEM_WORLD = 3;
 
 function showBattleEndStats() {
-	var battleLog = document.getElementById("togpane_log");
+	var battleLog = hv.battle.elementCache.battleLog;
 	battleLog.innerHTML = "<div class='ui-state-default ui-corner-bottom' style='padding:10px;margin-bottom:10px;text-align:left'>" + getBattleEndStatsHtml() + "</div>" + battleLog.innerHTML;
-}
-function inventoryWarning() {
-	var d = 4;
-	var rectObject = document.querySelector('div.stuffbox').getBoundingClientRect();
-	var c = rectObject.width - 85 - 4;
-	var div = document.createElement("div");
-	div.setAttribute("class", "ui-state-error ui-corner-all");
-	div.style.cssText = "position:absolute; top:" + d + "px; left: " + c + "px; z-index:1074; cursor:pointer";
-	div.innerHTML = '<span style="margin:3px" class="ui-icon ui-icon-alert" title="Inventory Limit Exceeded."/>';
-	document.body.insertBefore(div, null);
-	div.addEventListener("click", function (event) {
-		if (confirm("Reached equipment inventory limit (1000). Clear warning?")) {
-			hvStat.storage.removeItem(HV_EQUIP);
-		}
-	});
 }
 
 function saveStats() {
@@ -5484,8 +6234,6 @@ function saveStats() {
 	}
 	if (hvStat.roundContext.exp > 0) {
 		hvStat.overview.roundArray[hvStat.roundContext.battleType]++;
-		hvStat.drops.dropChancesbyBT[hvStat.roundContext.battleType] += hvStat.roundContext.dropChances;
-		hvStat.drops.dropChances += hvStat.roundContext.dropChances;
 	}
 	if (hvStat.settings.isTrackStats) {
 		hvStat.stats.kills += hvStat.roundContext.kills;
@@ -5598,23 +6346,18 @@ function saveStats() {
 		hvStat.stats.pskills[6] += hvStat.roundContext.pskills[6];
 		if (hvStat.stats.datestart === 0) hvStat.stats.datestart = (new Date()).getTime();
 	}
-	hvStat.arenaRewards.tokenDrops[0] += hvStat.roundContext.tokenDrops[0];
-	hvStat.arenaRewards.tokenDrops[2] += hvStat.roundContext.tokenDrops[2];
 	hvStat.storage.overview.save();
 	if (hvStat.settings.isTrackStats) {
 		hvStat.storage.stats.save();
 	}
-	if (hvStat.settings.isTrackRewards) {
-		hvStat.storage.arenaRewards.save();
-	}
 	if (hvStat.settings.isTrackItems) {
-		hvStat.storage.drops.save();
+		hvStat.storage.dropStats.save();
 	}
 }
 function getBattleEndStatsHtml() {
 	function formatProbability(numerator, denominator, digits) {
 		return String(numerator) + "/" + String(denominator)
-			+ " (" + String(hvStat.util.percentRatio(numerator, denominator, digits)) + "%)";
+			+ " (" + String(hvStat.ui.util.percentRatio(numerator, denominator, digits)) + "%)";
 	}
 
 	var f = hvStat.roundContext.sHits[0] + hvStat.roundContext.sHits[1] + hvStat.roundContext.depSpells[1] + hvStat.roundContext.sResists;
@@ -5631,9 +6374,9 @@ function getBattleEndStatsHtml() {
 		+ "<b>Coalesce</b>: " + formatProbability(hvStat.roundContext.coalesce, e, 2) + ", "
 		+ "<b>M. Accuracy</b>: " + formatProbability(e, f, 2) + ", "
 		+ "<b>Spell Crits</b>: " + formatProbability(hvStat.roundContext.sHits[1], c, 2) + ", "
-		+ "<b>Avg hit dmg</b>: " + hvStat.util.ratio(hvStat.roundContext.dDealt[0], hvStat.roundContext.aHits[0]).toFixed(2) + "|" + hvStat.util.ratio(hvStat.roundContext.dDealtSp[0], hvStat.roundContext.sHits[0]).toFixed(2) + ", "
-		+ "<b>Avg crit dmg</b>: " + hvStat.util.ratio(hvStat.roundContext.dDealt[1], hvStat.roundContext.aHits[1]).toFixed(2) + "|" + hvStat.util.ratio(hvStat.roundContext.dDealtSp[1], hvStat.roundContext.sHits[1]).toFixed(2) + ", "
-		+ "<b>Avg dmg</b>: " + hvStat.util.ratio(hvStat.roundContext.dDealt[0] + hvStat.roundContext.dDealt[1], d).toFixed(2) + "|" + hvStat.util.ratio(hvStat.roundContext.dDealtSp[0] + hvStat.roundContext.dDealtSp[1], c).toFixed(2)
+		+ "<b>Avg hit dmg</b>: " + hvStat.ui.util.ratio(hvStat.roundContext.dDealt[0], hvStat.roundContext.aHits[0]).toFixed(2) + "|" + hvStat.ui.util.ratio(hvStat.roundContext.dDealtSp[0], hvStat.roundContext.sHits[0]).toFixed(2) + ", "
+		+ "<b>Avg crit dmg</b>: " + hvStat.ui.util.ratio(hvStat.roundContext.dDealt[1], hvStat.roundContext.aHits[1]).toFixed(2) + "|" + hvStat.ui.util.ratio(hvStat.roundContext.dDealtSp[1], hvStat.roundContext.sHits[1]).toFixed(2) + ", "
+		+ "<b>Avg dmg</b>: " + hvStat.ui.util.ratio(hvStat.roundContext.dDealt[0] + hvStat.roundContext.dDealt[1], d).toFixed(2) + "|" + hvStat.ui.util.ratio(hvStat.roundContext.dDealtSp[0] + hvStat.roundContext.dDealtSp[1], c).toFixed(2)
 		+ "<hr style='height:1px;border:0;background-color:#333333;color:#333333' />"
 		+ "<b>Hits taken</b>: " + formatProbability(b, hvStat.roundContext.mAttempts, 2) + ", "
 		+ "<b>Missed</b>: " + formatProbability(hvStat.roundContext.pDodges, hvStat.roundContext.mAttempts, 2) + ", "
@@ -5643,7 +6386,7 @@ function getBattleEndStatsHtml() {
 		+ "<b>Resisted</b>: " + formatProbability(hvStat.roundContext.pResists, hvStat.roundContext.mAttempts, 2) + ", "
 		+ "<b>Crits taken</b>: " + formatProbability(hvStat.roundContext.mHits[1], b, 2) + ", "
 		+ "<b>Total dmg taken</b>: " + (hvStat.roundContext.dTaken[0] + hvStat.roundContext.dTaken[1]) + ", "
-		+ "<b>Avg dmg taken</b>: " + hvStat.util.ratio(hvStat.roundContext.dTaken[0] + hvStat.roundContext.dTaken[1], b).toFixed(2);
+		+ "<b>Avg dmg taken</b>: " + hvStat.ui.util.ratio(hvStat.roundContext.dTaken[0] + hvStat.roundContext.dTaken[1], b).toFixed(2);
 	if (hvStat.settings.isShowEndProfs && (hvStat.settings.isShowEndProfsMagic || hvStat.settings.isShowEndProfsArmor || hvStat.settings.isShowEndProfsWeapon)) { //isShowEndProfs added by Ilirith
 		if (hvStat.settings.isShowEndProfsMagic) {
 			a += "<hr style='height:1px;border:0;background-color:#333333;color:#333333' />"
@@ -5677,65 +6420,6 @@ function getBattleEndStatsHtml() {
 	return a;
 }
 
-function getReportItemHtml() {
-	var e = "Tracking disabled.";
-	if (hvStat.settings.isTrackItems && hvStat.drops.dropChances === 0)
-		e = "No data found. Complete a round to begin tracking.";
-	else if (hvStat.settings.isTrackItems && hvStat.drops.dropChances > 0)
-		e = '<table class="_UI" cellspacing="0" cellpadding="1" style="width:100%">';
-	else if (!hvStat.settings.isTrackItems && hvStat.drops.dropChances > 0)
-		e = '<table class="_UI" cellspacing="0" cellpadding="1" style="width:100%"><tr><td align="center" colspan="4"><div align="center" class="ui-state-error ui-corner-all" style="padding:4px;margin:4px"><span class="ui-icon ui-icon-pause"></span><b>TRACKING PAUSED</b></div></td></tr>';
-	if (hvStat.drops.dropChances > 0) {
-		var b = hvStat.drops.artDrop + hvStat.drops.eqDrop + hvStat.drops.itemDrop;
-		var b0 = hvStat.drops.artDropbyBT[0] + hvStat.drops.eqDropbyBT[0] + hvStat.drops.itemDropbyBT[0];
-		var b1 = hvStat.drops.artDropbyBT[1] + hvStat.drops.eqDropbyBT[1] + hvStat.drops.itemDropbyBT[1];
-		var b2 = hvStat.drops.artDropbyBT[2] + hvStat.drops.eqDropbyBT[2] + hvStat.drops.itemDropbyBT[2];
-		var b3 = hvStat.drops.artDropbyBT[3] + hvStat.drops.eqDropbyBT[3] + hvStat.drops.itemDropbyBT[3];
-		var b4 = hvStat.drops.artDropbyBT[4] + hvStat.drops.eqDropbyBT[4] + hvStat.drops.itemDropbyBT[4];
-		var d = b / 100;
-		var a = hvStat.drops.dropChances / 100;
-		e += '<tr><td colspan="4"><b>Total Item Drops:</b> ' + b + " from " + hvStat.drops.dropChances + " monsters (" + (b / a).toFixed(2) + '% total drop chance)</td></tr>'
-			+ '<tr><td colspan="4" style="padding-left:20px">Items: ' + hvStat.drops.itemDrop + " (" + (d === 0 ? 0 : (hvStat.drops.itemDrop / d).toFixed(2)) + "% of drops, " + (hvStat.drops.itemDrop / a).toFixed(2) + '% drop chance)</td></tr>'
-			+ '<tr><td colspan="4" style="padding-left:20px">Equipment: ' + hvStat.drops.eqDrop + " (" + (d === 0 ? 0 : (hvStat.drops.eqDrop / d).toFixed(2)) + "% of drops, " + (hvStat.drops.eqDrop / a).toFixed(2) + '% drop chance)</td></tr>'
-			+ '<tr><td colspan="4" style="padding-left:20px">Artifacts: ' + hvStat.drops.artDrop + " (" + (d === 0 ? 0 : (hvStat.drops.artDrop / d).toFixed(2)) + "% of drops, " + (hvStat.drops.artDrop / a).toFixed(2) + '% drop chance)</td></tr>'
-			+ '<tr><td colspan="4" style="padding-left:10px"><b>In hourly encounters:</b> ' + b0 + " from " + hvStat.drops.dropChancesbyBT[0] + " monsters (" + (b0*100 / hvStat.drops.dropChancesbyBT[0]).toFixed(2) + '% total drop chance)</td></tr>'
-			+ '<tr><td colspan="4" style="padding-left:20px">Items: ' + hvStat.drops.itemDropbyBT[0] + " (" + (b0 === 0 ? 0 : (hvStat.drops.itemDropbyBT[0]*100 / b0).toFixed(2)) + "% of drops, " + (hvStat.drops.itemDropbyBT[0]*100/hvStat.drops.dropChancesbyBT[0]).toFixed(2) + '% drop chance)</td></tr>'
-			+ '<tr><td colspan="4" style="padding-left:30px">Crystals: ' + hvStat.drops.crysDropbyBT[0] + " (" + (b0 === 0 ? 0 : (hvStat.drops.crysDropbyBT[0]*100 / b0).toFixed(2)) + "% of drops, " + (hvStat.drops.crysDropbyBT[0]*100/hvStat.drops.dropChancesbyBT[0]).toFixed(2) + '% drop chance)</td></tr>'
-			+ '<tr><td colspan="4" style="padding-left:20px">Equipment: ' + hvStat.drops.eqDropbyBT[0] + " (" + (b0 === 0 ? 0 : (hvStat.drops.eqDropbyBT[0]*100 / b0).toFixed(2)) + "% of drops, " + (hvStat.drops.eqDropbyBT[0]*100/hvStat.drops.dropChancesbyBT[0]).toFixed(2) + '% drop chance)</td></tr>'
-			+ '<tr><td colspan="4" style="padding-left:20px">Artifacts: ' + hvStat.drops.artDropbyBT[0] + " (" + (b0 === 0 ? 0 : (hvStat.drops.artDropbyBT[0]*100 / b0).toFixed(2)) + "% of drops, " + (hvStat.drops.artDropbyBT[0]*100/hvStat.drops.dropChancesbyBT[0]).toFixed(2) + '% drop chance)</td></tr>'
-			+ '<tr><td colspan="4" style="padding-left:10px"><b>In Arenas:</b> ' + b1 + " from " + hvStat.drops.dropChancesbyBT[1] + " monsters (" + (b1*100 / hvStat.drops.dropChancesbyBT[1]).toFixed(2) + '% total drop chance)</td></tr>'
-			+ '<tr><td colspan="4" style="padding-left:20px">Items: ' + hvStat.drops.itemDropbyBT[1] + " (" + (b1 === 0 ? 0 : (hvStat.drops.itemDropbyBT[1]*100 / b1).toFixed(2)) + "% of drops, " + (hvStat.drops.itemDropbyBT[1]*100/hvStat.drops.dropChancesbyBT[1]).toFixed(2) + '% drop chance)</td></tr>'
-			+ '<tr><td colspan="4" style="padding-left:30px">Crystals: ' + hvStat.drops.crysDropbyBT[1] + " (" + (b1 === 0 ? 0 : (hvStat.drops.crysDropbyBT[1]*100 / b1).toFixed(2)) + "% of drops, " + (hvStat.drops.crysDropbyBT[1]*100/hvStat.drops.dropChancesbyBT[1]).toFixed(2) + '% drop chance)</td></tr>'
-			+ '<tr><td colspan="4" style="padding-left:20px">Equipment: ' + hvStat.drops.eqDropbyBT[1] + " (" + (b1 === 0 ? 0 : (hvStat.drops.eqDropbyBT[1]*100 / b1).toFixed(2)) + "% of drops, " + (hvStat.drops.eqDropbyBT[1]*100/hvStat.drops.dropChancesbyBT[1]).toFixed(2) + '% drop chance)</td></tr>'
-			+ '<tr><td colspan="4" style="padding-left:20px">Artifacts: ' + hvStat.drops.artDropbyBT[1] + " (" + (b1 === 0 ? 0 : (hvStat.drops.artDropbyBT[1]*100 / b1).toFixed(2)) + "% of drops, " + (hvStat.drops.artDropbyBT[1]*100/hvStat.drops.dropChancesbyBT[1]).toFixed(2) + '% drop chance)</td></tr>'
-			+ '<tr><td colspan="4" style="padding-left:10px"><b>In GrindFests:</b> ' + b2 + " from " + hvStat.drops.dropChancesbyBT[2] + " monsters (" + (b2*100 / hvStat.drops.dropChancesbyBT[2]).toFixed(2) + '% total drop chance)</td></tr>'
-			+ '<tr><td colspan="4" style="padding-left:20px">Items: ' + hvStat.drops.itemDropbyBT[2] + " (" + (b2 === 0 ? 0 : (hvStat.drops.itemDropbyBT[2]*100 / b2).toFixed(2)) + "% of drops, " + (hvStat.drops.itemDropbyBT[2]*100/hvStat.drops.dropChancesbyBT[2]).toFixed(2) + '% drop chance)</td></tr>'
-			+ '<tr><td colspan="4" style="padding-left:30px">Crystals: ' + hvStat.drops.crysDropbyBT[2] + " (" + (b2 === 0 ? 0 : (hvStat.drops.crysDropbyBT[2]*100 / b2).toFixed(2)) + "% of drops, " + (hvStat.drops.crysDropbyBT[2]*100/hvStat.drops.dropChancesbyBT[2]).toFixed(2) + '% drop chance)</td></tr>'
-			+ '<tr><td colspan="4" style="padding-left:20px">Equipment: ' + hvStat.drops.eqDropbyBT[2] + " (" + (b2 === 0 ? 0 : (hvStat.drops.eqDropbyBT[2]*100 / b2).toFixed(2)) + "% of drops, " + (hvStat.drops.eqDropbyBT[2]*100/hvStat.drops.dropChancesbyBT[2]).toFixed(2) + '% drop chance)</td></tr>'
-			+ '<tr><td colspan="4" style="padding-left:20px">Artifacts: ' + hvStat.drops.artDropbyBT[2] + " (" + (b2 === 0 ? 0 : (hvStat.drops.artDropbyBT[2]*100 / b2).toFixed(2)) + "% of drops, " + (hvStat.drops.artDropbyBT[2]*100/hvStat.drops.dropChancesbyBT[2]).toFixed(2) + '% drop chance)</td></tr>'
-			+ '<tr><td colspan="4" style="padding-left:10px"><b>In Item Worlds:</b> ' + b3 + " from " + hvStat.drops.dropChancesbyBT[3] + " monsters (" + (b3*100 / hvStat.drops.dropChancesbyBT[3]).toFixed(2) + '% total drop chance)</td></tr>'
-			+ '<tr><td colspan="4" style="padding-left:20px">Items: ' + hvStat.drops.itemDropbyBT[3] + " (" + (b3 === 0 ? 0 : (hvStat.drops.itemDropbyBT[3]*100 / b3).toFixed(2)) + "% of drops, " + (hvStat.drops.itemDropbyBT[3]*100/hvStat.drops.dropChancesbyBT[3]).toFixed(2) + '% drop chance)</td></tr>'
-			+ '<tr><td colspan="4" style="padding-left:30px">Crystals: ' + hvStat.drops.crysDropbyBT[3] + " (" + (b3 === 0 ? 0 : (hvStat.drops.crysDropbyBT[3]*100 / b3).toFixed(2)) + "% of drops, " + (hvStat.drops.crysDropbyBT[3]*100/hvStat.drops.dropChancesbyBT[3]).toFixed(2) + '% drop chance)</td></tr>'
-			+ '<tr><td colspan="4" style="padding-left:20px">Equipment: ' + hvStat.drops.eqDropbyBT[3] + " (" + (b3 === 0 ? 0 : (hvStat.drops.eqDropbyBT[3]*100 / b3).toFixed(2)) + "% of drops, " + (hvStat.drops.eqDropbyBT[3]*100/hvStat.drops.dropChancesbyBT[3]).toFixed(2) + '% drop chance)</td></tr>'
-			+ '<tr><td colspan="4" style="padding-left:20px">Artifacts: ' + hvStat.drops.artDropbyBT[3] + " (" + (b3 === 0 ? 0 : (hvStat.drops.artDropbyBT[3]*100 / b3).toFixed(2)) + "% of drops, " + (hvStat.drops.artDropbyBT[3]*100/hvStat.drops.dropChancesbyBT[3]).toFixed(2) + '% drop chance)</td></tr>'
-			+ '<tr><td colspan="4"><b>Item:</b></td></tr>';
-		for (var c = 0; c < hvStat.drops.itemArry.length; c = c + 2) {
-			e += "<tr><td style='width:25%;padding-left:10px'>" + hvStat.drops.itemArry[c] + "</td><td style='width:25%'>x " + hvStat.drops.itemQtyArry[c] + " (" + (hvStat.drops.itemDrop === 0 ? 0 : ((hvStat.drops.itemQtyArry[c] / hvStat.drops.itemDrop) * 100).toFixed(2)) + "%)</td>";
-			if (hvStat.drops.itemArry[c + 1] !== " ")
-				e += "<td style='width:25%;padding-left:10px'>" + hvStat.drops.itemArry[c + 1] + "</td><td style='width:25%'>x " + hvStat.drops.itemQtyArry[c + 1] + " (" + (hvStat.drops.itemDrop === 0 ? 0 : ((hvStat.drops.itemQtyArry[c + 1] / hvStat.drops.itemDrop) * 100).toFixed(2)) + "%)</td></tr>";
-			else e += "<td></td><td></td></tr>";
-		}
-		e += '<tr><td colspan="4"><b>Equipment:</b></td></tr>';
-		var c = hvStat.drops.eqArray.length;
-		while (c--) e += '<tr><td colspan="4" style="padding-left:10px">' + hvStat.drops.eqArray[c] + "</td></tr>";
-		e += '<tr><td colspan="4"><b>Artifact:</b></td></tr>';
-		c = hvStat.drops.artArry.length;
-		while (c--) e += '<tr><td colspan="4" style="padding-left:10px">' + hvStat.drops.artArry[c] + " x " + hvStat.drops.artQtyArry[c] + "</td></tr>";
-		e += '<tr><td align="right" colspan="4"><input type="button" class="_resetItems" value="Reset Drops" /></td></tr>';
-	}
-	e += "</table>";
-	return e;
-}
 function initOverviewPane() {
 	var innerHTML;
 	if (hvStat.overview.totalRounds > 0) {
@@ -5767,10 +6451,10 @@ function initOverviewPane() {
  	var tdRoundsItemWorlds = $('#hvstat-overview-rounds-item-worlds td');
  	var tdRoundsTotal = $('#hvstat-overview-rounds-total td');
 
-	$(tdRoundsHourlyEncounters[0]).text(hvStat.util.numberWithCommas(hvStat.overview.roundArray[0]));
-	$(tdRoundsHourlyEncounters[1]).text(hvStat.util.percentRatio(hvStat.overview.roundArray[0], hvStat.overview.totalRounds, 2) + "%");
-	$(tdRoundsHourlyEncounters[2]).text(hvStat.util.numberWithCommas(hvStat.util.ratio(hvStat.overview.roundArray[0], elapsedHours).toFixed(2)));
-	$(tdRoundsHourlyEncounters[3]).text(hvStat.util.numberWithCommas(hvStat.util.ratio(hvStat.overview.roundArray[0], elapsedDays).toFixed(2)));
+	$(tdRoundsHourlyEncounters[0]).text(hvStat.ui.util.numberWithCommas(hvStat.overview.roundArray[0]));
+	$(tdRoundsHourlyEncounters[1]).text(hvStat.ui.util.percentRatio(hvStat.overview.roundArray[0], hvStat.overview.totalRounds, 2) + "%");
+	$(tdRoundsHourlyEncounters[2]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.roundArray[0], elapsedHours).toFixed(2)));
+	$(tdRoundsHourlyEncounters[3]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.roundArray[0], elapsedDays).toFixed(2)));
 
 	var lastHourlyEncounter;
 	if (hvStat.overview.lastHourlyTime === 0) {
@@ -5780,24 +6464,24 @@ function initOverviewPane() {
 	}
 	$(tdRoundsHourlyEncounters[4]).children('span').text(lastHourlyEncounter);
 
-	$(tdRoundsArena[0]).text(hvStat.util.numberWithCommas(hvStat.overview.roundArray[1]));
-	$(tdRoundsArena[1]).text(hvStat.util.percentRatio(hvStat.overview.roundArray[1], hvStat.overview.totalRounds, 2) + "%");
-	$(tdRoundsArena[2]).text(hvStat.util.numberWithCommas(hvStat.util.ratio(hvStat.overview.roundArray[1], elapsedHours).toFixed(2)));
-	$(tdRoundsArena[3]).text(hvStat.util.numberWithCommas(hvStat.util.ratio(hvStat.overview.roundArray[1], elapsedDays).toFixed(2)));
+	$(tdRoundsArena[0]).text(hvStat.ui.util.numberWithCommas(hvStat.overview.roundArray[1]));
+	$(tdRoundsArena[1]).text(hvStat.ui.util.percentRatio(hvStat.overview.roundArray[1], hvStat.overview.totalRounds, 2) + "%");
+	$(tdRoundsArena[2]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.roundArray[1], elapsedHours).toFixed(2)));
+	$(tdRoundsArena[3]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.roundArray[1], elapsedDays).toFixed(2)));
 
-	$(tdRoundsGrindfests[0]).text(hvStat.util.numberWithCommas(hvStat.overview.roundArray[2]));
-	$(tdRoundsGrindfests[1]).text(hvStat.util.percentRatio(hvStat.overview.roundArray[2], hvStat.overview.totalRounds, 2) + "%");
-	$(tdRoundsGrindfests[2]).text(hvStat.util.numberWithCommas(hvStat.util.ratio(hvStat.overview.roundArray[2], elapsedHours).toFixed(2)));
-	$(tdRoundsGrindfests[3]).text(hvStat.util.numberWithCommas(hvStat.util.ratio(hvStat.overview.roundArray[2], elapsedDays).toFixed(2)));
+	$(tdRoundsGrindfests[0]).text(hvStat.ui.util.numberWithCommas(hvStat.overview.roundArray[2]));
+	$(tdRoundsGrindfests[1]).text(hvStat.ui.util.percentRatio(hvStat.overview.roundArray[2], hvStat.overview.totalRounds, 2) + "%");
+	$(tdRoundsGrindfests[2]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.roundArray[2], elapsedHours).toFixed(2)));
+	$(tdRoundsGrindfests[3]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.roundArray[2], elapsedDays).toFixed(2)));
 
-	$(tdRoundsItemWorlds[0]).text(hvStat.util.numberWithCommas(hvStat.overview.roundArray[3]));
-	$(tdRoundsItemWorlds[1]).text(hvStat.util.percentRatio(hvStat.overview.roundArray[3], hvStat.overview.totalRounds, 2) + "%");
-	$(tdRoundsItemWorlds[2]).text(hvStat.util.numberWithCommas(hvStat.util.ratio(hvStat.overview.roundArray[3], elapsedHours).toFixed(2)));
-	$(tdRoundsItemWorlds[3]).text(hvStat.util.numberWithCommas(hvStat.util.ratio(hvStat.overview.roundArray[3], elapsedDays).toFixed(2)));
+	$(tdRoundsItemWorlds[0]).text(hvStat.ui.util.numberWithCommas(hvStat.overview.roundArray[3]));
+	$(tdRoundsItemWorlds[1]).text(hvStat.ui.util.percentRatio(hvStat.overview.roundArray[3], hvStat.overview.totalRounds, 2) + "%");
+	$(tdRoundsItemWorlds[2]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.roundArray[3], elapsedHours).toFixed(2)));
+	$(tdRoundsItemWorlds[3]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.roundArray[3], elapsedDays).toFixed(2)));
 
-	$(tdRoundsTotal[0]).text(hvStat.util.numberWithCommas(hvStat.overview.totalRounds));
-	$(tdRoundsTotal[2]).text(hvStat.util.numberWithCommas(hvStat.util.ratio(hvStat.overview.totalRounds, elapsedHours).toFixed(2)));
-	$(tdRoundsTotal[3]).text(hvStat.util.numberWithCommas(hvStat.util.ratio(hvStat.overview.totalRounds, elapsedDays).toFixed(2)));
+	$(tdRoundsTotal[0]).text(hvStat.ui.util.numberWithCommas(hvStat.overview.totalRounds));
+	$(tdRoundsTotal[2]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.totalRounds, elapsedHours).toFixed(2)));
+	$(tdRoundsTotal[3]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.totalRounds, elapsedDays).toFixed(2)));
 
  	var tdExpHourlyEncounters = $('#hvstat-overview-exp-hourly-encounters td');
  	var tdExpArena = $('#hvstat-overview-exp-arenas td');
@@ -5805,68 +6489,68 @@ function initOverviewPane() {
  	var tdExpItemWorlds = $('#hvstat-overview-exp-item-worlds td');
  	var tdExpTotal = $('#hvstat-overview-exp-total td');
 
-	$(tdExpHourlyEncounters[0]).text(hvStat.util.numberWithCommas(hvStat.overview.expbyBT[0]));
-	$(tdExpHourlyEncounters[1]).text(hvStat.util.percentRatio(hvStat.overview.expbyBT[0], hvStat.overview.exp, 2) + "%");
-	$(tdExpHourlyEncounters[2]).text(hvStat.util.numberWithCommas(hvStat.util.ratio(hvStat.overview.expbyBT[0], hvStat.overview.roundArray[0]).toFixed()));
-	$(tdExpHourlyEncounters[3]).text(hvStat.util.numberWithCommas(hvStat.util.ratio(hvStat.overview.expbyBT[0], elapsedHours).toFixed()));
-	$(tdExpHourlyEncounters[4]).text(hvStat.util.numberWithCommas(hvStat.util.ratio(hvStat.overview.expbyBT[0], elapsedDays).toFixed()));
+	$(tdExpHourlyEncounters[0]).text(hvStat.ui.util.numberWithCommas(hvStat.overview.expbyBT[0]));
+	$(tdExpHourlyEncounters[1]).text(hvStat.ui.util.percentRatio(hvStat.overview.expbyBT[0], hvStat.overview.exp, 2) + "%");
+	$(tdExpHourlyEncounters[2]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.expbyBT[0], hvStat.overview.roundArray[0]).toFixed()));
+	$(tdExpHourlyEncounters[3]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.expbyBT[0], elapsedHours).toFixed()));
+	$(tdExpHourlyEncounters[4]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.expbyBT[0], elapsedDays).toFixed()));
 
-	$(tdExpArena[0]).text(hvStat.util.numberWithCommas(hvStat.overview.expbyBT[1]));
-	$(tdExpArena[1]).text(hvStat.util.percentRatio(hvStat.overview.expbyBT[1], hvStat.overview.exp, 2) + "%");
-	$(tdExpArena[2]).text(hvStat.util.numberWithCommas(hvStat.util.ratio(hvStat.overview.expbyBT[1], hvStat.overview.roundArray[1]).toFixed()));
-	$(tdExpArena[3]).text(hvStat.util.numberWithCommas(hvStat.util.ratio(hvStat.overview.expbyBT[1], elapsedHours).toFixed()));
-	$(tdExpArena[4]).text(hvStat.util.numberWithCommas(hvStat.util.ratio(hvStat.overview.expbyBT[1], elapsedDays).toFixed()));
+	$(tdExpArena[0]).text(hvStat.ui.util.numberWithCommas(hvStat.overview.expbyBT[1]));
+	$(tdExpArena[1]).text(hvStat.ui.util.percentRatio(hvStat.overview.expbyBT[1], hvStat.overview.exp, 2) + "%");
+	$(tdExpArena[2]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.expbyBT[1], hvStat.overview.roundArray[1]).toFixed()));
+	$(tdExpArena[3]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.expbyBT[1], elapsedHours).toFixed()));
+	$(tdExpArena[4]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.expbyBT[1], elapsedDays).toFixed()));
 
-	$(tdExpGrindfests[0]).text(hvStat.util.numberWithCommas(hvStat.overview.expbyBT[2]));
-	$(tdExpGrindfests[1]).text(hvStat.util.percentRatio(hvStat.overview.expbyBT[2], hvStat.overview.exp, 2) + "%");
-	$(tdExpGrindfests[2]).text(hvStat.util.numberWithCommas(hvStat.util.ratio(hvStat.overview.expbyBT[2], hvStat.overview.roundArray[2]).toFixed()));
-	$(tdExpGrindfests[3]).text(hvStat.util.numberWithCommas(hvStat.util.ratio(hvStat.overview.expbyBT[2], elapsedHours).toFixed()));
-	$(tdExpGrindfests[4]).text(hvStat.util.numberWithCommas(hvStat.util.ratio(hvStat.overview.expbyBT[2], elapsedDays).toFixed()));
+	$(tdExpGrindfests[0]).text(hvStat.ui.util.numberWithCommas(hvStat.overview.expbyBT[2]));
+	$(tdExpGrindfests[1]).text(hvStat.ui.util.percentRatio(hvStat.overview.expbyBT[2], hvStat.overview.exp, 2) + "%");
+	$(tdExpGrindfests[2]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.expbyBT[2], hvStat.overview.roundArray[2]).toFixed()));
+	$(tdExpGrindfests[3]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.expbyBT[2], elapsedHours).toFixed()));
+	$(tdExpGrindfests[4]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.expbyBT[2], elapsedDays).toFixed()));
 
-	$(tdExpItemWorlds[0]).text(hvStat.util.numberWithCommas(hvStat.overview.expbyBT[3]));
-	$(tdExpItemWorlds[1]).text(hvStat.util.percentRatio(hvStat.overview.expbyBT[3], hvStat.overview.exp, 2) + "%");
-	$(tdExpItemWorlds[2]).text(hvStat.util.numberWithCommas(hvStat.util.ratio(hvStat.overview.expbyBT[3], hvStat.overview.roundArray[3]).toFixed()));
-	$(tdExpItemWorlds[3]).text(hvStat.util.numberWithCommas(hvStat.util.ratio(hvStat.overview.expbyBT[3], elapsedHours).toFixed()));
-	$(tdExpItemWorlds[4]).text(hvStat.util.numberWithCommas(hvStat.util.ratio(hvStat.overview.expbyBT[3], elapsedDays).toFixed()));
+	$(tdExpItemWorlds[0]).text(hvStat.ui.util.numberWithCommas(hvStat.overview.expbyBT[3]));
+	$(tdExpItemWorlds[1]).text(hvStat.ui.util.percentRatio(hvStat.overview.expbyBT[3], hvStat.overview.exp, 2) + "%");
+	$(tdExpItemWorlds[2]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.expbyBT[3], hvStat.overview.roundArray[3]).toFixed()));
+	$(tdExpItemWorlds[3]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.expbyBT[3], elapsedHours).toFixed()));
+	$(tdExpItemWorlds[4]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.expbyBT[3], elapsedDays).toFixed()));
 
-	$(tdExpTotal[0]).text(hvStat.util.numberWithCommas(hvStat.overview.exp));
-	$(tdExpTotal[2]).text(hvStat.util.numberWithCommas(hvStat.util.ratio(hvStat.overview.exp, hvStat.overview.totalRounds).toFixed()));
-	$(tdExpTotal[3]).text(hvStat.util.numberWithCommas(hvStat.util.ratio(hvStat.overview.exp, elapsedHours).toFixed()));
-	$(tdExpTotal[4]).text(hvStat.util.numberWithCommas(hvStat.util.ratio(hvStat.overview.exp, elapsedDays).toFixed()));
+	$(tdExpTotal[0]).text(hvStat.ui.util.numberWithCommas(hvStat.overview.exp));
+	$(tdExpTotal[2]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.exp, hvStat.overview.totalRounds).toFixed()));
+	$(tdExpTotal[3]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.exp, elapsedHours).toFixed()));
+	$(tdExpTotal[4]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.exp, elapsedDays).toFixed()));
 
 	var tdCreditsHourlyEncounters = $('#hvstat-overview-credits-hourly-encounters td');
 	var tdCreditsArena = $('#hvstat-overview-credits-arenas td');
 	var tdCreditsTotal = $('#hvstat-overview-credits-total td');
 
-	$(tdCreditsHourlyEncounters[0]).text(hvStat.util.numberWithCommas(hvStat.overview.creditsbyBT[0]));
-	$(tdCreditsHourlyEncounters[1]).text(hvStat.util.percentRatio(hvStat.overview.creditsbyBT[0], hvStat.overview.credits, 2) + "%");
-	$(tdCreditsHourlyEncounters[2]).text(hvStat.util.numberWithCommas(hvStat.util.ratio(hvStat.overview.creditsbyBT[0], hvStat.overview.roundArray[0]).toFixed()));
-	$(tdCreditsHourlyEncounters[3]).text(hvStat.util.numberWithCommas(hvStat.util.ratio(hvStat.overview.creditsbyBT[0], elapsedHours).toFixed()));
-	$(tdCreditsHourlyEncounters[4]).text(hvStat.util.numberWithCommas(hvStat.util.ratio(hvStat.overview.creditsbyBT[0], elapsedDays).toFixed()));
+	$(tdCreditsHourlyEncounters[0]).text(hvStat.ui.util.numberWithCommas(hvStat.overview.creditsbyBT[0]));
+	$(tdCreditsHourlyEncounters[1]).text(hvStat.ui.util.percentRatio(hvStat.overview.creditsbyBT[0], hvStat.overview.credits, 2) + "%");
+	$(tdCreditsHourlyEncounters[2]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.creditsbyBT[0], hvStat.overview.roundArray[0]).toFixed()));
+	$(tdCreditsHourlyEncounters[3]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.creditsbyBT[0], elapsedHours).toFixed()));
+	$(tdCreditsHourlyEncounters[4]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.creditsbyBT[0], elapsedDays).toFixed()));
 
-	$(tdCreditsArena[0]).text(hvStat.util.numberWithCommas(hvStat.overview.creditsbyBT[1]));
-	$(tdCreditsArena[1]).text(hvStat.util.percentRatio(hvStat.overview.creditsbyBT[1], hvStat.overview.credits, 2) + "%");
-	$(tdCreditsArena[2]).text(hvStat.util.numberWithCommas(hvStat.util.ratio(hvStat.overview.creditsbyBT[1], hvStat.overview.roundArray[1]).toFixed()));
-	$(tdCreditsArena[3]).text(hvStat.util.numberWithCommas(hvStat.util.ratio(hvStat.overview.creditsbyBT[1], elapsedHours).toFixed()));
-	$(tdCreditsArena[4]).text(hvStat.util.numberWithCommas(hvStat.util.ratio(hvStat.overview.creditsbyBT[1], elapsedDays).toFixed()));
+	$(tdCreditsArena[0]).text(hvStat.ui.util.numberWithCommas(hvStat.overview.creditsbyBT[1]));
+	$(tdCreditsArena[1]).text(hvStat.ui.util.percentRatio(hvStat.overview.creditsbyBT[1], hvStat.overview.credits, 2) + "%");
+	$(tdCreditsArena[2]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.creditsbyBT[1], hvStat.overview.roundArray[1]).toFixed()));
+	$(tdCreditsArena[3]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.creditsbyBT[1], elapsedHours).toFixed()));
+	$(tdCreditsArena[4]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.creditsbyBT[1], elapsedDays).toFixed()));
 
-	$(tdCreditsTotal[0]).text(hvStat.util.numberWithCommas(hvStat.overview.credits));
-	$(tdCreditsTotal[2]).text(hvStat.util.numberWithCommas(hvStat.util.ratio(hvStat.overview.credits, hvStat.overview.roundArray[0] + hvStat.overview.roundArray[1]).toFixed()));
-	$(tdCreditsTotal[3]).text(hvStat.util.numberWithCommas(hvStat.util.ratio(hvStat.overview.credits, elapsedHours).toFixed()));
-	$(tdCreditsTotal[4]).text(hvStat.util.numberWithCommas(hvStat.util.ratio(hvStat.overview.credits, elapsedDays).toFixed()));
+	$(tdCreditsTotal[0]).text(hvStat.ui.util.numberWithCommas(hvStat.overview.credits));
+	$(tdCreditsTotal[2]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.credits, hvStat.overview.roundArray[0] + hvStat.overview.roundArray[1]).toFixed()));
+	$(tdCreditsTotal[3]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.credits, elapsedHours).toFixed()));
+	$(tdCreditsTotal[4]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.credits, elapsedDays).toFixed()));
 
 	var tdDropsEquipments = $('#hvstat-overview-drops-equipments td');
 	var tdDropsArtifacts = $('#hvstat-overview-drops-artifacts td');
 
-	$(tdDropsEquipments[0]).text(hvStat.util.numberWithCommas(hvStat.overview.equips));
-	$(tdDropsEquipments[1]).text(hvStat.util.numberWithCommas(hvStat.util.ratio(hvStat.overview.equips, elapsedHours).toFixed(2)));
-	$(tdDropsEquipments[2]).text(hvStat.util.numberWithCommas(hvStat.util.ratio(hvStat.overview.equips, elapsedDays).toFixed(2)));
-	$(tdDropsEquipments[3]).text(hvStat.util.numberWithCommas(hvStat.util.ratio(hvStat.overview.totalRounds, hvStat.overview.equips).toFixed(2)));
+	$(tdDropsEquipments[0]).text(hvStat.ui.util.numberWithCommas(hvStat.overview.equips));
+	$(tdDropsEquipments[1]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.equips, elapsedHours).toFixed(2)));
+	$(tdDropsEquipments[2]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.equips, elapsedDays).toFixed(2)));
+	$(tdDropsEquipments[3]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.totalRounds, hvStat.overview.equips).toFixed(2)));
 
 	$(tdDropsArtifacts[0]).text(hvStat.overview.artifacts);
-	$(tdDropsArtifacts[1]).text(hvStat.util.ratio(hvStat.overview.artifacts, elapsedHours).toFixed(2));
-	$(tdDropsArtifacts[2]).text(hvStat.util.ratio(hvStat.overview.artifacts, elapsedDays).toFixed(2));
-	$(tdDropsArtifacts[3]).text(hvStat.util.ratio(hvStat.overview.totalRounds, hvStat.overview.artifacts).toFixed(2));
+	$(tdDropsArtifacts[1]).text(hvStat.ui.util.ratio(hvStat.overview.artifacts, elapsedHours).toFixed(2));
+	$(tdDropsArtifacts[2]).text(hvStat.ui.util.ratio(hvStat.overview.artifacts, elapsedDays).toFixed(2));
+	$(tdDropsArtifacts[3]).text(hvStat.ui.util.ratio(hvStat.overview.totalRounds, hvStat.overview.artifacts).toFixed(2));
 
 	var spanDropsEquipmentLastFound = $('#hvstat-overview-drops-equipments span');
 	var spanDropsArtifactLastFound = $('#hvstat-overview-drops-artifacts span');
@@ -6073,99 +6757,6 @@ function initBattleStatsPane() {
 		}
 	});
 }
-function initItemPane() {
-	$("#pane3").html(getReportItemHtml());
-	$("._resetItems").click(function () {
-		if (confirm("Reset Drops tab?")) {
-			hvStat.storage.drops.reset();
-		}
-	});
-}
-function initRewardsPane() {
-	var innerHTML;
-	if (hvStat.arenaRewards.totalRwrds === 0) {
-		innerHTML = "No data found. Complete an arena to begin tracking.";
-	} else {
-		innerHTML = browser.extension.getResourceText("html/", "arena-rewards-pane.html");
-	}
-	$('#hvstat-arena-rewards-pane').html(innerHTML);
-	if (hvStat.arenaRewards.totalRwrds > 0) {
-		if (!hvStat.settings.isTrackRewards) {
-			$('#hvstat-arena-rewards-pane .hvstat-tracking-paused').show();
-		}
-		// Total Rewards
-		$('#hvstat-arena-rewards-total-number').text(hvStat.arenaRewards.totalRwrds);
-		var tdTotalArtifact = $('#hvstat-arena-rewards-total-artifact td');
-		var tdTotalEquipment = $('#hvstat-arena-rewards-total-equipment td');
-		var tdTotalItem = $('#hvstat-arena-rewards-total-item td');
-		var tdTotalTotal = $('#hvstat-arena-rewards-total-total td');
-		$(tdTotalArtifact[0]).text(hvStat.arenaRewards.artRwrd);
-		$(tdTotalArtifact[1]).text(hvStat.util.percentRatio(hvStat.arenaRewards.artRwrd, hvStat.arenaRewards.totalRwrds, 2) + "%");
-		$(tdTotalEquipment[0]).text(hvStat.arenaRewards.eqRwrd);
-		$(tdTotalEquipment[1]).text(hvStat.util.percentRatio(hvStat.arenaRewards.eqRwrd, hvStat.arenaRewards.totalRwrds, 2) + "%");
-		$(tdTotalItem[0]).text(hvStat.arenaRewards.itemsRwrd);
-		$(tdTotalItem[1]).text(hvStat.util.percentRatio(hvStat.arenaRewards.itemsRwrd, hvStat.arenaRewards.totalRwrds, 2) + "%");
-		$(tdTotalTotal[0]).text(hvStat.arenaRewards.totalRwrds);
-		// Token Bonuses
-		var totalTokenDrops = hvStat.arenaRewards.tokenDrops[0] + hvStat.arenaRewards.tokenDrops[2];
-		$('#hvstat-arena-rewards-token-bonuses-number').text(totalTokenDrops);
-		var tdTokenBlood = $('#hvstat-arena-rewards-token-bonuses-blood td');
-		var tdTokenChaos = $('#hvstat-arena-rewards-token-bonuses-chaos td');
-		var tdTokenTotal = $('#hvstat-arena-rewards-token-bonuses-total td');
-		$(tdTokenBlood[0]).text(hvStat.arenaRewards.tokenDrops[0]);
-		$(tdTokenBlood[1]).text(hvStat.util.percentRatio(hvStat.arenaRewards.tokenDrops[0], totalTokenDrops, 2) + "%");
-		$(tdTokenChaos[0]).text(hvStat.arenaRewards.tokenDrops[2]);
-		$(tdTokenChaos[1]).text(hvStat.util.percentRatio(hvStat.arenaRewards.tokenDrops[2], totalTokenDrops, 2) + "%");
-		$(tdTokenTotal[0]).text(hvStat.arenaRewards.tokenDrops[0] + hvStat.arenaRewards.tokenDrops[2]);
-		// Artifacts
-		var i = hvStat.arenaRewards.artRwrdArry.length;
-		var artifactsHTML = "";
-		while (i--) {
-			artifactsHTML += '<li>' + hvStat.arenaRewards.artRwrdArry[i] + ' x ' + hvStat.arenaRewards.artRwrdQtyArry[i] + '</li>';
-		}
-		$('#hvstat-arena-rewards-artifacts').html(artifactsHTML);
-		// Equipments
-		i = hvStat.arenaRewards.eqRwrdArry.length;
-		var equipmentsHTML = "";
-		while (i--) {
-			equipmentsHTML += '<li>' + hvStat.arenaRewards.eqRwrdArry[i] + '</li>';
-		}
-		$('#hvstat-arena-rewards-equipments').html(equipmentsHTML);
-		// Items
-		i = hvStat.arenaRewards.itemRwrdArry.length;
-		var itemsHTML = "";
-		while (i--) {
-			itemsHTML += '<li>' + hvStat.arenaRewards.itemRwrdArry[i] + ' x ' + hvStat.arenaRewards.itemRwrdQtyArry[i] + '</li>';
-		}
-		$('#hvstat-arena-rewards-items').html(itemsHTML);
-		// Buttons
-		$('#hvstat-arena-rewards-artifacts-clear').click(function () {
-			if (confirm("Clear Artifact list?")) {
-				hvStat.arenaRewards.artRwrdArry = [];
-				hvStat.arenaRewards.artRwrdQtyArry = [];
-				hvStat.storage.arenaRewards.save();
-			}
-		});
-		$('#hvstat-arena-rewards-equipments-clear').click(function () {
-			if (confirm("Clear Equipment list?")) {
-				hvStat.arenaRewards.eqRwrdArry = [];
-				hvStat.storage.arenaRewards.save();
-			}
-		});
-		$('#hvstat-arena-rewards-items-clear').click(function () {
-			if (confirm("Clear Item list?")) {
-				hvStat.arenaRewards.itemRwrdArry = [];
-				hvStat.arenaRewards.itemRwrdQtyArry = [];
-				hvStat.storage.arenaRewards.save();
-			}
-		});
-		$('#hvstat-arena-rewards-reset').click(function () {
-			if (confirm("Reset Arena Rewards tab?")) {
-				hvStat.storage.arenaRewards.reset();
-			}
-		});
-	}
-}
 function initShrinePane() {
 	var innerHTML;
 	if (hvStat.shrine.totalRewards === 0) {
@@ -6178,23 +6769,23 @@ function initShrinePane() {
 		if (!hvStat.settings.isTrackShrine) {
 			$('#hvstat-shrine-pane .hvstat-tracking-paused').show();
 		}
-		var tdAbilityPoints = $('#hvstat-shrine-artifact-ability-points td');
 		var tdAttributes = $('#hvstat-shrine-artifact-attributes td');
 		var tdHath = $('#hvstat-shrine-artifact-hath td');
 		var tdCrystals = $('#hvstat-shrine-artifact-crystals td');
 		var tdEnergyDrinks = $('#hvstat-shrine-artifact-energy-drinks td');
+		var tdElixers = $('#hvstat-shrine-artifact-elixers td');
 		var tdTotal = $('#hvstat-shrine-artifact-total td');
-		$(tdAbilityPoints[0]).text(hvStat.shrine.artifactAP);
-		$(tdAbilityPoints[1]).text(hvStat.util.percentRatio(hvStat.shrine.artifactAP, hvStat.shrine.artifactsTraded, 2) + "%");
 		$(tdAttributes[0]).text(hvStat.shrine.artifactStat);
-		$(tdAttributes[1]).text(hvStat.util.percentRatio(hvStat.shrine.artifactStat, hvStat.shrine.artifactsTraded, 2) + "%");
+		$(tdAttributes[1]).text(hvStat.ui.util.percentRatio(hvStat.shrine.artifactStat, hvStat.shrine.artifactsTraded, 2) + "%");
 		$(tdHath[0]).text(hvStat.shrine.artifactHath);
-		$(tdHath[1]).text(hvStat.util.percentRatio(hvStat.shrine.artifactHath, hvStat.shrine.artifactsTraded, 2) + "%");
-		$(tdHath[2]).text("(" + hvStat.util.ratio(hvStat.shrine.artifactHathTotal, hvStat.shrine.artifactsTraded).toFixed(2) + " Hath per Artifact)");
+		$(tdHath[1]).text(hvStat.ui.util.percentRatio(hvStat.shrine.artifactHath, hvStat.shrine.artifactsTraded, 2) + "%");
+		$(tdHath[2]).text("(" + hvStat.ui.util.ratio(hvStat.shrine.artifactHathTotal, hvStat.shrine.artifactsTraded).toFixed(2) + " Hath per Artifact)");
 		$(tdCrystals[0]).text(hvStat.shrine.artifactCrystal);
-		$(tdCrystals[1]).text(hvStat.util.percentRatio(hvStat.shrine.artifactCrystal, hvStat.shrine.artifactsTraded, 2) + "%");
+		$(tdCrystals[1]).text(hvStat.ui.util.percentRatio(hvStat.shrine.artifactCrystal, hvStat.shrine.artifactsTraded, 2) + "%");
 		$(tdEnergyDrinks[0]).text(hvStat.shrine.artifactItem);
-		$(tdEnergyDrinks[1]).text(hvStat.util.percentRatio(hvStat.shrine.artifactItem, hvStat.shrine.artifactsTraded, 2) + "%");
+		$(tdEnergyDrinks[1]).text(hvStat.ui.util.percentRatio(hvStat.shrine.artifactItem, hvStat.shrine.artifactsTraded, 2) + "%");
+		$(tdElixers[0]).text(hvStat.shrine.artifactElixer);
+		$(tdElixers[1]).text(hvStat.ui.util.percentRatio(hvStat.shrine.artifactElixer, hvStat.shrine.artifactsTraded, 2) + "%");
 		$(tdTotal[0]).text(hvStat.shrine.artifactsTraded);
 
 		var i = hvStat.shrine.trophyArray.length;
@@ -6216,87 +6807,7 @@ function initShrinePane() {
 		});
 	}
 }
-function initMonsterDatabasePane() {
-	$("#hvstat-monster-database-pane").html(browser.extension.getResourceText("html/", "monster-database-pane.html"));
-	function showOldDatabaseSize() {
-		var oldDatabaseSize = ((localStorage.HVMonsterDatabase ? localStorage.HVMonsterDatabase.length : 0) / 1024 / 1024 * (browser.isChrome ? 2 : 1)).toFixed(2);
-		var e = document.getElementById("hvstat-monster-database-old-database-size");
-		e.textContent = String(oldDatabaseSize);
-	}
-	showOldDatabaseSize();
-	$("#importMonsterScanResults").change(function (event) {
-		var file = event.target.files[0];
-		if (!file) {
-			alert("Failed to load file");
-		} else {
-			if (confirm("Are you sure to import the monster scan results?")) {
-				hvStat.database.importMonsterScanResults(file);
-			}
-		}
-	});
-	$("#importMonsterSkills").change(function (event) {
-		var file = event.target.files[0];
-		if (!file) {
-			alert("Failed to load file");
-		} else {
-			if (confirm("Are you sure to import the monster skill data?")) {
-				hvStat.database.importMonsterSkills(file);
-			}
-		}
-	});
-	$("#exportMonsterScanResults").click(function () {
-		hvStat.database.exportMonsterScanResults(function () {
-			if (hvStat.database.nRowsMonsterScanResultsTSV === 0) {
-				alert("There is no monster scan result.");
-			} else {
-				var downloadLink = $("#downloadLinkMonsterScanResults");
-				downloadLink.attr("href", hvStat.database.dataURIMonsterScanResults);
-				downloadLink.attr("download", "hvstat_monster_scan.tsv");
-				downloadLink.css("visibility", "visible");
-				alert("Ready to export your monster scan results.\nClick the download link.");
-			}
-		});
-	});
-	$("#exportMonsterSkills").click(function () {
-		hvStat.database.exportMonsterSkills(function () {
-			var downloadLink = $("#downloadLinkMonsterSkills");
-			if (hvStat.database.nRowsMonsterSkillsTSV === 0) {
-				alert("There is no monster skill data.");
-			} else {
-				downloadLink.attr("href", hvStat.database.dataURIMonsterSkills);
-				downloadLink.attr("download", "hvstat_monster_skill.tsv");
-				downloadLink.css("visibility", "visible");
-				alert("Ready to export your monster skill data.\nClick the download link.");
-			}
-		});
-	});
-	$("#deleteMonsterScanResults").click(function () {
-		if (confirm("Are you sure to delete your monster scan results?")) {
-			hvStat.database.deleteAllObjectsInMonsterScanResults();
-		}
-	});
-	$("#deleteMonsterSkills").click(function () {
-		if (confirm("Are you sure to delete your monster skill data?")) {
-			hvStat.database.deleteAllObjectsInMonsterSkills();
-		}
-	});
-	$("#deleteDatabase").click(function () {
-		if (confirm("Are you really sure to delete your database?")) {
-			hvStat.database.deleteIndexedDB();
-		}
-	});
-	$("#migrateDatabase").click(function () {
-		if (confirm("Are you sure to migrate your monster database?")) {
-			hvStat.migration.monsterDatabase.migrateDatabase();
-		}
-	});
-	$("#deleteOldDatabase").click(function () {
-		if (confirm("Are you really sure to delete your old monster database?")) {
-			hvStat.migration.monsterDatabase.deleteOldDatabase();
-			showOldDatabaseSize();
-		}
-	});
-}
+
 function initSettingsPane() {
 	$("#hvstat-settings-pane").html(browser.extension.getResourceText("html/", "settings-pane.html"));
 
@@ -6334,7 +6845,6 @@ function initSettingsPane() {
 
 	// Tracking
 	if (hvStat.settings.isTrackStats) $("input[name=isTrackStats]").attr("checked", "checked");
-	if (hvStat.settings.isTrackRewards) $("input[name=isTrackRewards]").attr("checked", "checked");
 	if (hvStat.settings.isTrackShrine) $("input[name=isTrackShrine]").attr("checked", "checked");
 	if (hvStat.settings.isTrackItems) $("input[name=isTrackItems]").attr("checked", "checked");
 
@@ -6523,7 +7033,6 @@ function initSettingsPane() {
 
 	// Tracking Functions
 	$("input[name=isTrackStats]").click(saveSettings);
-	$("input[name=isTrackRewards]").click(saveSettings);
 	$("input[name=isTrackShrine]").click(saveSettings);
 	$("input[name=isTrackItems]").click(saveSettings);
 
@@ -6672,7 +7181,6 @@ function saveSettings() {
 
 	// Tracking
 	hvStat.settings.isTrackStats = $("input[name=isTrackStats]").get(0).checked;
-	hvStat.settings.isTrackRewards = $("input[name=isTrackRewards]").get(0).checked;
 	hvStat.settings.isTrackShrine = $("input[name=isTrackShrine]").get(0).checked;
 	hvStat.settings.isTrackItems = $("input[name=isTrackItems]").get(0).checked;
 
@@ -6839,31 +7347,24 @@ function reminderAndSaveSettings() {
 function HVResetTracking() {
 	hvStat.storage.overview.reset();
 	hvStat.storage.stats.reset();
-	hvStat.storage.arenaRewards.reset();
 	hvStat.storage.shrine.reset();
-	hvStat.storage.drops.reset();
+	hvStat.storage.dropStats.reset();
 }
 function HVMasterReset() {
+	// Local storage keys starting with "HV" should not be used to avoid conflicts with other scripts.
+	// They will be phased out. Use the prefix "hvStat." instead.
 	var keys = [
 		"HVBackup1",
 		"HVBackup2",
 		"HVBackup3",
 		"HVBackup4",
 		"HVBackup5",
-		"HVCharacterSettingsandStats",	// Obsolete
-		"HVCollectData",		// Obsolete
-		"HVDrops",
-		"HVLoadTimeCounters",	// Obsolete
 		"HVMonsterDatabase",	// Old monster data
 		"HVOverview",
-		"HVProf",				// Obsolete
-		"HVRewards",
-		"HVRound",				// Obsolete
 		"HVSettings",
 		"HVShrine",
 		"HVStats",
 		"HVTags",
-		"inventoryAlert",
 	];
 	var i = keys.length;
 	while (i--) {
@@ -7035,6 +7536,8 @@ hvStat.startup = {
 		hvStat.database.openIndexedDB(function (event) {
 			hvStat.database.idbAccessQueue.execute();
 		});
+		//Version checking doesn't depend on the DOM, so do it early
+		hvStat.versions.checkVersion();
 		if (document.readyState !== "loading") {
 			hvStat.startup.phase2();
 		} else {
@@ -7107,7 +7610,8 @@ hvStat.startup = {
 			}
 		} else {
 			hvStat.storage.roundContext.remove();
-			if ((hvStat.settings.isStartAlert || hvStat.settings.isShowEquippedSet) && !hv.settings.useHVFontEngine) {
+			if (hvStat.settings.isStartAlert || hvStat.settings.isShowEquippedSet ||
+					hvStat.settings.isTrackItems || hvStat.settings.isTrackShrine) {
 				hvStat.support.captureStatuses();
 			}
 			if (!hv.location.isRiddle) {
@@ -7144,7 +7648,7 @@ hvStat.startup = {
 			if (hv.location.isForge && hvStat.settings.isDisableForgeHotKeys) {
 				document.onkeypress = null;
 			}
-			if (hv.location.isCharacter && !hv.settings.useHVFontEngine) {
+			if (hv.location.isCharacter) {
 				hvStat.support.captureProficiencies();
 			}
 			if (hv.location.isShrine) {
@@ -7156,23 +7660,21 @@ hvStat.startup = {
 					hvStat.onkeydown = null;
 				}
 			}
-			if (hvStat.settings.isStartAlert && !hv.settings.useHVFontEngine) {
+			if (hvStat.settings.isStartAlert) {
 				hvStat.support.confirmBeforeBattle();
 			}
 		}
-		if (!hv.settings.useHVFontEngine && hvStat.settings.isShowEquippedSet) {
+		if (hvStat.settings.isShowEquippedSet) {
 			hvStat.gadget.equippedSet.create();
 		}
-		if (hvStat.settings.isShowSidebarProfs) {	// TODO: Disable if useHVFontEngine
+		if (hvStat.settings.isShowSidebarProfs) {
 			hvStat.gadget.proficiencyPopupIcon.create();
 		}
-		var invAlert = localStorage.getItem(HV_EQUIP);
-		var invFull = (invAlert === null) ? false : JSON.parse(invAlert);
-		if (invFull) {
-			inventoryWarning();
+		if (hvStat.characterStatus.didReachInventoryLimit) {
+			hvStat.support.createInventoryWarningIcon();
 		}
 		document.addEventListener("keydown", hvStat.keyboard.documentKeydown);
-		hvStat.ui.setup();
+		hvStat.icon.setup();
 		if (hvStat.settings.adjustKeyEventHandling) {
 			document.onkeydown = hvStat.onkeydown;
 		}
