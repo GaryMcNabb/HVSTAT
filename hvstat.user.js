@@ -3994,9 +3994,6 @@ hvStat.battle.monster.Monster = function (index) {
 	this._prevSpRate = null;
 	this._scanResult = null;
 	this._skills = [];
-	this._currHpRate = this._currBarRate(0);
-	this._currMpRate = this._currBarRate(1);
-	this._currSpRate = this._currBarRate(2);
 	this._hasSpiritPoint = this.healthBars.length > 2;
 };
 hvStat.battle.monster.Monster.prototype = {
@@ -4016,7 +4013,7 @@ hvStat.battle.monster.Monster.prototype = {
 		return v;
 	},
 	_currHp: function () {
-		var v = this._currHpRate * this._maxHp;
+		var v = this.healthPointRate * this._maxHp;
 		if (!this.isDead && v === 0) {
 			v = 1;
 		}
@@ -4299,9 +4296,9 @@ hvStat.battle.monster.Monster.prototype = {
 			'<tr class="monname"><td colspan="2"><b>' + that._name + '</b></td></tr>' +
 			'<tr><td width="33%">ID: </td><td>' + that._id + '</td></tr>' +
 			'<tr><td>Health: </td><td>' + that._currHp().toFixed(1) + ' / ' + that._maxHp.toFixed(1) + '</td></tr>' +
-			'<tr><td>Mana: </td><td>' + (that._currMpRate * 100).toFixed(2) + '%</td></tr>';
+			'<tr><td>Mana: </td><td>' + (that.magicPointRate * 100).toFixed(2) + '%</td></tr>';
 		if (that._hasSpiritPoint) {
-			html += '<tr><td>Spirit: </td><td>' + (that._currSpRate * 100).toFixed(2) + '%</td></tr>';
+			html += '<tr><td>Spirit: </td><td>' + (that.spiritPointRate * 100).toFixed(2) + '%</td></tr>';
 		}
 		if (existsScanResult) {
 			html += '<tr><td>Class:</td><td>' + (that._scanResult.monsterClass ? that._scanResult.monsterClass : "") + '</td></tr>' +
@@ -4365,9 +4362,15 @@ hvStat.battle.monster.Monster.prototype = {
 	get name() { return this._name; },
 	get maxHp() { return this._maxHp; },
 	get currHp() { return this._currHp(); },
-	get currHpRate() { return this._currHpRate; },
-	get currMpRate() { return this._currMpRate; },
-	get currSpRate() { return this._currSpRate; },
+	get healthPointRate() {
+		return this._currBarRate(0);
+	},
+	get magicPointRate() {
+		return this._currBarRate(1);
+	},
+	get spiritPointRate() {
+		return this._currBarRate(2);
+	},
 	get hasSpiritPoint() { return this._hasSpiritPoint; },
 	get isDead() {
 		return !!this._baseElement.style.cssText.match(/opacity\s*\:\s*0/i);
@@ -4380,8 +4383,8 @@ hvStat.battle.monster.Monster.prototype = {
 		vo.name = this._name;
 		vo.maxHp = this._maxHp;
 		vo.actualHealthPoint = this.actualHealthPoint;
-		vo.prevMpRate = this._currMpRate;
-		vo.prevSpRate = this._currSpRate;
+		vo.prevMpRate = this.magicPointRate;
+		vo.prevSpRate = this.spiritPointRate;
 		vo.scanResult = this._scanResult ? this._scanResult.valueObject : null;
 		for (var i = 0; i < this._skills.length; i++) {
 			vo.skills[i] = this._skills[i].valueObject;
@@ -4412,7 +4415,7 @@ hvStat.battle.monster.Monster.prototype = {
 	storeSkill: function (skillName, skillVerb, damageType) {
 		var that = this;
 		var i;
-		var skillType = (that._prevSpRate <= that._currSpRate) ? hvStat.constant.skillType.MANA : hvStat.constant.skillType.SPIRIT;
+		var skillType = (that._prevSpRate <= that.spiritPointRate) ? hvStat.constant.skillType.MANA : hvStat.constant.skillType.SPIRIT;
 		var vo = new hvStat.vo.MonsterSkillVO();
 		vo.name = skillName;
 		vo.skillType = skillType.id;
@@ -4594,7 +4597,7 @@ hvStat.battle.monster.Monster.prototype = {
 			div = document.createElement("div");
 			div.className = "hvstat-monster-health";
 			if (hvStat.settings.showMonsterHPPercent) {
-				div.textContent = (that.currHpRate * 100).toFixed(2) + "%";
+				div.textContent = (that.healthPointRate * 100).toFixed(2) + "%";
 			} else if (this.currHp && that.maxHp) {
 				div.textContent = that.currHp.toFixed(0) + " / " + that.maxHp.toFixed(0);
 			}
@@ -4603,13 +4606,13 @@ hvStat.battle.monster.Monster.prototype = {
 		if (hvStat.settings.showMonsterMP) {
 			div = document.createElement("div");
 			div.className = "hvstat-monster-magic";
-			div.textContent = (that.currMpRate * 100).toFixed(1) + "%";
+			div.textContent = (that.magicPointRate * 100).toFixed(1) + "%";
 			this.healthBars[1].parentNode.insertBefore(div, null);
 		}
 		if (hvStat.settings.showMonsterSP && this.hasSpiritPoint) {
 			div = document.createElement("div");
 			div.className = "hvstat-monster-spirit";
-			div.textContent = (that.currSpRate * 100).toFixed(1) + "%";
+			div.textContent = (that.spiritPointRate * 100).toFixed(1) + "%";
 			this.healthBars[2].parentNode.insertBefore(div, null);
 		}
 	},
