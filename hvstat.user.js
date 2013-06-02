@@ -4256,7 +4256,7 @@ hvStat.battle.monster.Monster.prototype = {
 			nameOuterFrameElement.style.width = String(maxStatsWidth) + "px";
 
 			if (hvStat.settings.highlightScanButtonWhenScanResultExpired) {
-				var existsScanResult = !!(that._scanResult && that._scanResult.monsterClass);
+				var doesScanResultExist = that.doesScanResultExist;
 				var getElapsedDaysFrom = function (date) {
 					var mins = 0, hours = 0, days = 0;
 					mins = Math.floor(((new Date()).getTime() - date.getTime()) / (60 * 1000));
@@ -4270,7 +4270,7 @@ hvStat.battle.monster.Monster.prototype = {
 					}
 					return days;
 				};
-				if (!existsScanResult || getElapsedDaysFrom(that._scanResult.lastScanDate) >= Number(hvStat.settings.nDaysUntilScanResultExpiration)) {
+				if (!doesScanResultExist || getElapsedDaysFrom(that._scanResult.lastScanDate) >= Number(hvStat.settings.nDaysUntilScanResultExpiration)) {
 					var scanButton = hvStat.battle.enhancement.scanButton.elements[that._index];
 					if (scanButton) {
 						scanButton.className += " hvstat-scan-button-highlight";
@@ -4282,7 +4282,7 @@ hvStat.battle.monster.Monster.prototype = {
 	_renderPopup: function () {
 		var that = this;
 		var i, len, skill, lastScanString;
-		var existsScanResult = that._scanResult && that._scanResult.monsterClass;
+		var doesScanResultExist = that.doesScanResultExist;
 		var html = '<table cellspacing="0" cellpadding="0" style="width:100%">' +
 			'<tr class="monname"><td colspan="2"><b>' + that._name + '</b></td></tr>' +
 			'<tr><td width="33%">ID: </td><td>' + that._id + '</td></tr>' +
@@ -4291,7 +4291,7 @@ hvStat.battle.monster.Monster.prototype = {
 		if (that.hasSpiritPoint) {
 			html += '<tr><td>Spirit: </td><td>' + (that.spiritPointRate * 100).toFixed(2) + '%</td></tr>';
 		}
-		if (existsScanResult) {
+		if (doesScanResultExist) {
 			html += '<tr><td>Class:</td><td>' + (that._scanResult.monsterClass ? that._scanResult.monsterClass : "") + '</td></tr>' +
 				'<tr><td>Trainer:</td><td>' + (that._scanResult.trainer ? that._scanResult.trainer : "") + '</td></tr>';
 			if (that._scanResult.powerLevel) {
@@ -4327,7 +4327,7 @@ hvStat.battle.monster.Monster.prototype = {
 			html += '</td></tr>';
 		}
 		lastScanString = "Never";
-		if (existsScanResult) {
+		if (doesScanResultExist) {
 			html += '<tr><td>Weak against:</td><td>' + (that._scanResult.defWeak.length > 0 ? that._scanResult.getDefWeakString(false, true, 0) : "-") + '</td></tr>' +
 				'<tr><td>Resistant to:</td><td>' + (that._scanResult.defResistant.length > 0 ? that._scanResult.getDefResistantString(false, true, 0) : "-") + '</td></tr>' +
 				'<tr><td>Impervious to:</td><td>' + (that._scanResult.defImpervious.length > 0 ? that._scanResult.getDefImperviousString(false, true, 0) : "-") + '</td></tr>' +
@@ -4337,7 +4337,7 @@ hvStat.battle.monster.Monster.prototype = {
 			}
 		}
 		html += '<tr><td valign="top">Last Scan:</td><td>' + lastScanString + '</td></tr>';
-		if (existsScanResult && that._scanResult.lastScanDate) {
+		if (doesScanResultExist && that._scanResult.lastScanDate) {
 			html += '<tr><td></td><td>' + hvStat.util.getElapseFrom(that._scanResult.lastScanDate) + ' ago</td></tr>';
 		}
 		html += '</table>';
@@ -4368,6 +4368,9 @@ hvStat.battle.monster.Monster.prototype = {
 		return !!this._baseElement.style.cssText.match(/opacity\s*\:\s*0/i);
 	},
 	get scanResult() { return this._scanResult; },
+	get doesScanResultExist() {
+		return !!(this._scanResult && this._scanResult.monsterClass);
+	},
 	get skills() { return this._skills; },
 	get valueObject() {
 		var vo = new hvStat.vo.MonsterVO();
