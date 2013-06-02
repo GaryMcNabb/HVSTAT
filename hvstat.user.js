@@ -4062,7 +4062,7 @@ hvStat.battle.monster.Monster.prototype = {
 		}
 		return skillTable;
 	},
-	_getSpiritSkill: function () {
+	get spiritSkill() {
 		var that = this;
 		var i, skill;
 		var len = that._skills.length;
@@ -4154,7 +4154,7 @@ hvStat.battle.monster.Monster.prototype = {
 					var isMeleeAttackKnown = that._scanResult && that._scanResult.meleeAttack;
 					var magicSkills = that.magicSkills;
 					var doesMagicSkillExist = that.doesMagicSkillExist;
-					var spiritSkill = that._getSpiritSkill();
+					var spiritSkill = that.spiritSkill;
 					if (isMeleeAttackKnown || doesMagicSkillExist || spiritSkill) {
 						statsHtml += '(';
 					}
@@ -4320,7 +4320,7 @@ hvStat.battle.monster.Monster.prototype = {
 			}
 			html += '</td></tr>';
 		}
-		var spiritSkill = that._getSpiritSkill();
+		var spiritSkill = that.spiritSkill;
 		if (spiritSkill) {
 			html += '<tr><td>Spirit Skill:</td><td>';
 			html += spiritSkill.toString();
