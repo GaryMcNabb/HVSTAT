@@ -3984,7 +3984,6 @@ hvStat.battle.monster.Monster = function (index) {
 	this._index = index;
 	this._baseElement = hv.battle.elementCache.monsters[this._index];
 	this._healthBars = this._baseElement.querySelectorAll('div.btm5');
-	this._isDead = this._healthBars[0].querySelectorAll('img.chb2').length === 0;
 	this._waitingForGetResponseOfMonsterScanResults = false;
 	this._waitingForGetResponseOfMonsterSkills = false;
 	this._id = null;
@@ -4018,7 +4017,7 @@ hvStat.battle.monster.Monster.prototype = {
 	},
 	_currHp: function () {
 		var v = this._currHpRate * this._maxHp;
-		if (!this._isDead && v === 0) {
+		if (!this.isDead && v === 0) {
 			v = 1;
 		}
 		var acceptableRange = this._maxHp / 120;
@@ -4089,7 +4088,7 @@ hvStat.battle.monster.Monster.prototype = {
 	},
 	_renderStats: function () {
 		var that = this;
-		if (that._isDead) {
+		if (that.isDead) {
 			return;
 		}
 		if (!(hvStat.settings.showMonsterHP ||
@@ -4365,7 +4364,9 @@ hvStat.battle.monster.Monster.prototype = {
 	get currMpRate() { return this._currMpRate; },
 	get currSpRate() { return this._currSpRate; },
 	get hasSpiritPoint() { return this._hasSpiritPoint; },
-	get isDead() { return this._isDead; },
+	get isDead() {
+		return !!this._baseElement.style.cssText.match(/opacity\s*\:\s*0/i);
+	},
 	get scanResult() { return this._scanResult; },
 	get skills() { return this._skills; },
 	get valueObject() {
