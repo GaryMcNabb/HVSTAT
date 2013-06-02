@@ -4015,23 +4015,22 @@ hvStat.battle.monster.Monster.prototype = {
 	_waitingForDBResponse: function () {
 		return this._waitingForGetResponseOfMonsterScanResults || this._waitingForGetResponseOfMonsterSkills;
 	},
-//	_getManaSkills: function () {
-	get manaSkills() {
+	get magicSkills() {
 		var that = this;
-		var manaSkills = [];
+		var magicSkills = [];
 		var i, skill;
 		var len = that._skills.length;
 		for (i = 0; i < len; i++) {
 			skill = that._skills[i];
 			if (skill.skillType === hvStat.constant.skillType.MANA) {
-				manaSkills.push(skill);
+				magicSkills.push(skill);
 			}
 		}
-		return manaSkills;
+		return magicSkills;
 	},
 	_getManaSkillTable: function () {
 		var that = this;
-		var manaSkills = that.manaSkills;
+		var magicSkills = that.magicSkills;
 		var damageTable = {
 			CRUSHING: false,
 			SLASHING: false,
@@ -4052,9 +4051,9 @@ hvStat.battle.monster.Monster.prototype = {
 		skillTable.PHYSICAL.damageTable = Object.create(damageTable);
 		skillTable.MAGICAL.damageTable = Object.create(damageTable);
 		var skillType, damageType;
-		for (var i = 0; i < manaSkills.length; i++) {
-			attackType = manaSkills[i].attackType.id;
-			damageType = manaSkills[i].damageType.id;
+		for (var i = 0; i < magicSkills.length; i++) {
+			attackType = magicSkills[i].attackType.id;
+			damageType = magicSkills[i].damageType.id;
 			skillTable[attackType].exists = true;
 			skillTable[attackType].damageTable[damageType] = true;
 		}
@@ -4150,8 +4149,8 @@ hvStat.battle.monster.Monster.prototype = {
 				// Melee attack and skills
 				if (hvStat.settings.showMonsterAttackTypeFromDB) {
 					var meleeAttackExists = that._scanResult && that._scanResult.meleeAttack;
-					var manaSkills = that.manaSkills;
-					var manaSkillsExist = manaSkills.length > 0;
+					var magicSkills = that.magicSkills;
+					var manaSkillsExist = magicSkills.length > 0;
 					var spiritSkill = that._getSpiritSkill();
 					if (meleeAttackExists || manaSkillsExist || spiritSkill) {
 						statsHtml += '(';
@@ -4297,10 +4296,10 @@ hvStat.battle.monster.Monster.prototype = {
 			}
 			html += '<tr><td>Melee Attack:</td><td>' + (that._scanResult.meleeAttack ? that._scanResult.meleeAttack : "") + '</td></tr>';
 		}
-		var manaSkills = that.manaSkills;
-		if (manaSkills && manaSkills.length > 0) {
+		var magicSkills = that.magicSkills;
+		if (magicSkills && magicSkills.length > 0) {
 			html += '<tr><td valign="top">Skills:</td><td>';
-			len = manaSkills.length;
+			len = magicSkills.length;
 			var skillTable = that._getManaSkillTable();
 			var skillCount = 0;
 			for (var attackType in skillTable) {
