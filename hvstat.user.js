@@ -4028,6 +4028,9 @@ hvStat.battle.monster.Monster.prototype = {
 		}
 		return magicSkills;
 	},
+	get doesMagicSkillExist() {
+		return this.magicSkills.length > 0;
+	},
 	_getManaSkillTable: function () {
 		var that = this;
 		var magicSkills = that.magicSkills;
@@ -4148,22 +4151,22 @@ hvStat.battle.monster.Monster.prototype = {
 				}
 				// Melee attack and skills
 				if (hvStat.settings.showMonsterAttackTypeFromDB) {
-					var meleeAttackExists = that._scanResult && that._scanResult.meleeAttack;
+					var isMeleeAttackKnown = that._scanResult && that._scanResult.meleeAttack;
 					var magicSkills = that.magicSkills;
-					var manaSkillsExist = magicSkills.length > 0;
+					var doesMagicSkillExist = that.doesMagicSkillExist;
 					var spiritSkill = that._getSpiritSkill();
-					if (meleeAttackExists || manaSkillsExist || spiritSkill) {
+					if (isMeleeAttackKnown || doesMagicSkillExist || spiritSkill) {
 						statsHtml += '(';
 					}
 					// Melee attack
-					if (meleeAttackExists) {
+					if (isMeleeAttackKnown) {
 						statsHtml += '<span class="hvstat-monster-status-melee-attack-type">';
 						statsHtml += that._scanResult.meleeAttack.toString(abbrLevel > 0 ? abbrLevel : 1);
 						statsHtml += '</span>';
 					}
 					// Mana skills
-					if (manaSkillsExist) {
-						if (meleeAttackExists) {
+					if (doesMagicSkillExist) {
+						if (isMeleeAttackKnown) {
 							statsHtml += ';';
 						}
 						statsHtml += '<span class="hvstat-monster-status-magic-skill-attack-type">';
@@ -4194,7 +4197,7 @@ hvStat.battle.monster.Monster.prototype = {
 					}
 					// Spirit skill
 					if (spiritSkill) {
-						if (!manaSkillsExist) {
+						if (!doesMagicSkillExist) {
 							statsHtml += ';';
 						} else {
 							statsHtml += '|';
@@ -4203,7 +4206,7 @@ hvStat.battle.monster.Monster.prototype = {
 						statsHtml += spiritSkill.toString(abbrLevel > 0 ? abbrLevel : 1);
 						statsHtml += '</span>';
 					}
-					if (meleeAttackExists || manaSkillsExist || spiritSkill) {
+					if (isMeleeAttackKnown || doesMagicSkillExist || spiritSkill) {
 						statsHtml += ')';
 					}
 				}
