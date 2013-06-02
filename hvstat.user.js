@@ -4164,7 +4164,7 @@ hvStat.battle.monster.Monster.prototype = {
 						statsHtml += that._scanResult.meleeAttack.toString(abbrLevel > 0 ? abbrLevel : 1);
 						statsHtml += '</span>';
 					}
-					// Mana skills
+					// Magic skills
 					if (doesMagicSkillExist) {
 						if (isMeleeAttackKnown) {
 							statsHtml += ';';
@@ -4435,7 +4435,7 @@ hvStat.battle.monster.Monster.prototype = {
 			}
 			that._skills[i] = skill;
 		} else {
-			// Mana skill
+			// Magic skill
 			// Overwrite if same name or name is null
 			for (i = 0; i < that._skills.length; i++) {
 				if (that._skills[i].skillType ===  hvStat.constant.skillType.MANA &&
