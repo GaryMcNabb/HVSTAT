@@ -4031,7 +4031,7 @@ hvStat.battle.monster.Monster.prototype = {
 	get doesMagicSkillExist() {
 		return this.magicSkills.length > 0;
 	},
-	_getManaSkillTable: function () {
+	get magicSkillTable() {
 		var that = this;
 		var magicSkills = that.magicSkills;
 		var damageTable = {
@@ -4170,7 +4170,7 @@ hvStat.battle.monster.Monster.prototype = {
 							statsHtml += ';';
 						}
 						statsHtml += '<span class="hvstat-monster-status-magic-skill-attack-type">';
-						var skillTable = that._getManaSkillTable();
+						var skillTable = that.magicSkillTable;
 						var attackTypeCount, damageTypeCount;
 						attackTypeCount = 0;
 						for (var attackType in skillTable) {
@@ -4303,7 +4303,7 @@ hvStat.battle.monster.Monster.prototype = {
 		if (magicSkills && magicSkills.length > 0) {
 			html += '<tr><td valign="top">Skills:</td><td>';
 			len = magicSkills.length;
-			var skillTable = that._getManaSkillTable();
+			var skillTable = that.magicSkillTable;
 			var skillCount = 0;
 			for (var attackType in skillTable) {
 				if (skillTable[attackType].exists) {
