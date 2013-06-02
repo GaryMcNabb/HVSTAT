@@ -3981,9 +3981,10 @@ hvStat.battle.monster.MonsterScanResults.prototype = {
 };
 
 hvStat.battle.monster.Monster = function (index) {
+	this.maxGaugeWidth = 120;
 	this._index = index;
 	this._baseElement = hv.battle.elementCache.monsters[this._index];
-	this._healthBars = null;
+	this._gauges = null;
 	this._waitingForGetResponseOfMonsterScanResults = false;
 	this._waitingForGetResponseOfMonsterSkills = false;
 	this._id = null;
@@ -3996,15 +3997,15 @@ hvStat.battle.monster.Monster = function (index) {
 	this._skills = [];
 };
 hvStat.battle.monster.Monster.prototype = {
-	_currBarRate: function (barIndex) {
-		return hv.util.getGaugeRate(this.healthBars[barIndex], 120);
+	gaugeRate: function (gaugeIndex) {
+		return hv.util.getGaugeRate(this.gauges[gaugeIndex], this.maxGaugeWidth);
 	},
 	_currHp: function () {
 		var v = this.healthPointRate * this._maxHp;
 		if (!this.isDead && v === 0) {
 			v = 1;
 		}
-		var acceptableRange = this._maxHp / 120;
+		var acceptableRange = this._maxHp / this.maxGaugeWidth;
 		if (v - acceptableRange < this.actualHealthPoint && this.actualHealthPoint < v + acceptableRange) {
 			// actualHealthPoint is probably correct
 			v = this.actualHealthPoint;
@@ -4339,27 +4340,27 @@ hvStat.battle.monster.Monster.prototype = {
 		html += '</table>';
 		return html;
 	},
-	get healthBars() {
-		if (!this._healthBars) {
-			this._healthBars = this._baseElement.querySelectorAll('div.btm5 img.chb2');
+	get gauges() {
+		if (!this._gauges) {
+			this._gauges = this._baseElement.querySelectorAll('div.btm5 img.chb2');
 		}
-		return this._healthBars;
+		return this._gauges;
 	},
 	get id() { return this._id; },
 	get name() { return this._name; },
 	get maxHp() { return this._maxHp; },
 	get currHp() { return this._currHp(); },
 	get healthPointRate() {
-		return this._currBarRate(0);
+		return this.gaugeRate(0);
 	},
 	get magicPointRate() {
-		return this._currBarRate(1);
+		return this.gaugeRate(1);
 	},
 	get spiritPointRate() {
-		return this._currBarRate(2);
+		return this.gaugeRate(2);
 	},
 	get hasSpiritPoint() {
-		return this.healthBars.length > 2;
+		return this.gauges.length > 2;
 	},
 	get isDead() {
 		return !!this._baseElement.style.cssText.match(/opacity\s*\:\s*0/i);
@@ -4590,19 +4591,19 @@ hvStat.battle.monster.Monster.prototype = {
 			} else if (this.currHp && that.maxHp) {
 				div.textContent = that.currHp.toFixed(0) + " / " + that.maxHp.toFixed(0);
 			}
-			this.healthBars[0].parentNode.insertBefore(div, null);
+			this.gauges[0].parentNode.insertBefore(div, null);
 		}
 		if (hvStat.settings.showMonsterMP) {
 			div = document.createElement("div");
 			div.className = "hvstat-monster-magic";
 			div.textContent = (that.magicPointRate * 100).toFixed(1) + "%";
-			this.healthBars[1].parentNode.insertBefore(div, null);
+			this.gauges[1].parentNode.insertBefore(div, null);
 		}
 		if (hvStat.settings.showMonsterSP && this.hasSpiritPoint) {
 			div = document.createElement("div");
 			div.className = "hvstat-monster-spirit";
 			div.textContent = (that.spiritPointRate * 100).toFixed(1) + "%";
-			this.healthBars[2].parentNode.insertBefore(div, null);
+			this.gauges[2].parentNode.insertBefore(div, null);
 		}
 	},
 	renderStats: function () {
