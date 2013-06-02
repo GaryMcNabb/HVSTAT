@@ -3997,20 +3997,8 @@ hvStat.battle.monster.Monster = function (index) {
 	this._hasSpiritPoint = this.healthBars.length > 2;
 };
 hvStat.battle.monster.Monster.prototype = {
-	_currBarRate: function (barIndex) {	// TODO: To be refactored to use hv.getGaugeRate
-		if (barIndex >= this.healthBars.length) {
-			return 0;
-		}
-		var v, bar = this.healthBars[barIndex];
-		if (!bar) {
-			v = 0;
-		} else {
-			var r = /width\s*?:\s*?(\d+?)px/i.exec(bar.style.cssText);
-			if (r) {
-				v = Number(r[1]) / 120;
-			}
-		}
-		return v;
+	_currBarRate: function (barIndex) {
+		return hv.util.getGaugeRate(this.healthBars[barIndex], 120);
 	},
 	_currHp: function () {
 		var v = this.healthPointRate * this._maxHp;
