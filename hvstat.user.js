@@ -4000,7 +4000,7 @@ hvStat.battle.monster.Monster.prototype = {
 	gaugeRate: function (gaugeIndex) {
 		return hv.util.getGaugeRate(this.gauges[gaugeIndex], this.maxGaugeWidth);
 	},
-	_currHp: function () {
+	get healthPoints() {
 		var v = this.healthPointRate * this._maxHp;
 		if (!this.isDead && v === 0) {
 			v = 1;
@@ -4283,7 +4283,7 @@ hvStat.battle.monster.Monster.prototype = {
 		var html = '<table cellspacing="0" cellpadding="0" style="width:100%">' +
 			'<tr class="monname"><td colspan="2"><b>' + that._name + '</b></td></tr>' +
 			'<tr><td width="33%">ID: </td><td>' + that._id + '</td></tr>' +
-			'<tr><td>Health: </td><td>' + that._currHp().toFixed(1) + ' / ' + that._maxHp.toFixed(1) + '</td></tr>' +
+			'<tr><td>Health: </td><td>' + that.healthPoints.toFixed(1) + ' / ' + that._maxHp.toFixed(1) + '</td></tr>' +
 			'<tr><td>Mana: </td><td>' + (that.magicPointRate * 100).toFixed(2) + '%</td></tr>';
 		if (that.hasSpiritPoint) {
 			html += '<tr><td>Spirit: </td><td>' + (that.spiritPointRate * 100).toFixed(2) + '%</td></tr>';
@@ -4349,7 +4349,6 @@ hvStat.battle.monster.Monster.prototype = {
 	get id() { return this._id; },
 	get name() { return this._name; },
 	get maxHp() { return this._maxHp; },
-	get currHp() { return this._currHp(); },
 	get healthPointRate() {
 		return this.gaugeRate(0);
 	},
@@ -4588,8 +4587,8 @@ hvStat.battle.monster.Monster.prototype = {
 			div.className = "hvstat-monster-health";
 			if (hvStat.settings.showMonsterHPPercent) {
 				div.textContent = (that.healthPointRate * 100).toFixed(2) + "%";
-			} else if (this.currHp && that.maxHp) {
-				div.textContent = that.currHp.toFixed(0) + " / " + that.maxHp.toFixed(0);
+			} else if (this.healthPoints && that.maxHp) {
+				div.textContent = that.healthPoints.toFixed(0) + " / " + that.maxHp.toFixed(0);
 			}
 			this.gauges[0].parentNode.insertBefore(div, null);
 		}
