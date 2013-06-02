@@ -3983,7 +3983,7 @@ hvStat.battle.monster.MonsterScanResults.prototype = {
 hvStat.battle.monster.Monster = function (index) {
 	this._index = index;
 	this._baseElement = hv.battle.elementCache.monsters[this._index];
-	this._healthBars = this._baseElement.querySelectorAll('div.btm5');
+	this._healthBars = null;
 	this._waitingForGetResponseOfMonsterScanResults = false;
 	this._waitingForGetResponseOfMonsterSkills = false;
 	this._id = null;
@@ -3997,14 +3997,14 @@ hvStat.battle.monster.Monster = function (index) {
 	this._currHpRate = this._currBarRate(0);
 	this._currMpRate = this._currBarRate(1);
 	this._currSpRate = this._currBarRate(2);
-	this._hasSpiritPoint = this._healthBars.length > 2;
+	this._hasSpiritPoint = this.healthBars.length > 2;
 };
 hvStat.battle.monster.Monster.prototype = {
 	_currBarRate: function (barIndex) {	// TODO: To be refactored to use hv.getGaugeRate
-		if (barIndex >= this._healthBars.length) {
+		if (barIndex >= this.healthBars.length) {
 			return 0;
 		}
-		var v, bar = this._healthBars[barIndex].querySelector('img.chb2');
+		var v, bar = this.healthBars[barIndex];
 		if (!bar) {
 			v = 0;
 		} else {
@@ -4355,7 +4355,12 @@ hvStat.battle.monster.Monster.prototype = {
 		html += '</table>';
 		return html;
 	},
-
+	get healthBars() {
+		if (!this._healthBars) {
+			this._healthBars = this._baseElement.querySelectorAll('div.btm5 img.chb2');
+		}
+		return this._healthBars;
+	},
 	get id() { return this._id; },
 	get name() { return this._name; },
 	get maxHp() { return this._maxHp; },
@@ -4584,41 +4589,28 @@ hvStat.battle.monster.Monster.prototype = {
 		if (that.isDead || !hvStat.settings.showMonsterHP && !hvStat.settings.showMonsterMP && !hvStat.settings.showMonsterSP) {
 			return;
 		}
-
-		var nameOuterFrameElement = that.baseElement.children[1];
-		var nameInnerFrameElement = that.baseElement.children[1].children[0];
-		var hpBarBaseElement = that.baseElement.children[2].children[0];
-		var mpBarBaseElement = that.baseElement.children[2].children[1];
-		var spBarBaseElement = that.baseElement.children[2].children[2];
-		var hpIndicator = "";
-		var mpIndicator = "";
-		var spIndicator = "";
 		var div;
-
 		if (hvStat.settings.showMonsterHP || hvStat.settings.showMonsterHPPercent) {
 			div = document.createElement("div");
 			div.className = "hvstat-monster-health";
 			if (hvStat.settings.showMonsterHPPercent) {
-				hpIndicator = (that.currHpRate * 100).toFixed(2) + "%";
+				div.textContent = (that.currHpRate * 100).toFixed(2) + "%";
 			} else if (this.currHp && that.maxHp) {
-				hpIndicator = that.currHp.toFixed(0) + " / " + that.maxHp.toFixed(0);
+				div.textContent = that.currHp.toFixed(0) + " / " + that.maxHp.toFixed(0);
 			}
-			div.textContent = hpIndicator;
-			hpBarBaseElement.parentNode.insertBefore(div, hpBarBaseElement.nextSibling);
+			this.healthBars[0].parentNode.insertBefore(div, null);
 		}
 		if (hvStat.settings.showMonsterMP) {
 			div = document.createElement("div");
 			div.className = "hvstat-monster-magic";
-			mpIndicator = (that.currMpRate * 100).toFixed(1) + "%";
-			div.textContent = mpIndicator;
-			mpBarBaseElement.parentNode.insertBefore(div, mpBarBaseElement.nextSibling);
+			div.textContent = (that.currMpRate * 100).toFixed(1) + "%";
+			this.healthBars[1].parentNode.insertBefore(div, null);
 		}
 		if (hvStat.settings.showMonsterSP && this.hasSpiritPoint) {
 			div = document.createElement("div");
 			div.className = "hvstat-monster-spirit";
-			spIndicator = (that.currSpRate * 100).toFixed(1) + "%";
-			div.textContent = spIndicator;
-			spBarBaseElement.parentNode.insertBefore(div, spBarBaseElement.nextSibling);
+			div.textContent = (that.currSpRate * 100).toFixed(1) + "%";
+			this.healthBars[2].parentNode.insertBefore(div, null);
 		}
 	},
 	renderStats: function () {
