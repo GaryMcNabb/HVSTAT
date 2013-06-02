@@ -4015,7 +4015,8 @@ hvStat.battle.monster.Monster.prototype = {
 	_waitingForDBResponse: function () {
 		return this._waitingForGetResponseOfMonsterScanResults || this._waitingForGetResponseOfMonsterSkills;
 	},
-	_getManaSkills: function () {
+//	_getManaSkills: function () {
+	get manaSkills() {
 		var that = this;
 		var manaSkills = [];
 		var i, skill;
@@ -4030,7 +4031,7 @@ hvStat.battle.monster.Monster.prototype = {
 	},
 	_getManaSkillTable: function () {
 		var that = this;
-		var manaSkills = that._getManaSkills();
+		var manaSkills = that.manaSkills;
 		var damageTable = {
 			CRUSHING: false,
 			SLASHING: false,
@@ -4149,7 +4150,7 @@ hvStat.battle.monster.Monster.prototype = {
 				// Melee attack and skills
 				if (hvStat.settings.showMonsterAttackTypeFromDB) {
 					var meleeAttackExists = that._scanResult && that._scanResult.meleeAttack;
-					var manaSkills = that._getManaSkills();
+					var manaSkills = that.manaSkills;
 					var manaSkillsExist = manaSkills.length > 0;
 					var spiritSkill = that._getSpiritSkill();
 					if (meleeAttackExists || manaSkillsExist || spiritSkill) {
@@ -4296,7 +4297,7 @@ hvStat.battle.monster.Monster.prototype = {
 			}
 			html += '<tr><td>Melee Attack:</td><td>' + (that._scanResult.meleeAttack ? that._scanResult.meleeAttack : "") + '</td></tr>';
 		}
-		var manaSkills = that._getManaSkills();
+		var manaSkills = that.manaSkills;
 		if (manaSkills && manaSkills.length > 0) {
 			html += '<tr><td valign="top">Skills:</td><td>';
 			len = manaSkills.length;
