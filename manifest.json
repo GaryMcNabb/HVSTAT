@@ -11,7 +11,10 @@
 	"content_scripts": [ {
 		"js": [ "hvstat.user.js" ],
 		"matches": [ "http://hentaiverse.org/*" ],
-		"exclude_matches": [ "http://hentaiverse.org/pages/showequip*" ],
+		"exclude_matches": [
+			"http://hentaiverse.org/pages/showequip*",
+			"http://hentaiverse.org/?login*"
+		],
 		"run_at": "document_start"
 	} ],
 	"web_accessible_resources": [
