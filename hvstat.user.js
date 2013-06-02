@@ -3994,7 +3994,6 @@ hvStat.battle.monster.Monster = function (index) {
 	this._prevSpRate = null;
 	this._scanResult = null;
 	this._skills = [];
-	this._hasSpiritPoint = this.healthBars.length > 2;
 };
 hvStat.battle.monster.Monster.prototype = {
 	_currBarRate: function (barIndex) {
@@ -4285,7 +4284,7 @@ hvStat.battle.monster.Monster.prototype = {
 			'<tr><td width="33%">ID: </td><td>' + that._id + '</td></tr>' +
 			'<tr><td>Health: </td><td>' + that._currHp().toFixed(1) + ' / ' + that._maxHp.toFixed(1) + '</td></tr>' +
 			'<tr><td>Mana: </td><td>' + (that.magicPointRate * 100).toFixed(2) + '%</td></tr>';
-		if (that._hasSpiritPoint) {
+		if (that.hasSpiritPoint) {
 			html += '<tr><td>Spirit: </td><td>' + (that.spiritPointRate * 100).toFixed(2) + '%</td></tr>';
 		}
 		if (existsScanResult) {
@@ -4359,7 +4358,9 @@ hvStat.battle.monster.Monster.prototype = {
 	get spiritPointRate() {
 		return this._currBarRate(2);
 	},
-	get hasSpiritPoint() { return this._hasSpiritPoint; },
+	get hasSpiritPoint() {
+		return this.healthBars.length > 2;
+	},
 	get isDead() {
 		return !!this._baseElement.style.cssText.match(/opacity\s*\:\s*0/i);
 	},
