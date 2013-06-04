@@ -298,7 +298,7 @@ var hv = {
 		};
 
 		var elementCache = {
-			popup: document.getElementById("popup_box"),
+			get popup() { return document.getElementById("popup_box"); },
 		};
 
 		this.util.useHVFontEngine = document.getElementsByClassName('fd2')[0].textContent !== "Health points";
