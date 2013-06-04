@@ -4776,13 +4776,13 @@ hvStat.battle.warningSystem = {
 	selfEffectNames: [
 		"Protection", "Hastened", "Shadow Veil", "Regen", "Absorbing Ward",
 		"Spark of Life", "Channeling", "Arcane Focus", "Heartseeker", "Spirit Shield",
-		"Flame Spikes", "Frost Spikes", "Lightning Spikes", "Storm Spikes",
+		"_", "_", "_", "_",
 		"Chain 1", "Chain 2",
 	],
 	monsterEffectNames: [
 		"Vital Theft", "Slowed", "Weakened", "Asleep", "Confused",
-		"Imperiled", "Blinded", "Silenced", "Magically Snared", "Ether Theft",
-		"Spirit Theft", "Coalesced Mana",
+		"Imperiled", "Blinded", "Silenced", "_", "Magically Snared",
+		"_", "Coalesced Mana",
 	],
 	warnSelfEffectExpiring: function () {
 		var elements = hv.battle.elementCache.characterEffectIcons;
@@ -7343,9 +7343,9 @@ function saveSettings() {
 	hvStat.settings.isEffectsAlertMonsters[5] = $("input[name=isEffectsAlertMonsters5]").get(0).checked;
 	hvStat.settings.isEffectsAlertMonsters[6] = $("input[name=isEffectsAlertMonsters6]").get(0).checked;
 	hvStat.settings.isEffectsAlertMonsters[7] = $("input[name=isEffectsAlertMonsters7]").get(0).checked;
-	hvStat.settings.isEffectsAlertMonsters[8] = $("input[name=isEffectsAlertMonsters8]").get(0).checked;
+	hvStat.settings.isEffectsAlertMonsters[8] = false; // Nerf is obsolete
 	hvStat.settings.isEffectsAlertMonsters[9] = $("input[name=isEffectsAlertMonsters9]").get(0).checked;
-	hvStat.settings.isEffectsAlertMonsters[10] = $("input[name=isEffectsAlertMonsters10]").get(0).checked;
+	hvStat.settings.isEffectsAlertMonsters[10] = false; // Lifestream is obsolete
 	hvStat.settings.isEffectsAlertMonsters[11] = $("input[name=isEffectsAlertMonsters11]").get(0).checked;
 	hvStat.settings.EffectsAlertMonstersRounds[0] = $("input[name=EffectsAlertMonstersRounds0]").get(0).value;
 	hvStat.settings.EffectsAlertMonstersRounds[1] = $("input[name=EffectsAlertMonstersRounds1]").get(0).value;
@@ -7355,9 +7355,9 @@ function saveSettings() {
 	hvStat.settings.EffectsAlertMonstersRounds[5] = $("input[name=EffectsAlertMonstersRounds5]").get(0).value;
 	hvStat.settings.EffectsAlertMonstersRounds[6] = $("input[name=EffectsAlertMonstersRounds6]").get(0).value;
 	hvStat.settings.EffectsAlertMonstersRounds[7] = $("input[name=EffectsAlertMonstersRounds7]").get(0).value;
-	hvStat.settings.EffectsAlertMonstersRounds[8] = $("input[name=EffectsAlertMonstersRounds8]").get(0).value;
+	hvStat.settings.EffectsAlertMonstersRounds[8] = 0; // Nerf is obsolete
 	hvStat.settings.EffectsAlertMonstersRounds[9] = $("input[name=EffectsAlertMonstersRounds9]").get(0).value;
-	hvStat.settings.EffectsAlertMonstersRounds[10] = $("input[name=EffectsAlertMonstersRounds10]").get(0).value;
+	hvStat.settings.EffectsAlertMonstersRounds[10] = 0; // Lifestream is obsolete
 	hvStat.settings.EffectsAlertMonstersRounds[11] = $("input[name=EffectsAlertMonstersRounds11]").get(0).value;
 
 	// Monster Information
