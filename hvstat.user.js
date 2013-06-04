@@ -344,10 +344,36 @@ var hv = {
 		};
 
 		var battleLog = document.getElementById("togpane_log");
-		var battle = {};
-		battle.active = !!battleLog;
-		if (battle.active) {
+		var battle = {
+			isActive: !!battleLog,
+			elementCache: null,
+			get isRoundFinished() {
+				if (!this.isActive) {
+					return false;
+				}
+				return !!this.elementCache.dialog;
+			},
+			get isFinished() {
+				if (!this.isActive) {
+					return false;
+				}
+				if (!this.isRoundFinished) {
+					return false;
+				} else {
+					if (!this.elementCache.dialogButton) {
+						// Hourly Encounter
+						return true;
+					} else {
+						// The others
+						var onclick = this.elementCache.dialogButton.getAttribute("onclick");
+						return onclick.indexOf("battle.battle_continue") === -1;
+					}
+				}
+			},
+		};
+		if (battle.isActive) {
 			battle.elementCache = {
+				battleLog: battleLog,
 				_mainPane: null,
 				_quickcastBar: null,
 				_monsterPane: null,
@@ -398,23 +424,6 @@ var hv = {
 					return this._monsters;
 				},
 			};
-
-			battle.round = {
-				finished: !!battle.elementCache.dialog,
-			};
-			battle.finished = false;
-			if (battle.round.finished) {
-				if (!battle.elementCache.dialogButton) {
-					// Hourly Encounter
-					battle.finished = true;
-				} else {
-					// The others
-					var dialogButton_onclick = battle.elementCache.dialogButton.getAttribute("onclick");
-					if (dialogButton_onclick.indexOf("battle.battle_continue") === -1) {
-						battle.finished = true;
-					}
-				}
-			}
 		}
 		this.location = location;
 		this.elementCache = elementCache;
@@ -1721,7 +1730,7 @@ hvStat.keyboard = {
 			}
 		}
 		var boundKeys, i, j;
-		if (hv.battle.active) {
+		if (hv.battle.isActive) {
 			var attackCommand = hvStat.battle.command.commandMap["Attack"];	// Used to close Skillbook menu
 			var miScan = hvStat.battle.command.subMenuItemMap["Scan"];
 			var miSkill1 = hvStat.battle.command.subMenuItemMap["Skill1"];
@@ -2018,7 +2027,7 @@ hvStat.battle = {
 		hvStat.battle.eventLog.setup();
 	},
 	advanceRound: function () {
-		if (!hv.battle.finished && hv.battle.round.finished) {
+		if (!hv.battle.isFinished && hv.battle.isRoundFinished) {
 			(function (dialogButton) {
 				setTimeout(function () {
 					dialogButton.click();
@@ -4730,7 +4739,7 @@ hvStat.battle.warningSystem = {
 		var healthWarningResumeLevel = Math.min(healthWarningLevel + 10, 100);
 		var magicWarningResumeLevel = Math.min(magicWarningLevel + 10, 100);
 		var spiritWarningResumeLevel = Math.min(spiritWarningLevel + 10, 100);
-		if (!hv.battle.round.finished) {
+		if (!hv.battle.isRoundFinished) {
 			if (hvStat.settings.isShowPopup) {
 				if (hv.character.healthPercent <= healthWarningLevel && (!hvStat.warningState.healthAlertShown || hvStat.settings.isNagHP)) {
 					this.enqueueAlert("Your health is dangerously low!");
@@ -7604,7 +7613,7 @@ hvStat.startup = {
 		if (hvStat.settings.isChangePageTitle) {
 			document.title = hvStat.settings.customPageTitle;
 		}
-		if (hv.battle.active) {
+		if (hv.battle.isActive) {
 			hvStat.battle.setup();
 			if (hvStat.settings.delayRoundEndAlerts) {
 				hvStat.battle.warningSystem.restoreAlerts();
@@ -7625,7 +7634,7 @@ hvStat.startup = {
 				hvStat.battle.monster.popup.setup();
 			}
 			// Show warnings
-			if (!hv.battle.round.finished) {
+			if (!hv.battle.isRoundFinished) {
 				if (hvStat.settings.warnMode[hvStat.roundContext.battleType]) {
 					hvStat.battle.warningSystem.warnHealthStatus();
 				}
@@ -7636,7 +7645,7 @@ hvStat.startup = {
 					hvStat.battle.warningSystem.warnMonsterEffectExpiring();
 				}
 			}
-			if (hv.battle.round.finished) {
+			if (hv.battle.isRoundFinished) {
 				if (hvStat.settings.isShowEndStats) {
 					showBattleEndStats();
 				}
@@ -7646,11 +7655,11 @@ hvStat.startup = {
 					hvStat.battle.advanceRound();
 				}
 				//Don't stash alerts if the battle's over
-				if (hvStat.settings.delayRoundEndAlerts && !hv.battle.finished) {
+				if (hvStat.settings.delayRoundEndAlerts && !hv.battle.isFinished) {
 					hvStat.battle.warningSystem.stashAlerts();
 				}
 			}
-			if (!hv.battle.finished) {
+			if (!hv.battle.isFinished) {
 				hvStat.battle.warningSystem.alertAllFromQueue();
 			}
 		} else {
