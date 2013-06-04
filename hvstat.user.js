@@ -317,19 +317,31 @@ var hv = {
 		};
 
 		var character = {
-			healthRate: hv.util.getCharacterGaugeRate(document.querySelector('img[alt="health"]')),
-			magicRate: hv.util.getCharacterGaugeRate(document.querySelector('img[alt="magic"]')),
-			spiritRate: hv.util.getCharacterGaugeRate(document.querySelector('img[alt="spirit"]')),
-			overchargeRate: hv.util.getCharacterGaugeRate(document.querySelector('img[alt="overcharge"]')),
-			healthPercent: 0,
-			magicPercent: 0,
-			spiritPercent: 0,
-			overchargePercent: 0,
+			get healthRate() {
+				return hv.util.getCharacterGaugeRate(document.querySelector('img[alt="health"]'));
+			},
+			get magicRate() {
+				return hv.util.getCharacterGaugeRate(document.querySelector('img[alt="magic"]'));
+			},
+			get spiritRate() {
+				return hv.util.getCharacterGaugeRate(document.querySelector('img[alt="spirit"]'));
+			},
+			get overchargeRate() {
+				return hv.util.getCharacterGaugeRate(document.querySelector('img[alt="overcharge"]'));
+			},
+			get healthPercent() {
+				return hv.util.percent(character.healthRate);
+			},
+			get magicPercent() {
+				return hv.util.percent(character.magicRate);
+			},
+			get spiritPercent() {
+				return hv.util.percent(character.spiritRate);
+			},
+			get overchargePercent() {
+				return hv.util.percent(character.overchargeRate);
+			},
 		};
-		character.healthPercent = hv.util.percent(character.healthRate);
-		character.magicPercent = hv.util.percent(character.magicRate);
-		character.spiritPercent = hv.util.percent(character.spiritRate);
-		character.overchargePercent = hv.util.percent(character.overchargeRate);
 
 		var battleLog = document.getElementById("togpane_log");
 		var battle = {};
