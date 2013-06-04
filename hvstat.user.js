@@ -227,13 +227,13 @@ var hv = {
 		percent: function (value) {
 			return Math.floor(value * 100);
 		},
-		useHVFontEngine: null,
+		isUsingHVFontEngine: null,
 		hvFontMap: "0123456789.,!?%+-=/\\'\":;()[]_           ABCDEFGHIJKLMNOPQRSTUVWXYZ ",
 		hvFontTextBlockSelector: 'div.fd2, div.fd4',
 		hvFontCharsLtoRSelector: 'div.f2lb, div.f2lg, div.f2lr, div.f2ly, div.f2la, div.f4lb, div.f4lg, div.f4lr, div.f4ly, div.f4la',
 		hvFontCharsRtoLSelector: 'div.f2rb, div.f2rg, div.f2rr, div.f2ry, div.f2ra, div.f4rb, div.f4rg, div.f4rr, div.f4ry, div.f4ra',
 		innerText: function (element) {
-			if (!this.useHVFontEngine) {
+			if (!this.isUsingHVFontEngine) {
 				return util.innerText(element);
 			}
 			// Parse HV Font text
@@ -301,9 +301,9 @@ var hv = {
 			get popup() { return document.getElementById("popup_box"); },
 		};
 
-		this.util.useHVFontEngine = document.getElementsByClassName('fd2')[0].textContent !== "Health points";
+		this.util.isUsingHVFontEngine = document.getElementsByClassName('fd2')[0].textContent !== "Health points";
 		var settings = {
-			useHVFontEngine: this.util.useHVFontEngine,
+			isUsingHVFontEngine: this.util.isUsingHVFontEngine,
 			get difficulty() {
 				var e = document.querySelectorAll('div.clb table.cit div.fd4');
 				for (var i = 0; i < e.length; i++) {
@@ -4272,7 +4272,7 @@ hvStat.battle.monster.Monster.prototype = {
 						statsHtml += ')';
 					}
 				}
-				if (hv.settings.useHVFontEngine) {
+				if (hv.settings.isUsingHVFontEngine) {
 					nameOuterFrameElement.style.width = "auto"; // Tweak for Firefox
 					nameInnerFrameElement.style.width = "auto"; // Tweak for Firefox
 					nameInnerFrameElement.lastChild.style.clear = "none";
