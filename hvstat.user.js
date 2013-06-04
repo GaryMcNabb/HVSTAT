@@ -348,15 +348,56 @@ var hv = {
 		battle.active = !!battleLog;
 		if (battle.active) {
 			battle.elementCache = {
-				mainPane: document.getElementById("mainpane"),
-				quickcastBar: document.getElementById("quickbar"),
-				battleLog: battleLog,
-				monsterPane: document.getElementById("monsterpane"),
-				dialog: document.querySelector('div.btcp'),
-				dialogButton: document.getElementById("ckey_continue"),
+				_mainPane: null,
+				_quickcastBar: null,
+				_monsterPane: null,
+				_dialog: null,
+				_dialogButton: null,
+				_characterEffectIcons: null,
+				_monsters: null,
+				get mainPane() {
+					if (!this._mainPane) {
+						this._mainPane = document.getElementById("mainpane");
+					}
+					return this._mainPane;
+				},
+				get quickcastBar() {
+					if (!this._quickcastBar) {
+						this._quickcastBar = document.getElementById("quickbar");
+					}
+					return this._quickcastBar;
+				},
+				get monsterPane() {
+					if (!this._monsterPane) {
+						this._monsterPane = document.getElementById("monsterpane");
+					}
+					return this._monsterPane;
+				},
+				get dialog() {
+					if (!this._dialog) {
+						this._dialog = document.querySelector('div.btcp');
+					}
+					return this._dialog;
+				},
+				get dialogButton() {
+					if (!this._dialogButton) {
+						this._dialogButton = document.getElementById("ckey_continue");
+					}
+					return this._dialogButton;
+				},
+				get characterEffectIcons() {
+					if (!this._characterEffectIcons) {
+						this._characterEffectIcons = this.mainPane.querySelectorAll('div.bte img[onmouseover^="battle.set_infopane_effect"]');
+					}
+					return this._characterEffectIcons;
+				},
+				get monsters() {
+					if (!this._monsters) {
+						this._monsters = this.monsterPane.querySelectorAll('div[id^="mkey_"]');
+					}
+					return this._monsters;
+				},
 			};
-			battle.elementCache.characterEffectIcons = battle.elementCache.mainPane.querySelectorAll('div.bte img[onmouseover^="battle.set_infopane_effect"]');
-			battle.elementCache.monsters = battle.elementCache.monsterPane.querySelectorAll('div[id^="mkey_"]');
 
 			battle.round = {
 				finished: !!battle.elementCache.dialog,
