@@ -293,8 +293,8 @@ var hv = {
 			isForge: document.location.search.indexOf("?s=Bazaar&ss=fr") > -1,
 			isShrine: document.location.search === "?s=Bazaar&ss=ss",
 			isMonsterLab: document.location.search.indexOf("?s=Bazaar&ss=ml") > -1,
-			isCharacter: !!document.getElementById("pattrform"),
-			isRiddle: !!document.getElementById("riddleform"),
+			get isCharacter() { return !!document.getElementById("pattrform"); },
+			get isRiddle() { return !!document.getElementById("riddleform"); },
 		};
 
 		var elementCache = {
