@@ -4780,9 +4780,9 @@ hvStat.battle.warningSystem = {
 		"Chain 1", "Chain 2",
 	],
 	monsterEffectNames: [
-		"Spreading Poison", "Slowed", "Weakened", "Asleep", "Confused",
-		"Imperiled", "Blinded", "Silenced", "Nerfed", "Magically Snared",
-		"Lifestream", "Coalesced Mana",
+		"Vital Theft", "Slowed", "Weakened", "Asleep", "Confused",
+		"Imperiled", "Blinded", "Silenced", "Magically Snared", "Ether Theft",
+		"Spirit Theft", "Coalesced Mana",
 	],
 	warnSelfEffectExpiring: function () {
 		var elements = hv.battle.elementCache.characterEffectIcons;
@@ -7306,32 +7306,32 @@ function saveSettings() {
 	hvStat.settings.isEffectsAlertSelf[1] = $("input[name=isEffectsAlertSelf1]").get(0).checked;
 	hvStat.settings.isEffectsAlertSelf[2] = $("input[name=isEffectsAlertSelf2]").get(0).checked;
 	hvStat.settings.isEffectsAlertSelf[3] = $("input[name=isEffectsAlertSelf3]").get(0).checked;
-	hvStat.settings.isEffectsAlertSelf[4] = false; // Absorb no longer has duration
+	hvStat.settings.isEffectsAlertSelf[4] = false; // Absorbing Ward no longer has duration
 	hvStat.settings.isEffectsAlertSelf[5] = $("input[name=isEffectsAlertSelf5]").get(0).checked;
 	hvStat.settings.isEffectsAlertSelf[6] = $("input[name=isEffectsAlertSelf6]").get(0).checked;
 	hvStat.settings.isEffectsAlertSelf[7] = $("input[name=isEffectsAlertSelf7]").get(0).checked;
 	hvStat.settings.isEffectsAlertSelf[8] = $("input[name=isEffectsAlertSelf8]").get(0).checked;
 	hvStat.settings.isEffectsAlertSelf[9] = $("input[name=isEffectsAlertSelf9]").get(0).checked;
-	hvStat.settings.isEffectsAlertSelf[10] = $("input[name=isEffectsAlertSelf10]").get(0).checked;
-	hvStat.settings.isEffectsAlertSelf[11] = $("input[name=isEffectsAlertSelf11]").get(0).checked;
-	hvStat.settings.isEffectsAlertSelf[12] = $("input[name=isEffectsAlertSelf12]").get(0).checked;
-	hvStat.settings.isEffectsAlertSelf[13] = $("input[name=isEffectsAlertSelf13]").get(0).checked;
+	hvStat.settings.isEffectsAlertSelf[10] = false;	// Flame Spikes is obsolete
+	hvStat.settings.isEffectsAlertSelf[11] = false;	// Frost Spikes is obsolete
+	hvStat.settings.isEffectsAlertSelf[12] = false;	// Lightning Spikes is obsolete
+	hvStat.settings.isEffectsAlertSelf[13] = false;	// Storm Spikes is obsolete
 	hvStat.settings.isEffectsAlertSelf[14] = $("input[name=isEffectsAlertSelf14]").get(0).checked;
 	hvStat.settings.isEffectsAlertSelf[15] = $("input[name=isEffectsAlertSelf15]").get(0).checked;
 	hvStat.settings.EffectsAlertSelfRounds[0] = $("input[name=EffectsAlertSelfRounds0]").get(0).value;
 	hvStat.settings.EffectsAlertSelfRounds[1] = $("input[name=EffectsAlertSelfRounds1]").get(0).value;
 	hvStat.settings.EffectsAlertSelfRounds[2] = $("input[name=EffectsAlertSelfRounds2]").get(0).value;
 	hvStat.settings.EffectsAlertSelfRounds[3] = $("input[name=EffectsAlertSelfRounds3]").get(0).value;
-	hvStat.settings.EffectsAlertSelfRounds[4] = 0; // absorb is obsolete
+	hvStat.settings.EffectsAlertSelfRounds[4] = 0; // Absorbing Ward no longer has duration
 	hvStat.settings.EffectsAlertSelfRounds[5] = $("input[name=EffectsAlertSelfRounds5]").get(0).value;
 	hvStat.settings.EffectsAlertSelfRounds[6] = $("input[name=EffectsAlertSelfRounds6]").get(0).value;
 	hvStat.settings.EffectsAlertSelfRounds[7] = $("input[name=EffectsAlertSelfRounds7]").get(0).value;
 	hvStat.settings.EffectsAlertSelfRounds[8] = $("input[name=EffectsAlertSelfRounds8]").get(0).value;
 	hvStat.settings.EffectsAlertSelfRounds[9] = $("input[name=EffectsAlertSelfRounds9]").get(0).value;
-	hvStat.settings.EffectsAlertSelfRounds[10] = $("input[name=EffectsAlertSelfRounds10]").get(0).value;
-	hvStat.settings.EffectsAlertSelfRounds[11] = $("input[name=EffectsAlertSelfRounds11]").get(0).value;
-	hvStat.settings.EffectsAlertSelfRounds[12] = $("input[name=EffectsAlertSelfRounds12]").get(0).value;
-	hvStat.settings.EffectsAlertSelfRounds[13] = $("input[name=EffectsAlertSelfRounds13]").get(0).value;
+	hvStat.settings.EffectsAlertSelfRounds[10] = 0;	// Flame Spikes is obsolete
+	hvStat.settings.EffectsAlertSelfRounds[11] = 0;	// Frost Spikes is obsolete
+	hvStat.settings.EffectsAlertSelfRounds[12] = 0;	// Lightning Spikes is obsolete
+	hvStat.settings.EffectsAlertSelfRounds[13] = 0;	// Storm Spikes is obsolete
 	hvStat.settings.EffectsAlertSelfRounds[14] = $("input[name=EffectsAlertSelfRounds14]").get(0).value;
 	hvStat.settings.EffectsAlertSelfRounds[15] = $("input[name=EffectsAlertSelfRounds15]").get(0).value;
 	hvStat.settings.isMainEffectsAlertMonsters = $("input[name=isMainEffectsAlertMonsters]").get(0).checked;
