@@ -1238,7 +1238,7 @@ hvStat.storage.Item.prototype = {
 		hvStat.storage.setItem(this._key, this.value);
 	},
 	reset: function () {
-		this._value = Object.create(this._defaultValue);
+		this._value = util.clone(this._defaultValue);
 		this.save();
 	},
 	remove: function () {
