@@ -1228,6 +1228,13 @@ hvStat.storage.Item.prototype = {
 				hvStat.util.forEachProperty(this._value, this._defaultValue, function (storedValue, defaultValue, key) {
 					if (storedValue[key] === undefined) {
 						storedValue[key] = util.clone(defaultValue[key]);
+					} else if (Array.isArray(storedValue[key])) {
+						// Compensate for the lack of elements
+						for (var i = 0; i < defaultValue[key].length; i++) {
+							if (storedValue[key][i] === undefined) {
+								storedValue[key][i] = defaultValue[key][i];
+							}
+						}
 					}
 				});
 			}
