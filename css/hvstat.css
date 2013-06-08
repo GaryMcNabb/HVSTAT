@@ -216,30 +216,12 @@
 	text-shadow: -1px -1px 5px #000,1px -1px 5px #000,-1px 1px 5px #000,1px 1px 5px #000;
 }
 
-div.hvstat-monster-health {
-	z-index: 10;
-	position: absolute;
-	top: -1px;
-	width: 120px;
-	text-align: center;
-	font-size: 8pt;
-	font-weight: bolder;
-	color: yellow;
-}
-div.hvstat-monster-magic {
-	z-index: 10;
-	position: absolute;
-	top: 11px;
-	width: 120px;
-	text-align: center;
-	font-size: 8pt;
-	font-weight: bolder;
-	color: yellow;
-}
+div.hvstat-monster-health,
+div.hvstat-monster-magic,
 div.hvstat-monster-spirit {
 	z-index: 10;
 	position: absolute;
-	top: 23px;
+	top: -1px;
 	width: 120px;
 	text-align: center;
 	font-size: 8pt;

@@ -1,5 +1,6 @@
 {
 	"items": [
+		{"name": "Credits", "className": "credit"},
 		{"name": "Lesser Health Potion", "className": "restorative"},
 		{"name": "Greater Health Potion", "className": "restorative"},
 		{"name": "Heroic Health Potion", "className": "restorative"},
@@ -17,7 +18,7 @@
 		{"name": "Infusion of Darkness", "className": "infusion"},
 		{"name": "Scroll of Swiftness", "className": "scroll"},
 		{"name": "Scroll of Protection", "className": "scroll"},
-		{"name": "Scroll of Avatar", "className": "scroll"},
+		{"name": "Scroll of the Avatar", "className": "scroll"},
 		{"name": "Scroll of Absorption", "className": "scroll"},
 		{"name": "Scroll of Shadows", "className": "scroll"},
 		{"name": "Scroll of Life", "className": "scroll"},
@@ -75,6 +76,7 @@
 		{"name": "Daring Do Figurine", "className": "collectable"}
 	],
 	"classes": [
+		{"className": "credit", "displayName1": "Credits", "displayName2": "Credits"},
 		{"className": "restorative", "displayName1": "Restorative", "displayName2": "Restoratives"},
 		{"className": "infusion", "displayName1": "Infusion", "displayName2": "Infusions"},
 		{"className": "scroll", "displayName1": "Scroll", "displayName2": "Scrolls"},
