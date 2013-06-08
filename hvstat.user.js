@@ -2046,6 +2046,22 @@ hvStat.battle = {
 };
 
 //------------------------------------
+// Battle - Character
+//------------------------------------
+hvStat.battle.character = {
+	get isSpiritStanceEnabled() {
+		var spiritCommand = document.getElementById("ckey_spirit");
+		if (spiritCommand) {
+			var src = spiritCommand.getAttribute("src");
+			if (src.indexOf("spirit_a") >= 0) {
+				return true;
+			}
+		}
+		return false;
+	},
+};
+
+//------------------------------------
 // Battle - Event log management
 //------------------------------------
 hvStat.battle.eventLog = {
@@ -4820,7 +4836,7 @@ hvStat.battle.warningSystem = {
 					hvStat.warningState.spiritAlertShown = true;
 				}
 			}
-			if (hvStat.settings.isAlertOverchargeFull && hv.character.overchargeRate >= 1.0 && !hvStat.warningState.overchargeAlertShown) {
+			if (hvStat.settings.isAlertOverchargeFull && hv.character.overchargeRate >= 1.0 && !hvStat.warningState.overchargeAlertShown && !hvStat.battle.character.isSpiritStanceEnabled) {
 				this.enqueueAlert("Your overcharge is full.");
 				hvStat.warningState.overchargeAlertShown = true;
 			}
