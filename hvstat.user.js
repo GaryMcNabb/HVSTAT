@@ -3139,24 +3139,24 @@ hvStat.battle.command = {
 	get menuItemMap() {
 		if (!this._menuItemMap) {
 			this._menuItemMap = {
-				"PowerupGem": hvStat.battle.command.getSubMenuItemById("ikey_p"),
-				"Scan": hvStat.battle.command.getSubMenuItemByName("Scan"),
-				"Skill1": hvStat.battle.command.getSubMenuItemById("2101") ||
-					hvStat.battle.command.getSubMenuItemById("2201") ||
-					hvStat.battle.command.getSubMenuItemById("2301") ||
-					hvStat.battle.command.getSubMenuItemById("2401") ||
-					hvStat.battle.command.getSubMenuItemById("2501"),
-				"Skill2": hvStat.battle.command.getSubMenuItemById("2102") ||
-					hvStat.battle.command.getSubMenuItemById("2202") ||
-					hvStat.battle.command.getSubMenuItemById("2302") ||
-					hvStat.battle.command.getSubMenuItemById("2402") ||
-					hvStat.battle.command.getSubMenuItemById("2502"),
-				"Skill3": hvStat.battle.command.getSubMenuItemById("2103") ||
-					hvStat.battle.command.getSubMenuItemById("2203") ||
-					hvStat.battle.command.getSubMenuItemById("2303") ||
-					hvStat.battle.command.getSubMenuItemById("2403") ||
-					hvStat.battle.command.getSubMenuItemById("2503"),
-				"OFC": hvStat.battle.command.getSubMenuItemByName("Orbital Friendship Cannon"),
+				"PowerupGem": hvStat.battle.command.getMenuItemById("ikey_p"),
+				"Scan": hvStat.battle.command.getMenuItemByName("Scan"),
+				"Skill1": hvStat.battle.command.getMenuItemById("2101") ||
+					hvStat.battle.command.getMenuItemById("2201") ||
+					hvStat.battle.command.getMenuItemById("2301") ||
+					hvStat.battle.command.getMenuItemById("2401") ||
+					hvStat.battle.command.getMenuItemById("2501"),
+				"Skill2": hvStat.battle.command.getMenuItemById("2102") ||
+					hvStat.battle.command.getMenuItemById("2202") ||
+					hvStat.battle.command.getMenuItemById("2302") ||
+					hvStat.battle.command.getMenuItemById("2402") ||
+					hvStat.battle.command.getMenuItemById("2502"),
+				"Skill3": hvStat.battle.command.getMenuItemById("2103") ||
+					hvStat.battle.command.getMenuItemById("2203") ||
+					hvStat.battle.command.getMenuItemById("2303") ||
+					hvStat.battle.command.getMenuItemById("2403") ||
+					hvStat.battle.command.getMenuItemById("2503"),
+				"OFC": hvStat.battle.command.getMenuItemByName("Orbital Friendship Cannon"),
 			};
 			if (this._menuItemMap["Scan"]) {
 				this._menuItemMap["Scan"].bindKeys([
@@ -3179,12 +3179,12 @@ hvStat.battle.command = {
 		}
 		return this._menuItemMap;
 	},
-	getSubMenuItemById: function (subMenuItemId) {
+	getMenuItemById: function (menuItemId) {
 		var commandMap = hvStat.battle.command.commandMap;
 		for (var key in commandMap) {
 			var menus = commandMap[key].menus;
 			for (var i = 0; i < menus.length; i++) {
-				var item = menus[i].getItemById(subMenuItemId);
+				var item = menus[i].getItemById(menuItemId);
 				if (item) {
 					return item;
 				}
@@ -3192,12 +3192,12 @@ hvStat.battle.command = {
 		}
 		return null;
 	},
-	getSubMenuItemByName: function (subMenuItemName) {
+	getMenuItemByName: function (menuItemName) {
 		var commandMap = hvStat.battle.command.commandMap;
 		for (var key in commandMap) {
 			var menus = commandMap[key].menus;
 			for (var i = 0; i < menus.length; i++) {
-				var item = menus[i].getItemByName(subMenuItemName);
+				var item = menus[i].getItemByName(menuItemName);
 				if (item) {
 					return item;
 				}
@@ -3205,7 +3205,7 @@ hvStat.battle.command = {
 		}
 		return null;
 	},
-	getSubMenuItemsByBoundKey: function (keyCombination) {
+	getMenuItemsByBoundKey: function (keyCombination) {
 		var itemMap = this.menuItemMap;
 		var foundItems = [];
 		for (var key in itemMap) {
