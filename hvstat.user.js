@@ -2828,7 +2828,7 @@ hvStat.battle.eventLog.messageTypeParams = {
 		evaluationFn: function (message) {
 			var styleColor = message.regexResult[2];
 			var stuffName = message.regexResult[3];
-			var regexResult, qty;
+			var regexResult, qty = 0;
 			switch (styleColor.toLowerCase()) {
 			case "#a89000":	// Credit
 				if (hvStat.settings.isTrackItems) {
@@ -2840,6 +2840,7 @@ hvStat.battle.eventLog.messageTypeParams = {
 							hvStat.characterStatus.difficulty.id, hvStat.roundContext.battleTypeName);
 					}
 				}
+				hvStat.roundContext.credits += qty;
 				break;
 			case "#ba05b4":	// Crystal
 				if (hvStat.settings.isTrackItems) {
@@ -2936,13 +2937,14 @@ hvStat.battle.eventLog.messageTypeParams = {
 		},
 	},
 	GRINDFEST_INITIALIZATION: {
-		regex: /^Initializing GrindFest \(Round (\d+)\) \.\.\.$/,
+		regex: /^Initializing Grindfest \(Round (\d+)\s*\/\s*(\d+)\) \.\.\.$/,
 		relatedMessageTypeNames: null,
 		contentType: "text",
 		evaluationFn: function (message) {
 			hvStat.roundContext.battleType = GRINDFEST;
 			hvStat.roundContext.battleTypeName = hvStat.constant.battleType.GRINDFEST.id;
 			hvStat.roundContext.currRound = Number(message.regexResult[1]);
+			hvStat.roundContext.maxRound = Number(message.regexResult[2]);
 		},
 	},
 	ESCAPE: {
@@ -2984,6 +2986,7 @@ hvStat.battle.eventLog.messageTypeParams = {
 		evaluationFn: function (message) {
 			var styleColor = message.regexResult[1];
 			var stuffName = message.regexResult[2];
+			var regexResult, qty = 0;
 			switch (styleColor.toLowerCase()) {
 			case "#a89000":	// Credit
 				if (hvStat.settings.isTrackItems) {
@@ -2995,6 +2998,7 @@ hvStat.battle.eventLog.messageTypeParams = {
 							hvStat.characterStatus.difficulty.id, hvStat.roundContext.battleTypeName);
 					}
 				}
+				hvStat.roundContext.credits += qty;
 				break;
 			case "#ba05b4":	// Crystal
 				if (hvStat.settings.isTrackItems) {
@@ -3067,7 +3071,7 @@ hvStat.battle.eventLog.messageTypeParams = {
 		contentType: "text",
 		evaluationFn: function (message) {
 			var credits = Number(message.regexResult[1]);
-			hvStat.roundContext.credits = credits;
+			hvStat.roundContext.credits += credits;
 		},
 	},
 	EXP: {
@@ -6636,6 +6640,8 @@ function initOverviewPane() {
 
 	var tdCreditsHourlyEncounters = $('#hvstat-overview-credits-hourly-encounters td');
 	var tdCreditsArena = $('#hvstat-overview-credits-arenas td');
+ 	var tdCreditsGrindfests = $('#hvstat-overview-credits-grindfests td');
+ 	var tdCreditsItemWorlds = $('#hvstat-overview-credits-item-worlds td');
 	var tdCreditsTotal = $('#hvstat-overview-credits-total td');
 
 	$(tdCreditsHourlyEncounters[0]).text(hvStat.ui.util.numberWithCommas(hvStat.overview.creditsbyBT[0]));
@@ -6650,8 +6656,20 @@ function initOverviewPane() {
 	$(tdCreditsArena[3]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.creditsbyBT[1], elapsedHours).toFixed()));
 	$(tdCreditsArena[4]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.creditsbyBT[1], elapsedDays).toFixed()));
 
+	$(tdCreditsGrindfests[0]).text(hvStat.ui.util.numberWithCommas(hvStat.overview.creditsbyBT[2]));
+	$(tdCreditsGrindfests[1]).text(hvStat.ui.util.percentRatio(hvStat.overview.creditsbyBT[2], hvStat.overview.credits, 2) + "%");
+	$(tdCreditsGrindfests[2]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.creditsbyBT[2], hvStat.overview.roundArray[2]).toFixed()));
+	$(tdCreditsGrindfests[3]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.creditsbyBT[2], elapsedHours).toFixed()));
+	$(tdCreditsGrindfests[4]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.creditsbyBT[2], elapsedDays).toFixed()));
+
+	$(tdCreditsItemWorlds[0]).text(hvStat.ui.util.numberWithCommas(hvStat.overview.creditsbyBT[3]));
+	$(tdCreditsItemWorlds[1]).text(hvStat.ui.util.percentRatio(hvStat.overview.creditsbyBT[3], hvStat.overview.credits, 2) + "%");
+	$(tdCreditsItemWorlds[2]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.creditsbyBT[3], hvStat.overview.roundArray[3]).toFixed()));
+	$(tdCreditsItemWorlds[3]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.creditsbyBT[3], elapsedHours).toFixed()));
+	$(tdCreditsItemWorlds[4]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.creditsbyBT[3], elapsedDays).toFixed()));
+
 	$(tdCreditsTotal[0]).text(hvStat.ui.util.numberWithCommas(hvStat.overview.credits));
-	$(tdCreditsTotal[2]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.credits, hvStat.overview.roundArray[0] + hvStat.overview.roundArray[1]).toFixed()));
+	$(tdCreditsTotal[2]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.credits, hvStat.overview.totalRounds).toFixed()));
 	$(tdCreditsTotal[3]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.credits, elapsedHours).toFixed()));
 	$(tdCreditsTotal[4]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.credits, elapsedDays).toFixed()));
 
