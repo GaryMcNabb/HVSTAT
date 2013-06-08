@@ -6,7 +6,7 @@
 // @exclude         http://hentaiverse.org/pages/showequip*
 // @exclude         http://hentaiverse.org/?login*
 // @author          Various (http://forums.e-hentai.org/index.php?showtopic=79552)
-// @version         5.6.0
+// @version         5.6.1
 // @resource        battle-log-type0.css                        css/battle-log-type0.css
 // @resource        battle-log-type1.css                        css/battle-log-type1.css
 // @resource        hvstat.css                                  css/hvstat.css
@@ -437,7 +437,7 @@ var hv = {
 // HV STAT object
 //------------------------------------
 var hvStat = {
-	version: "5.6.0",
+	version: "5.6.1",
 	setup: function () {
 		this.addStyle();
 	},
