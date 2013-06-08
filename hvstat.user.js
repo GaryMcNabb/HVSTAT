@@ -3180,53 +3180,38 @@ hvStat.battle.command = {
 		return this._subMenuItemMap;
 	},
 	getSubMenuItemById: function (subMenuItemId) {
-		var key, menus, i, items, j;
 		var commandMap = hvStat.battle.command.commandMap;
-		for (key in commandMap) {
-			menus = commandMap[key].menus;
-			for (i = 0; i < menus.length; i++) {
-				items = menus[i].items;
-				for (j = 0; j < items.length; j++) {
-					if (items[j].id === subMenuItemId) {
-						return items[j];
-					}
+		for (var key in commandMap) {
+			var menus = commandMap[key].menus;
+			for (var i = 0; i < menus.length; i++) {
+				var item = menus[i].getItemById(subMenuItemId);
+				if (item) {
+					return item;
 				}
 			}
 		}
 		return null;
 	},
 	getSubMenuItemByName: function (subMenuItemName) {
-		var key, menus, i, items, j;
 		var commandMap = hvStat.battle.command.commandMap;
-		for (key in commandMap) {
-			menus = commandMap[key].menus;
-			for (i = 0; i < menus.length; i++) {
-				items = menus[i].items;
-				for (j = 0; j < items.length; j++) {
-					if (items[j].name === subMenuItemName) {
-						return items[j];
-					}
+		for (var key in commandMap) {
+			var menus = commandMap[key].menus;
+			for (var i = 0; i < menus.length; i++) {
+				var item = menus[i].getItemByName(subMenuItemName);
+				if (item) {
+					return item;
 				}
 			}
 		}
 		return null;
 	},
 	getSubMenuItemsByBoundKey: function (keyCombination) {
+		var itemMap = this.subMenuItemMap;
 		var foundItems = [];
-		var key, menus, i, items, j, boundKeys, k;
-		var commandMap = hvStat.battle.command.commandMap;
-		for (key in commandMap) {
-			menus = commandMap[key].menus;
-			for (i = 0; i < menus.length; i++) {
-				items = menus[i].items;
-				for (j = 0; j < items.length; j++) {
-					boundKeys = items[j].boundKeys;
-					for (k = 0; k < boundKeys.length; k++) {
-						if (boundKeys[k].matches(keyCombination)) {
-							foundItems.push(items[j]);
-						}
-					}
-				}
+		for (var key in itemMap) {
+			var item = itemMap[key];
+			if (item && item.isBoundKey(keyCombination)) {
+				foundItems.push(itemMap[key]);
 			}
 		}
 		return foundItems;
@@ -3275,7 +3260,15 @@ hvStat.battle.command.SubMenuItem.prototype = {
 	},
 	unbindKeys: function () {
 		this.boundKeys = [];
-	}
+	},
+	isBoundKey: function (keyConbination) {
+		for (var i = 0; i < this.boundKeys.length; i++) {
+			if (this.boundKeys[i].matches(keyConbination)) {
+				return true;
+			}
+		}
+		return false;
+	},
 };
 
 hvStat.battle.command.SubMenu = function (spec) {
@@ -3302,7 +3295,32 @@ hvStat.battle.command.SubMenu.prototype = {
 		if (this.opened) {
 			this.parent.element.onclick();
 		}
-	}
+	},
+	getItemById: function (id) {
+		for (var i = 0; i < this.items.length; i++) {
+			if (this.items[i].id === id) {
+				return this.items[i];
+			}
+		}
+		return null;
+	},
+	getItemByName: function (name) {
+		for (var i = 0; i < this.items.length; i++) {
+			if (this.items[i].name === name) {
+				return this.items[i];
+			}
+		}
+		return null;
+	},
+	getItemsByBoundkey: function (keyCombination) {
+		var foundItems = [];
+		for (var i = 0; i < this.items.length; i++) {
+			if (this.items[i].isBoundKey(keyCombination)) {
+				foundItems.push(this.items[i]);
+			}
+		}
+		return foundItems;
+	},
 };
 
 hvStat.battle.command.Command = function (spec) {
