@@ -1739,11 +1739,11 @@ hvStat.keyboard = {
 		var boundKeys, i, j;
 		if (hv.battle.isActive) {
 			var attackCommand = hvStat.battle.command.commandMap["Attack"];	// Used to close Skillbook menu
-			var miScan = hvStat.battle.command.subMenuItemMap["Scan"];
-			var miSkill1 = hvStat.battle.command.subMenuItemMap["Skill1"];
-			var miSkill2 = hvStat.battle.command.subMenuItemMap["Skill2"];
-			var miSkill3 = hvStat.battle.command.subMenuItemMap["Skill3"];
-			var miOFC = hvStat.battle.command.subMenuItemMap["OFC"];
+			var miScan = hvStat.battle.command.menuItemMap["Scan"];
+			var miSkill1 = hvStat.battle.command.menuItemMap["Skill1"];
+			var miSkill2 = hvStat.battle.command.menuItemMap["Skill2"];
+			var miSkill3 = hvStat.battle.command.menuItemMap["Skill3"];
+			var miOFC = hvStat.battle.command.menuItemMap["OFC"];
 			var miSkills = [miSkill1, miSkill2, miSkill3];
 			if (hvStat.settings.isEnableScanHotkey && miScan) {
 				boundKeys = miScan.boundKeys;
@@ -3135,10 +3135,10 @@ hvStat.battle.command = {
 		}
 		return this._commandMap;
 	},
-	_subMenuItemMap: null,
-	get subMenuItemMap() {
-		if (!this._subMenuItemMap) {
-			this._subMenuItemMap = {
+	_menuItemMap: null,
+	get menuItemMap() {
+		if (!this._menuItemMap) {
+			this._menuItemMap = {
 				"PowerupGem": hvStat.battle.command.getSubMenuItemById("ikey_p"),
 				"Scan": hvStat.battle.command.getSubMenuItemByName("Scan"),
 				"Skill1": hvStat.battle.command.getSubMenuItemById("2101") ||
@@ -3158,26 +3158,26 @@ hvStat.battle.command = {
 					hvStat.battle.command.getSubMenuItemById("2503"),
 				"OFC": hvStat.battle.command.getSubMenuItemByName("Orbital Friendship Cannon"),
 			};
-			if (this._subMenuItemMap["Scan"]) {
-				this._subMenuItemMap["Scan"].bindKeys([
+			if (this._menuItemMap["Scan"]) {
+				this._menuItemMap["Scan"].bindKeys([
 					new hvStat.keyboard.KeyCombination({ keyCode: 46 }),	// Delete
 					new hvStat.keyboard.KeyCombination({ keyCode: 110 })	// Numpad . Del
 				]);
 			}
-			if (this._subMenuItemMap["Skill1"]) {
-				this._subMenuItemMap["Skill1"].bindKeys([
+			if (this._menuItemMap["Skill1"]) {
+				this._menuItemMap["Skill1"].bindKeys([
 					new hvStat.keyboard.KeyCombination({ keyCode: 107 }),	// Numpad +
 					new hvStat.keyboard.KeyCombination({ keyCode: 187 })	// = +
 				]);
 			}
-			if (this._subMenuItemMap["OFC"]) {
-				this._subMenuItemMap["OFC"].bindKeys([
+			if (this._menuItemMap["OFC"]) {
+				this._menuItemMap["OFC"].bindKeys([
 					new hvStat.keyboard.KeyCombination({ keyCode: 109 }),	// Numpad -
 					new hvStat.keyboard.KeyCombination({ keyCode: 189 })	// - _
 				]);
 			}
 		}
-		return this._subMenuItemMap;
+		return this._menuItemMap;
 	},
 	getSubMenuItemById: function (subMenuItemId) {
 		var commandMap = hvStat.battle.command.commandMap;
@@ -3206,7 +3206,7 @@ hvStat.battle.command = {
 		return null;
 	},
 	getSubMenuItemsByBoundKey: function (keyCombination) {
-		var itemMap = this.subMenuItemMap;
+		var itemMap = this.menuItemMap;
 		var foundItems = [];
 		for (var key in itemMap) {
 			var item = itemMap[key];
@@ -3530,7 +3530,7 @@ hvStat.battle.enhancement.powerupBox = {
 			powerBox.setAttribute("onmouseover", powerInfo);
 			powerBox.setAttribute("onmouseout", powerup.getAttribute("onmouseout"));
 			powerBox.addEventListener("click", function (event) {
-				hvStat.battle.command.subMenuItemMap["PowerupGem"].select();
+				hvStat.battle.command.menuItemMap["PowerupGem"].select();
 			});
 			if (powerInfo.indexOf('Health') > -1) {
 				powerBox.className += " hvstat-powerup-box-health";
@@ -3630,7 +3630,7 @@ hvStat.battle.enhancement.scanButton = {
 		button.className = "hvstat-scan-button";
 		button.textContent = "Scan";
 		button.addEventListener("click", function (event) {
-			hvStat.battle.command.subMenuItemMap["Scan"].select();
+			hvStat.battle.command.menuItemMap["Scan"].select();
 			monster.onclick();
 		});
 		return button;
@@ -3660,9 +3660,9 @@ hvStat.battle.enhancement.skillButton = {
 		return "";
 	},
 	createAll: function () {
-		var skill1 = hvStat.battle.command.subMenuItemMap["Skill1"];
-		var skill2 = hvStat.battle.command.subMenuItemMap["Skill2"];
-		var skill3 = hvStat.battle.command.subMenuItemMap["Skill3"];
+		var skill1 = hvStat.battle.command.menuItemMap["Skill1"];
+		var skill2 = hvStat.battle.command.menuItemMap["Skill2"];
+		var skill3 = hvStat.battle.command.menuItemMap["Skill3"];
 		var skills = [];
 		if (skill1) {
 			skills.push(skill1);
@@ -3696,7 +3696,7 @@ hvStat.battle.enhancement.skillButton = {
 			button.style.cssText += "opacity: 0.3;";
 		}
 		button.addEventListener("click", function (event) {
-			hvStat.battle.command.subMenuItemMap["Skill" + skillNumber].select();
+			hvStat.battle.command.menuItemMap["Skill" + skillNumber].select();
 			monster.onclick();
 		});
 		return button;
@@ -4823,8 +4823,8 @@ hvStat.battle.warningSystem = {
 						(effectName + " ").indexOf(this.selfEffectNames[j] + " ") >= 0 &&	// To match "Regen" and "Regen II", not "Regeneration"
 						String(hvStat.settings.EffectsAlertSelfRounds[j]) === duration) {
 					// Suppress useless warnings
-					if (effectName === "Chain 1" && !hvStat.battle.command.subMenuItemMap["Skill2"].available ||
-							effectName === "Chain 2" && !hvStat.battle.command.subMenuItemMap["Skill3"].available) {
+					if (effectName === "Chain 1" && !hvStat.battle.command.menuItemMap["Skill2"].available ||
+							effectName === "Chain 2" && !hvStat.battle.command.menuItemMap["Skill3"].available) {
 						continue;
 					}
 					this.enqueueAlert(effectName + " is expiring");
