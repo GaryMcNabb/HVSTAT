@@ -3218,7 +3218,7 @@ hvStat.battle.command = {
 	},
 };
 
-hvStat.battle.command.SubMenuItem = function (spec) {
+hvStat.battle.command.MenuItem = function (spec) {
 	this.parent = spec && spec.parent || null;
 	this.element = spec && spec.element || null;
 	var onmouseover = String(this.element.getAttribute("onmouseover"));
@@ -3238,7 +3238,7 @@ hvStat.battle.command.SubMenuItem = function (spec) {
 		this.commandTarget = "enemy";
 	}
 };
-hvStat.battle.command.SubMenuItem.prototype = {
+hvStat.battle.command.MenuItem.prototype = {
 	get available() {
 		return !this.element.style.cssText.match(/opacity\s*:\s*0/i);
 	},
@@ -3279,7 +3279,7 @@ hvStat.battle.command.Menu = function (spec) {
 	this.items = [];
 	var itemElements = this.element.querySelectorAll('div.btsd, #ikey_p, img.btii');
 	for (var i = 0; i < itemElements.length; i++) {
-		this.items[i] = new hvStat.battle.command.SubMenuItem({ parent: this, element: itemElements[i] });
+		this.items[i] = new hvStat.battle.command.MenuItem({ parent: this, element: itemElements[i] });
 	}
 };
 hvStat.battle.command.Menu.prototype = {
