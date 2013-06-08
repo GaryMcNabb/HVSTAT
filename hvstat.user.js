@@ -2828,11 +2828,23 @@ hvStat.battle.eventLog.messageTypeParams = {
 		evaluationFn: function (message) {
 			var styleColor = message.regexResult[2];
 			var stuffName = message.regexResult[3];
+			var regexResult, qty;
 			switch (styleColor.toLowerCase()) {
-			case "green":	// Item
+			case "#a89000":	// Credit
 				if (hvStat.settings.isTrackItems) {
-					var regexResult = stuffName.match(/(?:(\d+)x\s*)?(Crystal of .+)/);
-					var qty = 1;
+					regexResult = stuffName.match(/(\d+) (Credits)/);
+					if (regexResult[1]) {
+						qty = Number(regexResult[1]);
+						stuffName = regexResult[2];
+						hvStat.statistics.drops.addItem(stuffName, qty, hvStat.constant.dropType.MONSTER_DROP.id,
+							hvStat.characterStatus.difficulty.id, hvStat.roundContext.battleTypeName);
+					}
+				}
+				break;
+			case "#ba05b4":	// Crystal
+				if (hvStat.settings.isTrackItems) {
+					regexResult = stuffName.match(/(?:(\d+)x\s*)?(Crystal of .+)/);
+					qty = 1;
 					if (regexResult) {
 						// Crystal
 						if (regexResult[1]) {
@@ -2844,13 +2856,20 @@ hvStat.battle.eventLog.messageTypeParams = {
 						hvStat.characterStatus.difficulty.id, hvStat.roundContext.battleTypeName);
 				}
 				break;
+			case "#00b000":	// Item
+			case "#489eff":	// Monster Food
+				if (hvStat.settings.isTrackItems) {
+					hvStat.statistics.drops.addItem(stuffName, 1, hvStat.constant.dropType.MONSTER_DROP.id,
+						hvStat.characterStatus.difficulty.id, hvStat.roundContext.battleTypeName);
+				}
+				break;
 			case "#254117":	// Token
 				if (hvStat.settings.isTrackItems) {
 					hvStat.statistics.drops.addToken(stuffName, hvStat.constant.dropType.MONSTER_DROP.id,
 						hvStat.characterStatus.difficulty.id, hvStat.roundContext.battleTypeName);
 				}
 				break;
-			case "blue":	// Artifact or Collectable
+			case "#0000ff":	// Artifact or Collectable
 				hvStat.roundContext.artifacts++;
 				hvStat.roundContext.lastArtName = stuffName;
 				if (hvStat.settings.isTrackItems) {
@@ -2858,7 +2877,7 @@ hvStat.battle.eventLog.messageTypeParams = {
 						hvStat.characterStatus.difficulty.id, hvStat.roundContext.battleTypeName);
 				}
 				break;
-			case "red":		// Equipment
+			case "#ff0000":	// Equipment
 				hvStat.roundContext.equips++;
 				hvStat.roundContext.lastEquipName = stuffName;
 				if (hvStat.settings.isTrackItems) {
@@ -2966,10 +2985,21 @@ hvStat.battle.eventLog.messageTypeParams = {
 			var styleColor = message.regexResult[1];
 			var stuffName = message.regexResult[2];
 			switch (styleColor.toLowerCase()) {
-			case "green":	// Item
+			case "#a89000":	// Credit
 				if (hvStat.settings.isTrackItems) {
-					var regexResult = stuffName.match(/(?:(\d+)x\s*)?(Crystal of .+)/);
-					var qty = 1;
+					regexResult = stuffName.match(/(\d+) (Credits)/);
+					if (regexResult[1]) {
+						qty = Number(regexResult[1]);
+						stuffName = regexResult[2];
+						hvStat.statistics.drops.addItem(stuffName, qty, hvStat.constant.dropType.MONSTER_DROP.id,
+							hvStat.characterStatus.difficulty.id, hvStat.roundContext.battleTypeName);
+					}
+				}
+				break;
+			case "#ba05b4":	// Crystal
+				if (hvStat.settings.isTrackItems) {
+					regexResult = stuffName.match(/(?:(\d+)x\s*)?(Crystal of .+)/);
+					qty = 1;
 					if (regexResult) {
 						// Crystal
 						if (regexResult[1]) {
@@ -2977,7 +3007,14 @@ hvStat.battle.eventLog.messageTypeParams = {
 						}
 						stuffName = regexResult[2];
 					}
-					hvStat.statistics.drops.addItem(stuffName, qty, hvStat.constant.dropType.ARENA_CLEAR_BONUS.id,
+					hvStat.statistics.drops.addItem(stuffName, qty, hvStat.constant.dropType.MONSTER_DROP.id,
+						hvStat.characterStatus.difficulty.id, hvStat.roundContext.battleTypeName);
+				}
+				break;
+			case "#00b000":	// Item
+			case "#489eff":	// Monster Food
+				if (hvStat.settings.isTrackItems) {
+					hvStat.statistics.drops.addItem(stuffName, 1, hvStat.constant.dropType.MONSTER_DROP.id,
 						hvStat.characterStatus.difficulty.id, hvStat.roundContext.battleTypeName);
 				}
 				break;
@@ -2987,7 +3024,7 @@ hvStat.battle.eventLog.messageTypeParams = {
 						hvStat.characterStatus.difficulty.id, hvStat.roundContext.battleTypeName);
 				}
 				break;
-			case "blue":	// Artifact or Collectable
+			case "#0000ff":	// Artifact or Collectable
 				hvStat.roundContext.artifacts++;
 				hvStat.roundContext.lastArtName = stuffName;
 				if (hvStat.settings.isTrackItems) {
@@ -2995,7 +3032,7 @@ hvStat.battle.eventLog.messageTypeParams = {
 						hvStat.characterStatus.difficulty.id, hvStat.roundContext.battleTypeName);
 				}
 				break;
-			case "red":		// Equipment
+			case "#ff0000":	// Equipment
 				hvStat.roundContext.equips++;
 				hvStat.roundContext.lastEquipName = stuffName;
 				if (hvStat.settings.isTrackItems) {

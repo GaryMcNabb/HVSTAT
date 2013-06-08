@@ -1,5 +1,6 @@
 {
 	"items": [
+		{"name": "Credits", "className": "credit"},
 		{"name": "Lesser Health Potion", "className": "restorative"},
 		{"name": "Greater Health Potion", "className": "restorative"},
 		{"name": "Heroic Health Potion", "className": "restorative"},
@@ -75,6 +76,7 @@
 		{"name": "Daring Do Figurine", "className": "collectable"}
 	],
 	"classes": [
+		{"className": "credit", "displayName1": "Credits", "displayName2": "Credits"},
 		{"className": "restorative", "displayName1": "Restorative", "displayName2": "Restoratives"},
 		{"className": "infusion", "displayName1": "Infusion", "displayName2": "Infusions"},
 		{"className": "scroll", "displayName1": "Scroll", "displayName2": "Scrolls"},
