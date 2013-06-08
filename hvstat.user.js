@@ -3271,7 +3271,7 @@ hvStat.battle.command.SubMenuItem.prototype = {
 	},
 };
 
-hvStat.battle.command.SubMenu = function (spec) {
+hvStat.battle.command.Menu = function (spec) {
 	this.parent = spec && spec.parent || null;
 	this.elementId = spec && spec.elementId || null;
 	this.element = this.elementId && document.getElementById(this.elementId) || null;
@@ -3282,7 +3282,7 @@ hvStat.battle.command.SubMenu = function (spec) {
 		this.items[i] = new hvStat.battle.command.SubMenuItem({ parent: this, element: itemElements[i] });
 	}
 };
-hvStat.battle.command.SubMenu.prototype = {
+hvStat.battle.command.Menu.prototype = {
 	get opened() {
 		return !this.element.style.cssText.match(/display\s*:\s*none/);
 	},
@@ -3332,7 +3332,7 @@ hvStat.battle.command.Command = function (spec) {
 
 	// Build menus
 	for (var i = 0; i < this.menuElementIds.length; i++) {
-		this.menus[i] = new hvStat.battle.command.SubMenu({ parent: this, elementId: this.menuElementIds[i] });
+		this.menus[i] = new hvStat.battle.command.Menu({ parent: this, elementId: this.menuElementIds[i] });
 	}
 };
 hvStat.battle.command.Command.prototype = {
