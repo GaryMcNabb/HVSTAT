@@ -75,17 +75,17 @@
 		{"name": "Vinyl Scratch Figurine", "className": "collectable"},
 		{"name": "Daring Do Figurine", "className": "collectable"}
 	],
-	"classes": [
-		{"className": "credit", "displayName1": "Credits", "displayName2": "Credits"},
-		{"className": "restorative", "displayName1": "Restorative", "displayName2": "Restoratives"},
-		{"className": "infusion", "displayName1": "Infusion", "displayName2": "Infusions"},
-		{"className": "scroll", "displayName1": "Scroll", "displayName2": "Scrolls"},
-		{"className": "crystal", "displayName1": "Crystal", "displayName2": "Crystals"},
-		{"className": "monsterFood", "displayName1": "Monster Food", "displayName2": "Monster Food"},
-		{"className": "shard", "displayName1": "Shard", "displayName2": "Shards"},
-		{"className": "special", "displayName1": "Special", "displayName2": "Special"},
-		{"className": "token", "displayName1": "Token", "displayName2": "Tokens"},
-		{"className": "artifact", "displayName1": "Artifact", "displayName2": "Artifacts"},
-		{"className": "collectable", "displayName1": "Collectable", "displayName2": "Collectables"}
-	]
+	"itemClass": {
+		"credit": {"displayName1": "Credits", "displayName2": "Credits", "styleClassName": "hvstat-color-credits"},
+		"restorative": {"displayName1": "Restorative", "displayName2": "Restoratives", "styleClassName": "hvstat-color-item"},
+		"infusion": {"displayName1": "Infusion", "displayName2": "Infusions", "styleClassName": "hvstat-color-item"},
+		"scroll": {"displayName1": "Scroll", "displayName2": "Scrolls", "styleClassName": "hvstat-color-item"},
+		"crystal": {"displayName1": "Crystal", "displayName2": "Crystals", "styleClassName": "hvstat-color-crystal"},
+		"monsterFood": {"displayName1": "Monster Food", "displayName2": "Monster Food", "styleClassName": "hvstat-color-monster-food"},
+		"shard": {"displayName1": "Shard", "displayName2": "Shards", "styleClassName": "hvstat-color-item"},
+		"special": {"displayName1": "Special", "displayName2": "Special", "styleClassName": "hvstat-color-item"},
+		"token": {"displayName1": "Token", "displayName2": "Tokens", "styleClassName": "hvstat-color-token"},
+		"artifact": {"displayName1": "Artifact", "displayName2": "Artifacts", "styleClassName": "hvstat-color-artifact"},
+		"collectable": {"displayName1": "Collectable", "displayName2": "Collectables", "styleClassName": "hvstat-color-artifact"}
+	}
 }
