@@ -6,7 +6,7 @@
 // @exclude         http://hentaiverse.org/pages/showequip*
 // @exclude         http://hentaiverse.org/?login*
 // @author          Various (http://forums.e-hentai.org/index.php?showtopic=79552)
-// @version         5.6.1
+// @version         5.6.2
 // @resource        battle-log-type0.css                        css/battle-log-type0.css
 // @resource        battle-log-type1.css                        css/battle-log-type1.css
 // @resource        hvstat.css                                  css/hvstat.css
@@ -437,7 +437,7 @@ var hv = {
 // HV STAT object
 //------------------------------------
 var hvStat = {
-	version: "5.6.1",
+	version: "5.6.2",
 	setup: function () {
 		this.addStyle();
 	},
@@ -1040,7 +1040,10 @@ hvStat.storage.initialValue = {
 	dropStats: {
 		// Array of { key:Object { type:String, difficulty:String, battleType:String }, count:Number }
 		nChances: [],
+		creditCount: [],
 		itemCount: [],
+		crystalCount: [],
+		monsterFoodCount: [],
 		tokenCount: [],
 		artifactCount: [],
 		equipmentCount: [],
@@ -1343,11 +1346,29 @@ hvStat.storage.DropStats.prototype.increaseChance = function (value, dropType, d
 hvStat.storage.DropStats.prototype.nChances = function (dropType, difficulty, battleType) {
 	return this.getCount(this.value.nChances, dropType, difficulty, battleType);
 };
-hvStat.storage.DropStats.prototype.addItem = function (name, qty, dropType, difficulty, battleType) {
+hvStat.storage.DropStats.prototype.addCredit = function (name, dropType, difficulty, battleType) {
+	this.addCount(1, this.value.creditCount, dropType, difficulty, battleType);
+};
+hvStat.storage.DropStats.prototype.creditCount = function (dropType, difficulty, battleType) {
+	return this.getCount(this.value.creditCount, dropType, difficulty, battleType);
+};
+hvStat.storage.DropStats.prototype.addItem = function (name, dropType, difficulty, battleType) {
 	this.addCount(1, this.value.itemCount, dropType, difficulty, battleType);
 };
 hvStat.storage.DropStats.prototype.itemCount = function (dropType, difficulty, battleType) {
 	return this.getCount(this.value.itemCount, dropType, difficulty, battleType);
+};
+hvStat.storage.DropStats.prototype.addCrystal = function (name, dropType, difficulty, battleType) {
+	this.addCount(1, this.value.crystalCount, dropType, difficulty, battleType);
+};
+hvStat.storage.DropStats.prototype.crystalCount = function (dropType, difficulty, battleType) {
+	return this.getCount(this.value.crystalCount, dropType, difficulty, battleType);
+};
+hvStat.storage.DropStats.prototype.addMonsterFood = function (name, dropType, difficulty, battleType) {
+	this.addCount(1, this.value.monsterFoodCount, dropType, difficulty, battleType);
+};
+hvStat.storage.DropStats.prototype.monsterFoodCount = function (dropType, difficulty, battleType) {
+	return this.getCount(this.value.monsterFoodCount, dropType, difficulty, battleType);
 };
 hvStat.storage.DropStats.prototype.addToken = function (name, dropType, difficulty, battleType) {
 	this.addCount(1, this.value.tokenCount, dropType, difficulty, battleType);
@@ -1366,6 +1387,15 @@ hvStat.storage.DropStats.prototype.addEquipment = function (name, dropType, diff
 };
 hvStat.storage.DropStats.prototype.equipmentCount = function (dropType, difficulty, battleType) {
 	return this.getCount(this.value.equipmentCount, dropType, difficulty, battleType);
+};
+hvStat.storage.DropStats.prototype.totalCount = function (dropType, difficulty, battleType) {
+	return this.creditCount(dropType, difficulty, battleType) +
+		this.itemCount(dropType, difficulty, battleType) +
+		this.crystalCount(dropType, difficulty, battleType) +
+		this.monsterFoodCount(dropType, difficulty, battleType) +
+		this.tokenCount(dropType, difficulty, battleType) +
+		this.artifactCount(dropType, difficulty, battleType) +
+		this.equipmentCount(dropType, difficulty, battleType);
 };
 
 // Drop Statistics object
@@ -2852,11 +2882,17 @@ hvStat.battle.eventLog.messageTypeParams = {
 					if (regexResult[1]) {
 						qty = Number(regexResult[1]);
 						stuffName = regexResult[2];
-						hvStat.statistics.drops.addItem(stuffName, qty, hvStat.constant.dropType.MONSTER_DROP.id,
+						hvStat.statistics.drops.addCredit(stuffName, qty, hvStat.constant.dropType.MONSTER_DROP.id,
 							hvStat.characterStatus.difficulty.id, hvStat.roundContext.battleTypeName);
 					}
 				}
 				hvStat.roundContext.credits += qty;
+				break;
+			case "#00b000":	// Item
+				if (hvStat.settings.isTrackItems) {
+					hvStat.statistics.drops.addItem(stuffName, hvStat.constant.dropType.MONSTER_DROP.id,
+						hvStat.characterStatus.difficulty.id, hvStat.roundContext.battleTypeName);
+				}
 				break;
 			case "#ba05b4":	// Crystal
 				if (hvStat.settings.isTrackItems) {
@@ -2869,14 +2905,13 @@ hvStat.battle.eventLog.messageTypeParams = {
 						}
 						stuffName = regexResult[2];
 					}
-					hvStat.statistics.drops.addItem(stuffName, qty, hvStat.constant.dropType.MONSTER_DROP.id,
+					hvStat.statistics.drops.addCrystal(stuffName, qty, hvStat.constant.dropType.MONSTER_DROP.id,
 						hvStat.characterStatus.difficulty.id, hvStat.roundContext.battleTypeName);
 				}
 				break;
-			case "#00b000":	// Item
 			case "#489eff":	// Monster Food
 				if (hvStat.settings.isTrackItems) {
-					hvStat.statistics.drops.addItem(stuffName, 1, hvStat.constant.dropType.MONSTER_DROP.id,
+					hvStat.statistics.drops.addMonsterFood(stuffName, hvStat.constant.dropType.MONSTER_DROP.id,
 						hvStat.characterStatus.difficulty.id, hvStat.roundContext.battleTypeName);
 				}
 				break;
@@ -3004,17 +3039,11 @@ hvStat.battle.eventLog.messageTypeParams = {
 			var stuffName = message.regexResult[2];
 			var regexResult, qty = 0;
 			switch (styleColor.toLowerCase()) {
-			case "#a89000":	// Credit
+			case "#00b000":	// Item
 				if (hvStat.settings.isTrackItems) {
-					regexResult = stuffName.match(/(\d+) (Credits)/);
-					if (regexResult[1]) {
-						qty = Number(regexResult[1]);
-						stuffName = regexResult[2];
-						hvStat.statistics.drops.addItem(stuffName, qty, hvStat.constant.dropType.MONSTER_DROP.id,
-							hvStat.characterStatus.difficulty.id, hvStat.roundContext.battleTypeName);
-					}
+					hvStat.statistics.drops.addItem(stuffName, hvStat.constant.dropType.ARENA_CLEAR_BONUS.id,
+						hvStat.characterStatus.difficulty.id, hvStat.roundContext.battleTypeName);
 				}
-				hvStat.roundContext.credits += qty;
 				break;
 			case "#ba05b4":	// Crystal
 				if (hvStat.settings.isTrackItems) {
@@ -3027,14 +3056,13 @@ hvStat.battle.eventLog.messageTypeParams = {
 						}
 						stuffName = regexResult[2];
 					}
-					hvStat.statistics.drops.addItem(stuffName, qty, hvStat.constant.dropType.MONSTER_DROP.id,
+					hvStat.statistics.drops.addItem(stuffName, qty, hvStat.constant.dropType.ARENA_CLEAR_BONUS.id,
 						hvStat.characterStatus.difficulty.id, hvStat.roundContext.battleTypeName);
 				}
 				break;
-			case "#00b000":	// Item
 			case "#489eff":	// Monster Food
 				if (hvStat.settings.isTrackItems) {
-					hvStat.statistics.drops.addItem(stuffName, 1, hvStat.constant.dropType.MONSTER_DROP.id,
+					hvStat.statistics.drops.addItem(stuffName, hvStat.constant.dropType.ARENA_CLEAR_BONUS.id,
 						hvStat.characterStatus.difficulty.id, hvStat.roundContext.battleTypeName);
 				}
 				break;
@@ -4928,12 +4956,33 @@ hvStat.statistics.drops = {
 	nChances: function (dropType, difficulty, battleType) {
 		return hvStat.storage.dropStats.nChances(dropType, difficulty, battleType);
 	},
-	addItem: function (name, qty, dropType, difficulty, battleType) {
-		hvStat.storage.dropStats.addItem(name, qty, dropType, difficulty, battleType);
-		this.storeItem(name, qty, dropType, difficulty, battleType);
+	addCredit: function (name, amt, dropType, difficulty, battleType) {
+		hvStat.storage.dropStats.addCredit(name, dropType, difficulty, battleType);
+		this.storeItem(name, amt, dropType, difficulty, battleType);
+	},
+	creditCount: function (dropType, difficulty, battleType) {
+		return hvStat.storage.dropStats.creditCount(dropType, difficulty, battleType);
+	},
+	addItem: function (name, dropType, difficulty, battleType) {
+		hvStat.storage.dropStats.addItem(name, dropType, difficulty, battleType);
+		this.storeItem(name, 1, dropType, difficulty, battleType);
 	},
 	itemCount: function (dropType, difficulty, battleType) {
 		return hvStat.storage.dropStats.itemCount(dropType, difficulty, battleType);
+	},
+	addCrystal: function (name, qty, dropType, difficulty, battleType) {
+		hvStat.storage.dropStats.addCrystal(name, dropType, difficulty, battleType);
+		this.storeItem(name, qty, dropType, difficulty, battleType);
+	},
+	crystalCount: function (dropType, difficulty, battleType) {
+		return hvStat.storage.dropStats.crystalCount(dropType, difficulty, battleType);
+	},
+	addMonsterFood: function (name, dropType, difficulty, battleType) {
+		hvStat.storage.dropStats.addMonsterFood(name, dropType, difficulty, battleType);
+		this.storeItem(name, 1, dropType, difficulty, battleType);
+	},
+	monsterFoodCount: function (dropType, difficulty, battleType) {
+		return hvStat.storage.dropStats.monsterFoodCount(dropType, difficulty, battleType);
 	},
 	addToken: function (name, dropType, difficulty, battleType) {
 		hvStat.storage.dropStats.addToken(name, dropType, difficulty, battleType);
@@ -4951,7 +5000,8 @@ hvStat.statistics.drops = {
 	},
 	storeItem: function (name, qty, dropType, difficulty, battleType) {
 		hvStat.database.idbAccessQueue.add(function () {
-			var tx = hvStat.database.transaction;
+			// Use an individual transaction to avoid unintended overwriting when concurrent access occurs
+			var tx = hvStat.database.idb.transaction(["ItemDrops"], "readwrite");
 			var key = [
 				name,
 				dropType,
@@ -5620,7 +5670,7 @@ hvStat.ui = {
 			draggable: false,
 			resizable: false,
 			height: 620,
-			width: 950,
+			width: 1080,
 			modal: true,
 			position: ["center", "center"],
 			title: "[STAT] HentaiVerse Statistics, Tracking, and Analysis Tool v." + hvStat.version,
@@ -5687,9 +5737,9 @@ hvStat.ui.dropsPane = {
 		}
 		this.dropsDisplayTable = JSON.parse(browser.extension.getResourceText("json/", "drops-display-table.json"));
 
-		// Overview
-		$('#hvstat-drops-overview-drop-type').change(this.onOverviewFilterChange);
-		$('#hvstat-drops-overview-difficulty').change(this.onOverviewFilterChange).change();
+		// Overall Stats
+		$('#hvstat-drops-overall-stats-drop-type').change(this.onOverallStatsFilterChange);
+		$('#hvstat-drops-overall-stats-difficulty').change(this.onOverallStatsFilterChange).change();
 		// Items
 		$('#hvstat-drops-items-drop-type').change(this.onItemFilterChange);
 		$('#hvstat-drops-items-difficulty').change(this.onItemFilterChange);
@@ -5708,42 +5758,82 @@ hvStat.ui.dropsPane = {
 			}
 		});
 	},
-	updateOverview: function (dropType, difficulty) {
-		this.updateOverviewRow('#hvstat-drops-overview-hourly-encounters td', dropType, difficulty, hvStat.constant.battleType.HOURLY_ENCOUNTER.id);
-		this.updateOverviewRow('#hvstat-drops-overview-arenas td', dropType, difficulty, hvStat.constant.battleType.ARENA.id);
-		this.updateOverviewRow('#hvstat-drops-overview-grindfests td', dropType, difficulty, hvStat.constant.battleType.GRINDFEST.id);
-		this.updateOverviewRow('#hvstat-drops-overview-item-worlds td', dropType, difficulty, hvStat.constant.battleType.ITEM_WORLD.id);
-		this.updateOverviewRow('#hvstat-drops-overview-total td', dropType, difficulty, null);
+	updateOverallStats: function (dropType, difficulty) {
+		this.updateOverallStatsRow('#hvstat-drops-overall-stats-credits td', dropType, difficulty, hvStat.storage.dropStats.creditCount);
+		this.updateOverallStatsRow('#hvstat-drops-overall-stats-item td', dropType, difficulty, hvStat.storage.dropStats.itemCount);
+		this.updateOverallStatsRow('#hvstat-drops-overall-stats-crystal td', dropType, difficulty, hvStat.storage.dropStats.crystalCount);
+		this.updateOverallStatsRow('#hvstat-drops-overall-stats-monster-food td', dropType, difficulty, hvStat.storage.dropStats.monsterFoodCount);
+		this.updateOverallStatsRow('#hvstat-drops-overall-stats-token td', dropType, difficulty, hvStat.storage.dropStats.tokenCount);
+		this.updateOverallStatsRow('#hvstat-drops-overall-stats-artifact td', dropType, difficulty, hvStat.storage.dropStats.artifactCount);
+		this.updateOverallStatsRow('#hvstat-drops-overall-stats-equipment td', dropType, difficulty, hvStat.storage.dropStats.equipmentCount);
+
+		// Total
+		var dropsHourlyEncounter = hvStat.storage.dropStats.totalCount(dropType, difficulty, hvStat.constant.battleType.HOURLY_ENCOUNTER.id);
+		var dropsArena = hvStat.storage.dropStats.totalCount(dropType, difficulty, hvStat.constant.battleType.ARENA.id);
+		var dropsGrindfest = hvStat.storage.dropStats.totalCount(dropType, difficulty, hvStat.constant.battleType.GRINDFEST.id);
+		var dropsItemWorld = hvStat.storage.dropStats.totalCount(dropType, difficulty, hvStat.constant.battleType.ITEM_WORLD.id);
+		var dropsTotal = dropsHourlyEncounter + dropsArena + dropsGrindfest + dropsItemWorld;
+		var chancesHourlyEncounter = hvStat.storage.dropStats.nChances(dropType, difficulty, hvStat.constant.battleType.HOURLY_ENCOUNTER.id);
+		var chancesArena = hvStat.storage.dropStats.nChances(dropType, difficulty, hvStat.constant.battleType.ARENA.id);
+		var chancesGrindfest = hvStat.storage.dropStats.nChances(dropType, difficulty, hvStat.constant.battleType.GRINDFEST.id);
+		var chancesItemWorld = hvStat.storage.dropStats.nChances(dropType, difficulty, hvStat.constant.battleType.ITEM_WORLD.id);
+		var chancesTotal = hvStat.storage.dropStats.nChances(dropType, difficulty, null);
+		var columns = $('#hvstat-drops-overall-stats-chances td');
+		$(columns[0]).text(dropsHourlyEncounter);
+		$(columns[1]).text(chancesHourlyEncounter);
+		$(columns[2]).text(hvStat.ui.util.percentRatio(dropsHourlyEncounter, chancesHourlyEncounter, 2) + "%");
+		$(columns[3]).text(dropsArena);
+		$(columns[4]).text(chancesArena);
+		$(columns[5]).text(hvStat.ui.util.percentRatio(dropsArena, chancesArena, 2) + "%");
+		$(columns[6]).text(dropsGrindfest);
+		$(columns[7]).text(chancesGrindfest);
+		$(columns[8]).text(hvStat.ui.util.percentRatio(dropsGrindfest, chancesGrindfest, 2) + "%");
+		$(columns[9]).text(dropsItemWorld);
+		$(columns[10]).text(chancesItemWorld);
+		$(columns[11]).text(hvStat.ui.util.percentRatio(dropsItemWorld, chancesItemWorld, 2) + "%");
+		$(columns[12]).text(dropsTotal);
+		$(columns[13]).text(chancesTotal);
+		$(columns[14]).text(hvStat.ui.util.percentRatio(dropsTotal, chancesTotal, 2) + "%");
 	},
-	updateOverviewRow: function (cssSelecter, dropType, difficulty, battleType) {
-		var nChances = hvStat.storage.dropStats.nChances(dropType, difficulty, battleType);
-		var itemCount = hvStat.storage.dropStats.itemCount(dropType, difficulty, battleType);
-		var tokenCount = hvStat.storage.dropStats.tokenCount(dropType, difficulty, battleType);
-		var artifactCount = hvStat.storage.dropStats.artifactCount(dropType, difficulty, battleType);
-		var equipmentCount = hvStat.storage.dropStats.equipmentCount(dropType, difficulty, battleType);
-		var total = itemCount + equipmentCount + artifactCount + tokenCount;
+	updateOverallStatsRow: function (cssSelecter, dropType, difficulty, countFn) {
+		var o = hvStat.storage.dropStats;
+		var dropsHourlyEncounter = countFn.call(o, dropType, difficulty, hvStat.constant.battleType.HOURLY_ENCOUNTER.id);
+		var totalDropsHourlyEncounter = hvStat.storage.dropStats.totalCount(dropType, difficulty, hvStat.constant.battleType.HOURLY_ENCOUNTER.id);
+		var dropsArena = countFn.call(o, dropType, difficulty, hvStat.constant.battleType.ARENA.id);
+		var totalDropsArena = hvStat.storage.dropStats.totalCount(dropType, difficulty, hvStat.constant.battleType.ARENA.id);
+		var dropsGrindfest = countFn.call(o, dropType, difficulty, hvStat.constant.battleType.GRINDFEST.id);
+		var totalDropsGrindfest = hvStat.storage.dropStats.totalCount(dropType, difficulty, hvStat.constant.battleType.GRINDFEST.id);
+		var dropsItemWorld = countFn.call(o, dropType, difficulty, hvStat.constant.battleType.ITEM_WORLD.id);
+		var totalDropsItemWorld = hvStat.storage.dropStats.totalCount(dropType, difficulty, hvStat.constant.battleType.ITEM_WORLD.id);
+		var rowTotalDrops = countFn.call(o, dropType, difficulty, null);
+		var grandTotalDrops = hvStat.storage.dropStats.totalCount(dropType, difficulty, null);
+
+		var chancesHourlyEncounter = hvStat.storage.dropStats.nChances(dropType, difficulty, hvStat.constant.battleType.HOURLY_ENCOUNTER.id);
+		var chancesArena = hvStat.storage.dropStats.nChances(dropType, difficulty, hvStat.constant.battleType.ARENA.id);
+		var chancesGrindfest = hvStat.storage.dropStats.nChances(dropType, difficulty, hvStat.constant.battleType.GRINDFEST.id);
+		var chancesItemWorld = hvStat.storage.dropStats.nChances(dropType, difficulty, hvStat.constant.battleType.ITEM_WORLD.id);
+		var chancesTotal = hvStat.storage.dropStats.nChances(dropType, difficulty, null);
+
 		var columns = $(cssSelecter);
-		$(columns[0]).text(itemCount);
-		$(columns[1]).text(hvStat.ui.util.percentRatio(itemCount, total, 2) + "%");
-		$(columns[2]).text(hvStat.ui.util.percentRatio(itemCount, nChances, 2) + "%");
-		$(columns[3]).text(tokenCount);
-		$(columns[4]).text(hvStat.ui.util.percentRatio(tokenCount, total, 2) + "%");
-		$(columns[5]).text(hvStat.ui.util.percentRatio(tokenCount, nChances, 2) + "%");
-		$(columns[6]).text(artifactCount);
-		$(columns[7]).text(hvStat.ui.util.percentRatio(artifactCount, total, 2) + "%");
-		$(columns[8]).text(hvStat.ui.util.percentRatio(artifactCount, nChances, 2) + "%");
-		$(columns[9]).text(equipmentCount);
-		$(columns[10]).text(hvStat.ui.util.percentRatio(equipmentCount, total, 2) + "%");
-		$(columns[11]).text(hvStat.ui.util.percentRatio(equipmentCount, nChances, 2) + "%");
-		$(columns[12]).text(nChances);
+		$(columns[0]).text(dropsHourlyEncounter);
+		$(columns[1]).text(hvStat.ui.util.percentRatio(dropsHourlyEncounter, totalDropsHourlyEncounter, 2) + "%");
+		$(columns[2]).text(hvStat.ui.util.percentRatio(dropsHourlyEncounter, chancesHourlyEncounter, 2) + "%");
+		$(columns[3]).text(dropsArena);
+		$(columns[4]).text(hvStat.ui.util.percentRatio(dropsArena, totalDropsArena, 2) + "%");
+		$(columns[5]).text(hvStat.ui.util.percentRatio(dropsArena, chancesArena, 2) + "%");
+		$(columns[6]).text(dropsGrindfest);
+		$(columns[7]).text(hvStat.ui.util.percentRatio(dropsGrindfest, totalDropsGrindfest, 2) + "%");
+		$(columns[8]).text(hvStat.ui.util.percentRatio(dropsGrindfest, chancesGrindfest, 2) + "%");
+		$(columns[9]).text(dropsItemWorld);
+		$(columns[10]).text(hvStat.ui.util.percentRatio(dropsItemWorld, totalDropsItemWorld, 2) + "%");
+		$(columns[11]).text(hvStat.ui.util.percentRatio(dropsItemWorld, chancesItemWorld, 2) + "%");
+		$(columns[12]).text(rowTotalDrops);
+		$(columns[13]).text(hvStat.ui.util.percentRatio(rowTotalDrops, grandTotalDrops, 2) + "%");
+		$(columns[14]).text(hvStat.ui.util.percentRatio(rowTotalDrops, chancesTotal, 2) + "%");
 	},
 	updateItems: function (dropType, difficulty, battleType) {
 		try {
-			var itemCount = hvStat.storage.dropStats.itemCount(dropType, difficulty, battleType);
-			var equipmentCount = hvStat.storage.dropStats.equipmentCount(dropType, difficulty, battleType);
-			var artifactCount = hvStat.storage.dropStats.artifactCount(dropType, difficulty, battleType);
-			var tokenCount = hvStat.storage.dropStats.tokenCount(dropType, difficulty, battleType);
-			var total = itemCount + equipmentCount + artifactCount + tokenCount;
+			var total = hvStat.storage.dropStats.totalCount(dropType, difficulty, battleType);
 			var chanceTotal = hvStat.storage.dropStats.nChances(dropType, difficulty, battleType);
 
 			var tx = hvStat.database.idb.transaction(["ItemDrops"], "readonly");
@@ -5779,10 +5869,14 @@ hvStat.ui.dropsPane = {
 					}
 					cursor.continue();
 				} else {
-					var i, item, qty, dropCount, itemsHTML = ["", ""], itemsHTMLIndex = 0, prevClassName = "";
+					var i, item, itemClass, styleClassName = "", qty, dropCount, itemsHTML = ["", ""], itemsHTMLIndex = 0, prevClassName = "";
 					var dropsDisplayTable = hvStat.ui.dropsPane.dropsDisplayTable;
 					for (i = 0; i < dropsDisplayTable.items.length; i++) {
 						item = dropsDisplayTable.items[i];
+						itemClass = dropsDisplayTable.itemClass[item.className];
+						if (itemClass && itemClass.styleClassName) {
+							styleClassName = itemClass.styleClassName;
+						}
 						if (item.name in itemMap) {
 							qty = itemMap[item.name].qty;
 							dropCount = itemMap[item.name].dropCount;
@@ -5794,11 +5888,11 @@ hvStat.ui.dropsPane = {
 							itemsHTMLIndex++;
 						}
 						itemsHTML[itemsHTMLIndex] += '<tr' + ((prevClassName != item.className) ? ' class="hvstat-table-row-divider"' : '') + '>' +
-							'<th>' + item.name + '</th>' +
-							'<td>' + qty + '</td>' +
-							'<td>' + dropCount + '</td>' +
-							'<td>' + hvStat.ui.util.percentRatio(dropCount, total, 2) + "%" + '</td>' +
-							'<td>' + hvStat.ui.util.percentRatio(dropCount, chanceTotal, 2) + "%" + '</td>' +
+							'<th class="' + styleClassName + '">' + item.name + '</th>' +
+							'<td class="' + styleClassName + '">' + qty + '</td>' +
+							'<td class="' + styleClassName + '">' + dropCount + '</td>' +
+							'<td class="' + styleClassName + '">' + hvStat.ui.util.percentRatio(dropCount, total, 2) + "%" + '</td>' +
+							'<td class="' + styleClassName + '">' + hvStat.ui.util.percentRatio(dropCount, chanceTotal, 2) + "%" + '</td>' +
 							'</tr>\n';
 						prevClassName = item.className;
 					}
@@ -5837,7 +5931,7 @@ hvStat.ui.dropsPane = {
 						var roundNumber = (equipment.roundNumber === null) ? "-" : String(equipment.roundNumber);
 						// Reverse order
 						equipmentsHTML = '<tr>' +
-							'<th>' + equipment.name + '</th>' +
+							'<th class="hvstat-color-equipment">' + equipment.name + '</th>' +
 							'<td>' + hvStat.constant.difficulty[equipment.difficulty].name + '</td>' +
 							'<td>' + hvStat.constant.battleType[equipment.battleType].name + '</td>' +
 							'<td>' + arenaNumber + '</td>' +
@@ -5866,16 +5960,16 @@ hvStat.ui.dropsPane = {
 			alert(e);
 		}
 	},
-	onOverviewFilterChange: function () {
-		var dropType = $('#hvstat-drops-overview-drop-type').val();
+	onOverallStatsFilterChange: function () {
+		var dropType = $('#hvstat-drops-overall-stats-drop-type').val();
 		if (dropType === "_ALL_") {
 			dropType = null;
 		}
-		var difficulty = $('#hvstat-drops-overview-difficulty').val();
+		var difficulty = $('#hvstat-drops-overall-stats-difficulty').val();
 		if (difficulty === "_ALL_") {
 			difficulty = null;
 		}
-		hvStat.ui.dropsPane.updateOverview(dropType, difficulty);
+		hvStat.ui.dropsPane.updateOverallStats(dropType, difficulty);
 	},
 	onItemFilterChange: function () {
 		var dropType = $('#hvstat-drops-items-drop-type').val();

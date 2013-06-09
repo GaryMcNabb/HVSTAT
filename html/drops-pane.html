@@ -2,17 +2,17 @@
 
 <p><em><span style="color: red;">The report can be narrowed down by selecting the dropdown lists.</span></em></p>
 
-<div id="hvstat-drops-overview">
+<div id="hvstat-drops-overall-stats">
 <h2>Overall Stats</h2>
 
 <div>
-Obtained from: <select id="hvstat-drops-overview-drop-type">
+Obtained from: <select id="hvstat-drops-overall-stats-drop-type">
 	<option value="_ALL_" selected="selected">[All]</option>
 	<option value="MONSTER_DROP">Monster Drop</option>
 	<option value="ARENA_CLEAR_BONUS">Arena Crear Bonus</option>
 	<option value="ARENA_TOKEN_BONUS">Arena Token Bonus</option>
 </select>
-Difficulty: <select id="hvstat-drops-overview-difficulty">
+Difficulty: <select id="hvstat-drops-overall-stats-difficulty">
 	<option value="_ALL_" selected="selected">[All]</option>
 	<option value="NORMAL">Normal</option>
 	<option value="HARD">Hard</option>
@@ -28,27 +28,92 @@ Difficulty: <select id="hvstat-drops-overview-difficulty">
 <table>
 <thead>
 <tr>
-<th rowspan="2"></th><th colspan="3">Items</th><th colspan="3">Tokens</th><th colspan="3">Artifacts/<br />Collectables</th><th colspan="3">Equipments</th><th rowspan="2" class="hvstat-table-coloumn-total">Chance<br />Total</th>
+<th rowspan="2"></th>
+<th colspan="3">Hourly Encounter</th>
+<th colspan="3">Arena</th>
+<th colspan="3">Grindfest</th>
+<th colspan="3">Item World</th>
+<th colspan="3" class="hvstat-table-column-total">Total</th>
 </tr>
 <tr>
-<th>Drops</th><th>Drop<br />PCT.</th><th>Chance<br />PCT.</th><th>Drops</th><th>Drop<br />PCT.</th><th>Chance<br />PCT.</th><th>Drops</th><th>Drop<br />PCT.</th><th>Chance<br />PCT.</th><th>Drops</th><th>Drop<br />PCT.</th><th>Chance<br />PCT.</th>
+<th>Drops</th><th>Drop<br />PCT.</th><th>Chance<br />PCT.</th>
+<th>Drops</th><th>Drop<br />PCT.</th><th>Chance<br />PCT.</th>
+<th>Drops</th><th>Drop<br />PCT.</th><th>Chance<br />PCT.</th>
+<th>Drops</th><th>Drop<br />PCT.</th><th>Chance<br />PCT.</th>
+<th class="hvstat-table-column-total">Drops</th><th class="hvstat-table-column-total">Drop<br />PCT.</th><th class="hvstat-table-column-total">Chance<br />PCT.</th>
 </tr>
 </thead>
 <tbody>
-<tr id="hvstat-drops-overview-hourly-encounters">
-<th>Hourly Encounters</th>	<td></td><td></td><td></td>	<td></td><td></td><td></td>	<td></td><td></td><td></td>	<td></td><td></td><td></td>	<td class="hvstat-table-coloumn-total"></td>
+<tr id="hvstat-drops-overall-stats-credits">
+<th>Credits</th>
+<td></td><td></td><td></td>
+<td></td><td></td><td></td>
+<td></td><td></td><td></td>
+<td></td><td></td><td></td>
+<td class="hvstat-table-column-total"></td><td class="hvstat-table-column-total"></td><td class="hvstat-table-column-total"></td>
 </tr>
-<tr id="hvstat-drops-overview-arenas">
-<th>Arenas</th>			<td></td><td></td><td></td>	<td></td><td></td><td></td>	<td></td><td></td><td></td>	<td></td><td></td><td></td>	<td class="hvstat-table-coloumn-total"></td>
+<tr id="hvstat-drops-overall-stats-item">
+<th>Items</th>
+<td></td><td></td><td></td>
+<td></td><td></td><td></td>
+<td></td><td></td><td></td>
+<td></td><td></td><td></td>
+<td class="hvstat-table-column-total"></td><td class="hvstat-table-column-total"></td><td class="hvstat-table-column-total"></td>
 </tr>
-<tr id="hvstat-drops-overview-grindfests">
-<th>Grindfests</th>		<td></td><td></td><td></td>	<td></td><td></td><td></td>	<td></td><td></td><td></td>	<td></td><td></td><td></td>	<td class="hvstat-table-coloumn-total"></td>
+<tr id="hvstat-drops-overall-stats-crystal">
+<th>Crystals</th>
+<td></td><td></td><td></td>
+<td></td><td></td><td></td>
+<td></td><td></td><td></td>
+<td></td><td></td><td></td>
+<td class="hvstat-table-column-total"></td><td class="hvstat-table-column-total"></td><td class="hvstat-table-column-total"></td>
 </tr>
-<tr id="hvstat-drops-overview-item-worlds">
-<th>Item Worlds</th>		<td></td><td></td><td></td>	<td></td><td></td><td></td>	<td></td><td></td><td></td>	<td></td><td></td><td></td>	<td class="hvstat-table-coloumn-total"></td>
+<tr id="hvstat-drops-overall-stats-monster-food">
+<th>Monster Food</th>
+<td></td><td></td><td></td>
+<td></td><td></td><td></td>
+<td></td><td></td><td></td>
+<td></td><td></td><td></td>
+<td class="hvstat-table-column-total"></td><td class="hvstat-table-column-total"></td><td class="hvstat-table-column-total"></td>
 </tr>
-<tr id="hvstat-drops-overview-total" class="hvstat-table-total">
-<th>Total</th>			<td></td><td></td><td></td>	<td></td><td></td><td></td>	<td></td><td></td><td></td>	<td></td><td></td><td></td>	<td class="hvstat-table-coloumn-total"></td>
+<tr id="hvstat-drops-overall-stats-token">
+<th>Tokens</th>
+<td></td><td></td><td></td>
+<td></td><td></td><td></td>
+<td></td><td></td><td></td>
+<td></td><td></td><td></td>
+<td class="hvstat-table-column-total"></td><td class="hvstat-table-column-total"></td><td class="hvstat-table-column-total"></td>
+</tr>
+<tr id="hvstat-drops-overall-stats-artifact">
+<th>Artifacts</th>
+<td></td><td></td><td></td>
+<td></td><td></td><td></td>
+<td></td><td></td><td></td>
+<td></td><td></td><td></td>
+<td class="hvstat-table-column-total"></td><td class="hvstat-table-column-total"></td><td class="hvstat-table-column-total"></td>
+</tr>
+<tr id="hvstat-drops-overall-stats-equipment">
+<th>Equipments</th>
+<td></td><td></td><td></td>
+<td></td><td></td><td></td>
+<td></td><td></td><td></td>
+<td></td><td></td><td></td>
+<td class="hvstat-table-column-total"></td><td class="hvstat-table-column-total"></td><td class="hvstat-table-column-total"></td>
+</tr>
+<tr class="hvstat-table-total">
+<th rowspan="2">Total</th>
+<th>Drops</th><th>Chances</th><th>Chance<br />PCT.</th>
+<th>Drops</th><th>Chances</th><th>Chance<br />PCT.</th>
+<th>Drops</th><th>Chances</th><th>Chance<br />PCT.</th>
+<th>Drops</th><th>Chances</th><th>Chance<br />PCT.</th>
+<th class="hvstat-table-column-total">Drops</th><th class="hvstat-table-column-total">Chances</th><th class="hvstat-table-column-total">Chance<br />PCT.</th>
+</tr>
+<tr id="hvstat-drops-overall-stats-chances" class="hvstat-table-total">
+<td></td><td></td><td></td>
+<td></td><td></td><td></td>
+<td></td><td></td><td></td>
+<td></td><td></td><td></td>
+<td class="hvstat-table-column-total"></td><td class="hvstat-table-column-total"></td><td class="hvstat-table-column-total"></td>
 </tr>
 </tbody>
 </table>
