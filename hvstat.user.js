@@ -5670,7 +5670,7 @@ hvStat.ui = {
 			draggable: false,
 			resizable: false,
 			height: 620,
-			width: 1050,
+			width: 1080,
 			modal: true,
 			position: ["center", "center"],
 			title: "[STAT] HentaiVerse Statistics, Tracking, and Analysis Tool v." + hvStat.version,
