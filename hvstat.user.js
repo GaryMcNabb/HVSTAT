@@ -5931,7 +5931,7 @@ hvStat.ui.dropsPane = {
 						var roundNumber = (equipment.roundNumber === null) ? "-" : String(equipment.roundNumber);
 						// Reverse order
 						equipmentsHTML = '<tr>' +
-							'<th>' + equipment.name + '</th>' +
+							'<th class="hvstat-color-equipment">' + equipment.name + '</th>' +
 							'<td>' + hvStat.constant.difficulty[equipment.difficulty].name + '</td>' +
 							'<td>' + hvStat.constant.battleType[equipment.battleType].name + '</td>' +
 							'<td>' + arenaNumber + '</td>' +
