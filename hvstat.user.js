@@ -3010,7 +3010,7 @@ hvStat.battle.eventLog.messageTypeParams = {
 					if (regexResult[1]) {
 						qty = Number(regexResult[1]);
 						stuffName = regexResult[2];
-						hvStat.statistics.drops.addItem(stuffName, qty, hvStat.constant.dropType.MONSTER_DROP.id,
+						hvStat.statistics.drops.addItem(stuffName, qty, hvStat.constant.dropType.ARENA_CLEAR_BONUS.id,
 							hvStat.characterStatus.difficulty.id, hvStat.roundContext.battleTypeName);
 					}
 				}
@@ -3027,14 +3027,14 @@ hvStat.battle.eventLog.messageTypeParams = {
 						}
 						stuffName = regexResult[2];
 					}
-					hvStat.statistics.drops.addItem(stuffName, qty, hvStat.constant.dropType.MONSTER_DROP.id,
+					hvStat.statistics.drops.addItem(stuffName, qty, hvStat.constant.dropType.ARENA_CLEAR_BONUS.id,
 						hvStat.characterStatus.difficulty.id, hvStat.roundContext.battleTypeName);
 				}
 				break;
 			case "#00b000":	// Item
 			case "#489eff":	// Monster Food
 				if (hvStat.settings.isTrackItems) {
-					hvStat.statistics.drops.addItem(stuffName, 1, hvStat.constant.dropType.MONSTER_DROP.id,
+					hvStat.statistics.drops.addItem(stuffName, hvStat.constant.dropType.ARENA_CLEAR_BONUS.id,
 						hvStat.characterStatus.difficulty.id, hvStat.roundContext.battleTypeName);
 				}
 				break;
