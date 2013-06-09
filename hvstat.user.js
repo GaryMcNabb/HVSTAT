@@ -5798,10 +5798,15 @@ hvStat.ui.dropsPane = {
 	updateOverallStatsRow: function (cssSelecter, dropType, difficulty, countFn) {
 		var o = hvStat.storage.dropStats;
 		var dropsHourlyEncounter = countFn.call(o, dropType, difficulty, hvStat.constant.battleType.HOURLY_ENCOUNTER.id);
+		var totalDropsHourlyEncounter = hvStat.storage.dropStats.totalCount(dropType, difficulty, hvStat.constant.battleType.HOURLY_ENCOUNTER.id);
 		var dropsArena = countFn.call(o, dropType, difficulty, hvStat.constant.battleType.ARENA.id);
+		var totalDropsArena = hvStat.storage.dropStats.totalCount(dropType, difficulty, hvStat.constant.battleType.ARENA.id);
 		var dropsGrindfest = countFn.call(o, dropType, difficulty, hvStat.constant.battleType.GRINDFEST.id);
+		var totalDropsGrindfest = hvStat.storage.dropStats.totalCount(dropType, difficulty, hvStat.constant.battleType.GRINDFEST.id);
 		var dropsItemWorld = countFn.call(o, dropType, difficulty, hvStat.constant.battleType.ITEM_WORLD.id);
-		var dropsTotal = dropsHourlyEncounter + dropsArena + dropsGrindfest + dropsItemWorld;
+		var totalDropsItemWorld = hvStat.storage.dropStats.totalCount(dropType, difficulty, hvStat.constant.battleType.ITEM_WORLD.id);
+		var rowTotalDrops = countFn.call(o, dropType, difficulty, null);
+		var grandTotalDrops = hvStat.storage.dropStats.totalCount(dropType, difficulty, null);
 
 		var chancesHourlyEncounter = hvStat.storage.dropStats.nChances(dropType, difficulty, hvStat.constant.battleType.HOURLY_ENCOUNTER.id);
 		var chancesArena = hvStat.storage.dropStats.nChances(dropType, difficulty, hvStat.constant.battleType.ARENA.id);
@@ -5811,28 +5816,24 @@ hvStat.ui.dropsPane = {
 
 		var columns = $(cssSelecter);
 		$(columns[0]).text(dropsHourlyEncounter);
-		$(columns[1]).text(hvStat.ui.util.percentRatio(dropsHourlyEncounter, dropsTotal, 2) + "%");
+		$(columns[1]).text(hvStat.ui.util.percentRatio(dropsHourlyEncounter, totalDropsHourlyEncounter, 2) + "%");
 		$(columns[2]).text(hvStat.ui.util.percentRatio(dropsHourlyEncounter, chancesHourlyEncounter, 2) + "%");
 		$(columns[3]).text(dropsArena);
-		$(columns[4]).text(hvStat.ui.util.percentRatio(dropsArena, dropsTotal, 2) + "%");
+		$(columns[4]).text(hvStat.ui.util.percentRatio(dropsArena, totalDropsArena, 2) + "%");
 		$(columns[5]).text(hvStat.ui.util.percentRatio(dropsArena, chancesArena, 2) + "%");
 		$(columns[6]).text(dropsGrindfest);
-		$(columns[7]).text(hvStat.ui.util.percentRatio(dropsGrindfest, dropsTotal, 2) + "%");
+		$(columns[7]).text(hvStat.ui.util.percentRatio(dropsGrindfest, totalDropsGrindfest, 2) + "%");
 		$(columns[8]).text(hvStat.ui.util.percentRatio(dropsGrindfest, chancesGrindfest, 2) + "%");
 		$(columns[9]).text(dropsItemWorld);
-		$(columns[10]).text(hvStat.ui.util.percentRatio(dropsItemWorld, dropsTotal, 2) + "%");
+		$(columns[10]).text(hvStat.ui.util.percentRatio(dropsItemWorld, totalDropsItemWorld, 2) + "%");
 		$(columns[11]).text(hvStat.ui.util.percentRatio(dropsItemWorld, chancesItemWorld, 2) + "%");
-		$(columns[12]).text(dropsTotal);
-		$(columns[13]).text(chancesTotal);
-		$(columns[14]).text(hvStat.ui.util.percentRatio(dropsTotal, chancesTotal, 2) + "%");
+		$(columns[12]).text(rowTotalDrops);
+		$(columns[13]).text(hvStat.ui.util.percentRatio(rowTotalDrops, grandTotalDrops, 2) + "%");
+		$(columns[14]).text(hvStat.ui.util.percentRatio(rowTotalDrops, chancesTotal, 2) + "%");
 	},
 	updateItems: function (dropType, difficulty, battleType) {
 		try {
-			var itemCount = hvStat.storage.dropStats.itemCount(dropType, difficulty, battleType);
-			var equipmentCount = hvStat.storage.dropStats.equipmentCount(dropType, difficulty, battleType);
-			var artifactCount = hvStat.storage.dropStats.artifactCount(dropType, difficulty, battleType);
-			var tokenCount = hvStat.storage.dropStats.tokenCount(dropType, difficulty, battleType);
-			var total = itemCount + equipmentCount + artifactCount + tokenCount;
+			var total = hvStat.storage.dropStats.totalCount(dropType, difficulty, battleType);
 			var chanceTotal = hvStat.storage.dropStats.nChances(dropType, difficulty, battleType);
 
 			var tx = hvStat.database.idb.transaction(["ItemDrops"], "readonly");
