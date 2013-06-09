@@ -4951,7 +4951,8 @@ hvStat.statistics.drops = {
 	},
 	storeItem: function (name, qty, dropType, difficulty, battleType) {
 		hvStat.database.idbAccessQueue.add(function () {
-			var tx = hvStat.database.transaction;
+			// Use an individual transaction to avoid unintended overwriting when concurrent access occurs
+			var tx = hvStat.database.idb.transaction(["ItemDrops"], "readwrite");
 			var key = [
 				name,
 				dropType,
