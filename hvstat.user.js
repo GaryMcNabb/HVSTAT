@@ -5073,14 +5073,6 @@ hvStat.database = {
 	transaction: null,
 	idbAccessQueue: null,
 
-	// Monster database import/export
-	reMonsterScanResultsTSV: /^(\d+?)\t(.*?)\t(.*?)\t(.*?)\t(\d*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)$/gm,
-	reMonsterSkillsTSV: /^(\d+?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)$/gm,
-	dataURIMonsterScanResults: null,
-	dataURIMonsterSkills: null,
-	nRowsMonsterScanResultsTSV: 0,
-	nRowsMonsterSkillsTSV: 0,
-
 	// Temporary work
 	loadingMonsterInfoFromDB: false,
 };
