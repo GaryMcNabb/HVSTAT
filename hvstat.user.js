@@ -2060,9 +2060,6 @@ hvStat.battle = {
 		rInfoPaneParameters: /battle\.set_infopane_(?:spell|skill|item|effect)\('((?:[^'\\]|\\.)*)'\s*,\s*'(?:[^'\\]|\\.)*'\s*,\s*(.+)\)/,
 	},
 	setup: function () {
-		hvStat.database.idbAccessQueue.add(function () {
-			hvStat.database.transaction = hvStat.database.idb.transaction(["MonsterScanResults", "MonsterSkills", "ItemDrops", "EquipmentDrops"], "readwrite");
-		});
 		hvStat.battle.enhancement.setup();
 		hvStat.battle.monster.setup();
 		hvStat.battle.eventLog.setup();
@@ -2859,7 +2856,7 @@ hvStat.battle.eventLog.messageTypeParams = {
 					hvStat.database.loadingMonsterInfoFromDB = true;
 					(function (monster) {
 						hvStat.database.idbAccessQueue.add(function () {
-							monster.getFromDB(hvStat.database.transaction, function () {
+							monster.getFromDB(function () {
 								hvStat.storage.roundContext.save();
 							});
 						});
@@ -4579,7 +4576,7 @@ hvStat.battle.monster.Monster.prototype = {
 		that._scanResult = hvStat.battle.monster.MonsterScanResults.prototype.fromRegexResult(that._index, regexResult);
 		(function (that) {
 			hvStat.database.idbAccessQueue.add(function () {
-				that.putScanResultToDB(hvStat.database.transaction);
+				that.putScanResultToDB();
 			});
 		})(that);
 	},
@@ -4627,7 +4624,7 @@ hvStat.battle.monster.Monster.prototype = {
 		}
 		(function (that) {
 			hvStat.database.idbAccessQueue.add(function () {
-				that.putSkillsToDB(hvStat.database.transaction);
+				that.putSkillsToDB();
 			});
 		})(that);
 	},
@@ -4645,12 +4642,12 @@ hvStat.battle.monster.Monster.prototype = {
 			that._skills.push(new hvStat.battle.monster.MonsterSkill(element));
 		});
 	},
-	getFromDB: function (transaction, callback) {
+	getFromDB: function (callback) {
 		var that = this;
 		if (!that._id) {
 			return;
 		}
-		var tx = transaction;
+		var tx = hvStat.database.idb.transaction(["MonsterScanResults", "MonsterSkills"], "readonly");
 		var scanResultsStore = tx.objectStore("MonsterScanResults");
 		var skillsStore = tx.objectStore("MonsterSkills");
 		// MonsterScanResults
@@ -4702,12 +4699,13 @@ hvStat.battle.monster.Monster.prototype = {
 			console.log('request error.');
 		};
 	},
-	putScanResultToDB: function (transaction) {
+	putScanResultToDB: function () {
 		var that = this;
 		if (!that._id || !that._scanResult) {
 			return;
 		}
-		var scanResultsStore = transaction.objectStore("MonsterScanResults");
+		var tx = hvStat.database.idb.transaction(["MonsterScanResults"], "readwrite");
+		var scanResultsStore = tx.objectStore("MonsterScanResults");
 		var vo = that._scanResult.valueObject;
 		vo.id = that._id;
 		vo.name = that._name;
@@ -4719,13 +4717,14 @@ hvStat.battle.monster.Monster.prototype = {
 			console.log("putScanResultToDB: error: id = " + that._id);
 		};
 	},
-	putSkillsToDB: function (transaction) {
+	putSkillsToDB: function () {
 		var that = this;
 		if (!that._id) {
 			return;
 		}
 		// Put after delete
-		var skillsStore = transaction.objectStore("MonsterSkills");
+		var tx = hvStat.database.idb.transaction(["MonsterSkills"], "readwrite");
+		var skillsStore = tx.objectStore("MonsterSkills");
 		var range = IDBKeyRange.bound(that._id, that._id);
 		var reqOpen = skillsStore.openCursor(range, "next");
 		reqOpen.onsuccess = function () {
@@ -5047,7 +5046,6 @@ hvStat.statistics.drops = {
 	},
 	storeEquipment: function (name, dropType, difficulty, battleType, arenaNumber, roundNumber) {
 		hvStat.database.idbAccessQueue.add(function () {
-			var tx = hvStat.database.transaction;
 			if (battleType !== hvStat.constant.battleType.ARENA.id) {
 				arenaNumber = null;
 			}
@@ -5063,7 +5061,8 @@ hvStat.statistics.drops = {
 				roundNumber: roundNumber,
 				timeStamp: (new Date()).toISOString(),
 			};
-			hvStat.database.equipmentDrops.put(hvStat.database.transaction, equipmentDrop);
+			var tx = hvStat.database.idb.transaction(["EquipmentDrops"], "readwrite");
+			hvStat.database.equipmentDrops.put(tx, equipmentDrop);
 		});
 	},
 };
@@ -5074,7 +5073,6 @@ hvStat.statistics.drops = {
 hvStat.database = {
 	// indexedDB
 	idb: null,
-	transaction: null,
 	idbAccessQueue: null,
 
 	// Temporary work
@@ -5083,7 +5081,6 @@ hvStat.database = {
 
 hvStat.database.deleteIndexedDB = function () {
 	// Close connection
-	hvStat.database.transaction = null;
 	hvStat.database.idb = null;
 
 	// Delete database
