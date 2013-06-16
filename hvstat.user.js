@@ -7860,13 +7860,7 @@ hvStat.startup = {
 				hvStat.inventory.equipment.showTagInputFields(false);
 			}
 			if (hv.location.isMoogleWrite && hvStat.settings.isShowTags[3]) {
-				var mailForm = document.querySelector('#mailform #leftpane');
-				if (mailForm) {
-					var attachEquipButton = mailForm.children[3].children[1];
-					attachEquipButton.addEventListener("click", function (event) {
-						hvStat.inventory.equipment.showTagInputFields(false);
-					});
-				}
+				hvStat.inventory.equipment.showTagInputFields(false);
 			}
 			if (hv.location.isForge && hvStat.settings.isShowTags[4]) {
 				hvStat.inventory.equipment.showTagInputFields(false);
