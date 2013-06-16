@@ -2673,13 +2673,6 @@ hvStat.battle.eventLog.messageTypeParams = {
 			hvStat.roundContext.kills++;
 		},
 	},
-	MONSTER_AGITATED: {
-		regex: /^(.+?) is agitated\!$/,
-		relatedMessageTypeNames: null,
-		contentType: "text",
-		evaluationFn: function (message) {
-		},
-	},
 	SKILL_COOLDOWN_EXPIRATION: {
 		regex: /^Cooldown expired for (.+)$/,
 		relatedMessageTypeNames: null,
