@@ -1638,22 +1638,6 @@ hvStat.support = {
 			element.setAttribute("onclick", newOnClick);
 		}
 	},
-	createInventoryWarningIcon: function () {
-		var stuffBox = document.querySelector('div.stuffbox');
-		var icon = document.createElement("div");
-		icon.id = "hvstat-inventory-warning-icon";
-		icon.className = "ui-state-error ui-corner-all";
-		icon.innerHTML = '<span class="ui-icon ui-icon-alert" title="Reached equipment inventory limit."/>';
-		icon.addEventListener("click", function (event) {
-			if (confirm("Reached equipment inventory limit.\nClear warning?")) {
-				this.removeEventListener(event.type, arguments.callee);
-				hvStat.characterStatus.didReachInventoryLimit = false;
-				hvStat.storage.characterStatus.save();
-				this.parentNode.removeChild(this);
-			}
-		});
-		stuffBox.insertBefore(icon, null);
-	},
 };
 
 //------------------------------------
@@ -1715,6 +1699,25 @@ hvStat.gadget.proficiencyPopupIcon = {
 		hvStat.gadget.proficiencyPopupIcon.popup.style.visibility = "hidden";
 	},
 };
+
+hvStat.gadget.inventoryWarningIcon = {
+	create: function () {
+		var stuffBox = document.querySelector('div.stuffbox');
+		var icon = document.createElement("div");
+		icon.id = "hvstat-inventory-warning-icon";
+		icon.className = "ui-state-error ui-corner-all";
+		icon.innerHTML = '<span class="ui-icon ui-icon-alert" title="Reached equipment inventory limit."/>';
+		icon.addEventListener("click", function (event) {
+			if (confirm("Reached equipment inventory limit.\nClear warning?")) {
+				this.removeEventListener(event.type, arguments.callee);
+				hvStat.characterStatus.didReachInventoryLimit = false;
+				hvStat.storage.characterStatus.save();
+				this.parentNode.removeChild(this);
+			}
+		});
+		stuffBox.insertBefore(icon, null);
+	},
+}
 
 //------------------------------------
 // Keyboard Management
@@ -7891,7 +7894,7 @@ hvStat.startup = {
 			hvStat.gadget.proficiencyPopupIcon.create();
 		}
 		if (hvStat.characterStatus.didReachInventoryLimit) {
-			hvStat.support.createInventoryWarningIcon();
+			hvStat.gadget.inventoryWarningIcon.create();
 		}
 		document.addEventListener("keydown", hvStat.keyboard.documentKeydown);
 		hvStat.icon.initialize();
