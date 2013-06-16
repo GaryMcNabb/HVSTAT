@@ -176,6 +176,7 @@ browser.extension.style = {
 		} else {
 			if (!this.element) {
 				this.element = document.createElement("style");
+				this.element.type = "text/css";
 				(document.head || document.documentElement).insertBefore(this.element, null);
 			}
 			this.element.textContent += "\n" + styleText;
