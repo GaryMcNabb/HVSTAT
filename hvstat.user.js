@@ -1645,6 +1645,42 @@ hvStat.support = {
 //------------------------------------
 hvStat.gadget = {};
 
+hvStat.gadget.wrenchIcon = {
+	create: function () {
+		var C = browser.extension.style.ImageResourceInfo;
+		var imageResouces = [
+			new C("images/", "ui-bg_flat_0_aaaaaa_40x100.png", "css/images/"),
+			new C("images/", "ui-bg_flat_55_fbf9ee_40x100.png", "css/images/"),
+			new C("images/", "ui-bg_flat_65_edebdf_40x100.png", "css/images/"),
+			new C("images/", "ui-bg_flat_75_e3e0d1_40x100.png", "css/images/"),
+			new C("images/", "ui-bg_flat_75_edebdf_40x100.png", "css/images/"),
+			new C("images/", "ui-bg_flat_95_fef1ec_40x100.png", "css/images/"),
+			new C("images/", "ui-icons_2e83ff_256x240.png", "css/images/"),
+			new C("images/", "ui-icons_5c0d11_256x240.png", "css/images/"),
+			new C("images/", "ui-icons_cd0a0a_256x240.png", "css/images/"),
+		];
+		browser.extension.style.addFromResource("css/", "jquery-ui-1.9.2.custom.min.css", imageResouces);
+
+		var stuffBox = document.querySelector('div.stuffbox');
+		var icon = document.createElement("div");
+		icon.id = "hvstat-icon";
+		icon.className = "ui-state-default ui-corner-all";
+		icon.innerHTML = '<span class="ui-icon ui-icon-wrench" title="Launch HV STAT UI"/>';
+		icon.addEventListener("click", function (event) {
+			this.removeEventListener(event.type, arguments.callee);
+			hvStat.ui.createDialog();
+		});
+		icon.addEventListener("mouseover", function (event) {
+			this.className = this.className.replace(" ui-state-hover", "");
+			this.className += " ui-state-hover";
+		});
+		icon.addEventListener("mouseout", function (event) {
+			this.className = this.className.replace(" ui-state-hover", "");
+		});
+		stuffBox.insertBefore(icon, null);
+	},
+};
+
 hvStat.gadget.equippedSet = {
 	create: function () {
 		var leftBar = document.querySelector('div.clb');
@@ -5590,50 +5626,6 @@ hvStat.database.equipmentDrops = new hvStat.database.ObjectStoreDelegate({
 });
 
 //------------------------------------
-// HV STAT Icon
-//------------------------------------
-hvStat.icon = {
-	initialize: function () {
-		this.addStyle();
-		this.create();
-	},
-	addStyle: function () {
-		var C = browser.extension.style.ImageResourceInfo;
-		var imageResouces = [
-			new C("images/", "ui-bg_flat_0_aaaaaa_40x100.png", "css/images/"),
-			new C("images/", "ui-bg_flat_55_fbf9ee_40x100.png", "css/images/"),
-			new C("images/", "ui-bg_flat_65_edebdf_40x100.png", "css/images/"),
-			new C("images/", "ui-bg_flat_75_e3e0d1_40x100.png", "css/images/"),
-			new C("images/", "ui-bg_flat_75_edebdf_40x100.png", "css/images/"),
-			new C("images/", "ui-bg_flat_95_fef1ec_40x100.png", "css/images/"),
-			new C("images/", "ui-icons_2e83ff_256x240.png", "css/images/"),
-			new C("images/", "ui-icons_5c0d11_256x240.png", "css/images/"),
-			new C("images/", "ui-icons_cd0a0a_256x240.png", "css/images/"),
-		];
-		browser.extension.style.addFromResource("css/", "jquery-ui-1.9.2.custom.min.css", imageResouces);
-	},
-	create: function () {
-		var stuffBox = document.querySelector('div.stuffbox');
-		var icon = document.createElement("div");
-		icon.id = "hvstat-icon";
-		icon.className = "ui-state-default ui-corner-all";
-		icon.innerHTML = '<span class="ui-icon ui-icon-wrench" title="Launch HV STAT UI"/>';
-		icon.addEventListener("click", function (event) {
-			this.removeEventListener(event.type, arguments.callee);
-			hvStat.ui.createDialog();
-		});
-		icon.addEventListener("mouseover", function (event) {
-			this.className = this.className.replace(" ui-state-hover", "");
-			this.className += " ui-state-hover";
-		});
-		icon.addEventListener("mouseout", function (event) {
-			this.className = this.className.replace(" ui-state-hover", "");
-		});
-		stuffBox.insertBefore(icon, null);
-	},
-};
-
-//------------------------------------
 // Dialog User Interface
 //------------------------------------
 hvStat.ui = {
@@ -7897,7 +7889,7 @@ hvStat.startup = {
 			hvStat.gadget.inventoryWarningIcon.create();
 		}
 		document.addEventListener("keydown", hvStat.keyboard.documentKeydown);
-		hvStat.icon.initialize();
+		hvStat.gadget.wrenchIcon.create();
 		if (hvStat.settings.adjustKeyEventHandling) {
 			document.onkeydown = hvStat.onkeydown;
 		}
