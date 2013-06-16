@@ -3487,11 +3487,10 @@ hvStat.battle.enhancement = {
 hvStat.battle.enhancement.roundCounter = {
 	// Adds a Round counter to the Battle screen.
 	create: function () {
-		var doc = document,
-			curRound = hvStat.roundContext.currRound,
+		var curRound = hvStat.roundContext.currRound,
 			maxRound = hvStat.roundContext.maxRound,
 			dispRound = maxRound > 0 ? curRound + "/" + maxRound : "#" + curRound,
-			div = doc.createElement('div');
+			div = document.createElement('div');
 
 		div.className = "hvstat-round-counter";
 		div.textContent = dispRound;
@@ -3500,7 +3499,7 @@ hvStat.battle.enhancement.roundCounter = {
 		} else if (curRound === maxRound) {
 			div.className += " hvstat-round-counter-last";
 		}
-		doc.getElementById('mainpane').children[1].appendChild(div);
+		hv.battle.elementCache.mainPane.children[1].appendChild(div);
 	},
 };
 
