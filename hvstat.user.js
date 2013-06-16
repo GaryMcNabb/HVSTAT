@@ -283,7 +283,7 @@ var hv = {
 			return innerText;
 		}
 	},
-	setup: function () {
+	initialize: function () {
 		var location = {
 			isBattleItems: document.location.search === "?s=Character&ss=it",
 			isInventory: document.location.search === "?s=Character&ss=in",
@@ -439,7 +439,7 @@ var hv = {
 //------------------------------------
 var hvStat = {
 	version: "5.6.2",
-	setup: function () {
+	initialize: function () {
 		this.addStyle();
 	},
 	addStyle: function () {
@@ -1737,7 +1737,7 @@ hvStat.keyboard = {
 		mouseout: function (event) {
 			hvStat.keyboard.scrollable.currentTarget = null;
 		},
-		setup: function () {
+		initialize: function () {
 			var i = this.targets.length,
 				element;
 			while (i--) {
@@ -2056,10 +2056,10 @@ hvStat.battle = {
 	constant: {
 		rInfoPaneParameters: /battle\.set_infopane_(?:spell|skill|item|effect)\('((?:[^'\\]|\\.)*)'\s*,\s*'(?:[^'\\]|\\.)*'\s*,\s*(.+)\)/,
 	},
-	setup: function () {
-		hvStat.battle.enhancement.setup();
-		hvStat.battle.monster.setup();
-		hvStat.battle.eventLog.setup();
+	initialize: function () {
+		hvStat.battle.enhancement.initialize();
+		hvStat.battle.monster.initialize();
+		hvStat.battle.eventLog.initialize();
 	},
 	advanceRound: function () {
 		if (!hv.battle.isFinished && hv.battle.isRoundFinished) {
@@ -2100,7 +2100,7 @@ hvStat.battle.eventLog = {
 			hvStat.battle.eventLog.messageTypes[key] = new hvStat.battle.eventLog.MessageType(param);
 		}
 	},
-	setup: function () {
+	initialize: function () {
 		this.buildMessageTypes();
 	},
 	processEvents: function () {
@@ -3446,7 +3446,7 @@ hvStat.battle.command.Command.prototype = {
 // Battle - Enhancements
 //------------------------------------
 hvStat.battle.enhancement = {
-	setup: function () {
+	initialize: function () {
 		if (hvStat.settings.isShowSelfDuration) {
 			this.effectDurationBadge.showForCharacter();
 		}
@@ -3800,7 +3800,7 @@ hvStat.battle.enhancement.monsterLabel = {
 //------------------------------------
 hvStat.battle.monster = {
 	monsters: [],	// Instances of hvStat.battle.Monster
-	setup: function () {
+	initialize: function () {
 		for (var i = 0; i < hv.battle.elementCache.monsters.length; i++) {
 			hvStat.battle.monster.monsters[i] = new hvStat.battle.monster.Monster(i);
 			if (hvStat.roundContext.monsters[i]) {
@@ -3831,7 +3831,7 @@ hvStat.battle.monster = {
 
 hvStat.battle.monster.popup = {
 	timerId: null,
-	setup: function () {
+	initialize: function () {
 		for (var i = 0; i < hvStat.battle.monster.monsters.length; i++) {
 			var monsterElement = hvStat.battle.monster.monsters[i].baseElement;
 			monsterElement.addEventListener("mouseover", this.onmouseover);
@@ -5590,7 +5590,7 @@ hvStat.database.equipmentDrops = new hvStat.database.ObjectStoreDelegate({
 // HV STAT Icon
 //------------------------------------
 hvStat.icon = {
-	setup: function () {
+	initialize: function () {
 		this.addStyle();
 		this.create();
 	},
@@ -7778,15 +7778,15 @@ hvStat.startup = {
 			hvStat.onkeydown = document.onkeydown;
 			document.onkeydown = null;
 		}
-		hv.setup();
+		hv.initialize();
 		console.debug(hv);
-		hvStat.setup();
+		hvStat.initialize();
 		console.debug(hvStat);
 		if (hvStat.settings.isChangePageTitle) {
 			document.title = hvStat.settings.customPageTitle;
 		}
 		if (hv.battle.isActive) {
-			hvStat.battle.setup();
+			hvStat.battle.initialize();
 			if (hvStat.settings.delayRoundEndAlerts) {
 				hvStat.battle.warningSystem.restoreAlerts();
 			}
@@ -7803,7 +7803,7 @@ hvStat.startup = {
 				});
 			}
 			if (hvStat.settings.isShowStatsPopup) {
-				hvStat.battle.monster.popup.setup();
+				hvStat.battle.monster.popup.initialize();
 			}
 			// Show warnings
 			if (!hv.battle.isRoundFinished) {
@@ -7844,7 +7844,7 @@ hvStat.startup = {
 				hvStat.storage.warningState.remove();
 			}
 			if (hvStat.settings.enableScrollHotkey) {
-				hvStat.keyboard.scrollable.setup();
+				hvStat.keyboard.scrollable.initialize();
 			}
 			// Equipment tag
 			if (hv.location.isEquipment && hvStat.settings.isShowTags[0]) {
@@ -7894,7 +7894,7 @@ hvStat.startup = {
 			hvStat.support.createInventoryWarningIcon();
 		}
 		document.addEventListener("keydown", hvStat.keyboard.documentKeydown);
-		hvStat.icon.setup();
+		hvStat.icon.initialize();
 		if (hvStat.settings.adjustKeyEventHandling) {
 			document.onkeydown = hvStat.onkeydown;
 		}
