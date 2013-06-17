@@ -5749,253 +5749,6 @@ function getBattleEndStatsHtml() {
 	return a;
 }
 
-function saveSettings() {
-	// General
-	hvStat.settings.isChangePageTitle = $("input[name=isChangePageTitle]").get(0).checked;
-	hvStat.settings.customPageTitle = $("input[name=customPageTitle]").get(0).value;
-	hvStat.settings.isShowEquippedSet = $("input[name=isShowEquippedSet]").get(0).checked;
-	hvStat.settings.isShowSidebarProfs = $("input[name=isShowSidebarProfs]").get(0).checked;
-	hvStat.settings.isStartAlert = $("input[name=isStartAlert]").get(0).checked;
-	hvStat.settings.StartAlertHP = $("input[name=StartAlertHP]").get(0).value;
-	hvStat.settings.StartAlertMP = $("input[name=StartAlertMP]").get(0).value;
-	hvStat.settings.StartAlertSP = $("input[name=StartAlertSP]").get(0).value;
-	hvStat.settings.StartAlertDifficulty = $("select[id=StartAlertDifficulty]").get(0).value;
-	hvStat.settings.isShowTags[0] = $("input[name=isShowTags0]").get(0).checked;
-	hvStat.settings.isShowTags[1] = $("input[name=isShowTags1]").get(0).checked;
-	hvStat.settings.isShowTags[2] = $("input[name=isShowTags2]").get(0).checked;
-	hvStat.settings.isShowTags[3] = $("input[name=isShowTags3]").get(0).checked;
-	hvStat.settings.isShowTags[4] = $("input[name=isShowTags4]").get(0).checked;
-	hvStat.settings.isShowTags[5] = $("input[name=isShowTags5]").get(0).checked;
-
-	// Keyboard
-	hvStat.settings.adjustKeyEventHandling = $("input[name=adjustKeyEventHandling]").get(0).checked;
-	hvStat.settings.isEnableScanHotkey = $("input[name=isEnableScanHotkey]").get(0).checked;
-	hvStat.settings.isEnableSkillHotkey = $("input[name=isEnableSkillHotkey]").get(0).checked;
-	hvStat.settings.reverseSkillHotkeyTraversalOrder = $("input[name=reverseSkillHotkeyTraversalOrder]").get(0).checked;
-	hvStat.settings.enableOFCHotkey = $("input[name=enableOFCHotkey]").get(0).checked;
-	hvStat.settings.enableScrollHotkey = $("input[name=enableScrollHotkey]").get(0).checked;
-	hvStat.settings.isDisableForgeHotKeys = $("input[name=isDisableForgeHotKeys]").get(0).checked;
-	hvStat.settings.enableShrineKeyPatch = $("input[name=enableShrineKeyPatch]").get(0).checked;
-
-	// Tracking
-	hvStat.settings.isTrackStats = $("input[name=isTrackStats]").get(0).checked;
-	hvStat.settings.isTrackShrine = $("input[name=isTrackShrine]").get(0).checked;
-	hvStat.settings.isTrackItems = $("input[name=isTrackItems]").get(0).checked;
-
-	// Battle Enhancement
-	hvStat.settings.isShowRoundCounter = $("input[name=isShowRoundCounter]").get(0).checked;
-	hvStat.settings.isShowRoundReminder = $("input[name=isShowRoundReminder]").get(0).checked;
-	hvStat.settings.reminderMinRounds = $("input[name=reminderMinRounds]").get(0).value;
-	hvStat.settings.reminderBeforeEnd = $("input[name=reminderBeforeEnd]").get(0).value;
-	hvStat.settings.isShowSelfDuration = $("input[name=isShowSelfDuration]").get(0).checked;
-	hvStat.settings.isSelfEffectsWarnColor = $("input[name=isSelfEffectsWarnColor]").get(0).checked;
-	hvStat.settings.SelfWarnOrangeRounds = $("input[name=SelfWarnOrangeRounds]").get(0).value;
-	hvStat.settings.SelfWarnRedRounds = $("input[name=SelfWarnRedRounds]").get(0).value;
-	hvStat.settings.showSelfEffectStackLevel = $("input[name=showSelfEffectStackLevel]").get(0).checked;
-	hvStat.settings.isShowPowerupBox = $("input[name=isShowPowerupBox]").get(0).checked;
-	hvStat.settings.isShowHighlight = $("input[name=isShowHighlight]").get(0).checked;
-	hvStat.settings.isAltHighlight = $("input[name=isAltHighlight]").get(0).checked;
-	hvStat.settings.isShowDivider = $("input[name=isShowDivider]").get(0).checked;
-	hvStat.settings.isShowScanButton = $("input[name=isShowScanButton]").get(0).checked;
-	hvStat.settings.highlightScanButtonWhenScanResultExpired = $("input[name=highlightScanButtonWhenScanResultExpired]").get(0).checked;
-	hvStat.settings.nDaysUntilScanResultExpiration = $("input[name=nDaysUntilScanResultExpiration]").get(0).value;
-	hvStat.settings.isShowSkillButton = $("input[name=isShowSkillButton]").get(0).checked;
-	hvStat.settings.isShowMonsterNumber = $("input[name=isShowMonsterNumber]").get(0).checked;
-	hvStat.settings.isShowMonsterDuration = $("input[name=isShowMonsterDuration]").get(0).checked;
-	hvStat.settings.isMonstersEffectsWarnColor = $("input[name=isMonstersEffectsWarnColor]").get(0).checked;
-	hvStat.settings.MonstersWarnOrangeRounds = $("input[name=MonstersWarnOrangeRounds]").get(0).value;
-	hvStat.settings.MonstersWarnRedRounds = $("input[name=MonstersWarnRedRounds]").get(0).value;
-	hvStat.settings.showMonsterEffectStackLevel = $("input[name=showMonsterEffectStackLevel]").get(0).checked;
-	hvStat.settings.isShowEndStats = $("input[name=isShowEndStats]").get(0).checked;
-	hvStat.settings.isShowEndProfs = $("input[name=isShowEndProfs]").get(0).checked; //isShowEndProfs added by Ilirith
-	hvStat.settings.isShowEndProfsMagic = $("input[name=isShowEndProfsMagic]").get(0).checked; //isShowEndProfs added by Ilirith
-	hvStat.settings.isShowEndProfsArmor = $("input[name=isShowEndProfsArmor]").get(0).checked; //isShowEndProfs added by Ilirith
-	hvStat.settings.isShowEndProfsWeapon = $("input[name=isShowEndProfsWeapon]").get(0).checked; //isShowEndProfs added by Ilirith
-	hvStat.settings.autoAdvanceBattleRound = $("input[name=autoAdvanceBattleRound]").get(0).checked;
-	hvStat.settings.autoAdvanceBattleRoundDelay = $("input[name=autoAdvanceBattleRoundDelay]").get(0).value;
-
-	// Warning System
-	// - Display Method
-	hvStat.settings.isCondenseAlerts = $("input[name=isCondenseAlerts]").get(0).checked;
-	hvStat.settings.delayRoundEndAlerts = $("input[name=delayRoundEndAlerts]").get(0).checked;
-	// - Self Status
-	hvStat.settings.isHighlightQC = $("input[name=isHighlightQC]").get(0).checked;
-	hvStat.settings.warnOrangeLevel = $("input[name=warnOrangeLevel]").get(0).value;
-	hvStat.settings.warnRedLevel = $("input[name=warnRedLevel]").get(0).value;
-	hvStat.settings.warnAlertLevel = $("input[name=warnAlertLevel]").get(0).value;
-	hvStat.settings.warnOrangeLevelMP = $("input[name=warnOrangeLevelMP]").get(0).value;
-	hvStat.settings.warnRedLevelMP = $("input[name=warnRedLevelMP]").get(0).value;
-	hvStat.settings.warnAlertLevelMP = $("input[name=warnAlertLevelMP]").get(0).value;
-	hvStat.settings.warnOrangeLevelSP = $("input[name=warnOrangeLevelSP]").get(0).value;
-	hvStat.settings.warnRedLevelSP = $("input[name=warnRedLevelSP]").get(0).value;
-	hvStat.settings.warnAlertLevelSP = $("input[name=warnAlertLevelSP]").get(0).value;
-	hvStat.settings.isShowPopup = $("input[name=isShowPopup]").get(0).checked;
-	hvStat.settings.isNagHP = $("input[name=isNagHP]").get(0).checked;
-	hvStat.settings.isNagMP = $("input[name=isNagMP]").get(0).checked;
-	hvStat.settings.isNagSP = $("input[name=isNagSP]").get(0).checked;
-	hvStat.settings.warnMode[0] = $("input[name=isWarnH]").get(0).checked;
-	hvStat.settings.warnMode[1] = $("input[name=isWarnA]").get(0).checked;
-	hvStat.settings.warnMode[2] = $("input[name=isWarnGF]").get(0).checked;
-	hvStat.settings.warnMode[3] = $("input[name=isWarnIW]").get(0).checked;
-	// - Event Notifications
-	hvStat.settings.isAlertGem = $("input[name=isAlertGem]").get(0).checked;
-	hvStat.settings.isAlertOverchargeFull = $("input[name=isAlertOverchargeFull]").get(0).checked;
-	hvStat.settings.isWarnAbsorbTrigger = $("input[name=isWarnAbsorbTrigger]").get(0).checked;
-	hvStat.settings.isWarnSparkTrigger = $("input[name=isWarnSparkTrigger]").get(0).checked;
-	hvStat.settings.isWarnSparkExpire = $("input[name=isWarnSparkExpire]").get(0).checked;
-	hvStat.settings.alertWhenChannelingIsGained = $("input[name=alertWhenChannelingIsGained]").get(0).checked;
-	// - Effects Expiring Warnings
-	hvStat.settings.isMainEffectsAlertSelf = $("input[name=isMainEffectsAlertSelf]").get(0).checked;
-	hvStat.settings.isEffectsAlertSelf[0] = $("input[name=isEffectsAlertSelf0]").get(0).checked;
-	hvStat.settings.isEffectsAlertSelf[1] = $("input[name=isEffectsAlertSelf1]").get(0).checked;
-	hvStat.settings.isEffectsAlertSelf[2] = $("input[name=isEffectsAlertSelf2]").get(0).checked;
-	hvStat.settings.isEffectsAlertSelf[3] = $("input[name=isEffectsAlertSelf3]").get(0).checked;
-	hvStat.settings.isEffectsAlertSelf[4] = false; // Absorbing Ward no longer has duration
-	hvStat.settings.isEffectsAlertSelf[5] = $("input[name=isEffectsAlertSelf5]").get(0).checked;
-	hvStat.settings.isEffectsAlertSelf[6] = $("input[name=isEffectsAlertSelf6]").get(0).checked;
-	hvStat.settings.isEffectsAlertSelf[7] = $("input[name=isEffectsAlertSelf7]").get(0).checked;
-	hvStat.settings.isEffectsAlertSelf[8] = $("input[name=isEffectsAlertSelf8]").get(0).checked;
-	hvStat.settings.isEffectsAlertSelf[9] = $("input[name=isEffectsAlertSelf9]").get(0).checked;
-	hvStat.settings.isEffectsAlertSelf[10] = false;	// Flame Spikes is obsolete
-	hvStat.settings.isEffectsAlertSelf[11] = false;	// Frost Spikes is obsolete
-	hvStat.settings.isEffectsAlertSelf[12] = false;	// Lightning Spikes is obsolete
-	hvStat.settings.isEffectsAlertSelf[13] = false;	// Storm Spikes is obsolete
-	hvStat.settings.isEffectsAlertSelf[14] = $("input[name=isEffectsAlertSelf14]").get(0).checked;
-	hvStat.settings.isEffectsAlertSelf[15] = $("input[name=isEffectsAlertSelf15]").get(0).checked;
-	hvStat.settings.EffectsAlertSelfRounds[0] = $("input[name=EffectsAlertSelfRounds0]").get(0).value;
-	hvStat.settings.EffectsAlertSelfRounds[1] = $("input[name=EffectsAlertSelfRounds1]").get(0).value;
-	hvStat.settings.EffectsAlertSelfRounds[2] = $("input[name=EffectsAlertSelfRounds2]").get(0).value;
-	hvStat.settings.EffectsAlertSelfRounds[3] = $("input[name=EffectsAlertSelfRounds3]").get(0).value;
-	hvStat.settings.EffectsAlertSelfRounds[4] = 0; // Absorbing Ward no longer has duration
-	hvStat.settings.EffectsAlertSelfRounds[5] = $("input[name=EffectsAlertSelfRounds5]").get(0).value;
-	hvStat.settings.EffectsAlertSelfRounds[6] = $("input[name=EffectsAlertSelfRounds6]").get(0).value;
-	hvStat.settings.EffectsAlertSelfRounds[7] = $("input[name=EffectsAlertSelfRounds7]").get(0).value;
-	hvStat.settings.EffectsAlertSelfRounds[8] = $("input[name=EffectsAlertSelfRounds8]").get(0).value;
-	hvStat.settings.EffectsAlertSelfRounds[9] = $("input[name=EffectsAlertSelfRounds9]").get(0).value;
-	hvStat.settings.EffectsAlertSelfRounds[10] = 0;	// Flame Spikes is obsolete
-	hvStat.settings.EffectsAlertSelfRounds[11] = 0;	// Frost Spikes is obsolete
-	hvStat.settings.EffectsAlertSelfRounds[12] = 0;	// Lightning Spikes is obsolete
-	hvStat.settings.EffectsAlertSelfRounds[13] = 0;	// Storm Spikes is obsolete
-	hvStat.settings.EffectsAlertSelfRounds[14] = $("input[name=EffectsAlertSelfRounds14]").get(0).value;
-	hvStat.settings.EffectsAlertSelfRounds[15] = $("input[name=EffectsAlertSelfRounds15]").get(0).value;
-	hvStat.settings.isMainEffectsAlertMonsters = $("input[name=isMainEffectsAlertMonsters]").get(0).checked;
-	hvStat.settings.isEffectsAlertMonsters[0] = $("input[name=isEffectsAlertMonsters0]").get(0).checked;
-	hvStat.settings.isEffectsAlertMonsters[1] = $("input[name=isEffectsAlertMonsters1]").get(0).checked;
-	hvStat.settings.isEffectsAlertMonsters[2] = $("input[name=isEffectsAlertMonsters2]").get(0).checked;
-	hvStat.settings.isEffectsAlertMonsters[3] = $("input[name=isEffectsAlertMonsters3]").get(0).checked;
-	hvStat.settings.isEffectsAlertMonsters[4] = $("input[name=isEffectsAlertMonsters4]").get(0).checked;
-	hvStat.settings.isEffectsAlertMonsters[5] = $("input[name=isEffectsAlertMonsters5]").get(0).checked;
-	hvStat.settings.isEffectsAlertMonsters[6] = $("input[name=isEffectsAlertMonsters6]").get(0).checked;
-	hvStat.settings.isEffectsAlertMonsters[7] = $("input[name=isEffectsAlertMonsters7]").get(0).checked;
-	hvStat.settings.isEffectsAlertMonsters[8] = false; // Nerf is obsolete
-	hvStat.settings.isEffectsAlertMonsters[9] = $("input[name=isEffectsAlertMonsters9]").get(0).checked;
-	hvStat.settings.isEffectsAlertMonsters[10] = false; // Lifestream is obsolete
-	hvStat.settings.isEffectsAlertMonsters[11] = $("input[name=isEffectsAlertMonsters11]").get(0).checked;
-	hvStat.settings.EffectsAlertMonstersRounds[0] = $("input[name=EffectsAlertMonstersRounds0]").get(0).value;
-	hvStat.settings.EffectsAlertMonstersRounds[1] = $("input[name=EffectsAlertMonstersRounds1]").get(0).value;
-	hvStat.settings.EffectsAlertMonstersRounds[2] = $("input[name=EffectsAlertMonstersRounds2]").get(0).value;
-	hvStat.settings.EffectsAlertMonstersRounds[3] = $("input[name=EffectsAlertMonstersRounds3]").get(0).value;
-	hvStat.settings.EffectsAlertMonstersRounds[4] = $("input[name=EffectsAlertMonstersRounds4]").get(0).value;
-	hvStat.settings.EffectsAlertMonstersRounds[5] = $("input[name=EffectsAlertMonstersRounds5]").get(0).value;
-	hvStat.settings.EffectsAlertMonstersRounds[6] = $("input[name=EffectsAlertMonstersRounds6]").get(0).value;
-	hvStat.settings.EffectsAlertMonstersRounds[7] = $("input[name=EffectsAlertMonstersRounds7]").get(0).value;
-	hvStat.settings.EffectsAlertMonstersRounds[8] = 0; // Nerf is obsolete
-	hvStat.settings.EffectsAlertMonstersRounds[9] = $("input[name=EffectsAlertMonstersRounds9]").get(0).value;
-	hvStat.settings.EffectsAlertMonstersRounds[10] = 0; // Lifestream is obsolete
-	hvStat.settings.EffectsAlertMonstersRounds[11] = $("input[name=EffectsAlertMonstersRounds11]").get(0).value;
-
-	// Monster Information
-	// - Monster Database
-	hvStat.settings.isRememberScan = $("input[name=isRememberScan]").get(0).checked;
-	hvStat.settings.isRememberSkillsTypes = $("input[name=isRememberSkillsTypes]").get(0).checked;
-	hvStat.settings.showMonsterHP = $("input[name=showMonsterHP]").get(0).checked;
-	hvStat.settings.showMonsterHPPercent = $("input[name=showMonsterHPPercent]").get(0).checked;
-	hvStat.settings.showMonsterMP = $("input[name=showMonsterMP]").get(0).checked;
-	hvStat.settings.showMonsterSP = $("input[name=showMonsterSP]").get(0).checked;
-	hvStat.settings.showMonsterInfoFromDB = $("input[name=showMonsterInfoFromDB]").get(0).checked;
-	hvStat.settings.showMonsterClassFromDB = $("input[name=showMonsterClassFromDB]").get(0).checked;
-	hvStat.settings.showMonsterPowerLevelFromDB = $("input[name=showMonsterPowerLevelFromDB]").get(0).checked;
-	hvStat.settings.showMonsterAttackTypeFromDB = $("input[name=showMonsterAttackTypeFromDB]").get(0).checked;
-	hvStat.settings.showMonsterWeaknessesFromDB = $("input[name=showMonsterWeaknessesFromDB]").get(0).checked;
-	hvStat.settings.showMonsterResistancesFromDB = $("input[name=showMonsterResistancesFromDB]").get(0).checked;
-	hvStat.settings.hideSpecificDamageType[0] = $("input[name=hideSpecificDamageType0]").get(0).checked;
-	hvStat.settings.hideSpecificDamageType[1] = $("input[name=hideSpecificDamageType1]").get(0).checked;
-	hvStat.settings.hideSpecificDamageType[2] = $("input[name=hideSpecificDamageType2]").get(0).checked;
-	hvStat.settings.hideSpecificDamageType[3] = $("input[name=hideSpecificDamageType3]").get(0).checked;
-	hvStat.settings.hideSpecificDamageType[4] = $("input[name=hideSpecificDamageType4]").get(0).checked;
-	hvStat.settings.hideSpecificDamageType[5] = $("input[name=hideSpecificDamageType5]").get(0).checked;
-	hvStat.settings.hideSpecificDamageType[6] = $("input[name=hideSpecificDamageType6]").get(0).checked;
-	hvStat.settings.hideSpecificDamageType[7] = $("input[name=hideSpecificDamageType7]").get(0).checked;
-	hvStat.settings.hideSpecificDamageType[8] = $("input[name=hideSpecificDamageType8]").get(0).checked;
-	hvStat.settings.hideSpecificDamageType[9] = $("input[name=hideSpecificDamageType9]").get(0).checked;
-	hvStat.settings.hideSpecificDamageType[10] = $("input[name=hideSpecificDamageType10]").get(0).checked;
-	hvStat.settings.ResizeMonsterInfo = $("input[name=ResizeMonsterInfo]").get(0).checked;
-	hvStat.settings.isShowStatsPopup = $("input[name=isShowStatsPopup]").get(0).checked;
-	hvStat.settings.monsterPopupDelay = $("input[name=monsterPopupDelay]").get(0).value;
-	hvStat.settings.isMonsterPopupPlacement = $("input[name=isMonsterPopupPlacement]").get(0).checked;
-
-	hvStat.storage.settings.save();
-}
-function reminderAndSaveSettings() {
-	if (!hvStat.characterStatus.areProficienciesCaptured && $("input[name=isShowSidebarProfs]").get(0).checked) {
-		alert('Please visit the Character Stats page at least once\nwith either the "Use Downloable Fonts" or "Custom\nLocal Font" setting enabled, to allow STAT to record\nyour current proficiencies. STAT cannot record this\ndata while HentaiVerse Font Engine is enabled.');
-	}
-	saveSettings();
-}
-function HVResetTracking() {
-	hvStat.storage.overview.reset();
-	hvStat.storage.stats.reset();
-	hvStat.storage.shrine.reset();
-	hvStat.storage.dropStats.reset();
-}
-function HVMasterReset() {
-	// Local storage keys starting with "HV" should not be used to avoid conflicts with other scripts.
-	// They will be phased out. Use the prefix "hvStat." instead.
-	var keys = [
-		"HVBackup1",
-		"HVBackup2",
-		"HVBackup3",
-		"HVBackup4",
-		"HVBackup5",
-		"HVMonsterDatabase",	// Old monster data
-		"HVOverview",
-		"HVSettings",
-		"HVShrine",
-		"HVStats",
-		"HVTags",
-	];
-	var i = keys.length;
-	while (i--) {
-		localStorage.removeItem(keys[i]);
-	}
-	for (var key in localStorage) {
-		if (key.indexOf("hvStat.") === 0) {
-			console.debug("Remove from localStorage: " + key);
-			localStorage.removeItem(key);
-		}
-	}
-}
-function saveStatsBackup(back) {
-	var ba = hvStat.statsBackups[back];
-	hvStat.util.copyEachProperty(ba, hvStat.stats);
-	hvStat.storage.statsBackups[back].save();
-}
-function addtoStatsBackup(back) {
-	var ba = hvStat.statsBackups[back];
-	hvStat.util.addEachPropertyValue(ba, hvStat.stats, ["datestart", "datesave"]);
-	hvStat.storage.statsBackups[back].save();
-}
-function loadStatsBackup(back) {
-	var ba = hvStat.statsBackups[back];
-	hvStat.util.copyEachProperty(hvStat.stats, ba);
-	hvStat.storage.stats.save();
-}
-function addfromStatsBackup(back) {
-	var ba = hvStat.statsBackups[back];
-	hvStat.util.addEachPropertyValue(hvStat.stats, ba, ["datestart", "datesave"]);
-	hvStat.storage.stats.save();
-}
-
 //------------------------------------
 // Inventory Management
 //------------------------------------
@@ -7620,6 +7373,253 @@ function initSettingsPane() {
 		if (confirm("This will delete ALL HV data saved in localStorage.\nAre you sure you want to do this?"))
 			HVMasterReset();
 	});
+}
+
+function saveSettings() {
+	// General
+	hvStat.settings.isChangePageTitle = $("input[name=isChangePageTitle]").get(0).checked;
+	hvStat.settings.customPageTitle = $("input[name=customPageTitle]").get(0).value;
+	hvStat.settings.isShowEquippedSet = $("input[name=isShowEquippedSet]").get(0).checked;
+	hvStat.settings.isShowSidebarProfs = $("input[name=isShowSidebarProfs]").get(0).checked;
+	hvStat.settings.isStartAlert = $("input[name=isStartAlert]").get(0).checked;
+	hvStat.settings.StartAlertHP = $("input[name=StartAlertHP]").get(0).value;
+	hvStat.settings.StartAlertMP = $("input[name=StartAlertMP]").get(0).value;
+	hvStat.settings.StartAlertSP = $("input[name=StartAlertSP]").get(0).value;
+	hvStat.settings.StartAlertDifficulty = $("select[id=StartAlertDifficulty]").get(0).value;
+	hvStat.settings.isShowTags[0] = $("input[name=isShowTags0]").get(0).checked;
+	hvStat.settings.isShowTags[1] = $("input[name=isShowTags1]").get(0).checked;
+	hvStat.settings.isShowTags[2] = $("input[name=isShowTags2]").get(0).checked;
+	hvStat.settings.isShowTags[3] = $("input[name=isShowTags3]").get(0).checked;
+	hvStat.settings.isShowTags[4] = $("input[name=isShowTags4]").get(0).checked;
+	hvStat.settings.isShowTags[5] = $("input[name=isShowTags5]").get(0).checked;
+
+	// Keyboard
+	hvStat.settings.adjustKeyEventHandling = $("input[name=adjustKeyEventHandling]").get(0).checked;
+	hvStat.settings.isEnableScanHotkey = $("input[name=isEnableScanHotkey]").get(0).checked;
+	hvStat.settings.isEnableSkillHotkey = $("input[name=isEnableSkillHotkey]").get(0).checked;
+	hvStat.settings.reverseSkillHotkeyTraversalOrder = $("input[name=reverseSkillHotkeyTraversalOrder]").get(0).checked;
+	hvStat.settings.enableOFCHotkey = $("input[name=enableOFCHotkey]").get(0).checked;
+	hvStat.settings.enableScrollHotkey = $("input[name=enableScrollHotkey]").get(0).checked;
+	hvStat.settings.isDisableForgeHotKeys = $("input[name=isDisableForgeHotKeys]").get(0).checked;
+	hvStat.settings.enableShrineKeyPatch = $("input[name=enableShrineKeyPatch]").get(0).checked;
+
+	// Tracking
+	hvStat.settings.isTrackStats = $("input[name=isTrackStats]").get(0).checked;
+	hvStat.settings.isTrackShrine = $("input[name=isTrackShrine]").get(0).checked;
+	hvStat.settings.isTrackItems = $("input[name=isTrackItems]").get(0).checked;
+
+	// Battle Enhancement
+	hvStat.settings.isShowRoundCounter = $("input[name=isShowRoundCounter]").get(0).checked;
+	hvStat.settings.isShowRoundReminder = $("input[name=isShowRoundReminder]").get(0).checked;
+	hvStat.settings.reminderMinRounds = $("input[name=reminderMinRounds]").get(0).value;
+	hvStat.settings.reminderBeforeEnd = $("input[name=reminderBeforeEnd]").get(0).value;
+	hvStat.settings.isShowSelfDuration = $("input[name=isShowSelfDuration]").get(0).checked;
+	hvStat.settings.isSelfEffectsWarnColor = $("input[name=isSelfEffectsWarnColor]").get(0).checked;
+	hvStat.settings.SelfWarnOrangeRounds = $("input[name=SelfWarnOrangeRounds]").get(0).value;
+	hvStat.settings.SelfWarnRedRounds = $("input[name=SelfWarnRedRounds]").get(0).value;
+	hvStat.settings.showSelfEffectStackLevel = $("input[name=showSelfEffectStackLevel]").get(0).checked;
+	hvStat.settings.isShowPowerupBox = $("input[name=isShowPowerupBox]").get(0).checked;
+	hvStat.settings.isShowHighlight = $("input[name=isShowHighlight]").get(0).checked;
+	hvStat.settings.isAltHighlight = $("input[name=isAltHighlight]").get(0).checked;
+	hvStat.settings.isShowDivider = $("input[name=isShowDivider]").get(0).checked;
+	hvStat.settings.isShowScanButton = $("input[name=isShowScanButton]").get(0).checked;
+	hvStat.settings.highlightScanButtonWhenScanResultExpired = $("input[name=highlightScanButtonWhenScanResultExpired]").get(0).checked;
+	hvStat.settings.nDaysUntilScanResultExpiration = $("input[name=nDaysUntilScanResultExpiration]").get(0).value;
+	hvStat.settings.isShowSkillButton = $("input[name=isShowSkillButton]").get(0).checked;
+	hvStat.settings.isShowMonsterNumber = $("input[name=isShowMonsterNumber]").get(0).checked;
+	hvStat.settings.isShowMonsterDuration = $("input[name=isShowMonsterDuration]").get(0).checked;
+	hvStat.settings.isMonstersEffectsWarnColor = $("input[name=isMonstersEffectsWarnColor]").get(0).checked;
+	hvStat.settings.MonstersWarnOrangeRounds = $("input[name=MonstersWarnOrangeRounds]").get(0).value;
+	hvStat.settings.MonstersWarnRedRounds = $("input[name=MonstersWarnRedRounds]").get(0).value;
+	hvStat.settings.showMonsterEffectStackLevel = $("input[name=showMonsterEffectStackLevel]").get(0).checked;
+	hvStat.settings.isShowEndStats = $("input[name=isShowEndStats]").get(0).checked;
+	hvStat.settings.isShowEndProfs = $("input[name=isShowEndProfs]").get(0).checked; //isShowEndProfs added by Ilirith
+	hvStat.settings.isShowEndProfsMagic = $("input[name=isShowEndProfsMagic]").get(0).checked; //isShowEndProfs added by Ilirith
+	hvStat.settings.isShowEndProfsArmor = $("input[name=isShowEndProfsArmor]").get(0).checked; //isShowEndProfs added by Ilirith
+	hvStat.settings.isShowEndProfsWeapon = $("input[name=isShowEndProfsWeapon]").get(0).checked; //isShowEndProfs added by Ilirith
+	hvStat.settings.autoAdvanceBattleRound = $("input[name=autoAdvanceBattleRound]").get(0).checked;
+	hvStat.settings.autoAdvanceBattleRoundDelay = $("input[name=autoAdvanceBattleRoundDelay]").get(0).value;
+
+	// Warning System
+	// - Display Method
+	hvStat.settings.isCondenseAlerts = $("input[name=isCondenseAlerts]").get(0).checked;
+	hvStat.settings.delayRoundEndAlerts = $("input[name=delayRoundEndAlerts]").get(0).checked;
+	// - Self Status
+	hvStat.settings.isHighlightQC = $("input[name=isHighlightQC]").get(0).checked;
+	hvStat.settings.warnOrangeLevel = $("input[name=warnOrangeLevel]").get(0).value;
+	hvStat.settings.warnRedLevel = $("input[name=warnRedLevel]").get(0).value;
+	hvStat.settings.warnAlertLevel = $("input[name=warnAlertLevel]").get(0).value;
+	hvStat.settings.warnOrangeLevelMP = $("input[name=warnOrangeLevelMP]").get(0).value;
+	hvStat.settings.warnRedLevelMP = $("input[name=warnRedLevelMP]").get(0).value;
+	hvStat.settings.warnAlertLevelMP = $("input[name=warnAlertLevelMP]").get(0).value;
+	hvStat.settings.warnOrangeLevelSP = $("input[name=warnOrangeLevelSP]").get(0).value;
+	hvStat.settings.warnRedLevelSP = $("input[name=warnRedLevelSP]").get(0).value;
+	hvStat.settings.warnAlertLevelSP = $("input[name=warnAlertLevelSP]").get(0).value;
+	hvStat.settings.isShowPopup = $("input[name=isShowPopup]").get(0).checked;
+	hvStat.settings.isNagHP = $("input[name=isNagHP]").get(0).checked;
+	hvStat.settings.isNagMP = $("input[name=isNagMP]").get(0).checked;
+	hvStat.settings.isNagSP = $("input[name=isNagSP]").get(0).checked;
+	hvStat.settings.warnMode[0] = $("input[name=isWarnH]").get(0).checked;
+	hvStat.settings.warnMode[1] = $("input[name=isWarnA]").get(0).checked;
+	hvStat.settings.warnMode[2] = $("input[name=isWarnGF]").get(0).checked;
+	hvStat.settings.warnMode[3] = $("input[name=isWarnIW]").get(0).checked;
+	// - Event Notifications
+	hvStat.settings.isAlertGem = $("input[name=isAlertGem]").get(0).checked;
+	hvStat.settings.isAlertOverchargeFull = $("input[name=isAlertOverchargeFull]").get(0).checked;
+	hvStat.settings.isWarnAbsorbTrigger = $("input[name=isWarnAbsorbTrigger]").get(0).checked;
+	hvStat.settings.isWarnSparkTrigger = $("input[name=isWarnSparkTrigger]").get(0).checked;
+	hvStat.settings.isWarnSparkExpire = $("input[name=isWarnSparkExpire]").get(0).checked;
+	hvStat.settings.alertWhenChannelingIsGained = $("input[name=alertWhenChannelingIsGained]").get(0).checked;
+	// - Effects Expiring Warnings
+	hvStat.settings.isMainEffectsAlertSelf = $("input[name=isMainEffectsAlertSelf]").get(0).checked;
+	hvStat.settings.isEffectsAlertSelf[0] = $("input[name=isEffectsAlertSelf0]").get(0).checked;
+	hvStat.settings.isEffectsAlertSelf[1] = $("input[name=isEffectsAlertSelf1]").get(0).checked;
+	hvStat.settings.isEffectsAlertSelf[2] = $("input[name=isEffectsAlertSelf2]").get(0).checked;
+	hvStat.settings.isEffectsAlertSelf[3] = $("input[name=isEffectsAlertSelf3]").get(0).checked;
+	hvStat.settings.isEffectsAlertSelf[4] = false; // Absorbing Ward no longer has duration
+	hvStat.settings.isEffectsAlertSelf[5] = $("input[name=isEffectsAlertSelf5]").get(0).checked;
+	hvStat.settings.isEffectsAlertSelf[6] = $("input[name=isEffectsAlertSelf6]").get(0).checked;
+	hvStat.settings.isEffectsAlertSelf[7] = $("input[name=isEffectsAlertSelf7]").get(0).checked;
+	hvStat.settings.isEffectsAlertSelf[8] = $("input[name=isEffectsAlertSelf8]").get(0).checked;
+	hvStat.settings.isEffectsAlertSelf[9] = $("input[name=isEffectsAlertSelf9]").get(0).checked;
+	hvStat.settings.isEffectsAlertSelf[10] = false;	// Flame Spikes is obsolete
+	hvStat.settings.isEffectsAlertSelf[11] = false;	// Frost Spikes is obsolete
+	hvStat.settings.isEffectsAlertSelf[12] = false;	// Lightning Spikes is obsolete
+	hvStat.settings.isEffectsAlertSelf[13] = false;	// Storm Spikes is obsolete
+	hvStat.settings.isEffectsAlertSelf[14] = $("input[name=isEffectsAlertSelf14]").get(0).checked;
+	hvStat.settings.isEffectsAlertSelf[15] = $("input[name=isEffectsAlertSelf15]").get(0).checked;
+	hvStat.settings.EffectsAlertSelfRounds[0] = $("input[name=EffectsAlertSelfRounds0]").get(0).value;
+	hvStat.settings.EffectsAlertSelfRounds[1] = $("input[name=EffectsAlertSelfRounds1]").get(0).value;
+	hvStat.settings.EffectsAlertSelfRounds[2] = $("input[name=EffectsAlertSelfRounds2]").get(0).value;
+	hvStat.settings.EffectsAlertSelfRounds[3] = $("input[name=EffectsAlertSelfRounds3]").get(0).value;
+	hvStat.settings.EffectsAlertSelfRounds[4] = 0; // Absorbing Ward no longer has duration
+	hvStat.settings.EffectsAlertSelfRounds[5] = $("input[name=EffectsAlertSelfRounds5]").get(0).value;
+	hvStat.settings.EffectsAlertSelfRounds[6] = $("input[name=EffectsAlertSelfRounds6]").get(0).value;
+	hvStat.settings.EffectsAlertSelfRounds[7] = $("input[name=EffectsAlertSelfRounds7]").get(0).value;
+	hvStat.settings.EffectsAlertSelfRounds[8] = $("input[name=EffectsAlertSelfRounds8]").get(0).value;
+	hvStat.settings.EffectsAlertSelfRounds[9] = $("input[name=EffectsAlertSelfRounds9]").get(0).value;
+	hvStat.settings.EffectsAlertSelfRounds[10] = 0;	// Flame Spikes is obsolete
+	hvStat.settings.EffectsAlertSelfRounds[11] = 0;	// Frost Spikes is obsolete
+	hvStat.settings.EffectsAlertSelfRounds[12] = 0;	// Lightning Spikes is obsolete
+	hvStat.settings.EffectsAlertSelfRounds[13] = 0;	// Storm Spikes is obsolete
+	hvStat.settings.EffectsAlertSelfRounds[14] = $("input[name=EffectsAlertSelfRounds14]").get(0).value;
+	hvStat.settings.EffectsAlertSelfRounds[15] = $("input[name=EffectsAlertSelfRounds15]").get(0).value;
+	hvStat.settings.isMainEffectsAlertMonsters = $("input[name=isMainEffectsAlertMonsters]").get(0).checked;
+	hvStat.settings.isEffectsAlertMonsters[0] = $("input[name=isEffectsAlertMonsters0]").get(0).checked;
+	hvStat.settings.isEffectsAlertMonsters[1] = $("input[name=isEffectsAlertMonsters1]").get(0).checked;
+	hvStat.settings.isEffectsAlertMonsters[2] = $("input[name=isEffectsAlertMonsters2]").get(0).checked;
+	hvStat.settings.isEffectsAlertMonsters[3] = $("input[name=isEffectsAlertMonsters3]").get(0).checked;
+	hvStat.settings.isEffectsAlertMonsters[4] = $("input[name=isEffectsAlertMonsters4]").get(0).checked;
+	hvStat.settings.isEffectsAlertMonsters[5] = $("input[name=isEffectsAlertMonsters5]").get(0).checked;
+	hvStat.settings.isEffectsAlertMonsters[6] = $("input[name=isEffectsAlertMonsters6]").get(0).checked;
+	hvStat.settings.isEffectsAlertMonsters[7] = $("input[name=isEffectsAlertMonsters7]").get(0).checked;
+	hvStat.settings.isEffectsAlertMonsters[8] = false; // Nerf is obsolete
+	hvStat.settings.isEffectsAlertMonsters[9] = $("input[name=isEffectsAlertMonsters9]").get(0).checked;
+	hvStat.settings.isEffectsAlertMonsters[10] = false; // Lifestream is obsolete
+	hvStat.settings.isEffectsAlertMonsters[11] = $("input[name=isEffectsAlertMonsters11]").get(0).checked;
+	hvStat.settings.EffectsAlertMonstersRounds[0] = $("input[name=EffectsAlertMonstersRounds0]").get(0).value;
+	hvStat.settings.EffectsAlertMonstersRounds[1] = $("input[name=EffectsAlertMonstersRounds1]").get(0).value;
+	hvStat.settings.EffectsAlertMonstersRounds[2] = $("input[name=EffectsAlertMonstersRounds2]").get(0).value;
+	hvStat.settings.EffectsAlertMonstersRounds[3] = $("input[name=EffectsAlertMonstersRounds3]").get(0).value;
+	hvStat.settings.EffectsAlertMonstersRounds[4] = $("input[name=EffectsAlertMonstersRounds4]").get(0).value;
+	hvStat.settings.EffectsAlertMonstersRounds[5] = $("input[name=EffectsAlertMonstersRounds5]").get(0).value;
+	hvStat.settings.EffectsAlertMonstersRounds[6] = $("input[name=EffectsAlertMonstersRounds6]").get(0).value;
+	hvStat.settings.EffectsAlertMonstersRounds[7] = $("input[name=EffectsAlertMonstersRounds7]").get(0).value;
+	hvStat.settings.EffectsAlertMonstersRounds[8] = 0; // Nerf is obsolete
+	hvStat.settings.EffectsAlertMonstersRounds[9] = $("input[name=EffectsAlertMonstersRounds9]").get(0).value;
+	hvStat.settings.EffectsAlertMonstersRounds[10] = 0; // Lifestream is obsolete
+	hvStat.settings.EffectsAlertMonstersRounds[11] = $("input[name=EffectsAlertMonstersRounds11]").get(0).value;
+
+	// Monster Information
+	// - Monster Database
+	hvStat.settings.isRememberScan = $("input[name=isRememberScan]").get(0).checked;
+	hvStat.settings.isRememberSkillsTypes = $("input[name=isRememberSkillsTypes]").get(0).checked;
+	hvStat.settings.showMonsterHP = $("input[name=showMonsterHP]").get(0).checked;
+	hvStat.settings.showMonsterHPPercent = $("input[name=showMonsterHPPercent]").get(0).checked;
+	hvStat.settings.showMonsterMP = $("input[name=showMonsterMP]").get(0).checked;
+	hvStat.settings.showMonsterSP = $("input[name=showMonsterSP]").get(0).checked;
+	hvStat.settings.showMonsterInfoFromDB = $("input[name=showMonsterInfoFromDB]").get(0).checked;
+	hvStat.settings.showMonsterClassFromDB = $("input[name=showMonsterClassFromDB]").get(0).checked;
+	hvStat.settings.showMonsterPowerLevelFromDB = $("input[name=showMonsterPowerLevelFromDB]").get(0).checked;
+	hvStat.settings.showMonsterAttackTypeFromDB = $("input[name=showMonsterAttackTypeFromDB]").get(0).checked;
+	hvStat.settings.showMonsterWeaknessesFromDB = $("input[name=showMonsterWeaknessesFromDB]").get(0).checked;
+	hvStat.settings.showMonsterResistancesFromDB = $("input[name=showMonsterResistancesFromDB]").get(0).checked;
+	hvStat.settings.hideSpecificDamageType[0] = $("input[name=hideSpecificDamageType0]").get(0).checked;
+	hvStat.settings.hideSpecificDamageType[1] = $("input[name=hideSpecificDamageType1]").get(0).checked;
+	hvStat.settings.hideSpecificDamageType[2] = $("input[name=hideSpecificDamageType2]").get(0).checked;
+	hvStat.settings.hideSpecificDamageType[3] = $("input[name=hideSpecificDamageType3]").get(0).checked;
+	hvStat.settings.hideSpecificDamageType[4] = $("input[name=hideSpecificDamageType4]").get(0).checked;
+	hvStat.settings.hideSpecificDamageType[5] = $("input[name=hideSpecificDamageType5]").get(0).checked;
+	hvStat.settings.hideSpecificDamageType[6] = $("input[name=hideSpecificDamageType6]").get(0).checked;
+	hvStat.settings.hideSpecificDamageType[7] = $("input[name=hideSpecificDamageType7]").get(0).checked;
+	hvStat.settings.hideSpecificDamageType[8] = $("input[name=hideSpecificDamageType8]").get(0).checked;
+	hvStat.settings.hideSpecificDamageType[9] = $("input[name=hideSpecificDamageType9]").get(0).checked;
+	hvStat.settings.hideSpecificDamageType[10] = $("input[name=hideSpecificDamageType10]").get(0).checked;
+	hvStat.settings.ResizeMonsterInfo = $("input[name=ResizeMonsterInfo]").get(0).checked;
+	hvStat.settings.isShowStatsPopup = $("input[name=isShowStatsPopup]").get(0).checked;
+	hvStat.settings.monsterPopupDelay = $("input[name=monsterPopupDelay]").get(0).value;
+	hvStat.settings.isMonsterPopupPlacement = $("input[name=isMonsterPopupPlacement]").get(0).checked;
+
+	hvStat.storage.settings.save();
+}
+function reminderAndSaveSettings() {
+	if (!hvStat.characterStatus.areProficienciesCaptured && $("input[name=isShowSidebarProfs]").get(0).checked) {
+		alert('Please visit the Character Stats page at least once\nwith either the "Use Downloable Fonts" or "Custom\nLocal Font" setting enabled, to allow STAT to record\nyour current proficiencies. STAT cannot record this\ndata while HentaiVerse Font Engine is enabled.');
+	}
+	saveSettings();
+}
+function HVResetTracking() {
+	hvStat.storage.overview.reset();
+	hvStat.storage.stats.reset();
+	hvStat.storage.shrine.reset();
+	hvStat.storage.dropStats.reset();
+}
+function HVMasterReset() {
+	// Local storage keys starting with "HV" should not be used to avoid conflicts with other scripts.
+	// They will be phased out. Use the prefix "hvStat." instead.
+	var keys = [
+		"HVBackup1",
+		"HVBackup2",
+		"HVBackup3",
+		"HVBackup4",
+		"HVBackup5",
+		"HVMonsterDatabase",	// Old monster data
+		"HVOverview",
+		"HVSettings",
+		"HVShrine",
+		"HVStats",
+		"HVTags",
+	];
+	var i = keys.length;
+	while (i--) {
+		localStorage.removeItem(keys[i]);
+	}
+	for (var key in localStorage) {
+		if (key.indexOf("hvStat.") === 0) {
+			console.debug("Remove from localStorage: " + key);
+			localStorage.removeItem(key);
+		}
+	}
+}
+function saveStatsBackup(back) {
+	var ba = hvStat.statsBackups[back];
+	hvStat.util.copyEachProperty(ba, hvStat.stats);
+	hvStat.storage.statsBackups[back].save();
+}
+function addtoStatsBackup(back) {
+	var ba = hvStat.statsBackups[back];
+	hvStat.util.addEachPropertyValue(ba, hvStat.stats, ["datestart", "datesave"]);
+	hvStat.storage.statsBackups[back].save();
+}
+function loadStatsBackup(back) {
+	var ba = hvStat.statsBackups[back];
+	hvStat.util.copyEachProperty(hvStat.stats, ba);
+	hvStat.storage.stats.save();
+}
+function addfromStatsBackup(back) {
+	var ba = hvStat.statsBackups[back];
+	hvStat.util.addEachPropertyValue(hvStat.stats, ba, ["datestart", "datesave"]);
+	hvStat.storage.stats.save();
 }
 
 //------------------------------------
