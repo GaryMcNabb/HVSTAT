@@ -4861,7 +4861,7 @@ hvStat.battle.monster.Monster.prototype = {
 		}
 		return null;
 	},
-	_renderStats: function () {
+	renderStats: function () {
 		var that = this;
 		if (that.isDead) {
 			return;
@@ -5399,9 +5399,6 @@ hvStat.battle.monster.Monster.prototype = {
 			div.textContent = (that.spiritPointRate * 100).toFixed(1) + "%";
 			this.gauges[2].parentNode.insertBefore(div, null);
 		}
-	},
-	renderStats: function () {
-		this._renderStats();
 	},
 	renderPopup: function () {
 		return this._renderPopup();
