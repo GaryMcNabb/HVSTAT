@@ -2089,6 +2089,536 @@ hvStat.vo.MonsterVO = function () {
 };
 
 //------------------------------------
+// IndexedDB Management
+//------------------------------------
+hvStat.database = {
+	// indexedDB
+	idb: null,
+	idbAccessQueue: null,
+
+	// Temporary work
+	loadingMonsterInfoFromDB: false,
+};
+
+hvStat.database.deleteIndexedDB = function () {
+	// Close connection
+	hvStat.database.idb = null;
+
+	// Delete database
+	var reqDelete = indexedDB.deleteDatabase("HVStat");
+	reqDelete.onsuccess = function (event) {
+		alert("Your database has been deleted.");
+		//console.log("deleteIndexedDB: success");
+	};
+	reqDelete.onerror = function (event) {
+		alert("Error: Failed to delete your database");
+		//console.log("deleteIndexedDB: error");
+	};
+	reqDelete.onblocked = function (event) {
+		alert("Blocked: Please wait for a while or close the browser.");
+		//console.log("deleteIndexedDB: blocked");
+	};
+};
+
+hvStat.database.maintainObjectStores = function (oldVersion, versionChangeTransaction) {
+	var alertMessage = "IndexDB database operation has failed; see console log";
+	var idb = versionChangeTransaction.db;
+	var store;
+
+	if (oldVersion < 1) {
+		// MonsterScanResults
+		try {
+			store = idb.createObjectStore("MonsterScanResults", { keyPath: "id", autoIncrement: false });
+		} catch (e) {
+			alert(alertMessage);
+			console.log(e.message + "\n" + e.stack);
+		}
+		try {
+			store.createIndex("ix_id", "id", { unique: true });
+		} catch (e) {
+			alert(alertMessage);
+			console.log(e.message + "\n" + e.stack);
+		}
+		try {
+			store.createIndex("ix_name", "name", { unique: true });
+		} catch (e) {
+			alert(alertMessage);
+			console.log(e.message + "\n" + e.stack);
+		}
+
+		// MonsterSkills
+		try {
+			store = idb.createObjectStore("MonsterSkills", { keyPath: "key", autoIncrement: false });
+		} catch (e) {
+			alert(alertMessage);
+			console.log(e.message + "\n" + e.stack);
+		}
+		try {
+			store.createIndex("ix_key", "key", { unique: true });
+		} catch (e) {
+			alert(alertMessage);
+			console.log(e.message + "\n" + e.stack);
+		}
+		try {
+			store.createIndex("ix_id", "id", { unique: false });
+		} catch (e) {
+			alert(alertMessage);
+			console.log(e.message + "\n" + e.stack);
+		}
+	}
+	if (oldVersion < 2) {
+		// ItemDrops
+		try {
+			store = idb.createObjectStore("ItemDrops", { keyPath: "key", autoIncrement: false });
+		} catch (e) {
+			alert(alertMessage);
+			console.log(e.message + "\n" + e.stack);
+		}
+		try {
+			store.createIndex("ix_key", "key", { unique: true });
+		} catch (e) {
+			alert(alertMessage);
+			console.log(e.message + "\n" + e.stack);
+		}
+		try {
+			store.createIndex("ix_name", "name", { unique: false });
+		} catch (e) {
+			alert(alertMessage);
+			console.log(e.message + "\n" + e.stack);
+		}
+
+		// EquipmentDrops
+		try {
+			store = idb.createObjectStore("EquipmentDrops", { keyPath: "id", autoIncrement: true });
+		} catch (e) {
+			alert(alertMessage);
+			console.log(e.message + "\n" + e.stack);
+		}
+		try {
+			store.createIndex("ix_id", "id", { unique: true });
+		} catch (e) {
+			alert(alertMessage);
+			console.log(e.message + "\n" + e.stack);
+		}
+		try {
+			store.createIndex("ix_name", "name", { unique: false });
+		} catch (e) {
+			alert(alertMessage);
+			console.log(e.message + "\n" + e.stack);
+		}
+	}
+};
+
+hvStat.database.openIndexedDB = function (callback) {
+	var errorMessage;
+
+	var idbVersion = 2; // Must be an integer
+	var idbOpenDBRequest = indexedDB.open("HVStat", idbVersion);
+	idbOpenDBRequest.onerror = function (event) {
+		errorMessage = "Database open error: " + event.target.errorCode;
+		alert(errorMessage);
+		console.log(event);
+	};
+	// Latest W3C draft (Firefox and Chrome 23 or later)
+	idbOpenDBRequest.onupgradeneeded = function (event) {
+		console.log("onupgradeneeded: old version = " + event.oldVersion);
+		hvStat.database.idb = event.target.result;
+		var versionChangeTransaction = event.target.transaction;
+		hvStat.database.maintainObjectStores(event.oldVersion, versionChangeTransaction);
+		// Subsequently onsuccess event handler is called automatically
+	};
+	idbOpenDBRequest.onsuccess = function (event) {
+		var idb = hvStat.database.idb = event.target.result;
+		if (Number(idb.version) === idbVersion) {
+			// Always come here if Firefox and Chrome 23 or later
+			if (callback instanceof Function) {
+				callback(event);
+			}
+		} else {
+			// Obsolete Chrome style (Chrome 22 or earlier)
+			var oldVersion = idb.version;
+			if (oldVersion === "") {
+				oldVersion = 0;
+			}
+			console.debug("setVersion: old version = " + oldVersion);
+			var versionChangeRequest = idb.setVersion(String(idbVersion));
+			versionChangeRequest.onerror = function (event) {
+				errorMessage = "Database setVersion error: " + event.target.errorCode;
+				alert(errorMessage);
+				console.log(errorMessage);
+			};
+			versionChangeRequest.onsuccess = function (event) {
+				var versionChangeTransaction = versionChangeRequest.result;
+				hvStat.database.maintainObjectStores(oldVersion, versionChangeTransaction);
+				if (callback instanceof Function) {
+					versionChangeTransaction.oncomplete = function (event) {
+						callback(event);
+					};
+				}
+			};
+		}
+	};
+};
+
+hvStat.database.ObjectStoreDelegate = function (spec) {
+	this.objectStoreName = spec.objectStoreName;
+	this.columnSeparator = spec.columnSeparator || "%09";
+	this.lineSeparator = spec.lineSeparator || "%0A";
+	this.regex = spec.regex;
+	this.headerLabels = spec.headerLabels;
+	this.keyPropertyName = spec.keyPropertyName || "key";
+	this.timeStampPropertyName = spec.timeStampPropertyName || "timeStamp";
+	this.objectToTextArrayFn = spec.objectToTextArrayFn;
+	this.regexResultToObjectFn = spec.regexResultToObjectFn;
+};
+hvStat.database.ObjectStoreDelegate.prototype = {
+	get textHeader() {
+		return this.headerLabels.join(this.columnSeparator);
+	},
+	get: function (tx, key, callback) {
+		try {
+			this._get(tx, key, callback);
+		} catch (e) {
+			console.log(e);
+			alert(e);
+		}
+	},
+	_get: function (tx, key, callback) {
+		var store = tx.objectStore(this.objectStoreName);
+		var getRequest = store.get(key);
+		getRequest.onerror = function (event) {
+			console.log(event);
+			alert(event);
+		};
+		getRequest.onsuccess = function (event) {
+			if (callback instanceof Function) {
+				callback(event.target.result);
+			}
+		};
+	},
+	put: function (tx, obj, callback) {
+		try {
+			this._put(tx, obj, callback);
+		} catch (e) {
+			console.log(e);
+			alert(e);
+		}
+	},
+	_put: function (tx, obj, callback) {
+		var that = this;
+		var store = tx.objectStore(this.objectStoreName);
+		var putRequest = store.put(obj);
+		putRequest.onerror = function (event) {
+			console.log(event);
+			alert(event);
+		};
+		putRequest.onsuccess = function (event) {
+			if (callback instanceof Function) {
+				callback(obj);
+			}
+		}
+	},
+	export: function (callback) {
+		try {
+			this._export(callback);
+		} catch (e) {
+			console.log(e);
+			alert(e);
+		}
+	},
+	_export: function (callback) {
+		var that = this;
+		var tx = hvStat.database.idb.transaction([this.objectStoreName], "readonly");
+		var store = tx.objectStore(this.objectStoreName);
+		var count = 0;
+		var texts = [];
+		texts[count++] = this.textHeader;
+		var cursorOpenRequest = store.openCursor(null, "next");
+		cursorOpenRequest.onerror = function (event) {
+			console.log(event);
+			alert(event);
+		};
+		cursorOpenRequest.onsuccess = function (event) {
+			var cursor = this.result;
+			var obj, text, result;
+			if (cursor) {
+				obj = cursor.value;
+				texts[count++] = that.objectToTextArrayFn(obj).join(that.columnSeparator);
+				cursor.continue();
+			} else {
+				if (callback instanceof Function) {
+					result = {
+						dataURI: "data:text/tsv;charset=utf-8," + texts.join(that.lineSeparator),
+						rowCount: count,
+					}
+					callback(result);
+				}
+			}
+		};
+	},
+	import: function (callback) {
+		try {
+			this._import(callback);
+		} catch (e) {
+			console.log(e);
+			alert(e);
+		}
+	},
+	_import: function (file, callback) {
+		var that = this;
+		var reader = new FileReader();
+		reader.onerror = function (event) {
+			console.log(event);
+			alert(event);
+		};
+		reader.onload = function (event) {
+			var contents = event.target.result;
+			var rowCount, procCount;
+			var regexResult;
+			var tx = hvStat.database.idb.transaction([that.objectStoreName], "readwrite");
+			var store = tx.objectStore(that.objectStoreName);
+			var skipCount = 0;
+			var successCount = 0;
+			var errorCount = 0;
+			var obj;
+
+			var report = function () {
+				if (procCount >= rowCount) {
+					alert(rowCount + " row(s) found,\n" + successCount + " row(s) imported,\n" + skipCount + " row(s) skipped,\n" + errorCount + " error(s)");
+				}
+			};
+
+			// Prescan
+			that.regex.lastIndex = 0;
+			rowCount = 0;
+			while ((regexResult = that.regex.exec(contents)) !== null) {
+				rowCount++;
+			}
+
+			// Import
+			procCount = 0;
+			that.regex.lastIndex = 0;
+			while ((regexResult = that.regex.exec(contents)) !== null) {
+				obj = that.regexResultToObjectFn(regexResult);
+				(function (obj) {
+					var getRequest = store.get(obj[that.keyPropertyName]);
+					getRequest.onerror = function (event) {
+						console.debug(event);
+						alert(event);
+						errorCount++;
+						procCount++;
+						report();
+					};
+					getRequest.onsuccess = function (event) {
+						var existingObj = event.target.result;
+						var doPut = (existingObj === undefined ||
+							obj[that.timeStampPropertyName] === null ||
+							obj[that.timeStampPropertyName] >= existingObj[that.timeStampPropertyName]);
+						if (!doPut) {
+							skipCount++;
+							procCount++;
+						} else {
+							var putRequest = store.put(obj);
+							putRequest.onerror = function (event) {
+								console.debug(event);
+								alert(event);
+								errorCount++;
+								procCount++;
+								report();
+							};
+							putRequest.onsuccess = function (event) {
+								successCount++;
+								procCount++;
+								report();
+							};
+						}
+					};
+				})(obj);
+			}
+		};
+		reader.readAsText(file, 'UTF-8');
+	},
+	delete: function (callback) {
+		var that = this;
+		var tx = hvStat.database.idb.transaction([that.objectStoreName], "readwrite");
+		var store = tx.objectStore(that.objectStoreName);
+		var count = 0;
+		var cursorOpenRequest = store.openCursor(null, "next");
+		cursorOpenRequest.onerror = function (event) {
+			console.log(event);
+			alert(event);
+		};
+		cursorOpenRequest.onsuccess = function (event) {
+			var cursor = this.result;
+			if (cursor) {
+				cursor.delete();
+				count++;
+				cursor.continue();
+			} else {
+				if (callback instanceof Function) {
+					var result = {
+						count: count,
+					}
+					callback(result);
+				}
+			}
+		};
+	},
+};
+
+
+hvStat.database.monsterScanResults = new hvStat.database.ObjectStoreDelegate({
+	objectStoreName: "MonsterScanResults",
+	regex: /^(\d+?)\t(.*?)\t(.*?)\t(.*?)\t(\d*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)$/gm,
+	headerLabels:[
+		"ID", "LAST_SCAN_DATE", "NAME", "MONSTER_CLASS", "POWER_LEVEL", "TRAINER", "MELEE_ATTACK",
+		"DEF_CRUSHING", "DEF_SLASHING", "DEF_PIERCING", "DEF_FIRE", "DEF_COLD", "DEF_ELEC", "DEF_WIND",
+		"DEF_HOLY", "DEF_DARK", "DEF_SOUL", "DEF_VOID", "DEBUFFS_AFFECTED",
+	],
+	keyPropertyName: "id",
+	timeStampPropertyName: "lastScanDate",
+	objectToTextArrayFn: function (obj) {
+		obj.defenseLevel = obj.defenseLevel || obj.defenceLevel;	// Patch
+		return [
+			obj.id,
+			obj.lastScanDate !== null ? obj.lastScanDate : "",
+			obj.name !== null ? obj.name : "",
+			obj.monsterClass !== null ? obj.monsterClass : "",
+			obj.powerLevel !== null ? obj.powerLevel : "",
+			obj.trainer !== null ? obj.trainer : "",
+			obj.meleeAttack !== null ? obj.meleeAttack : "",
+			obj.defenseLevel && obj.defenseLevel.CRUSHING ? obj.defenseLevel.CRUSHING : "",
+			obj.defenseLevel && obj.defenseLevel.SLASHING ? obj.defenseLevel.SLASHING : "",
+			obj.defenseLevel && obj.defenseLevel.PIERCING ? obj.defenseLevel.PIERCING : "",
+			obj.defenseLevel && obj.defenseLevel.FIRE ? obj.defenseLevel.FIRE : "",
+			obj.defenseLevel && obj.defenseLevel.COLD ? obj.defenseLevel.COLD : "",
+			obj.defenseLevel && obj.defenseLevel.ELEC ? obj.defenseLevel.ELEC : "",
+			obj.defenseLevel && obj.defenseLevel.WIND ? obj.defenseLevel.WIND : "",
+			obj.defenseLevel && obj.defenseLevel.HOLY ? obj.defenseLevel.HOLY : "",
+			obj.defenseLevel && obj.defenseLevel.DARK ? obj.defenseLevel.DARK : "",
+			obj.defenseLevel && obj.defenseLevel.SOUL ? obj.defenseLevel.SOUL : "",
+			obj.defenseLevel && obj.defenseLevel.VOID ? obj.defenseLevel.VOID : "",
+			obj.debuffsAffected ? obj.debuffsAffected.join(", ") : "",
+		];
+	},
+	regexResultToObjectFn: function (regexResult) {
+		return new hvStat.vo.MonsterScanResultsVO({
+			id: regexResult[1],
+			lastScanDate: regexResult[2],
+			name: regexResult[3],
+			monsterClass: regexResult[4],
+			powerLevel: regexResult[5],
+			trainer: regexResult[6],
+			meleeAttack: regexResult[7],
+			defCrushing: regexResult[8],
+			defSlashing: regexResult[9],
+			defPiercing: regexResult[10],
+			defFire: regexResult[11],
+			defCold: regexResult[12],
+			defElec: regexResult[13],
+			defWind: regexResult[14],
+			defHoly: regexResult[15],
+			defDark: regexResult[16],
+			defSoul: regexResult[17],
+			defVoid: regexResult[18],
+			debuffsAffected: regexResult[19],
+		});
+	},
+});
+
+hvStat.database.monsterSkills = new hvStat.database.ObjectStoreDelegate({
+	objectStoreName: "MonsterSkills",
+	regex: /^(\d+?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)$/gm,
+	headerLabels: ["ID", "NAME", "SKILL_TYPE", "ATTACK_TYPE", "DAMAGE_TYPE", "LAST_USED_DATE"],
+	timeStampPropertyName: "lastScanDate",
+	objectToTextArrayFn: function (obj) {
+		return [
+			obj.id,
+			obj.name !== null ? obj.name : "",
+			obj.skillType !== null ? obj.skillType : "",
+			obj.attackType !== null ? obj.attackType : "",
+			obj.damageType !== null ? obj.damageType : "",
+			obj.lastUsedDate !== null ? obj.lastUsedDate : "",
+		];
+	},
+	regexResultToObjectFn: function (regexResult) {
+		return new hvStat.vo.MonsterSkillVO({
+			id: regexResult[1],
+			name: regexResult[2],
+			skillType: regexResult[3],
+			attackType: regexResult[4],
+			damageType: regexResult[5],
+			lastUsedDate: regexResult[6]
+		});
+	},
+});
+
+hvStat.database.itemDrops = new hvStat.database.ObjectStoreDelegate({
+	objectStoreName: "ItemDrops",
+	regex: /^(.+?)\t(.+?)\t(.+?)\t(.+?)\t(\d+)\t(\d+)\t([-0-9TZ\:\.]+?)$/gm,
+	headerLabels: ["NAME", "DROP_TYPE", "DIFFICULTY", "BATTLE_TYPE", "DROP_COUNT", "QTY", "TIME_STAMP"],
+	objectToTextArrayFn: function (obj) {
+		return [
+			obj.name,
+			obj.dropType,
+			obj.difficulty,
+			obj.battleType,
+			obj.dropCount,
+			obj.qty,
+			obj.timeStamp,
+		];
+	},
+	regexResultToObjectFn: function (regexResult) {
+		return {
+			key: [
+				regexResult[1],
+				regexResult[2],
+				regexResult[3],
+				regexResult[4],
+			],
+			name: regexResult[1],
+			dropType: regexResult[2],
+			difficulty: regexResult[3],
+			battleType: regexResult[4],
+			dropCount: Number(regexResult[5]),
+			qty: Number(regexResult[6]),
+			timeStamp: regexResult[7],
+		};
+	},
+});
+
+hvStat.database.equipmentDrops = new hvStat.database.ObjectStoreDelegate({
+	objectStoreName: "EquipmentDrops",
+	regex: /^(\d+)\t(.+?)\t(.+?)\t(.+?)\t(.+?)\t(\d*)\t(\d*)\t([-0-9TZ\:\.]+?)$/gm,
+	headerLabels: ["ID", "NAME", "DROP_TYPE", "DIFFICULTY", "BATTLE_TYPE", "ARENA_NUMBER", "ROUND_NUMBER", "TIME_STAMP"],
+	keyPropertyName: "id",
+	objectToTextArrayFn: function (obj) {
+		return [
+			obj.id,
+			obj.name,
+			obj.dropType,
+			obj.difficulty,
+			obj.battleType,
+			(obj.arenaNumber === null ? "" : obj.arenaNumber),
+			(obj.roundNumber === null ? "" : obj.roundNumber),
+			obj.timeStamp,
+		];
+	},
+	regexResultToObjectFn: function (regexResult) {
+		return {
+			id: Number(regexResult[1]),
+			name: regexResult[2],
+			dropType: regexResult[3],
+			difficulty: regexResult[4],
+			battleType: regexResult[5],
+			arenaNumber: regexResult[6] === "" ? null : Number(regexResult[6]),
+			roundNumber: regexResult[7] === "" ? null : Number(regexResult[7]),
+			timeStamp: regexResult[8],
+		};
+	},
+});
+
+//------------------------------------
 // Battle
 //------------------------------------
 hvStat.battle = {
@@ -5094,536 +5624,6 @@ hvStat.statistics.drops = {
 		});
 	},
 };
-
-//------------------------------------
-// IndexedDB Management
-//------------------------------------
-hvStat.database = {
-	// indexedDB
-	idb: null,
-	idbAccessQueue: null,
-
-	// Temporary work
-	loadingMonsterInfoFromDB: false,
-};
-
-hvStat.database.deleteIndexedDB = function () {
-	// Close connection
-	hvStat.database.idb = null;
-
-	// Delete database
-	var reqDelete = indexedDB.deleteDatabase("HVStat");
-	reqDelete.onsuccess = function (event) {
-		alert("Your database has been deleted.");
-		//console.log("deleteIndexedDB: success");
-	};
-	reqDelete.onerror = function (event) {
-		alert("Error: Failed to delete your database");
-		//console.log("deleteIndexedDB: error");
-	};
-	reqDelete.onblocked = function (event) {
-		alert("Blocked: Please wait for a while or close the browser.");
-		//console.log("deleteIndexedDB: blocked");
-	};
-};
-
-hvStat.database.maintainObjectStores = function (oldVersion, versionChangeTransaction) {
-	var alertMessage = "IndexDB database operation has failed; see console log";
-	var idb = versionChangeTransaction.db;
-	var store;
-
-	if (oldVersion < 1) {
-		// MonsterScanResults
-		try {
-			store = idb.createObjectStore("MonsterScanResults", { keyPath: "id", autoIncrement: false });
-		} catch (e) {
-			alert(alertMessage);
-			console.log(e.message + "\n" + e.stack);
-		}
-		try {
-			store.createIndex("ix_id", "id", { unique: true });
-		} catch (e) {
-			alert(alertMessage);
-			console.log(e.message + "\n" + e.stack);
-		}
-		try {
-			store.createIndex("ix_name", "name", { unique: true });
-		} catch (e) {
-			alert(alertMessage);
-			console.log(e.message + "\n" + e.stack);
-		}
-
-		// MonsterSkills
-		try {
-			store = idb.createObjectStore("MonsterSkills", { keyPath: "key", autoIncrement: false });
-		} catch (e) {
-			alert(alertMessage);
-			console.log(e.message + "\n" + e.stack);
-		}
-		try {
-			store.createIndex("ix_key", "key", { unique: true });
-		} catch (e) {
-			alert(alertMessage);
-			console.log(e.message + "\n" + e.stack);
-		}
-		try {
-			store.createIndex("ix_id", "id", { unique: false });
-		} catch (e) {
-			alert(alertMessage);
-			console.log(e.message + "\n" + e.stack);
-		}
-	}
-	if (oldVersion < 2) {
-		// ItemDrops
-		try {
-			store = idb.createObjectStore("ItemDrops", { keyPath: "key", autoIncrement: false });
-		} catch (e) {
-			alert(alertMessage);
-			console.log(e.message + "\n" + e.stack);
-		}
-		try {
-			store.createIndex("ix_key", "key", { unique: true });
-		} catch (e) {
-			alert(alertMessage);
-			console.log(e.message + "\n" + e.stack);
-		}
-		try {
-			store.createIndex("ix_name", "name", { unique: false });
-		} catch (e) {
-			alert(alertMessage);
-			console.log(e.message + "\n" + e.stack);
-		}
-
-		// EquipmentDrops
-		try {
-			store = idb.createObjectStore("EquipmentDrops", { keyPath: "id", autoIncrement: true });
-		} catch (e) {
-			alert(alertMessage);
-			console.log(e.message + "\n" + e.stack);
-		}
-		try {
-			store.createIndex("ix_id", "id", { unique: true });
-		} catch (e) {
-			alert(alertMessage);
-			console.log(e.message + "\n" + e.stack);
-		}
-		try {
-			store.createIndex("ix_name", "name", { unique: false });
-		} catch (e) {
-			alert(alertMessage);
-			console.log(e.message + "\n" + e.stack);
-		}
-	}
-};
-
-hvStat.database.openIndexedDB = function (callback) {
-	var errorMessage;
-
-	var idbVersion = 2; // Must be an integer
-	var idbOpenDBRequest = indexedDB.open("HVStat", idbVersion);
-	idbOpenDBRequest.onerror = function (event) {
-		errorMessage = "Database open error: " + event.target.errorCode;
-		alert(errorMessage);
-		console.log(event);
-	};
-	// Latest W3C draft (Firefox and Chrome 23 or later)
-	idbOpenDBRequest.onupgradeneeded = function (event) {
-		console.log("onupgradeneeded: old version = " + event.oldVersion);
-		hvStat.database.idb = event.target.result;
-		var versionChangeTransaction = event.target.transaction;
-		hvStat.database.maintainObjectStores(event.oldVersion, versionChangeTransaction);
-		// Subsequently onsuccess event handler is called automatically
-	};
-	idbOpenDBRequest.onsuccess = function (event) {
-		var idb = hvStat.database.idb = event.target.result;
-		if (Number(idb.version) === idbVersion) {
-			// Always come here if Firefox and Chrome 23 or later
-			if (callback instanceof Function) {
-				callback(event);
-			}
-		} else {
-			// Obsolete Chrome style (Chrome 22 or earlier)
-			var oldVersion = idb.version;
-			if (oldVersion === "") {
-				oldVersion = 0;
-			}
-			console.debug("setVersion: old version = " + oldVersion);
-			var versionChangeRequest = idb.setVersion(String(idbVersion));
-			versionChangeRequest.onerror = function (event) {
-				errorMessage = "Database setVersion error: " + event.target.errorCode;
-				alert(errorMessage);
-				console.log(errorMessage);
-			};
-			versionChangeRequest.onsuccess = function (event) {
-				var versionChangeTransaction = versionChangeRequest.result;
-				hvStat.database.maintainObjectStores(oldVersion, versionChangeTransaction);
-				if (callback instanceof Function) {
-					versionChangeTransaction.oncomplete = function (event) {
-						callback(event);
-					};
-				}
-			};
-		}
-	};
-};
-
-hvStat.database.ObjectStoreDelegate = function (spec) {
-	this.objectStoreName = spec.objectStoreName;
-	this.columnSeparator = spec.columnSeparator || "%09";
-	this.lineSeparator = spec.lineSeparator || "%0A";
-	this.regex = spec.regex;
-	this.headerLabels = spec.headerLabels;
-	this.keyPropertyName = spec.keyPropertyName || "key";
-	this.timeStampPropertyName = spec.timeStampPropertyName || "timeStamp";
-	this.objectToTextArrayFn = spec.objectToTextArrayFn;
-	this.regexResultToObjectFn = spec.regexResultToObjectFn;
-};
-hvStat.database.ObjectStoreDelegate.prototype = {
-	get textHeader() {
-		return this.headerLabels.join(this.columnSeparator);
-	},
-	get: function (tx, key, callback) {
-		try {
-			this._get(tx, key, callback);
-		} catch (e) {
-			console.log(e);
-			alert(e);
-		}
-	},
-	_get: function (tx, key, callback) {
-		var store = tx.objectStore(this.objectStoreName);
-		var getRequest = store.get(key);
-		getRequest.onerror = function (event) {
-			console.log(event);
-			alert(event);
-		};
-		getRequest.onsuccess = function (event) {
-			if (callback instanceof Function) {
-				callback(event.target.result);
-			}
-		};
-	},
-	put: function (tx, obj, callback) {
-		try {
-			this._put(tx, obj, callback);
-		} catch (e) {
-			console.log(e);
-			alert(e);
-		}
-	},
-	_put: function (tx, obj, callback) {
-		var that = this;
-		var store = tx.objectStore(this.objectStoreName);
-		var putRequest = store.put(obj);
-		putRequest.onerror = function (event) {
-			console.log(event);
-			alert(event);
-		};
-		putRequest.onsuccess = function (event) {
-			if (callback instanceof Function) {
-				callback(obj);
-			}
-		}
-	},
-	export: function (callback) {
-		try {
-			this._export(callback);
-		} catch (e) {
-			console.log(e);
-			alert(e);
-		}
-	},
-	_export: function (callback) {
-		var that = this;
-		var tx = hvStat.database.idb.transaction([this.objectStoreName], "readonly");
-		var store = tx.objectStore(this.objectStoreName);
-		var count = 0;
-		var texts = [];
-		texts[count++] = this.textHeader;
-		var cursorOpenRequest = store.openCursor(null, "next");
-		cursorOpenRequest.onerror = function (event) {
-			console.log(event);
-			alert(event);
-		};
-		cursorOpenRequest.onsuccess = function (event) {
-			var cursor = this.result;
-			var obj, text, result;
-			if (cursor) {
-				obj = cursor.value;
-				texts[count++] = that.objectToTextArrayFn(obj).join(that.columnSeparator);
-				cursor.continue();
-			} else {
-				if (callback instanceof Function) {
-					result = {
-						dataURI: "data:text/tsv;charset=utf-8," + texts.join(that.lineSeparator),
-						rowCount: count,
-					}
-					callback(result);
-				}
-			}
-		};
-	},
-	import: function (callback) {
-		try {
-			this._import(callback);
-		} catch (e) {
-			console.log(e);
-			alert(e);
-		}
-	},
-	_import: function (file, callback) {
-		var that = this;
-		var reader = new FileReader();
-		reader.onerror = function (event) {
-			console.log(event);
-			alert(event);
-		};
-		reader.onload = function (event) {
-			var contents = event.target.result;
-			var rowCount, procCount;
-			var regexResult;
-			var tx = hvStat.database.idb.transaction([that.objectStoreName], "readwrite");
-			var store = tx.objectStore(that.objectStoreName);
-			var skipCount = 0;
-			var successCount = 0;
-			var errorCount = 0;
-			var obj;
-
-			var report = function () {
-				if (procCount >= rowCount) {
-					alert(rowCount + " row(s) found,\n" + successCount + " row(s) imported,\n" + skipCount + " row(s) skipped,\n" + errorCount + " error(s)");
-				}
-			};
-
-			// Prescan
-			that.regex.lastIndex = 0;
-			rowCount = 0;
-			while ((regexResult = that.regex.exec(contents)) !== null) {
-				rowCount++;
-			}
-
-			// Import
-			procCount = 0;
-			that.regex.lastIndex = 0;
-			while ((regexResult = that.regex.exec(contents)) !== null) {
-				obj = that.regexResultToObjectFn(regexResult);
-				(function (obj) {
-					var getRequest = store.get(obj[that.keyPropertyName]);
-					getRequest.onerror = function (event) {
-						console.debug(event);
-						alert(event);
-						errorCount++;
-						procCount++;
-						report();
-					};
-					getRequest.onsuccess = function (event) {
-						var existingObj = event.target.result;
-						var doPut = (existingObj === undefined ||
-							obj[that.timeStampPropertyName] === null ||
-							obj[that.timeStampPropertyName] >= existingObj[that.timeStampPropertyName]);
-						if (!doPut) {
-							skipCount++;
-							procCount++;
-						} else {
-							var putRequest = store.put(obj);
-							putRequest.onerror = function (event) {
-								console.debug(event);
-								alert(event);
-								errorCount++;
-								procCount++;
-								report();
-							};
-							putRequest.onsuccess = function (event) {
-								successCount++;
-								procCount++;
-								report();
-							};
-						}
-					};
-				})(obj);
-			}
-		};
-		reader.readAsText(file, 'UTF-8');
-	},
-	delete: function (callback) {
-		var that = this;
-		var tx = hvStat.database.idb.transaction([that.objectStoreName], "readwrite");
-		var store = tx.objectStore(that.objectStoreName);
-		var count = 0;
-		var cursorOpenRequest = store.openCursor(null, "next");
-		cursorOpenRequest.onerror = function (event) {
-			console.log(event);
-			alert(event);
-		};
-		cursorOpenRequest.onsuccess = function (event) {
-			var cursor = this.result;
-			if (cursor) {
-				cursor.delete();
-				count++;
-				cursor.continue();
-			} else {
-				if (callback instanceof Function) {
-					var result = {
-						count: count,
-					}
-					callback(result);
-				}
-			}
-		};
-	},
-};
-
-
-hvStat.database.monsterScanResults = new hvStat.database.ObjectStoreDelegate({
-	objectStoreName: "MonsterScanResults",
-	regex: /^(\d+?)\t(.*?)\t(.*?)\t(.*?)\t(\d*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)$/gm,
-	headerLabels:[
-		"ID", "LAST_SCAN_DATE", "NAME", "MONSTER_CLASS", "POWER_LEVEL", "TRAINER", "MELEE_ATTACK",
-		"DEF_CRUSHING", "DEF_SLASHING", "DEF_PIERCING", "DEF_FIRE", "DEF_COLD", "DEF_ELEC", "DEF_WIND",
-		"DEF_HOLY", "DEF_DARK", "DEF_SOUL", "DEF_VOID", "DEBUFFS_AFFECTED",
-	],
-	keyPropertyName: "id",
-	timeStampPropertyName: "lastScanDate",
-	objectToTextArrayFn: function (obj) {
-		obj.defenseLevel = obj.defenseLevel || obj.defenceLevel;	// Patch
-		return [
-			obj.id,
-			obj.lastScanDate !== null ? obj.lastScanDate : "",
-			obj.name !== null ? obj.name : "",
-			obj.monsterClass !== null ? obj.monsterClass : "",
-			obj.powerLevel !== null ? obj.powerLevel : "",
-			obj.trainer !== null ? obj.trainer : "",
-			obj.meleeAttack !== null ? obj.meleeAttack : "",
-			obj.defenseLevel && obj.defenseLevel.CRUSHING ? obj.defenseLevel.CRUSHING : "",
-			obj.defenseLevel && obj.defenseLevel.SLASHING ? obj.defenseLevel.SLASHING : "",
-			obj.defenseLevel && obj.defenseLevel.PIERCING ? obj.defenseLevel.PIERCING : "",
-			obj.defenseLevel && obj.defenseLevel.FIRE ? obj.defenseLevel.FIRE : "",
-			obj.defenseLevel && obj.defenseLevel.COLD ? obj.defenseLevel.COLD : "",
-			obj.defenseLevel && obj.defenseLevel.ELEC ? obj.defenseLevel.ELEC : "",
-			obj.defenseLevel && obj.defenseLevel.WIND ? obj.defenseLevel.WIND : "",
-			obj.defenseLevel && obj.defenseLevel.HOLY ? obj.defenseLevel.HOLY : "",
-			obj.defenseLevel && obj.defenseLevel.DARK ? obj.defenseLevel.DARK : "",
-			obj.defenseLevel && obj.defenseLevel.SOUL ? obj.defenseLevel.SOUL : "",
-			obj.defenseLevel && obj.defenseLevel.VOID ? obj.defenseLevel.VOID : "",
-			obj.debuffsAffected ? obj.debuffsAffected.join(", ") : "",
-		];
-	},
-	regexResultToObjectFn: function (regexResult) {
-		return new hvStat.vo.MonsterScanResultsVO({
-			id: regexResult[1],
-			lastScanDate: regexResult[2],
-			name: regexResult[3],
-			monsterClass: regexResult[4],
-			powerLevel: regexResult[5],
-			trainer: regexResult[6],
-			meleeAttack: regexResult[7],
-			defCrushing: regexResult[8],
-			defSlashing: regexResult[9],
-			defPiercing: regexResult[10],
-			defFire: regexResult[11],
-			defCold: regexResult[12],
-			defElec: regexResult[13],
-			defWind: regexResult[14],
-			defHoly: regexResult[15],
-			defDark: regexResult[16],
-			defSoul: regexResult[17],
-			defVoid: regexResult[18],
-			debuffsAffected: regexResult[19],
-		});
-	},
-});
-
-hvStat.database.monsterSkills = new hvStat.database.ObjectStoreDelegate({
-	objectStoreName: "MonsterSkills",
-	regex: /^(\d+?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)\t(.*?)$/gm,
-	headerLabels: ["ID", "NAME", "SKILL_TYPE", "ATTACK_TYPE", "DAMAGE_TYPE", "LAST_USED_DATE"],
-	timeStampPropertyName: "lastScanDate",
-	objectToTextArrayFn: function (obj) {
-		return [
-			obj.id,
-			obj.name !== null ? obj.name : "",
-			obj.skillType !== null ? obj.skillType : "",
-			obj.attackType !== null ? obj.attackType : "",
-			obj.damageType !== null ? obj.damageType : "",
-			obj.lastUsedDate !== null ? obj.lastUsedDate : "",
-		];
-	},
-	regexResultToObjectFn: function (regexResult) {
-		return new hvStat.vo.MonsterSkillVO({
-			id: regexResult[1],
-			name: regexResult[2],
-			skillType: regexResult[3],
-			attackType: regexResult[4],
-			damageType: regexResult[5],
-			lastUsedDate: regexResult[6]
-		});
-	},
-});
-
-hvStat.database.itemDrops = new hvStat.database.ObjectStoreDelegate({
-	objectStoreName: "ItemDrops",
-	regex: /^(.+?)\t(.+?)\t(.+?)\t(.+?)\t(\d+)\t(\d+)\t([-0-9TZ\:\.]+?)$/gm,
-	headerLabels: ["NAME", "DROP_TYPE", "DIFFICULTY", "BATTLE_TYPE", "DROP_COUNT", "QTY", "TIME_STAMP"],
-	objectToTextArrayFn: function (obj) {
-		return [
-			obj.name,
-			obj.dropType,
-			obj.difficulty,
-			obj.battleType,
-			obj.dropCount,
-			obj.qty,
-			obj.timeStamp,
-		];
-	},
-	regexResultToObjectFn: function (regexResult) {
-		return {
-			key: [
-				regexResult[1],
-				regexResult[2],
-				regexResult[3],
-				regexResult[4],
-			],
-			name: regexResult[1],
-			dropType: regexResult[2],
-			difficulty: regexResult[3],
-			battleType: regexResult[4],
-			dropCount: Number(regexResult[5]),
-			qty: Number(regexResult[6]),
-			timeStamp: regexResult[7],
-		};
-	},
-});
-
-hvStat.database.equipmentDrops = new hvStat.database.ObjectStoreDelegate({
-	objectStoreName: "EquipmentDrops",
-	regex: /^(\d+)\t(.+?)\t(.+?)\t(.+?)\t(.+?)\t(\d*)\t(\d*)\t([-0-9TZ\:\.]+?)$/gm,
-	headerLabels: ["ID", "NAME", "DROP_TYPE", "DIFFICULTY", "BATTLE_TYPE", "ARENA_NUMBER", "ROUND_NUMBER", "TIME_STAMP"],
-	keyPropertyName: "id",
-	objectToTextArrayFn: function (obj) {
-		return [
-			obj.id,
-			obj.name,
-			obj.dropType,
-			obj.difficulty,
-			obj.battleType,
-			(obj.arenaNumber === null ? "" : obj.arenaNumber),
-			(obj.roundNumber === null ? "" : obj.roundNumber),
-			obj.timeStamp,
-		];
-	},
-	regexResultToObjectFn: function (regexResult) {
-		return {
-			id: Number(regexResult[1]),
-			name: regexResult[2],
-			dropType: regexResult[3],
-			difficulty: regexResult[4],
-			battleType: regexResult[5],
-			arenaNumber: regexResult[6] === "" ? null : Number(regexResult[6]),
-			roundNumber: regexResult[7] === "" ? null : Number(regexResult[7]),
-			timeStamp: regexResult[8],
-		};
-	},
-});
 
 //------------------------------------
 // Dialog User Interface
