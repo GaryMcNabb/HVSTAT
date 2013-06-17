@@ -5750,135 +5750,6 @@ function getBattleEndStatsHtml() {
 }
 
 //------------------------------------
-// Inventory Management
-//------------------------------------
-hvStat.inventory = {};
-
-hvStat.inventory.equipment = {
-	showTagInputFields: function (doClean) {
-		var equipTagArrayTable = [
-			{id: hvStat.equipmentTags.OneHandedIDs,	value: hvStat.equipmentTags.OneHandedTAGs,	idClean: [], valueClean: []},
-			{id: hvStat.equipmentTags.TwoHandedIDs,	value: hvStat.equipmentTags.TwoHandedTAGs,	idClean: [], valueClean: []},
-			{id: hvStat.equipmentTags.StaffsIDs,	value: hvStat.equipmentTags.StaffsTAGs,		idClean: [], valueClean: []},
-			{id: hvStat.equipmentTags.ShieldIDs,	value: hvStat.equipmentTags.ShieldTAGs,		idClean: [], valueClean: []},
-			{id: hvStat.equipmentTags.ClothIDs,		value: hvStat.equipmentTags.ClothTAGs,		idClean: [], valueClean: []},
-			{id: hvStat.equipmentTags.LightIDs,		value: hvStat.equipmentTags.LightTAGs,		idClean: [], valueClean: []},
-			{id: hvStat.equipmentTags.HeavyIDs,		value: hvStat.equipmentTags.HeavyTAGs,		idClean: [], valueClean: []}
-		];
-		var elements = document.querySelectorAll('#inv_equip div.eqdp, #item_pane div.eqdp, #equip div.eqdp, #equip_pane div.eqdp');
-		Array.prototype.forEach.call(elements, function (element) {
-			var onmouseover = element.getAttribute("onmouseover");
-			var regexResult = onmouseover.match(/(One-handed Weapon|Two-handed Weapon|Staff|Shield|Cloth Armor|Light Armor|Heavy Armor)(?:\s*&nbsp;)*\s*Level/);
-			if (!regexResult) {
-				return;
-			}
-			var equipType = regexResult[1];
-			var id = parseInt(String(element.id), 10);
-			var equipTypeIdx = -1;
-			if (/One-Handed/i.test(equipType)) {
-				equipTypeIdx = 0;
-			} else if (/Two-Handed/i.test(equipType)) {
-				equipTypeIdx = 1;
-			} else if (/Staff/i.test(equipType)) {
-				equipTypeIdx = 2;
-			} else if (/Shield/i.test(equipType)) {
-				equipTypeIdx = 3;
-			} else if (/Cloth/i.test(equipType)) {
-				equipTypeIdx = 4;
-			} else if (/Light/i.test(equipType)) {
-				equipTypeIdx = 5;
-			} else if (/Heavy/i.test(equipType)) {
-				equipTypeIdx = 6;
-			}
-			if (equipTypeIdx < 0) {
-				alert("unexpected equipment type");
-				return;
-			}
-			var idArray = equipTagArrayTable[equipTypeIdx].id;
-			var valueArray = equipTagArrayTable[equipTypeIdx].value;
-			var idCleanArray = equipTagArrayTable[equipTypeIdx].idClean;
-			var valueCleanArray = equipTagArrayTable[equipTypeIdx].valueClean;
-			var inputElement = document.createElement("input");
-			inputElement.type = "text";
-			inputElement.className = "hvstat-equipment-tag";
-			inputElement.name = "tagid_" + String(id);
-			inputElement.size = 5;
-			inputElement.maxLength = 6;
-			var index = idArray.indexOf(id);
-			if (index < 0) {
-				inputElement.className += " hvstat-equipment-tag-new";
-				inputElement.value = "*NEW*";
-			} else {
-				inputElement.value = valueArray[index];
-				if (doClean) {
-					idCleanArray.push(id);
-					valueCleanArray.push(valueArray[index]);
-				}
-			}
-			element.parentNode.insertBefore(inputElement, null);
-			inputElement.addEventListener("change", function (event) {
-				var target = event.target;
-				var tagId = Number(target.name.replace("tagid_", ""));
-				var tagValue = target.value;
-				var index = idArray.indexOf(tagId);
-				if (index >= 0) {
-					valueArray[index] = tagValue;
-				} else {
-					idArray.push(tagId);
-					valueArray.push(tagValue);
-				}
-				target.className = target.className.replace(" hvstat-equipment-tag-new", "");
-				hvStat.storage.equipmentTags.save();
-			});
-		});
-		if (doClean) {
-			var cleaned = false;
-			var i = equipTagArrayTable.length;
-			while (i--) {
-				if (equipTagArrayTable[i].id.length > equipTagArrayTable[i].idClean.length) {
-					idCleanArray = equipTagArrayTable[i].idClean;
-					valueCleanArray = equipTagArrayTable[i].valueClean;
-					switch (i) {
-					case 0:
-						hvStat.equipmentTags.OneHandedIDs = idCleanArray;
-						hvStat.equipmentTags.OneHandedTAGs = valueCleanArray;
-						break;
-					case 1:
-						hvStat.equipmentTags.TwoHandedIDs = idCleanArray;
-						hvStat.equipmentTags.TwoHandedTAGs = valueCleanArray;
-						break;
-					case 2:
-						hvStat.equipmentTags.StaffsIDs = idCleanArray;
-						hvStat.equipmentTags.StaffsTAGs = valueCleanArray;
-						break;
-					case 3:
-						hvStat.equipmentTags.ShieldIDs = idCleanArray;
-						hvStat.equipmentTags.ShieldTAGs = valueCleanArray;
-						break;
-					case 4:
-						hvStat.equipmentTags.ClothIDs = idCleanArray;
-						hvStat.equipmentTags.ClothTAGs = valueCleanArray;
-						break;
-					case 5:
-						hvStat.equipmentTags.LightIDs = idCleanArray;
-						hvStat.equipmentTags.LightTAGs = valueCleanArray;
-						break;
-					case 6:
-						hvStat.equipmentTags.HeavyIDs = idCleanArray;
-						hvStat.equipmentTags.HeavyTAGs = valueCleanArray;
-						break;
-					}
-					cleaned = true;
-				}
-			}
-			if (cleaned) {
-				hvStat.storage.equipmentTags.save();
-			}
-		}
-	},
-};
-
-//------------------------------------
 // Start-up
 //------------------------------------
 hvStat.startup = {
@@ -6121,6 +5992,135 @@ hvStat.support = {
 			}
 			newOnClick += '")) {'+ oldOnClick+ '}';
 			element.setAttribute("onclick", newOnClick);
+		}
+	},
+};
+
+//------------------------------------
+// Inventory Management
+//------------------------------------
+hvStat.inventory = {};
+
+hvStat.inventory.equipment = {
+	showTagInputFields: function (doClean) {
+		var equipTagArrayTable = [
+			{id: hvStat.equipmentTags.OneHandedIDs,	value: hvStat.equipmentTags.OneHandedTAGs,	idClean: [], valueClean: []},
+			{id: hvStat.equipmentTags.TwoHandedIDs,	value: hvStat.equipmentTags.TwoHandedTAGs,	idClean: [], valueClean: []},
+			{id: hvStat.equipmentTags.StaffsIDs,	value: hvStat.equipmentTags.StaffsTAGs,		idClean: [], valueClean: []},
+			{id: hvStat.equipmentTags.ShieldIDs,	value: hvStat.equipmentTags.ShieldTAGs,		idClean: [], valueClean: []},
+			{id: hvStat.equipmentTags.ClothIDs,		value: hvStat.equipmentTags.ClothTAGs,		idClean: [], valueClean: []},
+			{id: hvStat.equipmentTags.LightIDs,		value: hvStat.equipmentTags.LightTAGs,		idClean: [], valueClean: []},
+			{id: hvStat.equipmentTags.HeavyIDs,		value: hvStat.equipmentTags.HeavyTAGs,		idClean: [], valueClean: []}
+		];
+		var elements = document.querySelectorAll('#inv_equip div.eqdp, #item_pane div.eqdp, #equip div.eqdp, #equip_pane div.eqdp');
+		Array.prototype.forEach.call(elements, function (element) {
+			var onmouseover = element.getAttribute("onmouseover");
+			var regexResult = onmouseover.match(/(One-handed Weapon|Two-handed Weapon|Staff|Shield|Cloth Armor|Light Armor|Heavy Armor)(?:\s*&nbsp;)*\s*Level/);
+			if (!regexResult) {
+				return;
+			}
+			var equipType = regexResult[1];
+			var id = parseInt(String(element.id), 10);
+			var equipTypeIdx = -1;
+			if (/One-Handed/i.test(equipType)) {
+				equipTypeIdx = 0;
+			} else if (/Two-Handed/i.test(equipType)) {
+				equipTypeIdx = 1;
+			} else if (/Staff/i.test(equipType)) {
+				equipTypeIdx = 2;
+			} else if (/Shield/i.test(equipType)) {
+				equipTypeIdx = 3;
+			} else if (/Cloth/i.test(equipType)) {
+				equipTypeIdx = 4;
+			} else if (/Light/i.test(equipType)) {
+				equipTypeIdx = 5;
+			} else if (/Heavy/i.test(equipType)) {
+				equipTypeIdx = 6;
+			}
+			if (equipTypeIdx < 0) {
+				alert("unexpected equipment type");
+				return;
+			}
+			var idArray = equipTagArrayTable[equipTypeIdx].id;
+			var valueArray = equipTagArrayTable[equipTypeIdx].value;
+			var idCleanArray = equipTagArrayTable[equipTypeIdx].idClean;
+			var valueCleanArray = equipTagArrayTable[equipTypeIdx].valueClean;
+			var inputElement = document.createElement("input");
+			inputElement.type = "text";
+			inputElement.className = "hvstat-equipment-tag";
+			inputElement.name = "tagid_" + String(id);
+			inputElement.size = 5;
+			inputElement.maxLength = 6;
+			var index = idArray.indexOf(id);
+			if (index < 0) {
+				inputElement.className += " hvstat-equipment-tag-new";
+				inputElement.value = "*NEW*";
+			} else {
+				inputElement.value = valueArray[index];
+				if (doClean) {
+					idCleanArray.push(id);
+					valueCleanArray.push(valueArray[index]);
+				}
+			}
+			element.parentNode.insertBefore(inputElement, null);
+			inputElement.addEventListener("change", function (event) {
+				var target = event.target;
+				var tagId = Number(target.name.replace("tagid_", ""));
+				var tagValue = target.value;
+				var index = idArray.indexOf(tagId);
+				if (index >= 0) {
+					valueArray[index] = tagValue;
+				} else {
+					idArray.push(tagId);
+					valueArray.push(tagValue);
+				}
+				target.className = target.className.replace(" hvstat-equipment-tag-new", "");
+				hvStat.storage.equipmentTags.save();
+			});
+		});
+		if (doClean) {
+			var cleaned = false;
+			var i = equipTagArrayTable.length;
+			while (i--) {
+				if (equipTagArrayTable[i].id.length > equipTagArrayTable[i].idClean.length) {
+					idCleanArray = equipTagArrayTable[i].idClean;
+					valueCleanArray = equipTagArrayTable[i].valueClean;
+					switch (i) {
+					case 0:
+						hvStat.equipmentTags.OneHandedIDs = idCleanArray;
+						hvStat.equipmentTags.OneHandedTAGs = valueCleanArray;
+						break;
+					case 1:
+						hvStat.equipmentTags.TwoHandedIDs = idCleanArray;
+						hvStat.equipmentTags.TwoHandedTAGs = valueCleanArray;
+						break;
+					case 2:
+						hvStat.equipmentTags.StaffsIDs = idCleanArray;
+						hvStat.equipmentTags.StaffsTAGs = valueCleanArray;
+						break;
+					case 3:
+						hvStat.equipmentTags.ShieldIDs = idCleanArray;
+						hvStat.equipmentTags.ShieldTAGs = valueCleanArray;
+						break;
+					case 4:
+						hvStat.equipmentTags.ClothIDs = idCleanArray;
+						hvStat.equipmentTags.ClothTAGs = valueCleanArray;
+						break;
+					case 5:
+						hvStat.equipmentTags.LightIDs = idCleanArray;
+						hvStat.equipmentTags.LightTAGs = valueCleanArray;
+						break;
+					case 6:
+						hvStat.equipmentTags.HeavyIDs = idCleanArray;
+						hvStat.equipmentTags.HeavyTAGs = valueCleanArray;
+						break;
+					}
+					cleaned = true;
+				}
+			}
+			if (cleaned) {
+				hvStat.storage.equipmentTags.save();
+			}
 		}
 	},
 };
