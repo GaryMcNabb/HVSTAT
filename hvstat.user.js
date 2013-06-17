@@ -1568,41 +1568,46 @@ hvStat.versions.functions = {
 //------------------------------------
 // Gadgets
 //------------------------------------
-hvStat.gadget = {};
+hvStat.gadget = {
+	imageResources: [
+		new browser.I("images/", "ui-bg_flat_0_aaaaaa_40x100.png", "css/images/"),
+		new browser.I("images/", "ui-bg_flat_55_fbf9ee_40x100.png", "css/images/"),
+		new browser.I("images/", "ui-bg_flat_65_edebdf_40x100.png", "css/images/"),
+		new browser.I("images/", "ui-bg_flat_75_e3e0d1_40x100.png", "css/images/"),
+		new browser.I("images/", "ui-bg_flat_75_edebdf_40x100.png", "css/images/"),
+		new browser.I("images/", "ui-bg_flat_95_fef1ec_40x100.png", "css/images/"),
+		new browser.I("images/", "ui-icons_2e83ff_256x240.png", "css/images/"),
+		new browser.I("images/", "ui-icons_5c0d11_256x240.png", "css/images/"),
+		new browser.I("images/", "ui-icons_cd0a0a_256x240.png", "css/images/"),
+	],
+	addStyle: function () {
+		browser.extension.style.addFromResource("css/", "jquery-ui-1.9.2.custom.min.css", this.imageResources);
+	},
+};
 
 hvStat.gadget.wrenchIcon = {
 	create: function () {
-		var C = browser.extension.style.ImageResourceInfo;
-		var imageResouces = [
-			new C("images/", "ui-bg_flat_0_aaaaaa_40x100.png", "css/images/"),
-			new C("images/", "ui-bg_flat_55_fbf9ee_40x100.png", "css/images/"),
-			new C("images/", "ui-bg_flat_65_edebdf_40x100.png", "css/images/"),
-			new C("images/", "ui-bg_flat_75_e3e0d1_40x100.png", "css/images/"),
-			new C("images/", "ui-bg_flat_75_edebdf_40x100.png", "css/images/"),
-			new C("images/", "ui-bg_flat_95_fef1ec_40x100.png", "css/images/"),
-			new C("images/", "ui-icons_2e83ff_256x240.png", "css/images/"),
-			new C("images/", "ui-icons_5c0d11_256x240.png", "css/images/"),
-			new C("images/", "ui-icons_cd0a0a_256x240.png", "css/images/"),
-		];
-		browser.extension.style.addFromResource("css/", "jquery-ui-1.9.2.custom.min.css", imageResouces);
-
 		var stuffBox = document.querySelector('div.stuffbox');
 		var icon = document.createElement("div");
 		icon.id = "hvstat-icon";
 		icon.className = "ui-state-default ui-corner-all";
 		icon.innerHTML = '<span class="ui-icon ui-icon-wrench" title="Launch HV STAT UI"/>';
-		icon.addEventListener("click", function (event) {
-			this.removeEventListener(event.type, arguments.callee);
-			hvStat.ui.createDialog();
-		});
-		icon.addEventListener("mouseover", function (event) {
-			this.className = this.className.replace(" ui-state-hover", "");
-			this.className += " ui-state-hover";
-		});
-		icon.addEventListener("mouseout", function (event) {
-			this.className = this.className.replace(" ui-state-hover", "");
-		});
+		icon.addEventListener("click", this.onclick);
+		icon.addEventListener("mouseover", this.onmouseover);
+		icon.addEventListener("mouseout", this.onmouseout);
 		stuffBox.insertBefore(icon, null);
+	},
+	onclick: function (event) {
+		this.removeEventListener(event.type, arguments.callee);
+		browser.extension.loadScript("scripts/", "hvstat-ui.js");
+		hvStat.ui.createDialog();
+	},
+	onmouseover: function (event) {
+		this.className = this.className.replace(" ui-state-hover", "");
+		this.className += " ui-state-hover";
+	},
+	onmouseout: function (event) {
+		this.className = this.className.replace(" ui-state-hover", "");
 	},
 };
 
@@ -5803,6 +5808,7 @@ hvStat.startup = {
 		if (hvStat.settings.isChangePageTitle) {
 			document.title = hvStat.settings.customPageTitle;
 		}
+		hvStat.gadget.addStyle();
 		if (hv.battle.isActive) {
 			hvStat.battle.initialize();
 			if (hvStat.settings.delayRoundEndAlerts) {
