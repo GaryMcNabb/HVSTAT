@@ -4528,10 +4528,10 @@ hvStat.battle.monster.MonsterSkill.prototype = {
 
 hvStat.battle.monster.MonsterScanResults = function (vo) {
 	this._damageTypesToBeHidden = [];
-	var i, len = this._mappingToSettingsHideSpecificDamageType.length;
+	var i, len = this.damageTypes.length;
 	for (i = 0; i < len; i++) {
 		if (hvStat.settings.hideSpecificDamageType[i]) {
-			this._damageTypesToBeHidden.push(this._mappingToSettingsHideSpecificDamageType[i]);
+			this._damageTypesToBeHidden.push(this.damageTypes[i]);
 		}
 	}
 
@@ -4570,42 +4570,38 @@ hvStat.battle.monster.MonsterScanResults = function (vo) {
 	}
 };
 hvStat.battle.monster.MonsterScanResults.prototype = {
-	get _mappingToSettingsHideSpecificDamageType() {
-		return [
-			hvStat.constant.damageType.CRUSHING,
-			hvStat.constant.damageType.SLASHING,
-			hvStat.constant.damageType.PIERCING,
-			hvStat.constant.damageType.FIRE,
-			hvStat.constant.damageType.COLD,
-			hvStat.constant.damageType.ELEC,
-			hvStat.constant.damageType.WIND,
-			hvStat.constant.damageType.HOLY,
-			hvStat.constant.damageType.DARK,
-			hvStat.constant.damageType.SOUL,
-			hvStat.constant.damageType.VOID
-		];
-	},
-	get _damageTypeGeneralizingTable() {
-		return [
-			{
-				generic: hvStat.constant.genericDamageType.PHYSICAL,
-				elements: [
-					hvStat.constant.damageType.CRUSHING,
-					hvStat.constant.damageType.SLASHING,
-					hvStat.constant.damageType.PIERCING
-				]
-			},
-			{
-				generic: hvStat.constant.genericDamageType.ELEMENTAL,
-				elements: [
-					hvStat.constant.damageType.FIRE,
-					hvStat.constant.damageType.COLD,
-					hvStat.constant.damageType.ELEC,
-					hvStat.constant.damageType.WIND
-				]
-			},
-		];
-	},
+	damageTypes: [
+		hvStat.constant.damageType.CRUSHING,
+		hvStat.constant.damageType.SLASHING,
+		hvStat.constant.damageType.PIERCING,
+		hvStat.constant.damageType.FIRE,
+		hvStat.constant.damageType.COLD,
+		hvStat.constant.damageType.ELEC,
+		hvStat.constant.damageType.WIND,
+		hvStat.constant.damageType.HOLY,
+		hvStat.constant.damageType.DARK,
+		hvStat.constant.damageType.SOUL,
+		hvStat.constant.damageType.VOID
+	],
+	damageTypeGeneralizingTable: [
+		{
+			generic: hvStat.constant.genericDamageType.PHYSICAL,
+			elements: [
+				hvStat.constant.damageType.CRUSHING,
+				hvStat.constant.damageType.SLASHING,
+				hvStat.constant.damageType.PIERCING,
+			]
+		},
+		{
+			generic: hvStat.constant.genericDamageType.ELEMENTAL,
+			elements: [
+				hvStat.constant.damageType.FIRE,
+				hvStat.constant.damageType.COLD,
+				hvStat.constant.damageType.ELEC,
+				hvStat.constant.damageType.WIND,
+			]
+		},
+	],
 	_hideDamageTypes: function (source) {
 		var i, j;
 		var damageTypes = source.concat();
@@ -4623,12 +4619,12 @@ hvStat.battle.monster.MonsterScanResults.prototype = {
 		var i, lenTable, indices;
 		var j, lenTableElem, index;
 
-		lenTable = this._damageTypeGeneralizingTable.length;
-		for (i = 0; i < this._damageTypeGeneralizingTable.length; i++) {
+		lenTable = this.damageTypeGeneralizingTable.length;
+		for (i = 0; i < this.damageTypeGeneralizingTable.length; i++) {
 			indices = [];
-			lenTableElem = this._damageTypeGeneralizingTable[i].elements.length;
+			lenTableElem = this.damageTypeGeneralizingTable[i].elements.length;
 			for (j = 0; j < lenTableElem; j++) {
-				index = damageTypes.indexOf(this._damageTypeGeneralizingTable[i].elements[j]);
+				index = damageTypes.indexOf(this.damageTypeGeneralizingTable[i].elements[j]);
 				if (index >= 0) {
 					indices.push(index);
 				}
@@ -4638,7 +4634,7 @@ hvStat.battle.monster.MonsterScanResults.prototype = {
 					if (j > 0) {
 						damageTypes.splice(indices[j], 1);
 					} else {
-						damageTypes[indices[j]] = this._damageTypeGeneralizingTable[i].generic;
+						damageTypes[indices[j]] = this.damageTypeGeneralizingTable[i].generic;
 					}
 				}
 			}
