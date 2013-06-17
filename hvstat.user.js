@@ -5749,57 +5749,6 @@ function getBattleEndStatsHtml() {
 	return a;
 }
 
-function initShrinePane() {
-	var innerHTML;
-	if (hvStat.shrine.totalRewards === 0) {
-		innerHTML = "No data found. Make an offering at Snowflake's Shrine to begin tracking.";
-	} else {
-		innerHTML = browser.extension.getResourceText("html/", "shrine-pane.html");
-	}
-	$('#hvstat-shrine-pane').html(innerHTML);
-	if (hvStat.shrine.totalRewards > 0) {
-		if (!hvStat.settings.isTrackShrine) {
-			$('#hvstat-shrine-pane .hvstat-tracking-paused').show();
-		}
-		var tdAttributes = $('#hvstat-shrine-artifact-attributes td');
-		var tdHath = $('#hvstat-shrine-artifact-hath td');
-		var tdCrystals = $('#hvstat-shrine-artifact-crystals td');
-		var tdEnergyDrinks = $('#hvstat-shrine-artifact-energy-drinks td');
-		var tdElixers = $('#hvstat-shrine-artifact-elixers td');
-		var tdTotal = $('#hvstat-shrine-artifact-total td');
-		$(tdAttributes[0]).text(hvStat.shrine.artifactStat);
-		$(tdAttributes[1]).text(hvStat.ui.util.percentRatio(hvStat.shrine.artifactStat, hvStat.shrine.artifactsTraded, 2) + "%");
-		$(tdHath[0]).text(hvStat.shrine.artifactHath);
-		$(tdHath[1]).text(hvStat.ui.util.percentRatio(hvStat.shrine.artifactHath, hvStat.shrine.artifactsTraded, 2) + "%");
-		$(tdHath[2]).text("(" + hvStat.ui.util.ratio(hvStat.shrine.artifactHathTotal, hvStat.shrine.artifactsTraded).toFixed(2) + " Hath per Artifact)");
-		$(tdCrystals[0]).text(hvStat.shrine.artifactCrystal);
-		$(tdCrystals[1]).text(hvStat.ui.util.percentRatio(hvStat.shrine.artifactCrystal, hvStat.shrine.artifactsTraded, 2) + "%");
-		$(tdEnergyDrinks[0]).text(hvStat.shrine.artifactItem);
-		$(tdEnergyDrinks[1]).text(hvStat.ui.util.percentRatio(hvStat.shrine.artifactItem, hvStat.shrine.artifactsTraded, 2) + "%");
-		$(tdElixers[0]).text(hvStat.shrine.artifactElixer);
-		$(tdElixers[1]).text(hvStat.ui.util.percentRatio(hvStat.shrine.artifactElixer, hvStat.shrine.artifactsTraded, 2) + "%");
-		$(tdTotal[0]).text(hvStat.shrine.artifactsTraded);
-
-		var i = hvStat.shrine.trophyArray.length;
-		var trophiesHTML = "";
-		while (i--) {
-			trophiesHTML += '<li>' + hvStat.shrine.trophyArray[i] + '</li>';
-		}
-		$('#hvstat-shrine-trophies').html(trophiesHTML);
-		$('#hvstat-shrine-clear-trophies').click(function () {
-			if (confirm("Clear Trophy list?")) {
-				hvStat.shrine.trophyArray = [];
-				hvStat.storage.shrine.save();
-			}
-		});
-		$('#hvstat-shrine-reset').click(function () {
-			if (confirm("Reset Shrine tab?")) {
-				hvStat.storage.shrine.reset();
-			}
-		});
-	}
-}
-
 function initSettingsPane() {
 	$("#hvstat-settings-pane").html(browser.extension.getResourceText("html/", "settings-pane.html"));
 
@@ -7619,6 +7568,57 @@ function initBattleStatsPane() {
 			}
 		}
 	});
+}
+
+function initShrinePane() {
+	var innerHTML;
+	if (hvStat.shrine.totalRewards === 0) {
+		innerHTML = "No data found. Make an offering at Snowflake's Shrine to begin tracking.";
+	} else {
+		innerHTML = browser.extension.getResourceText("html/", "shrine-pane.html");
+	}
+	$('#hvstat-shrine-pane').html(innerHTML);
+	if (hvStat.shrine.totalRewards > 0) {
+		if (!hvStat.settings.isTrackShrine) {
+			$('#hvstat-shrine-pane .hvstat-tracking-paused').show();
+		}
+		var tdAttributes = $('#hvstat-shrine-artifact-attributes td');
+		var tdHath = $('#hvstat-shrine-artifact-hath td');
+		var tdCrystals = $('#hvstat-shrine-artifact-crystals td');
+		var tdEnergyDrinks = $('#hvstat-shrine-artifact-energy-drinks td');
+		var tdElixers = $('#hvstat-shrine-artifact-elixers td');
+		var tdTotal = $('#hvstat-shrine-artifact-total td');
+		$(tdAttributes[0]).text(hvStat.shrine.artifactStat);
+		$(tdAttributes[1]).text(hvStat.ui.util.percentRatio(hvStat.shrine.artifactStat, hvStat.shrine.artifactsTraded, 2) + "%");
+		$(tdHath[0]).text(hvStat.shrine.artifactHath);
+		$(tdHath[1]).text(hvStat.ui.util.percentRatio(hvStat.shrine.artifactHath, hvStat.shrine.artifactsTraded, 2) + "%");
+		$(tdHath[2]).text("(" + hvStat.ui.util.ratio(hvStat.shrine.artifactHathTotal, hvStat.shrine.artifactsTraded).toFixed(2) + " Hath per Artifact)");
+		$(tdCrystals[0]).text(hvStat.shrine.artifactCrystal);
+		$(tdCrystals[1]).text(hvStat.ui.util.percentRatio(hvStat.shrine.artifactCrystal, hvStat.shrine.artifactsTraded, 2) + "%");
+		$(tdEnergyDrinks[0]).text(hvStat.shrine.artifactItem);
+		$(tdEnergyDrinks[1]).text(hvStat.ui.util.percentRatio(hvStat.shrine.artifactItem, hvStat.shrine.artifactsTraded, 2) + "%");
+		$(tdElixers[0]).text(hvStat.shrine.artifactElixer);
+		$(tdElixers[1]).text(hvStat.ui.util.percentRatio(hvStat.shrine.artifactElixer, hvStat.shrine.artifactsTraded, 2) + "%");
+		$(tdTotal[0]).text(hvStat.shrine.artifactsTraded);
+
+		var i = hvStat.shrine.trophyArray.length;
+		var trophiesHTML = "";
+		while (i--) {
+			trophiesHTML += '<li>' + hvStat.shrine.trophyArray[i] + '</li>';
+		}
+		$('#hvstat-shrine-trophies').html(trophiesHTML);
+		$('#hvstat-shrine-clear-trophies').click(function () {
+			if (confirm("Clear Trophy list?")) {
+				hvStat.shrine.trophyArray = [];
+				hvStat.storage.shrine.save();
+			}
+		});
+		$('#hvstat-shrine-reset').click(function () {
+			if (confirm("Reset Shrine tab?")) {
+				hvStat.storage.shrine.reset();
+			}
+		});
+	}
 }
 
 //------------------------------------
