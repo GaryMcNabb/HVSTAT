@@ -5066,7 +5066,7 @@ hvStat.battle.monster.Monster.prototype = {
 			}
 		}
 	},
-	_renderPopup: function () {
+	renderPopup: function () {
 		var that = this;
 		var i, len, skill, lastScanString;
 		var doesScanResultExist = that.doesScanResultExist;
@@ -5399,9 +5399,6 @@ hvStat.battle.monster.Monster.prototype = {
 			div.textContent = (that.spiritPointRate * 100).toFixed(1) + "%";
 			this.gauges[2].parentNode.insertBefore(div, null);
 		}
-	},
-	renderPopup: function () {
-		return this._renderPopup();
 	},
 	takeDamage: function (damageAmount) {
 		this.actualHealthPoint -= damageAmount;
