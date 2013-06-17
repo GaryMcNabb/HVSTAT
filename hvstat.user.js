@@ -3465,7 +3465,10 @@ hvStat.battle.eventLog.messageTypeParams = {
 					(function (monster) {
 						hvStat.database.idbAccessQueue.add(function () {
 							monster.getFromDB(function () {
-								hvStat.storage.roundContext.save();
+								monster.renderStats();
+								if (hvStat.battle.monster.areAllMonstersFinishedGettingFromDb) {
+									hvStat.storage.roundContext.save();
+								}
 							});
 						});
 					})(monster);
@@ -4426,14 +4429,22 @@ hvStat.battle.monster = {
 			}
 		}
 	},
+	get areAllMonstersFinishedGettingFromDb() {
+		for (var i = 0; i < this.monsters.length; i++) {
+			if (this.monsters[i].isWaitingForGetResponse) {
+				return false;
+			}
+		}
+		return true;
+	},
 	showHealthAll: function () {
 		for (var i = 0; i < this.monsters.length; i++) {
-			hvStat.battle.monster.monsters[i].renderHealth();
+			this.monsters[i].renderHealth();
 		}
 	},
 	showStatusAll: function () {
 		for (var i = 0; i < this.monsters.length; i++) {
-			hvStat.battle.monster.monsters[i].renderStats();
+			this.monsters[i].renderStats();
 		}
 	},
 	findByName: function (monsterName) {
@@ -4788,7 +4799,7 @@ hvStat.battle.monster.Monster.prototype = {
 		}
 		return v;
 	},
-	_waitingForDBResponse: function () {
+	get isWaitingForGetResponse() {
 		return this._waitingForGetResponseOfMonsterScanResults || this._waitingForGetResponseOfMonsterSkills;
 	},
 	get magicSkills() {
@@ -5266,7 +5277,7 @@ hvStat.battle.monster.Monster.prototype = {
 				that._scanResult = new hvStat.battle.monster.MonsterScanResults(event.target.result);
 				//console.debug(that._scanResult.valueObject);
 			}
-			if (!that._waitingForDBResponse()) {
+			if (!that.isWaitingForGetResponse) {
 				callback();
 			}
 		};
@@ -5293,7 +5304,7 @@ hvStat.battle.monster.Monster.prototype = {
 				that._waitingForGetResponseOfMonsterSkills = false;
 				//console.log("get from MonsterSkills: finished: id = " + that._id);
 			}
-			if (!that._waitingForDBResponse()) {
+			if (!that.isWaitingForGetResponse) {
 				callback();
 			}
 		};
@@ -5390,15 +5401,7 @@ hvStat.battle.monster.Monster.prototype = {
 		}
 	},
 	renderStats: function () {
-		if (!this._waitingForDBResponse()) {
-			this._renderStats();
-		} else {
-			(function (that) {
-				setTimeout(function () {
-					that.renderStats();
-				}, 10);
-			})(this);
-		}
+		this._renderStats();
 	},
 	renderPopup: function () {
 		return this._renderPopup();
@@ -5817,10 +5820,6 @@ hvStat.startup = {
 			hvStat.battle.monster.showHealthAll();
 			if (!hvStat.database.loadingMonsterInfoFromDB) {
 				hvStat.battle.monster.showStatusAll();
-			} else {
-				hvStat.database.idbAccessQueue.add(function () {
-					hvStat.battle.monster.showStatusAll();
-				});
 			}
 			if (hvStat.settings.isShowStatsPopup) {
 				hvStat.battle.monster.popup.initialize();
