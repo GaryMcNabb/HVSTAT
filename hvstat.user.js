@@ -3465,7 +3465,7 @@ hvStat.battle.eventLog.messageTypeParams = {
 					(function (monster) {
 						hvStat.database.idbAccessQueue.add(function () {
 							monster.getFromDB(function () {
-								monster.renderStats();
+								monster.showStatus();
 								if (hvStat.battle.monster.areAllMonstersFinishedGettingFromDb) {
 									hvStat.storage.roundContext.save();
 								}
@@ -4444,7 +4444,7 @@ hvStat.battle.monster = {
 	},
 	showStatusAll: function () {
 		for (var i = 0; i < this.monsters.length; i++) {
-			this.monsters[i].renderStats();
+			this.monsters[i].showStatus();
 		}
 	},
 	findByName: function (monsterName) {
@@ -4476,7 +4476,7 @@ hvStat.battle.monster.popup = {
 			}
 		}
 		if (index < 0) return;
-		var html = hvStat.battle.monster.monsters[index].renderPopup();
+		var html = hvStat.battle.monster.monsters[index].createPopupHTML();
 		hv.elementCache.popup.style.width = "270px";
 		hv.elementCache.popup.style.height = "auto";
 		hv.elementCache.popup.innerHTML = html;
@@ -4861,7 +4861,7 @@ hvStat.battle.monster.Monster.prototype = {
 		}
 		return null;
 	},
-	renderStats: function () {
+	showStatus: function () {
 		var that = this;
 		if (that.isDead) {
 			return;
@@ -5066,7 +5066,7 @@ hvStat.battle.monster.Monster.prototype = {
 			}
 		}
 	},
-	renderPopup: function () {
+	createPopupHTML: function () {
 		var that = this;
 		var i, len, skill, lastScanString;
 		var doesScanResultExist = that.doesScanResultExist;
