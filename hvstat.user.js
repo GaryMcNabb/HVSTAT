@@ -453,7 +453,7 @@ var hvStat = {
 	addStyle: function () {
 		browser.extension.style.addFromResource("css/", "hvstat.css", this.imageResources);
 	},
-	// Shortcuts
+	// Aliases
 	get settings() {
 		return hvStat.storage.settings.value;
 	},
@@ -733,7 +733,7 @@ hvStat.constant.Keyword.prototype = {
 	},
 };
 
-hvStat.C = hvStat.constant.Keyword;	// Shortcut
+hvStat.C = hvStat.constant.Keyword;	// Alias
 
 hvStat.constant.difficulty = hvStat.constant.factory([
 	new hvStat.C("NORMAL", "Normal"),
@@ -1617,7 +1617,7 @@ hvStat.gadget.equippedSet = {
 		var cssText = leftBar.querySelector('table.cit td > div > div').style.cssText;
 		var table = document.createElement("table");
 		table.className = "cit";
-		table.innerHTML ='<tbody><tr><td><div class="fd4"><div id="hvstat-equipped-set"></div></div></td></tr></tbody>';
+		table.innerHTML = '<tbody><tr><td><div class="fd4"><div id="hvstat-equipped-set"></div></div></td></tr></tbody>';
 		leftBar.insertBefore(table, null);
 		var equippedSet = document.getElementById("hvstat-equipped-set");
 		equippedSet.style.cssText = cssText;
