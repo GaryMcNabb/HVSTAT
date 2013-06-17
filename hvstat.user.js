@@ -204,6 +204,8 @@ browser.extension.style = {
 	},
 };
 
+browser.I = browser.extension.style.ImageResourceInfo;	// Alias
+
 //------------------------------------
 // HV utility object
 //------------------------------------
@@ -442,15 +444,14 @@ var hvStat = {
 	initialize: function () {
 		this.addStyle();
 	},
+	imageResources: [
+		new browser.I("images/", "channeling.png", "css/images/"),
+		new browser.I("images/", "healthpot.png", "css/images/"),
+		new browser.I("images/", "manapot.png", "css/images/"),
+		new browser.I("images/", "spiritpot.png", "css/images/"),
+	],
 	addStyle: function () {
-		var C = browser.extension.style.ImageResourceInfo;
-		var imageResouces = [
-			new C("images/", "channeling.png", "css/images/"),
-			new C("images/", "healthpot.png", "css/images/"),
-			new C("images/", "manapot.png", "css/images/"),
-			new C("images/", "spiritpot.png", "css/images/"),
-		];
-		browser.extension.style.addFromResource("css/", "hvstat.css", imageResouces);
+		browser.extension.style.addFromResource("css/", "hvstat.css", this.imageResources);
 	},
 	// Shortcuts
 	get settings() {
