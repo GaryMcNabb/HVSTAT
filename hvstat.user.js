@@ -5749,182 +5749,6 @@ function getBattleEndStatsHtml() {
 	return a;
 }
 
-function initOverviewPane() {
-	var innerHTML;
-	if (hvStat.overview.totalRounds > 0) {
-		innerHTML = browser.extension.getResourceText("html/", "overview-pane.html");
-	} else {
-		innerHTML = "No data found. Complete a round to begin tracking.";
-	}
- 	$('#hvstat-overview-pane').html(innerHTML);
-	if (hvStat.overview.totalRounds === 0) {
-		return;
-	}
-
-	var start = new Date(hvStat.overview.startTime);
-	var now = new Date();
-	var elapsedMilliseconds = now.getTime() - hvStat.overview.startTime;
-	var elapsedSeconds = elapsedMilliseconds / 1000;
-	var elapsedMinutes = elapsedSeconds / 60;
-	var elapsedHours = elapsedMinutes / 60;
-	var elapsedDays = elapsedHours / 24;
-
-	var tdReportingPeriod = $('#hvstat-overview-reporting-period td');
-	$(tdReportingPeriod[0]).text(start.toLocaleString());
-	$(tdReportingPeriod[1]).text(now.toLocaleString());
-	$(tdReportingPeriod[2]).text(hvStat.util.getElapseFrom(start));
-
- 	var tdRoundsHourlyEncounters = $('#hvstat-overview-rounds-hourly-encounters td');
- 	var tdRoundsArena = $('#hvstat-overview-rounds-arenas td');
- 	var tdRoundsGrindfests = $('#hvstat-overview-rounds-grindfests td');
- 	var tdRoundsItemWorlds = $('#hvstat-overview-rounds-item-worlds td');
- 	var tdRoundsTotal = $('#hvstat-overview-rounds-total td');
-
-	$(tdRoundsHourlyEncounters[0]).text(hvStat.ui.util.numberWithCommas(hvStat.overview.roundArray[0]));
-	$(tdRoundsHourlyEncounters[1]).text(hvStat.ui.util.percentRatio(hvStat.overview.roundArray[0], hvStat.overview.totalRounds, 2) + "%");
-	$(tdRoundsHourlyEncounters[2]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.roundArray[0], elapsedHours).toFixed(2)));
-	$(tdRoundsHourlyEncounters[3]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.roundArray[0], elapsedDays).toFixed(2)));
-
-	var lastHourlyEncounter;
-	if (hvStat.overview.lastHourlyTime === 0) {
-		lastHourlyEncounter = "Never";
-	} else {
-		lastHourlyEncounter = (new Date(hvStat.overview.lastHourlyTime)).toLocaleTimeString();
-	}
-	$(tdRoundsHourlyEncounters[4]).children('span').text(lastHourlyEncounter);
-
-	$(tdRoundsArena[0]).text(hvStat.ui.util.numberWithCommas(hvStat.overview.roundArray[1]));
-	$(tdRoundsArena[1]).text(hvStat.ui.util.percentRatio(hvStat.overview.roundArray[1], hvStat.overview.totalRounds, 2) + "%");
-	$(tdRoundsArena[2]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.roundArray[1], elapsedHours).toFixed(2)));
-	$(tdRoundsArena[3]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.roundArray[1], elapsedDays).toFixed(2)));
-
-	$(tdRoundsGrindfests[0]).text(hvStat.ui.util.numberWithCommas(hvStat.overview.roundArray[2]));
-	$(tdRoundsGrindfests[1]).text(hvStat.ui.util.percentRatio(hvStat.overview.roundArray[2], hvStat.overview.totalRounds, 2) + "%");
-	$(tdRoundsGrindfests[2]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.roundArray[2], elapsedHours).toFixed(2)));
-	$(tdRoundsGrindfests[3]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.roundArray[2], elapsedDays).toFixed(2)));
-
-	$(tdRoundsItemWorlds[0]).text(hvStat.ui.util.numberWithCommas(hvStat.overview.roundArray[3]));
-	$(tdRoundsItemWorlds[1]).text(hvStat.ui.util.percentRatio(hvStat.overview.roundArray[3], hvStat.overview.totalRounds, 2) + "%");
-	$(tdRoundsItemWorlds[2]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.roundArray[3], elapsedHours).toFixed(2)));
-	$(tdRoundsItemWorlds[3]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.roundArray[3], elapsedDays).toFixed(2)));
-
-	$(tdRoundsTotal[0]).text(hvStat.ui.util.numberWithCommas(hvStat.overview.totalRounds));
-	$(tdRoundsTotal[2]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.totalRounds, elapsedHours).toFixed(2)));
-	$(tdRoundsTotal[3]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.totalRounds, elapsedDays).toFixed(2)));
-
- 	var tdExpHourlyEncounters = $('#hvstat-overview-exp-hourly-encounters td');
- 	var tdExpArena = $('#hvstat-overview-exp-arenas td');
- 	var tdExpGrindfests = $('#hvstat-overview-exp-grindfests td');
- 	var tdExpItemWorlds = $('#hvstat-overview-exp-item-worlds td');
- 	var tdExpTotal = $('#hvstat-overview-exp-total td');
-
-	$(tdExpHourlyEncounters[0]).text(hvStat.ui.util.numberWithCommas(hvStat.overview.expbyBT[0]));
-	$(tdExpHourlyEncounters[1]).text(hvStat.ui.util.percentRatio(hvStat.overview.expbyBT[0], hvStat.overview.exp, 2) + "%");
-	$(tdExpHourlyEncounters[2]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.expbyBT[0], hvStat.overview.roundArray[0]).toFixed()));
-	$(tdExpHourlyEncounters[3]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.expbyBT[0], elapsedHours).toFixed()));
-	$(tdExpHourlyEncounters[4]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.expbyBT[0], elapsedDays).toFixed()));
-
-	$(tdExpArena[0]).text(hvStat.ui.util.numberWithCommas(hvStat.overview.expbyBT[1]));
-	$(tdExpArena[1]).text(hvStat.ui.util.percentRatio(hvStat.overview.expbyBT[1], hvStat.overview.exp, 2) + "%");
-	$(tdExpArena[2]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.expbyBT[1], hvStat.overview.roundArray[1]).toFixed()));
-	$(tdExpArena[3]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.expbyBT[1], elapsedHours).toFixed()));
-	$(tdExpArena[4]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.expbyBT[1], elapsedDays).toFixed()));
-
-	$(tdExpGrindfests[0]).text(hvStat.ui.util.numberWithCommas(hvStat.overview.expbyBT[2]));
-	$(tdExpGrindfests[1]).text(hvStat.ui.util.percentRatio(hvStat.overview.expbyBT[2], hvStat.overview.exp, 2) + "%");
-	$(tdExpGrindfests[2]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.expbyBT[2], hvStat.overview.roundArray[2]).toFixed()));
-	$(tdExpGrindfests[3]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.expbyBT[2], elapsedHours).toFixed()));
-	$(tdExpGrindfests[4]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.expbyBT[2], elapsedDays).toFixed()));
-
-	$(tdExpItemWorlds[0]).text(hvStat.ui.util.numberWithCommas(hvStat.overview.expbyBT[3]));
-	$(tdExpItemWorlds[1]).text(hvStat.ui.util.percentRatio(hvStat.overview.expbyBT[3], hvStat.overview.exp, 2) + "%");
-	$(tdExpItemWorlds[2]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.expbyBT[3], hvStat.overview.roundArray[3]).toFixed()));
-	$(tdExpItemWorlds[3]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.expbyBT[3], elapsedHours).toFixed()));
-	$(tdExpItemWorlds[4]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.expbyBT[3], elapsedDays).toFixed()));
-
-	$(tdExpTotal[0]).text(hvStat.ui.util.numberWithCommas(hvStat.overview.exp));
-	$(tdExpTotal[2]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.exp, hvStat.overview.totalRounds).toFixed()));
-	$(tdExpTotal[3]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.exp, elapsedHours).toFixed()));
-	$(tdExpTotal[4]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.exp, elapsedDays).toFixed()));
-
-	var tdCreditsHourlyEncounters = $('#hvstat-overview-credits-hourly-encounters td');
-	var tdCreditsArena = $('#hvstat-overview-credits-arenas td');
- 	var tdCreditsGrindfests = $('#hvstat-overview-credits-grindfests td');
- 	var tdCreditsItemWorlds = $('#hvstat-overview-credits-item-worlds td');
-	var tdCreditsTotal = $('#hvstat-overview-credits-total td');
-
-	$(tdCreditsHourlyEncounters[0]).text(hvStat.ui.util.numberWithCommas(hvStat.overview.creditsbyBT[0]));
-	$(tdCreditsHourlyEncounters[1]).text(hvStat.ui.util.percentRatio(hvStat.overview.creditsbyBT[0], hvStat.overview.credits, 2) + "%");
-	$(tdCreditsHourlyEncounters[2]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.creditsbyBT[0], hvStat.overview.roundArray[0]).toFixed()));
-	$(tdCreditsHourlyEncounters[3]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.creditsbyBT[0], elapsedHours).toFixed()));
-	$(tdCreditsHourlyEncounters[4]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.creditsbyBT[0], elapsedDays).toFixed()));
-
-	$(tdCreditsArena[0]).text(hvStat.ui.util.numberWithCommas(hvStat.overview.creditsbyBT[1]));
-	$(tdCreditsArena[1]).text(hvStat.ui.util.percentRatio(hvStat.overview.creditsbyBT[1], hvStat.overview.credits, 2) + "%");
-	$(tdCreditsArena[2]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.creditsbyBT[1], hvStat.overview.roundArray[1]).toFixed()));
-	$(tdCreditsArena[3]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.creditsbyBT[1], elapsedHours).toFixed()));
-	$(tdCreditsArena[4]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.creditsbyBT[1], elapsedDays).toFixed()));
-
-	$(tdCreditsGrindfests[0]).text(hvStat.ui.util.numberWithCommas(hvStat.overview.creditsbyBT[2]));
-	$(tdCreditsGrindfests[1]).text(hvStat.ui.util.percentRatio(hvStat.overview.creditsbyBT[2], hvStat.overview.credits, 2) + "%");
-	$(tdCreditsGrindfests[2]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.creditsbyBT[2], hvStat.overview.roundArray[2]).toFixed()));
-	$(tdCreditsGrindfests[3]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.creditsbyBT[2], elapsedHours).toFixed()));
-	$(tdCreditsGrindfests[4]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.creditsbyBT[2], elapsedDays).toFixed()));
-
-	$(tdCreditsItemWorlds[0]).text(hvStat.ui.util.numberWithCommas(hvStat.overview.creditsbyBT[3]));
-	$(tdCreditsItemWorlds[1]).text(hvStat.ui.util.percentRatio(hvStat.overview.creditsbyBT[3], hvStat.overview.credits, 2) + "%");
-	$(tdCreditsItemWorlds[2]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.creditsbyBT[3], hvStat.overview.roundArray[3]).toFixed()));
-	$(tdCreditsItemWorlds[3]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.creditsbyBT[3], elapsedHours).toFixed()));
-	$(tdCreditsItemWorlds[4]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.creditsbyBT[3], elapsedDays).toFixed()));
-
-	$(tdCreditsTotal[0]).text(hvStat.ui.util.numberWithCommas(hvStat.overview.credits));
-	$(tdCreditsTotal[2]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.credits, hvStat.overview.totalRounds).toFixed()));
-	$(tdCreditsTotal[3]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.credits, elapsedHours).toFixed()));
-	$(tdCreditsTotal[4]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.credits, elapsedDays).toFixed()));
-
-	var tdDropsEquipments = $('#hvstat-overview-drops-equipments td');
-	var tdDropsArtifacts = $('#hvstat-overview-drops-artifacts td');
-
-	$(tdDropsEquipments[0]).text(hvStat.ui.util.numberWithCommas(hvStat.overview.equips));
-	$(tdDropsEquipments[1]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.equips, elapsedHours).toFixed(2)));
-	$(tdDropsEquipments[2]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.equips, elapsedDays).toFixed(2)));
-	$(tdDropsEquipments[3]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.totalRounds, hvStat.overview.equips).toFixed(2)));
-
-	$(tdDropsArtifacts[0]).text(hvStat.overview.artifacts);
-	$(tdDropsArtifacts[1]).text(hvStat.ui.util.ratio(hvStat.overview.artifacts, elapsedHours).toFixed(2));
-	$(tdDropsArtifacts[2]).text(hvStat.ui.util.ratio(hvStat.overview.artifacts, elapsedDays).toFixed(2));
-	$(tdDropsArtifacts[3]).text(hvStat.ui.util.ratio(hvStat.overview.totalRounds, hvStat.overview.artifacts).toFixed(2));
-
-	var spanDropsEquipmentLastFound = $('#hvstat-overview-drops-equipments span');
-	var spanDropsArtifactLastFound = $('#hvstat-overview-drops-artifacts span');
-
-	var lastFoundName, lastFoundTime;
-	if (hvStat.overview.equips === 0) {
-		lastFoundName = "None yet!";
-		lastFoundTime = "N/A";
-	} else {
-		lastFoundName = hvStat.overview.lastEquipName;
-		lastFoundTime = hvStat.util.getRelativeTime(hvStat.overview.lastEquipTime);
-	}
-	$(spanDropsEquipmentLastFound[0]).text(lastFoundName);
-	$(spanDropsEquipmentLastFound[1]).text(lastFoundTime);
-
-	if (hvStat.overview.artifacts === 0) {
-		lastFoundName = "None yet!";
-		lastFoundTime = "N/A";
-	} else {
-		lastFoundName = hvStat.overview.lastArtName;
-		lastFoundTime = hvStat.util.getRelativeTime(hvStat.overview.lastArtTime);
-	}
-	$(spanDropsArtifactLastFound[0]).text(lastFoundName);
-	$(spanDropsArtifactLastFound[1]).text(lastFoundTime);
-
-	$('#hvstat-overview-reset').click(function () {
-		if (confirm("Reset Overview tab?")) {
-			hvStat.storage.overview.reset();
-		}
-	});
-}
 function initBattleStatsPane() {
 	var innerHTML;
 	if (hvStat.stats.rounds > 0) {
@@ -7618,6 +7442,183 @@ hvStat.ui.databasePane = {
 		$('#hvstat-database-old-monster-database-size').text(size);
 	},
 };
+
+function initOverviewPane() {
+	var innerHTML;
+	if (hvStat.overview.totalRounds > 0) {
+		innerHTML = browser.extension.getResourceText("html/", "overview-pane.html");
+	} else {
+		innerHTML = "No data found. Complete a round to begin tracking.";
+	}
+ 	$('#hvstat-overview-pane').html(innerHTML);
+	if (hvStat.overview.totalRounds === 0) {
+		return;
+	}
+
+	var start = new Date(hvStat.overview.startTime);
+	var now = new Date();
+	var elapsedMilliseconds = now.getTime() - hvStat.overview.startTime;
+	var elapsedSeconds = elapsedMilliseconds / 1000;
+	var elapsedMinutes = elapsedSeconds / 60;
+	var elapsedHours = elapsedMinutes / 60;
+	var elapsedDays = elapsedHours / 24;
+
+	var tdReportingPeriod = $('#hvstat-overview-reporting-period td');
+	$(tdReportingPeriod[0]).text(start.toLocaleString());
+	$(tdReportingPeriod[1]).text(now.toLocaleString());
+	$(tdReportingPeriod[2]).text(hvStat.util.getElapseFrom(start));
+
+ 	var tdRoundsHourlyEncounters = $('#hvstat-overview-rounds-hourly-encounters td');
+ 	var tdRoundsArena = $('#hvstat-overview-rounds-arenas td');
+ 	var tdRoundsGrindfests = $('#hvstat-overview-rounds-grindfests td');
+ 	var tdRoundsItemWorlds = $('#hvstat-overview-rounds-item-worlds td');
+ 	var tdRoundsTotal = $('#hvstat-overview-rounds-total td');
+
+	$(tdRoundsHourlyEncounters[0]).text(hvStat.ui.util.numberWithCommas(hvStat.overview.roundArray[0]));
+	$(tdRoundsHourlyEncounters[1]).text(hvStat.ui.util.percentRatio(hvStat.overview.roundArray[0], hvStat.overview.totalRounds, 2) + "%");
+	$(tdRoundsHourlyEncounters[2]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.roundArray[0], elapsedHours).toFixed(2)));
+	$(tdRoundsHourlyEncounters[3]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.roundArray[0], elapsedDays).toFixed(2)));
+
+	var lastHourlyEncounter;
+	if (hvStat.overview.lastHourlyTime === 0) {
+		lastHourlyEncounter = "Never";
+	} else {
+		lastHourlyEncounter = (new Date(hvStat.overview.lastHourlyTime)).toLocaleTimeString();
+	}
+	$(tdRoundsHourlyEncounters[4]).children('span').text(lastHourlyEncounter);
+
+	$(tdRoundsArena[0]).text(hvStat.ui.util.numberWithCommas(hvStat.overview.roundArray[1]));
+	$(tdRoundsArena[1]).text(hvStat.ui.util.percentRatio(hvStat.overview.roundArray[1], hvStat.overview.totalRounds, 2) + "%");
+	$(tdRoundsArena[2]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.roundArray[1], elapsedHours).toFixed(2)));
+	$(tdRoundsArena[3]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.roundArray[1], elapsedDays).toFixed(2)));
+
+	$(tdRoundsGrindfests[0]).text(hvStat.ui.util.numberWithCommas(hvStat.overview.roundArray[2]));
+	$(tdRoundsGrindfests[1]).text(hvStat.ui.util.percentRatio(hvStat.overview.roundArray[2], hvStat.overview.totalRounds, 2) + "%");
+	$(tdRoundsGrindfests[2]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.roundArray[2], elapsedHours).toFixed(2)));
+	$(tdRoundsGrindfests[3]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.roundArray[2], elapsedDays).toFixed(2)));
+
+	$(tdRoundsItemWorlds[0]).text(hvStat.ui.util.numberWithCommas(hvStat.overview.roundArray[3]));
+	$(tdRoundsItemWorlds[1]).text(hvStat.ui.util.percentRatio(hvStat.overview.roundArray[3], hvStat.overview.totalRounds, 2) + "%");
+	$(tdRoundsItemWorlds[2]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.roundArray[3], elapsedHours).toFixed(2)));
+	$(tdRoundsItemWorlds[3]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.roundArray[3], elapsedDays).toFixed(2)));
+
+	$(tdRoundsTotal[0]).text(hvStat.ui.util.numberWithCommas(hvStat.overview.totalRounds));
+	$(tdRoundsTotal[2]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.totalRounds, elapsedHours).toFixed(2)));
+	$(tdRoundsTotal[3]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.totalRounds, elapsedDays).toFixed(2)));
+
+ 	var tdExpHourlyEncounters = $('#hvstat-overview-exp-hourly-encounters td');
+ 	var tdExpArena = $('#hvstat-overview-exp-arenas td');
+ 	var tdExpGrindfests = $('#hvstat-overview-exp-grindfests td');
+ 	var tdExpItemWorlds = $('#hvstat-overview-exp-item-worlds td');
+ 	var tdExpTotal = $('#hvstat-overview-exp-total td');
+
+	$(tdExpHourlyEncounters[0]).text(hvStat.ui.util.numberWithCommas(hvStat.overview.expbyBT[0]));
+	$(tdExpHourlyEncounters[1]).text(hvStat.ui.util.percentRatio(hvStat.overview.expbyBT[0], hvStat.overview.exp, 2) + "%");
+	$(tdExpHourlyEncounters[2]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.expbyBT[0], hvStat.overview.roundArray[0]).toFixed()));
+	$(tdExpHourlyEncounters[3]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.expbyBT[0], elapsedHours).toFixed()));
+	$(tdExpHourlyEncounters[4]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.expbyBT[0], elapsedDays).toFixed()));
+
+	$(tdExpArena[0]).text(hvStat.ui.util.numberWithCommas(hvStat.overview.expbyBT[1]));
+	$(tdExpArena[1]).text(hvStat.ui.util.percentRatio(hvStat.overview.expbyBT[1], hvStat.overview.exp, 2) + "%");
+	$(tdExpArena[2]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.expbyBT[1], hvStat.overview.roundArray[1]).toFixed()));
+	$(tdExpArena[3]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.expbyBT[1], elapsedHours).toFixed()));
+	$(tdExpArena[4]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.expbyBT[1], elapsedDays).toFixed()));
+
+	$(tdExpGrindfests[0]).text(hvStat.ui.util.numberWithCommas(hvStat.overview.expbyBT[2]));
+	$(tdExpGrindfests[1]).text(hvStat.ui.util.percentRatio(hvStat.overview.expbyBT[2], hvStat.overview.exp, 2) + "%");
+	$(tdExpGrindfests[2]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.expbyBT[2], hvStat.overview.roundArray[2]).toFixed()));
+	$(tdExpGrindfests[3]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.expbyBT[2], elapsedHours).toFixed()));
+	$(tdExpGrindfests[4]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.expbyBT[2], elapsedDays).toFixed()));
+
+	$(tdExpItemWorlds[0]).text(hvStat.ui.util.numberWithCommas(hvStat.overview.expbyBT[3]));
+	$(tdExpItemWorlds[1]).text(hvStat.ui.util.percentRatio(hvStat.overview.expbyBT[3], hvStat.overview.exp, 2) + "%");
+	$(tdExpItemWorlds[2]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.expbyBT[3], hvStat.overview.roundArray[3]).toFixed()));
+	$(tdExpItemWorlds[3]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.expbyBT[3], elapsedHours).toFixed()));
+	$(tdExpItemWorlds[4]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.expbyBT[3], elapsedDays).toFixed()));
+
+	$(tdExpTotal[0]).text(hvStat.ui.util.numberWithCommas(hvStat.overview.exp));
+	$(tdExpTotal[2]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.exp, hvStat.overview.totalRounds).toFixed()));
+	$(tdExpTotal[3]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.exp, elapsedHours).toFixed()));
+	$(tdExpTotal[4]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.exp, elapsedDays).toFixed()));
+
+	var tdCreditsHourlyEncounters = $('#hvstat-overview-credits-hourly-encounters td');
+	var tdCreditsArena = $('#hvstat-overview-credits-arenas td');
+ 	var tdCreditsGrindfests = $('#hvstat-overview-credits-grindfests td');
+ 	var tdCreditsItemWorlds = $('#hvstat-overview-credits-item-worlds td');
+	var tdCreditsTotal = $('#hvstat-overview-credits-total td');
+
+	$(tdCreditsHourlyEncounters[0]).text(hvStat.ui.util.numberWithCommas(hvStat.overview.creditsbyBT[0]));
+	$(tdCreditsHourlyEncounters[1]).text(hvStat.ui.util.percentRatio(hvStat.overview.creditsbyBT[0], hvStat.overview.credits, 2) + "%");
+	$(tdCreditsHourlyEncounters[2]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.creditsbyBT[0], hvStat.overview.roundArray[0]).toFixed()));
+	$(tdCreditsHourlyEncounters[3]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.creditsbyBT[0], elapsedHours).toFixed()));
+	$(tdCreditsHourlyEncounters[4]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.creditsbyBT[0], elapsedDays).toFixed()));
+
+	$(tdCreditsArena[0]).text(hvStat.ui.util.numberWithCommas(hvStat.overview.creditsbyBT[1]));
+	$(tdCreditsArena[1]).text(hvStat.ui.util.percentRatio(hvStat.overview.creditsbyBT[1], hvStat.overview.credits, 2) + "%");
+	$(tdCreditsArena[2]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.creditsbyBT[1], hvStat.overview.roundArray[1]).toFixed()));
+	$(tdCreditsArena[3]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.creditsbyBT[1], elapsedHours).toFixed()));
+	$(tdCreditsArena[4]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.creditsbyBT[1], elapsedDays).toFixed()));
+
+	$(tdCreditsGrindfests[0]).text(hvStat.ui.util.numberWithCommas(hvStat.overview.creditsbyBT[2]));
+	$(tdCreditsGrindfests[1]).text(hvStat.ui.util.percentRatio(hvStat.overview.creditsbyBT[2], hvStat.overview.credits, 2) + "%");
+	$(tdCreditsGrindfests[2]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.creditsbyBT[2], hvStat.overview.roundArray[2]).toFixed()));
+	$(tdCreditsGrindfests[3]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.creditsbyBT[2], elapsedHours).toFixed()));
+	$(tdCreditsGrindfests[4]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.creditsbyBT[2], elapsedDays).toFixed()));
+
+	$(tdCreditsItemWorlds[0]).text(hvStat.ui.util.numberWithCommas(hvStat.overview.creditsbyBT[3]));
+	$(tdCreditsItemWorlds[1]).text(hvStat.ui.util.percentRatio(hvStat.overview.creditsbyBT[3], hvStat.overview.credits, 2) + "%");
+	$(tdCreditsItemWorlds[2]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.creditsbyBT[3], hvStat.overview.roundArray[3]).toFixed()));
+	$(tdCreditsItemWorlds[3]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.creditsbyBT[3], elapsedHours).toFixed()));
+	$(tdCreditsItemWorlds[4]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.creditsbyBT[3], elapsedDays).toFixed()));
+
+	$(tdCreditsTotal[0]).text(hvStat.ui.util.numberWithCommas(hvStat.overview.credits));
+	$(tdCreditsTotal[2]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.credits, hvStat.overview.totalRounds).toFixed()));
+	$(tdCreditsTotal[3]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.credits, elapsedHours).toFixed()));
+	$(tdCreditsTotal[4]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.credits, elapsedDays).toFixed()));
+
+	var tdDropsEquipments = $('#hvstat-overview-drops-equipments td');
+	var tdDropsArtifacts = $('#hvstat-overview-drops-artifacts td');
+
+	$(tdDropsEquipments[0]).text(hvStat.ui.util.numberWithCommas(hvStat.overview.equips));
+	$(tdDropsEquipments[1]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.equips, elapsedHours).toFixed(2)));
+	$(tdDropsEquipments[2]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.equips, elapsedDays).toFixed(2)));
+	$(tdDropsEquipments[3]).text(hvStat.ui.util.numberWithCommas(hvStat.ui.util.ratio(hvStat.overview.totalRounds, hvStat.overview.equips).toFixed(2)));
+
+	$(tdDropsArtifacts[0]).text(hvStat.overview.artifacts);
+	$(tdDropsArtifacts[1]).text(hvStat.ui.util.ratio(hvStat.overview.artifacts, elapsedHours).toFixed(2));
+	$(tdDropsArtifacts[2]).text(hvStat.ui.util.ratio(hvStat.overview.artifacts, elapsedDays).toFixed(2));
+	$(tdDropsArtifacts[3]).text(hvStat.ui.util.ratio(hvStat.overview.totalRounds, hvStat.overview.artifacts).toFixed(2));
+
+	var spanDropsEquipmentLastFound = $('#hvstat-overview-drops-equipments span');
+	var spanDropsArtifactLastFound = $('#hvstat-overview-drops-artifacts span');
+
+	var lastFoundName, lastFoundTime;
+	if (hvStat.overview.equips === 0) {
+		lastFoundName = "None yet!";
+		lastFoundTime = "N/A";
+	} else {
+		lastFoundName = hvStat.overview.lastEquipName;
+		lastFoundTime = hvStat.util.getRelativeTime(hvStat.overview.lastEquipTime);
+	}
+	$(spanDropsEquipmentLastFound[0]).text(lastFoundName);
+	$(spanDropsEquipmentLastFound[1]).text(lastFoundTime);
+
+	if (hvStat.overview.artifacts === 0) {
+		lastFoundName = "None yet!";
+		lastFoundTime = "N/A";
+	} else {
+		lastFoundName = hvStat.overview.lastArtName;
+		lastFoundTime = hvStat.util.getRelativeTime(hvStat.overview.lastArtTime);
+	}
+	$(spanDropsArtifactLastFound[0]).text(lastFoundName);
+	$(spanDropsArtifactLastFound[1]).text(lastFoundTime);
+
+	$('#hvstat-overview-reset').click(function () {
+		if (confirm("Reset Overview tab?")) {
+			hvStat.storage.overview.reset();
+		}
+	});
+}
 
 //------------------------------------
 // Migration Functions
