@@ -4331,23 +4331,23 @@ hvStat.battle.enhancement.scanButton = {
 };
 
 hvStat.battle.enhancement.skillButton = {
+	labelTable: [
+		{ id: "2101", label: "SkyS" },
+		{ id: "2201", label: "ShiB" },
+		{ id: "2202", label: "VitS" },
+		{ id: "2203", label: "MerB" },
+		{ id: "2301", label: "GreC" },
+		{ id: "2302", label: "RenB" },
+		{ id: "2303", label: "ShaS" },
+		{ id: "2401", label: "IrisS" },
+		{ id: "2402", label: "Stab" },
+		{ id: "2403", label: "FreB" },
+		{ id: "2501", label: "ConS" },
+	],
 	getLabelById: function (id) {
-		var labelTable = [
-			{ id: "2101", label: "SkyS" },
-			{ id: "2201", label: "ShiB" },
-			{ id: "2202", label: "VitS" },
-			{ id: "2203", label: "MerB" },
-			{ id: "2301", label: "GreC" },
-			{ id: "2302", label: "RenB" },
-			{ id: "2303", label: "ShaS" },
-			{ id: "2401", label: "IrisS" },
-			{ id: "2402", label: "Stab" },
-			{ id: "2403", label: "FreB" },
-			{ id: "2501", label: "ConS" },
-		];
-		for (var i = 0; i < labelTable.length; i++) {
-			if (labelTable[i].id === id) {
-				return labelTable[i].label;
+		for (var i = 0; i < this.labelTable.length; i++) {
+			if (this.labelTable[i].id === id) {
+				return this.labelTable[i].label;
 			}
 		}
 		return "";
