@@ -2619,6 +2619,125 @@ hvStat.database.equipmentDrops = new hvStat.database.ObjectStoreDelegate({
 });
 
 //------------------------------------
+// Statistics
+//------------------------------------
+hvStat.statistics = {};
+hvStat.statistics.drops = {
+	increaseChance: function (value, dropType, difficulty, battleType) {
+		hvStat.storage.dropStats.increaseChance(value, dropType, difficulty, battleType);
+	},
+	nChances: function (dropType, difficulty, battleType) {
+		return hvStat.storage.dropStats.nChances(dropType, difficulty, battleType);
+	},
+	addCredit: function (name, amt, dropType, difficulty, battleType) {
+		hvStat.storage.dropStats.addCredit(name, dropType, difficulty, battleType);
+		this.storeItem(name, amt, dropType, difficulty, battleType);
+	},
+	creditCount: function (dropType, difficulty, battleType) {
+		return hvStat.storage.dropStats.creditCount(dropType, difficulty, battleType);
+	},
+	addItem: function (name, dropType, difficulty, battleType) {
+		hvStat.storage.dropStats.addItem(name, dropType, difficulty, battleType);
+		this.storeItem(name, 1, dropType, difficulty, battleType);
+	},
+	itemCount: function (dropType, difficulty, battleType) {
+		return hvStat.storage.dropStats.itemCount(dropType, difficulty, battleType);
+	},
+	addCrystal: function (name, qty, dropType, difficulty, battleType) {
+		hvStat.storage.dropStats.addCrystal(name, dropType, difficulty, battleType);
+		this.storeItem(name, qty, dropType, difficulty, battleType);
+	},
+	crystalCount: function (dropType, difficulty, battleType) {
+		return hvStat.storage.dropStats.crystalCount(dropType, difficulty, battleType);
+	},
+	addMonsterFood: function (name, dropType, difficulty, battleType) {
+		hvStat.storage.dropStats.addMonsterFood(name, dropType, difficulty, battleType);
+		this.storeItem(name, 1, dropType, difficulty, battleType);
+	},
+	monsterFoodCount: function (dropType, difficulty, battleType) {
+		return hvStat.storage.dropStats.monsterFoodCount(dropType, difficulty, battleType);
+	},
+	addToken: function (name, dropType, difficulty, battleType) {
+		hvStat.storage.dropStats.addToken(name, dropType, difficulty, battleType);
+		this.storeItem(name, 1, dropType, difficulty, battleType);
+	},
+	tokenCount: function (dropType, difficulty, battleType) {
+		return hvStat.storage.dropStats.tokenCount(dropType, difficulty, battleType);
+	},
+	addArtifact: function (name, dropType, difficulty, battleType) {
+		hvStat.storage.dropStats.addArtifact(name, dropType, difficulty, battleType);
+		this.storeItem(name, 1, dropType, difficulty, battleType);
+	},
+	artifactCount: function (dropType, difficulty, battleType) {
+		return hvStat.storage.dropStats.artifactCount(dropType, difficulty, battleType);
+	},
+	storeItem: function (name, qty, dropType, difficulty, battleType) {
+		hvStat.database.idbAccessQueue.add(function () {
+			// Use an individual transaction to avoid unintended overwriting when concurrent access occurs
+			var tx = hvStat.database.idb.transaction(["ItemDrops"], "readwrite");
+			var key = [
+				name,
+				dropType,
+				difficulty,
+				battleType,
+			];
+			hvStat.database.itemDrops.get(tx, key, function (obj) {
+				var timeStamp = (new Date()).toISOString();
+				var itemDrop;
+				if (obj) {
+					// Update
+					itemDrop = obj;
+					itemDrop.dropCount++;
+					itemDrop.qty += qty;
+					itemDrop.timeStamp = timeStamp;
+				} else {
+					// Create new
+					itemDrop = {
+						key: key,
+						name: name,
+						dropType: dropType,
+						difficulty: difficulty,
+						battleType: battleType,
+						dropCount: 1,
+						qty: qty,
+						timeStamp: timeStamp,
+					};
+				}
+				hvStat.database.itemDrops.put(tx, itemDrop);
+			});
+		});
+	},
+	addEquipment: function (name, dropType, difficulty, battleType, arenaNumber, roundNumber) {
+		hvStat.storage.dropStats.addEquipment(name, dropType, difficulty, battleType, arenaNumber, roundNumber);
+		this.storeEquipment(name, dropType, difficulty, battleType, arenaNumber, roundNumber);
+	},
+	equipmentCount: function (dropType, difficulty, battleType) {
+		return hvStat.storage.dropStats.equipmentCount(dropType, difficulty, battleType);
+	},
+	storeEquipment: function (name, dropType, difficulty, battleType, arenaNumber, roundNumber) {
+		hvStat.database.idbAccessQueue.add(function () {
+			if (battleType !== hvStat.constant.battleType.ARENA.id) {
+				arenaNumber = null;
+			}
+			if (battleType === hvStat.constant.battleType.HOURLY_ENCOUNTER.id) {
+				roundNumber = null;
+			}
+			var equipmentDrop = {
+				name: name,
+				dropType: dropType,
+				difficulty: difficulty,
+				battleType: battleType,
+				arenaNumber: arenaNumber,
+				roundNumber: roundNumber,
+				timeStamp: (new Date()).toISOString(),
+			};
+			var tx = hvStat.database.idb.transaction(["EquipmentDrops"], "readwrite");
+			hvStat.database.equipmentDrops.put(tx, equipmentDrop);
+		});
+	},
+};
+
+//------------------------------------
 // Battle
 //------------------------------------
 hvStat.battle = {
@@ -5503,125 +5622,6 @@ hvStat.battle.warningSystem = {
 				}
 			}
 		}
-	},
-};
-
-//------------------------------------
-// Statistics
-//------------------------------------
-hvStat.statistics = {};
-hvStat.statistics.drops = {
-	increaseChance: function (value, dropType, difficulty, battleType) {
-		hvStat.storage.dropStats.increaseChance(value, dropType, difficulty, battleType);
-	},
-	nChances: function (dropType, difficulty, battleType) {
-		return hvStat.storage.dropStats.nChances(dropType, difficulty, battleType);
-	},
-	addCredit: function (name, amt, dropType, difficulty, battleType) {
-		hvStat.storage.dropStats.addCredit(name, dropType, difficulty, battleType);
-		this.storeItem(name, amt, dropType, difficulty, battleType);
-	},
-	creditCount: function (dropType, difficulty, battleType) {
-		return hvStat.storage.dropStats.creditCount(dropType, difficulty, battleType);
-	},
-	addItem: function (name, dropType, difficulty, battleType) {
-		hvStat.storage.dropStats.addItem(name, dropType, difficulty, battleType);
-		this.storeItem(name, 1, dropType, difficulty, battleType);
-	},
-	itemCount: function (dropType, difficulty, battleType) {
-		return hvStat.storage.dropStats.itemCount(dropType, difficulty, battleType);
-	},
-	addCrystal: function (name, qty, dropType, difficulty, battleType) {
-		hvStat.storage.dropStats.addCrystal(name, dropType, difficulty, battleType);
-		this.storeItem(name, qty, dropType, difficulty, battleType);
-	},
-	crystalCount: function (dropType, difficulty, battleType) {
-		return hvStat.storage.dropStats.crystalCount(dropType, difficulty, battleType);
-	},
-	addMonsterFood: function (name, dropType, difficulty, battleType) {
-		hvStat.storage.dropStats.addMonsterFood(name, dropType, difficulty, battleType);
-		this.storeItem(name, 1, dropType, difficulty, battleType);
-	},
-	monsterFoodCount: function (dropType, difficulty, battleType) {
-		return hvStat.storage.dropStats.monsterFoodCount(dropType, difficulty, battleType);
-	},
-	addToken: function (name, dropType, difficulty, battleType) {
-		hvStat.storage.dropStats.addToken(name, dropType, difficulty, battleType);
-		this.storeItem(name, 1, dropType, difficulty, battleType);
-	},
-	tokenCount: function (dropType, difficulty, battleType) {
-		return hvStat.storage.dropStats.tokenCount(dropType, difficulty, battleType);
-	},
-	addArtifact: function (name, dropType, difficulty, battleType) {
-		hvStat.storage.dropStats.addArtifact(name, dropType, difficulty, battleType);
-		this.storeItem(name, 1, dropType, difficulty, battleType);
-	},
-	artifactCount: function (dropType, difficulty, battleType) {
-		return hvStat.storage.dropStats.artifactCount(dropType, difficulty, battleType);
-	},
-	storeItem: function (name, qty, dropType, difficulty, battleType) {
-		hvStat.database.idbAccessQueue.add(function () {
-			// Use an individual transaction to avoid unintended overwriting when concurrent access occurs
-			var tx = hvStat.database.idb.transaction(["ItemDrops"], "readwrite");
-			var key = [
-				name,
-				dropType,
-				difficulty,
-				battleType,
-			];
-			hvStat.database.itemDrops.get(tx, key, function (obj) {
-				var timeStamp = (new Date()).toISOString();
-				var itemDrop;
-				if (obj) {
-					// Update
-					itemDrop = obj;
-					itemDrop.dropCount++;
-					itemDrop.qty += qty;
-					itemDrop.timeStamp = timeStamp;
-				} else {
-					// Create new
-					itemDrop = {
-						key: key,
-						name: name,
-						dropType: dropType,
-						difficulty: difficulty,
-						battleType: battleType,
-						dropCount: 1,
-						qty: qty,
-						timeStamp: timeStamp,
-					};
-				}
-				hvStat.database.itemDrops.put(tx, itemDrop);
-			});
-		});
-	},
-	addEquipment: function (name, dropType, difficulty, battleType, arenaNumber, roundNumber) {
-		hvStat.storage.dropStats.addEquipment(name, dropType, difficulty, battleType, arenaNumber, roundNumber);
-		this.storeEquipment(name, dropType, difficulty, battleType, arenaNumber, roundNumber);
-	},
-	equipmentCount: function (dropType, difficulty, battleType) {
-		return hvStat.storage.dropStats.equipmentCount(dropType, difficulty, battleType);
-	},
-	storeEquipment: function (name, dropType, difficulty, battleType, arenaNumber, roundNumber) {
-		hvStat.database.idbAccessQueue.add(function () {
-			if (battleType !== hvStat.constant.battleType.ARENA.id) {
-				arenaNumber = null;
-			}
-			if (battleType === hvStat.constant.battleType.HOURLY_ENCOUNTER.id) {
-				roundNumber = null;
-			}
-			var equipmentDrop = {
-				name: name,
-				dropType: dropType,
-				difficulty: difficulty,
-				battleType: battleType,
-				arenaNumber: arenaNumber,
-				roundNumber: roundNumber,
-				timeStamp: (new Date()).toISOString(),
-			};
-			var tx = hvStat.database.idb.transaction(["EquipmentDrops"], "readwrite");
-			hvStat.database.equipmentDrops.put(tx, equipmentDrop);
-		});
 	},
 };
 
