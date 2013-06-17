@@ -1690,140 +1690,7 @@ hvStat.gadget.inventoryWarningIcon = {
 //------------------------------------
 // Keyboard Management
 //------------------------------------
-hvStat.keyboard = {
-	scrollable: {
-		targets: [
-			"stats_pane",				// Character
-			"equip_pane",				// Equipment
-			"inv_item", "inv_equip",	// Inventory
-			"item_pane", "shop_pane",	// Battle Inventory, Shop, Forge, Item World
-			"slot_pane",				// Monster Lab
-			"item", "equip",			// Moogle write
-			"arena_pane",				// Arena
-		],
-		currentTarget: null,
-		mouseover: function (event) {
-			hvStat.keyboard.scrollable.currentTarget = this;
-		},
-		mouseout: function (event) {
-			hvStat.keyboard.scrollable.currentTarget = null;
-		},
-		initialize: function () {
-			var i = this.targets.length,
-				element;
-			while (i--) {
-				element = document.getElementById(this.targets[i]);
-				if (element) {
-					element.addEventListener("mouseover", this.mouseover);
-					element.addEventListener("mouseout", this.mouseout);
-				}
-			}
-		},
-	},
-	selectedSkillIndex: -1,	// -1: not selected, 0-2: selected
-	documentKeydown: function (event) {
-		var scrollTarget;
-		if (hvStat.settings.enableScrollHotkey &&
-				hvStat.keyboard.scrollable.currentTarget &&
-				!event.altKey && !event.ctrlKey && !event.shiftKey) {
-			scrollTarget = hvStat.keyboard.scrollable.currentTarget;
-			switch (event.keyCode) {
-			case 33:	// PAGE UP
-				scrollTarget.scrollTop -= scrollTarget.clientHeight - 20;
-				event.preventDefault();
-				break;
-			case 34:	// PAGE DOWN
-				scrollTarget.scrollTop += scrollTarget.clientHeight - 20;
-				event.preventDefault();
-				break;
-			}
-		}
-		var boundKeys, i, j;
-		if (hv.battle.isActive) {
-			var attackCommand = hvStat.battle.command.commandMap["Attack"];	// Used to close Skillbook menu
-			var miScan = hvStat.battle.command.menuItemMap["Scan"];
-			var miSkill1 = hvStat.battle.command.menuItemMap["Skill1"];
-			var miSkill2 = hvStat.battle.command.menuItemMap["Skill2"];
-			var miSkill3 = hvStat.battle.command.menuItemMap["Skill3"];
-			var miOFC = hvStat.battle.command.menuItemMap["OFC"];
-			var miSkills = [miSkill1, miSkill2, miSkill3];
-			if (hvStat.settings.isEnableScanHotkey && miScan) {
-				boundKeys = miScan.boundKeys;
-				for (i = 0; i < boundKeys.length; i++) {
-					if (boundKeys[i].matches(event)) {
-						if (hvStat.battle.command.commandMap["Skillbook"].menuOpened) {
-							// Close Skillbook menu
-							attackCommand.select();
-							attackCommand.select();
-						} else {
-							miScan.select();
-						}
-					}
-				}
-			}
-			if (hvStat.settings.isEnableSkillHotkey && miSkill1) {
-				var availableSkillMinIndex = -1;
-				var availableSkillMaxIndex = -1;
-				for (i = 0; i < miSkills.length; i++) {
-					if (miSkills[i] && miSkills[i].available) {
-						if (availableSkillMinIndex === -1) {
-							availableSkillMinIndex = i;
-						}
-						availableSkillMaxIndex = i;
-					}
-				}
-				var startIndex = hvStat.keyboard.selectedSkillIndex;
-				var increment;
-				if (!hvStat.settings.reverseSkillHotkeyTraversalOrder) {
-					increment = 1;
-				} else {
-					if (startIndex === -1) {
-						startIndex = 3;
-					}
-					increment = -1;
-				}
-				var traversalFinished = !hvStat.settings.reverseSkillHotkeyTraversalOrder && startIndex >= availableSkillMaxIndex ||
-						hvStat.settings.reverseSkillHotkeyTraversalOrder && startIndex <= availableSkillMinIndex;
-				boundKeys = miSkill1.boundKeys;
-				for (i = 0; i < boundKeys.length; i++) {
-					if (boundKeys[i].matches(event)) {
-						if (traversalFinished) {
-							// Close Skillbook menu
-							attackCommand.select();
-							attackCommand.select();
-							hvStat.keyboard.selectedSkillIndex = -1;
-						} else {
-							for (j = startIndex + increment;
-									hvStat.settings.reverseSkillHotkeyTraversalOrder && 0 <= j ||
-									!hvStat.settings.reverseSkillHotkeyTraversalOrder && j <= availableSkillMaxIndex;
-									j += increment) {
-								if (miSkills[j] && miSkills[j].available) {
-									miSkills[j].select();
-									hvStat.keyboard.selectedSkillIndex = j;
-									break;
-								}
-							}
-						}
-					}
-				}
-			}
-			if (hvStat.settings.enableOFCHotkey && miOFC) {
-				boundKeys = miOFC.boundKeys;
-				for (i = 0; i < boundKeys.length; i++) {
-					if (boundKeys[i].matches(event)) {
-						if (hvStat.battle.command.commandMap["Skillbook"].menuOpened) {
-							// Close Skillbook menu
-							attackCommand.select();
-							attackCommand.select();
-						} else {
-							miOFC.select();
-						}
-					}
-				}
-			}
-		}
-	},
-};
+hvStat.keyboard = {};
 
 hvStat.keyboard.KeyCombination = function (spec) {
 	this.altKey = spec && spec.altKey || false;
@@ -5550,6 +5417,97 @@ hvStat.battle.warningSystem = {
 	},
 };
 
+//------------------------------------
+// Battle - Keyboard
+//------------------------------------
+hvStat.battle.keyboard = {
+	selectedSkillIndex: -1,	// -1: not selected, 0-2: selected
+	documentKeydown: function (event) {
+		var boundKeys, i, j;
+		var attackCommand = hvStat.battle.command.commandMap["Attack"];	// Used to close Skillbook menu
+		var miScan = hvStat.battle.command.menuItemMap["Scan"];
+		var miSkill1 = hvStat.battle.command.menuItemMap["Skill1"];
+		var miSkill2 = hvStat.battle.command.menuItemMap["Skill2"];
+		var miSkill3 = hvStat.battle.command.menuItemMap["Skill3"];
+		var miOFC = hvStat.battle.command.menuItemMap["OFC"];
+		var miSkills = [miSkill1, miSkill2, miSkill3];
+		if (hvStat.settings.isEnableScanHotkey && miScan) {
+			boundKeys = miScan.boundKeys;
+			for (i = 0; i < boundKeys.length; i++) {
+				if (boundKeys[i].matches(event)) {
+					if (hvStat.battle.command.commandMap["Skillbook"].menuOpened) {
+						// Close Skillbook menu
+						attackCommand.select();
+						attackCommand.select();
+					} else {
+						miScan.select();
+					}
+				}
+			}
+		}
+		if (hvStat.settings.isEnableSkillHotkey && miSkill1) {
+			var availableSkillMinIndex = -1;
+			var availableSkillMaxIndex = -1;
+			for (i = 0; i < miSkills.length; i++) {
+				if (miSkills[i] && miSkills[i].available) {
+					if (availableSkillMinIndex === -1) {
+						availableSkillMinIndex = i;
+					}
+					availableSkillMaxIndex = i;
+				}
+			}
+			var startIndex = hvStat.battle.keyboard.selectedSkillIndex;
+			var increment;
+			if (!hvStat.settings.reverseSkillHotkeyTraversalOrder) {
+				increment = 1;
+			} else {
+				if (startIndex === -1) {
+					startIndex = 3;
+				}
+				increment = -1;
+			}
+			var traversalFinished = !hvStat.settings.reverseSkillHotkeyTraversalOrder && startIndex >= availableSkillMaxIndex ||
+					hvStat.settings.reverseSkillHotkeyTraversalOrder && startIndex <= availableSkillMinIndex;
+			boundKeys = miSkill1.boundKeys;
+			for (i = 0; i < boundKeys.length; i++) {
+				if (boundKeys[i].matches(event)) {
+					if (traversalFinished) {
+						// Close Skillbook menu
+						attackCommand.select();
+						attackCommand.select();
+						hvStat.battle.keyboard.selectedSkillIndex = -1;
+					} else {
+						for (j = startIndex + increment;
+								hvStat.settings.reverseSkillHotkeyTraversalOrder && 0 <= j ||
+								!hvStat.settings.reverseSkillHotkeyTraversalOrder && j <= availableSkillMaxIndex;
+								j += increment) {
+							if (miSkills[j] && miSkills[j].available) {
+								miSkills[j].select();
+								hvStat.battle.keyboard.selectedSkillIndex = j;
+								break;
+							}
+						}
+					}
+				}
+			}
+		}
+		if (hvStat.settings.enableOFCHotkey && miOFC) {
+			boundKeys = miOFC.boundKeys;
+			for (i = 0; i < boundKeys.length; i++) {
+				if (boundKeys[i].matches(event)) {
+					if (hvStat.battle.command.commandMap["Skillbook"].menuOpened) {
+						// Close Skillbook menu
+						attackCommand.select();
+						attackCommand.select();
+					} else {
+						miOFC.select();
+					}
+				}
+			}
+		}
+	},
+};
+
 /* ========== GLOBAL VARIABLES ========== */
 HOURLY = 0;
 ARENA = 1;
@@ -5849,6 +5807,7 @@ hvStat.startup = {
 			if (!hv.battle.isFinished) {
 				hvStat.battle.warningSystem.alertAllFromQueue();
 			}
+			document.addEventListener("keydown", hvStat.battle.keyboard.documentKeydown);
 		} else {
 			hvStat.storage.roundContext.remove();
 			if (hvStat.settings.isStartAlert || hvStat.settings.isShowEquippedSet ||
@@ -5859,7 +5818,8 @@ hvStat.startup = {
 				hvStat.storage.warningState.remove();
 			}
 			if (hvStat.settings.enableScrollHotkey) {
-				hvStat.keyboard.scrollable.initialize();
+				hvStat.noncombat.keyboard.scrollable.initialize();
+				document.addEventListener("keydown", hvStat.noncombat.keyboard.documentKeydown);
 			}
 			// Equipment tag
 			if (hv.location.isEquipment && hvStat.settings.isShowTags[0]) {
@@ -6143,3 +6103,54 @@ hvStat.inventory.equipment = {
 		}
 	},
 };
+
+hvStat.noncombat.keyboard = {
+	scrollable: {
+		targets: [
+			"stats_pane",				// Character
+			"equip_pane",				// Equipment
+			"inv_item", "inv_equip",	// Inventory
+			"item_pane", "shop_pane",	// Battle Inventory, Shop, Forge, Item World
+			"slot_pane",				// Monster Lab
+			"item", "equip",			// Moogle write
+			"arena_pane",				// Arena
+		],
+		currentTarget: null,
+		mouseover: function (event) {
+			hvStat.noncombat.keyboard.scrollable.currentTarget = this;
+		},
+		mouseout: function (event) {
+			hvStat.noncombat.keyboard.scrollable.currentTarget = null;
+		},
+		initialize: function () {
+			var i = this.targets.length,
+				element;
+			while (i--) {
+				element = document.getElementById(this.targets[i]);
+				if (element) {
+					element.addEventListener("mouseover", this.mouseover);
+					element.addEventListener("mouseout", this.mouseout);
+				}
+			}
+		},
+	},
+	documentKeydown: function (event) {
+		var scrollTarget;
+		if (hvStat.settings.enableScrollHotkey &&
+				hvStat.noncombat.keyboard.scrollable.currentTarget &&
+				!event.altKey && !event.ctrlKey && !event.shiftKey) {
+			scrollTarget = hvStat.noncombat.keyboard.scrollable.currentTarget;
+			switch (event.keyCode) {
+			case 33:	// PAGE UP
+				scrollTarget.scrollTop -= scrollTarget.clientHeight - 20;
+				event.preventDefault();
+				break;
+			case 34:	// PAGE DOWN
+				scrollTarget.scrollTop += scrollTarget.clientHeight - 20;
+				event.preventDefault();
+				break;
+			}
+		}
+	},
+};
+
