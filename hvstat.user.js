@@ -5812,7 +5812,7 @@ hvStat.startup = {
 			hvStat.storage.roundContext.remove();
 			if (hvStat.settings.isStartAlert || hvStat.settings.isShowEquippedSet ||
 					hvStat.settings.isTrackItems || hvStat.settings.isTrackShrine) {
-				hvStat.support.captureStatuses();
+				hvStat.noncombat.support.captureStatuses();
 			}
 			if (!hv.location.isRiddle) {
 				hvStat.storage.warningState.remove();
@@ -5823,32 +5823,32 @@ hvStat.startup = {
 			}
 			// Equipment tag
 			if (hv.location.isEquipment && hvStat.settings.isShowTags[0]) {
-				hvStat.inventory.equipment.showTagInputFields(false);
+				hvStat.noncombat.inventory.equipment.showTagInputFields(false);
 			}
 			if (hv.location.isInventory && hvStat.settings.isShowTags[5]) {
-				hvStat.inventory.equipment.showTagInputFields(true);
+				hvStat.noncombat.inventory.equipment.showTagInputFields(true);
 			}
 			if (hv.location.isEquipmentShop && hvStat.settings.isShowTags[1]) {
-				hvStat.inventory.equipment.showTagInputFields(false);
+				hvStat.noncombat.inventory.equipment.showTagInputFields(false);
 			}
 			if (hv.location.isItemWorld && hvStat.settings.isShowTags[2]) {
-				hvStat.inventory.equipment.showTagInputFields(false);
+				hvStat.noncombat.inventory.equipment.showTagInputFields(false);
 			}
 			if (hv.location.isMoogleWrite && hvStat.settings.isShowTags[3]) {
-				hvStat.inventory.equipment.showTagInputFields(false);
+				hvStat.noncombat.inventory.equipment.showTagInputFields(false);
 			}
 			if (hv.location.isForge && hvStat.settings.isShowTags[4]) {
-				hvStat.inventory.equipment.showTagInputFields(false);
+				hvStat.noncombat.inventory.equipment.showTagInputFields(false);
 			}
 			if (hv.location.isForge && hvStat.settings.isDisableForgeHotKeys) {
 				document.onkeypress = null;
 			}
 			if (hv.location.isCharacter) {
-				hvStat.support.captureProficiencies();
+				hvStat.noncombat.support.captureProficiencies();
 			}
 			if (hv.location.isShrine) {
 				if (hvStat.settings.isTrackShrine) {
-					hvStat.support.captureShrine();
+					hvStat.noncombat.support.captureShrine();
 				}
 				if (browser.isChrome && hvStat.settings.enableShrineKeyPatch) {
 					document.onkeydown = null;	// Workaround to make enable SPACE key
@@ -5856,7 +5856,7 @@ hvStat.startup = {
 				}
 			}
 			if (hvStat.settings.isStartAlert) {
-				hvStat.support.confirmBeforeBattle();
+				hvStat.noncombat.support.confirmBeforeBattle();
 			}
 		}
 		if (hvStat.settings.isShowEquippedSet) {
@@ -5868,7 +5868,6 @@ hvStat.startup = {
 		if (hvStat.characterStatus.didReachInventoryLimit) {
 			hvStat.gadget.inventoryWarningIcon.create();
 		}
-		document.addEventListener("keydown", hvStat.keyboard.documentKeydown);
 		hvStat.gadget.wrenchIcon.create();
 		if (hvStat.settings.adjustKeyEventHandling) {
 			document.onkeydown = hvStat.onkeydown;
@@ -5879,9 +5878,11 @@ hvStat.startup = {
 hvStat.startup.phase1();
 
 //------------------------------------
-// Support Functions
+// Noncombat
 //------------------------------------
-hvStat.support = {
+hvStat.noncombat = {};
+
+hvStat.noncombat.support = {
 	captureStatuses: function () {
 		var difficulties = ["", "NORMAL", "HARD", "NIGHTMARE", "HELL", "NINTENDO", "BATTLETOADS", "IWBTH"];
 		var difficulty = hv.settings.difficulty;
@@ -5975,12 +5976,9 @@ hvStat.support = {
 	},
 };
 
-//------------------------------------
-// Inventory Management
-//------------------------------------
-hvStat.inventory = {};
+hvStat.noncombat.inventory = {};
 
-hvStat.inventory.equipment = {
+hvStat.noncombat.inventory.equipment = {
 	showTagInputFields: function (doClean) {
 		var equipTagArrayTable = [
 			{id: hvStat.equipmentTags.OneHandedIDs,	value: hvStat.equipmentTags.OneHandedTAGs,	idClean: [], valueClean: []},
