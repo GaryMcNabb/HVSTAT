@@ -1544,103 +1544,6 @@ hvStat.versions.functions = {
 };
 
 //------------------------------------
-// Support Functions
-//------------------------------------
-hvStat.support = {
-	captureStatuses: function () {
-		var difficulties = ["", "NORMAL", "HARD", "NIGHTMARE", "HELL", "NINTENDO", "BATTLETOADS", "IWBTH"];
-		var difficulty = hv.settings.difficulty;
-		if (difficulty) {
-			hvStat.characterStatus.difficulty.id = hv.settings.difficulty;
-			hvStat.characterStatus.difficulty.name = hvStat.constant.difficulty[hv.settings.difficulty].name;
-			hvStat.characterStatus.difficulty.index = difficulties.indexOf(difficulty);
-		}
-		elements = document.querySelectorAll('#setform img');
-		var result;
-		for (var i = 0; i < elements.length; i++) {
-			result = /set(\d)_on/.exec(elements[i].getAttribute("src"));
-			if (result) {
-				hvStat.characterStatus.equippedSet = Number(result[1]);
-				break;
-			}
-		}
-		hvStat.storage.characterStatus.save();
-	},
-	captureProficiencies: function () {
-		var proficiencyTable = document.getElementById("leftpane").children[1].querySelectorAll('div.fd4');
-		var prof = hvStat.characterStatus.proficiencies;
-		prof.oneHanded = Number(hv.util.innerText(proficiencyTable[2]));
-		prof.twoHanded = Number(hv.util.innerText(proficiencyTable[4]));
-		prof.dualWielding = Number(hv.util.innerText(proficiencyTable[6]));
-		prof.staff = Number(hv.util.innerText(proficiencyTable[8]));
-		prof.clothArmor = Number(hv.util.innerText(proficiencyTable[10]));
-		prof.lightArmor = Number(hv.util.innerText(proficiencyTable[12]));
-		prof.heavyArmor = Number(hv.util.innerText(proficiencyTable[14]));
-		prof.elemental = Number(hv.util.innerText(proficiencyTable[17]));
-		prof.divine = Number(hv.util.innerText(proficiencyTable[19]));
-		prof.forbidden = Number(hv.util.innerText(proficiencyTable[21]));
-		prof.deprecating = Number(hv.util.innerText(proficiencyTable[23]));
-		prof.supportive = Number(hv.util.innerText(proficiencyTable[25]));
-		hvStat.characterStatus.areProficienciesCaptured = true;
-		hvStat.storage.characterStatus.save();
-	},
-	captureShrine: function () {
-		var messageBoxElement = document.querySelector('#messagebox');
-		if (!messageBoxElement) {
-			return;
-		}
-		var messageElements = messageBoxElement.querySelectorAll('div.cmb6');
-		var message0 = hv.util.innerText(messageElements[0]);
-		if (message0.match(/power/i)) {
-			hvStat.shrine.artifactsTraded++;
-			var message2 = hv.util.innerText(messageElements[2]);
-			if (message2.match(/Elixir/i)) {
-				hvStat.shrine.artifactElixer++;
-			} else if (message2.match(/crystal/i)) {
-				hvStat.shrine.artifactCrystal++;
-			} else if (message2.match(/increased/i)) {
-				hvStat.shrine.artifactStat++;
-			} else if (message2.match(/(\d) hath/i)) {
-				hvStat.shrine.artifactHath++;
-				hvStat.shrine.artifactHathTotal += Number(RegExp.$1);
-			} else if (message2.match(/energy drink/i)) {
-				hvStat.shrine.artifactItem++;
-			}
-		} else if (message0.match(/item/i)) {
-			var message3 = hv.util.innerText(messageElements[3]);
-			hvStat.shrine.trophyArray.push(hvStat.util.capitalizeEquipmentName(message3));
-		}
-		hvStat.storage.shrine.save();
-	},
-	confirmBeforeBattle: function () {
-		var elements = document.querySelectorAll('#mainpane img[onclick*="arenaform"]');
-		var i, element;
-		for (i = 0; i < elements.length; i++) {
-			element = elements[i];
-			var oldOnClick = element.getAttribute("onclick");
-			var newOnClick = 'if(confirm("Are you sure you want to start this challenge on ' +
-				hvStat.characterStatus.difficulty.name +
-				' difficulty, with set number: ' +
-				hvStat.characterStatus.equippedSet + '?\\n';
-			if (hvStat.settings.StartAlertHP > hv.character.healthPercent) {
-				newOnClick += '\\n - HP is only '+ hv.character.healthPercent + '%';
-			}
-			if (hvStat.settings.StartAlertMP > hv.character.magicPercent) {
-				newOnClick += '\\n - MP is only '+ hv.character.magicPercent + '%';
-			}
-			if (hvStat.settings.StartAlertSP > hv.character.spiritPercent) {
-				newOnClick += '\\n - SP is only '+ hv.character.spiritPercent + '%';
-			}
-			if (hvStat.settings.StartAlertDifficulty < hvStat.characterStatus.difficulty.index) {
-				newOnClick += '\\n - Difficulty is '+ hvStat.characterStatus.difficulty.name;
-			}
-			newOnClick += '")) {'+ oldOnClick+ '}';
-			element.setAttribute("onclick", newOnClick);
-		}
-	},
-};
-
-//------------------------------------
 // Gadgets
 //------------------------------------
 hvStat.gadget = {};
@@ -7897,3 +7800,100 @@ hvStat.startup = {
 };
 
 hvStat.startup.phase1();
+
+//------------------------------------
+// Support Functions
+//------------------------------------
+hvStat.support = {
+	captureStatuses: function () {
+		var difficulties = ["", "NORMAL", "HARD", "NIGHTMARE", "HELL", "NINTENDO", "BATTLETOADS", "IWBTH"];
+		var difficulty = hv.settings.difficulty;
+		if (difficulty) {
+			hvStat.characterStatus.difficulty.id = hv.settings.difficulty;
+			hvStat.characterStatus.difficulty.name = hvStat.constant.difficulty[hv.settings.difficulty].name;
+			hvStat.characterStatus.difficulty.index = difficulties.indexOf(difficulty);
+		}
+		elements = document.querySelectorAll('#setform img');
+		var result;
+		for (var i = 0; i < elements.length; i++) {
+			result = /set(\d)_on/.exec(elements[i].getAttribute("src"));
+			if (result) {
+				hvStat.characterStatus.equippedSet = Number(result[1]);
+				break;
+			}
+		}
+		hvStat.storage.characterStatus.save();
+	},
+	captureProficiencies: function () {
+		var proficiencyTable = document.getElementById("leftpane").children[1].querySelectorAll('div.fd4');
+		var prof = hvStat.characterStatus.proficiencies;
+		prof.oneHanded = Number(hv.util.innerText(proficiencyTable[2]));
+		prof.twoHanded = Number(hv.util.innerText(proficiencyTable[4]));
+		prof.dualWielding = Number(hv.util.innerText(proficiencyTable[6]));
+		prof.staff = Number(hv.util.innerText(proficiencyTable[8]));
+		prof.clothArmor = Number(hv.util.innerText(proficiencyTable[10]));
+		prof.lightArmor = Number(hv.util.innerText(proficiencyTable[12]));
+		prof.heavyArmor = Number(hv.util.innerText(proficiencyTable[14]));
+		prof.elemental = Number(hv.util.innerText(proficiencyTable[17]));
+		prof.divine = Number(hv.util.innerText(proficiencyTable[19]));
+		prof.forbidden = Number(hv.util.innerText(proficiencyTable[21]));
+		prof.deprecating = Number(hv.util.innerText(proficiencyTable[23]));
+		prof.supportive = Number(hv.util.innerText(proficiencyTable[25]));
+		hvStat.characterStatus.areProficienciesCaptured = true;
+		hvStat.storage.characterStatus.save();
+	},
+	captureShrine: function () {
+		var messageBoxElement = document.querySelector('#messagebox');
+		if (!messageBoxElement) {
+			return;
+		}
+		var messageElements = messageBoxElement.querySelectorAll('div.cmb6');
+		var message0 = hv.util.innerText(messageElements[0]);
+		if (message0.match(/power/i)) {
+			hvStat.shrine.artifactsTraded++;
+			var message2 = hv.util.innerText(messageElements[2]);
+			if (message2.match(/Elixir/i)) {
+				hvStat.shrine.artifactElixer++;
+			} else if (message2.match(/crystal/i)) {
+				hvStat.shrine.artifactCrystal++;
+			} else if (message2.match(/increased/i)) {
+				hvStat.shrine.artifactStat++;
+			} else if (message2.match(/(\d) hath/i)) {
+				hvStat.shrine.artifactHath++;
+				hvStat.shrine.artifactHathTotal += Number(RegExp.$1);
+			} else if (message2.match(/energy drink/i)) {
+				hvStat.shrine.artifactItem++;
+			}
+		} else if (message0.match(/item/i)) {
+			var message3 = hv.util.innerText(messageElements[3]);
+			hvStat.shrine.trophyArray.push(hvStat.util.capitalizeEquipmentName(message3));
+		}
+		hvStat.storage.shrine.save();
+	},
+	confirmBeforeBattle: function () {
+		var elements = document.querySelectorAll('#mainpane img[onclick*="arenaform"]');
+		var i, element;
+		for (i = 0; i < elements.length; i++) {
+			element = elements[i];
+			var oldOnClick = element.getAttribute("onclick");
+			var newOnClick = 'if(confirm("Are you sure you want to start this challenge on ' +
+				hvStat.characterStatus.difficulty.name +
+				' difficulty, with set number: ' +
+				hvStat.characterStatus.equippedSet + '?\\n';
+			if (hvStat.settings.StartAlertHP > hv.character.healthPercent) {
+				newOnClick += '\\n - HP is only '+ hv.character.healthPercent + '%';
+			}
+			if (hvStat.settings.StartAlertMP > hv.character.magicPercent) {
+				newOnClick += '\\n - MP is only '+ hv.character.magicPercent + '%';
+			}
+			if (hvStat.settings.StartAlertSP > hv.character.spiritPercent) {
+				newOnClick += '\\n - SP is only '+ hv.character.spiritPercent + '%';
+			}
+			if (hvStat.settings.StartAlertDifficulty < hvStat.characterStatus.difficulty.index) {
+				newOnClick += '\\n - Difficulty is '+ hvStat.characterStatus.difficulty.name;
+			}
+			newOnClick += '")) {'+ oldOnClick+ '}';
+			element.setAttribute("onclick", newOnClick);
+		}
+	},
+};
