@@ -476,17 +476,18 @@ var hv = {
 //------------------------------------
 var hvStat = {
 	version: "5.6.2",
-	initialize: function () {
-		this.addStyle();
-	},
 	imageResources: [
 		new browser.I("images/", "channeling.png", "css/images/"),
 		new browser.I("images/", "healthpot.png", "css/images/"),
 		new browser.I("images/", "manapot.png", "css/images/"),
 		new browser.I("images/", "spiritpot.png", "css/images/"),
 	],
+	isStyleAdded: false,
 	addStyle: function () {
-		browser.extension.style.addFromResource("css/", "hvstat.css", this.imageResources);
+		if (!this.isStyleAdded) {
+			browser.extension.style.addFromResource("css/", "hvstat.css", this.imageResources);
+			this.isStyleAdded = true;
+		}
 	},
 	// Aliases
 	get settings() {
@@ -5771,6 +5772,9 @@ hvStat.startup = {
 		hvStat.database.openIndexedDB(function (event) {
 			hvStat.database.idbAccessQueue.execute();
 		});
+		if (document.head || document.documentElement) {
+			hvStat.addStyle();
+		}
 		//Version checking doesn't depend on the DOM, so do it early
 		hvStat.versions.checkVersion();
 		if (document.readyState !== "loading") {
@@ -5789,7 +5793,7 @@ hvStat.startup = {
 		}
 		hv.initialize();
 		console.debug(hv);
-		hvStat.initialize();
+		hvStat.addStyle();
 		console.debug(hvStat);
 		if (hvStat.settings.isChangePageTitle) {
 			document.title = hvStat.settings.customPageTitle;
