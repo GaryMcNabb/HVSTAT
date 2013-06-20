@@ -20,6 +20,7 @@
 	"web_accessible_resources": [
 		"css/battle-log-type0.css",
 		"css/battle-log-type1.css",
+		"css/hide-logo.css",
 		"css/hvstat.css",
 		"css/hvstat-ui.css",
 		"css/jquery-ui-1.9.2.custom.min.css",

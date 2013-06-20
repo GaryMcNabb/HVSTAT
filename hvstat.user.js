@@ -9,6 +9,7 @@
 // @version         5.6.2
 // @resource        battle-log-type0.css                        css/battle-log-type0.css
 // @resource        battle-log-type1.css                        css/battle-log-type1.css
+// @resource        hide-logo.css                               css/hide-logo.css
 // @resource        hvstat.css                                  css/hvstat.css
 // @resource        hvstat-ui.css                               css/hvstat-ui.css
 // @resource        jquery-ui-1.9.2.custom.min.css              css/jquery-ui-1.9.2.custom.min.css
@@ -486,6 +487,9 @@ var hvStat = {
 	addStyle: function () {
 		if (!this.isStyleAdded) {
 			browser.extension.style.addFromResource("css/", "hvstat.css", this.imageResources);
+			if (hvStat.settings.doesHideLogo) {
+				browser.extension.style.addFromResource("css/", "hide-logo.css");
+			}
 			this.isStyleAdded = true;
 		}
 	},
@@ -891,6 +895,7 @@ hvStat.storage.initialValue = {
 		// General
 		isChangePageTitle: false,
 		customPageTitle: "HV",
+		doesHideLogo: false,
 		isShowEquippedSet: false,
 		isShowSidebarProfs: false,
 		isStartAlert: false,
