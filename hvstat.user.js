@@ -288,21 +288,32 @@ var hv = {
 			return innerText;
 		}
 	},
+	locationMap: {
+		"character":		"?s=Character&ss=ch",
+		"equipment":		"?s=Character&ss=eq",
+		"abilities":		"?s=Character&ss=ab",
+		"training":			"?s=Character&ss=tr",
+		"battleItems":		"?s=Character&ss=it",
+		"inventory":		"?s=Character&ss=in",
+		"settings":			"?s=Character&ss=se",
+		"equipmentShop":	"?s=Bazaar&ss=es",
+		"itemShop":			"?s=Bazaar&ss=is",
+		"itemShopBot":		"?s=Bazaar&ss=ib",
+		"monsterLab":		"?s=Bazaar&ss=ml",
+		"shrine":			"?s=Bazaar&ss=ss",
+		"forge":			"?s=Bazaar&ss=fr",
+		"moogleMailInbox":		"?s=Bazaar&ss=mm&filter=Inbox",
+		"moogleMailWriteNew":	"?s=Bazaar&ss=mm&filter=Write%20New",
+		"moogleMailReadMail":	"?s=Bazaar&ss=mm&filter=Read%20Mail",
+		"moogleMailSentMail":	"?s=Bazaar&ss=mm&filter=Sent%20Mail",
+		"moogleMail":		"?s=Bazaar&ss=mm",
+		"battle":			"?s=Battle&ss=ba",
+		"arena":			"?s=Battle&ss=ar",
+		"ringOfBlood":		"?s=Battle&ss=rb",
+		"grindfest":		"?s=Battle&ss=gr",
+		"itemWorld":		"?s=Battle&ss=iw",
+	},
 	initialize: function () {
-		var location = {
-			isBattleItems: document.location.search === "?s=Character&ss=it",
-			isInventory: document.location.search === "?s=Character&ss=in",
-			isEquipment: document.location.search.indexOf("?s=Character&ss=eq") > -1,
-			isItemWorld: document.location.search.indexOf("?s=Battle&ss=iw") > -1,
-			isMoogleWrite: document.location.search.indexOf("?s=Bazaar&ss=mm&filter=Write") > -1,
-			isEquipmentShop: document.location.search.indexOf("?s=Bazaar&ss=es") > -1,
-			isForge: document.location.search.indexOf("?s=Bazaar&ss=fr") > -1,
-			isShrine: document.location.search === "?s=Bazaar&ss=ss",
-			isMonsterLab: document.location.search.indexOf("?s=Bazaar&ss=ml") > -1,
-			get isCharacter() { return !!document.getElementById("pattrform"); },
-			get isRiddle() { return !!document.getElementById("riddleform"); },
-		};
-
 		var elementCache = {
 			get popup() { return document.getElementById("popup_box"); },
 		};
@@ -430,6 +441,27 @@ var hv = {
 					return this._monsters;
 				},
 			};
+		}
+		var isLocationFound = false,
+			location = "",
+			key;
+		if (battle.isActive) {
+			location = "engagingBattle";
+		} else {
+			for (key in this.locationMap) {
+				if (document.location.search.indexOf(this.locationMap[key]) === 0) {
+					location = key;
+					isLocationFound = true;
+					break;
+				}
+			}
+			if (!isLocationFound) {
+				if (document.getElementById("riddleform")) {
+					location = "riddle";
+				} else if (document.getElementById("pattrform")) {
+					location = "character";
+				}
+			}
 		}
 		this.location = location;
 		this.elementCache = elementCache;
@@ -5809,7 +5841,7 @@ hvStat.startup = {
 				hvStat.battle.warningSystem.alertAllFromQueue();
 			}
 			document.addEventListener("keydown", hvStat.battle.keyboard.documentKeydown);
-		} else if (hv.location.isRiddle) {
+		} else if (hv.location === "riddle") {
 			// Do nothing
 		} else {
 			hvStat.storage.roundContext.remove();
@@ -5824,31 +5856,31 @@ hvStat.startup = {
 				document.addEventListener("keydown", hvStat.noncombat.keyboard.documentKeydown);
 			}
 			// Equipment tag
-			if (hv.location.isEquipment && hvStat.settings.isShowTags[0]) {
+			if (hv.location === "equipment" && hvStat.settings.isShowTags[0]) {
 				hvStat.noncombat.inventory.equipment.showTagInputFields(false);
 			}
-			if (hv.location.isInventory && hvStat.settings.isShowTags[5]) {
+			if (hv.location === "inventory" && hvStat.settings.isShowTags[5]) {
 				hvStat.noncombat.inventory.equipment.showTagInputFields(true);
 			}
-			if (hv.location.isEquipmentShop && hvStat.settings.isShowTags[1]) {
+			if (hv.location === "equipmentShop" && hvStat.settings.isShowTags[1]) {
 				hvStat.noncombat.inventory.equipment.showTagInputFields(false);
 			}
-			if (hv.location.isItemWorld && hvStat.settings.isShowTags[2]) {
+			if (hv.location === "itemWorld" && hvStat.settings.isShowTags[2]) {
 				hvStat.noncombat.inventory.equipment.showTagInputFields(false);
 			}
-			if (hv.location.isMoogleWrite && hvStat.settings.isShowTags[3]) {
+			if (hv.location === "moogleMailWriteNew" && hvStat.settings.isShowTags[3]) {
 				hvStat.noncombat.inventory.equipment.showTagInputFields(false);
 			}
-			if (hv.location.isForge && hvStat.settings.isShowTags[4]) {
+			if (hv.location === "forge" && hvStat.settings.isShowTags[4]) {
 				hvStat.noncombat.inventory.equipment.showTagInputFields(false);
 			}
-			if (hv.location.isForge && hvStat.settings.isDisableForgeHotKeys) {
+			if (hv.location === "forge" && hvStat.settings.isDisableForgeHotKeys) {
 				document.onkeypress = null;
 			}
-			if (hv.location.isCharacter) {
+			if (hv.location === "character") {
 				hvStat.noncombat.support.captureProficiencies();
 			}
-			if (hv.location.isShrine) {
+			if (hv.location === "shrine") {
 				if (hvStat.settings.isTrackShrine) {
 					hvStat.noncombat.support.captureShrine();
 				}
