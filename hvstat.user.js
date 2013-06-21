@@ -1946,15 +1946,12 @@ hvStat.database.deleteIndexedDB = function () {
 	var reqDelete = indexedDB.deleteDatabase("HVStat");
 	reqDelete.onsuccess = function (event) {
 		alert("Your database has been deleted.");
-		//console.log("deleteIndexedDB: success");
 	};
 	reqDelete.onerror = function (event) {
 		alert("Error: Failed to delete your database");
-		//console.log("deleteIndexedDB: error");
 	};
 	reqDelete.onblocked = function (event) {
 		alert("Blocked: Please wait for a while or close the browser.");
-		//console.log("deleteIndexedDB: blocked");
 	};
 };
 
@@ -3328,7 +3325,7 @@ hvStat.battle.eventLog.messageTypeParams = {
 				var scanningMonsterName = message.regexResult[1];
 				var monster = hvStat.battle.monster.findByName(scanningMonsterName);
 				if (monster) {
-					 monster.storeScanResult(message.regexResult);
+					monster.storeScanResult(message.regexResult);
 				}
 			}
 		},
