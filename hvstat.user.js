@@ -1694,15 +1694,15 @@ hvStat.gadget.proficiencyPopupIcon = {
 		icon.className = "ui-corner-all";
 		icon.textContent = "Proficiency";
 		icon.appendChild(this.popup);
-		icon.addEventListener("mouseover", this.mouseover);
-		icon.addEventListener("mouseout", this.mouseout);
+		icon.addEventListener("mouseover", this.onmouseover);
+		icon.addEventListener("mouseout", this.onmouseout);
 		var leftBar = document.querySelector('div.clb');
 		leftBar.parentNode.insertBefore(icon, leftBar.nextSibling);
 	},
-	mouseover: function (event) {
+	onmouseover: function (event) {
 		hvStat.gadget.proficiencyPopupIcon.popup.style.visibility = "visible";
 	},
-	mouseout: function (event) {
+	onmouseout: function (event) {
 		hvStat.gadget.proficiencyPopupIcon.popup.style.visibility = "hidden";
 	},
 };
