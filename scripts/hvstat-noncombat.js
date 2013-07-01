@@ -117,27 +117,30 @@ hvStat.noncombat.inventory.equipment = {
 			if (!regexResult) {
 				return;
 			}
-			var equipType = regexResult[1];
 			var id = parseInt(String(element.id), 10);
-			var equipTypeIdx = -1;
-			if (/One-Handed/i.test(equipType)) {
+			var equipTypeIdx;
+			switch (regexResult[1]) {
+			case "One-handed Weapon":
 				equipTypeIdx = 0;
-			} else if (/Two-Handed/i.test(equipType)) {
+				break;
+			case "Two-handed Weapon":
 				equipTypeIdx = 1;
-			} else if (/Staff/i.test(equipType)) {
+				break;
+			case "Staff":
 				equipTypeIdx = 2;
-			} else if (/Shield/i.test(equipType)) {
+				break;
+			case "Shield":
 				equipTypeIdx = 3;
-			} else if (/Cloth/i.test(equipType)) {
+				break;
+			case "Cloth Armor":
 				equipTypeIdx = 4;
-			} else if (/Light/i.test(equipType)) {
+				break;
+			case "Light Armor":
 				equipTypeIdx = 5;
-			} else if (/Heavy/i.test(equipType)) {
+				break;
+			case "Heavy Armor":
 				equipTypeIdx = 6;
-			}
-			if (equipTypeIdx < 0) {
-				alert("unexpected equipment type");
-				return;
+				break;
 			}
 			var idArray = equipTagArrayTable[equipTypeIdx].id;
 			var valueArray = equipTagArrayTable[equipTypeIdx].value;
