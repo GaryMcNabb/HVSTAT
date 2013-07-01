@@ -5841,8 +5841,7 @@ hvStat.startup = {
 				if (hvStat.settings.isMainEffectsAlertMonsters) {
 					hvStat.battle.warningSystem.warnMonsterEffectExpiring();
 				}
-			}
-			if (hv.battle.isRoundFinished) {
+			} else {
 				if (hvStat.settings.isShowEndStats) {
 					showBattleEndStats();
 				}
@@ -5875,41 +5874,70 @@ hvStat.startup = {
 				document.addEventListener("keydown", hvStat.noncombat.keyboard.documentKeydown);
 			}
 			// Equipment tag
-			if (hv.location === "equipment" && hvStat.settings.isShowTags[0]) {
-				hvStat.noncombat.inventory.equipment.showTagInputFields(false);
-			}
-			if (hv.location === "inventory" && hvStat.settings.isShowTags[5]) {
-				hvStat.noncombat.inventory.equipment.showTagInputFields(true);
-			}
-			if (hv.location === "equipmentShop" && hvStat.settings.isShowTags[1]) {
-				hvStat.noncombat.inventory.equipment.showTagInputFields(false);
-			}
-			if (hv.location === "itemWorld" && hvStat.settings.isShowTags[2]) {
-				hvStat.noncombat.inventory.equipment.showTagInputFields(false);
-			}
-			if (hv.location === "moogleMailWriteNew" && hvStat.settings.isShowTags[3]) {
-				hvStat.noncombat.inventory.equipment.showTagInputFields(false);
-			}
-			if (hv.location === "forge" && hvStat.settings.isShowTags[4]) {
-				hvStat.noncombat.inventory.equipment.showTagInputFields(false);
-			}
-			if (hv.location === "forge" && hvStat.settings.isDisableForgeHotKeys) {
-				document.onkeypress = null;
-			}
-			if (hv.location === "character") {
+			switch (hv.location) {
+			case "character":
 				hvStat.noncombat.support.captureProficiencies();
-			}
-			if (hv.location === "shrine") {
+				break;
+			case "equipment":
+				if (hvStat.settings.isShowTags[0]) {
+					hvStat.noncombat.inventory.equipment.showTagInputFields(false);
+				}
+				break;
+			case "inventory":
+				if (hvStat.settings.isShowTags[5]) {
+					hvStat.noncombat.inventory.equipment.showTagInputFields(true);
+				}
+				break;
+			case "equipmentShop":
+				if (hvStat.settings.isShowTags[1]) {
+					hvStat.noncombat.inventory.equipment.showTagInputFields(false);
+				}
+				break;
+			case "shrine":
 				if (hvStat.settings.isTrackShrine) {
 					hvStat.noncombat.support.captureShrine();
 				}
 				if (browser.isChrome && hvStat.settings.enableShrineKeyPatch) {
-					document.onkeydown = null;	// Workaround to make enable SPACE key
-					hvStat.onkeydown = null;
+					// Remove keydown handler to apply keypress handler
+					util.addSiteScript('document.onkeydown = null;');
 				}
-			}
-			if (hvStat.settings.isStartAlert) {
-				hvStat.noncombat.support.confirmBeforeBattle();
+				break;
+			case "forge":
+				if (hvStat.settings.isShowTags[4]) {
+					hvStat.noncombat.inventory.equipment.showTagInputFields(false);
+				}
+				if (hvStat.settings.isDisableForgeHotKeys) {
+					document.onkeypress = null;
+				}
+				break;
+			case "moogleMailWriteNew":
+				if (hvStat.settings.isShowTags[3]) {
+					hvStat.noncombat.inventory.equipment.showTagInputFields(false);
+				}
+				break;
+			case "arena":
+				if (hvStat.settings.isStartAlert) {
+					hvStat.noncombat.support.confirmBeforeBattle();
+				}
+				break;
+			case "ringOfBlood":
+				if (hvStat.settings.isStartAlert) {
+					hvStat.noncombat.support.confirmBeforeBattle();
+				}
+				break;
+			case "grindfest":
+				if (hvStat.settings.isStartAlert) {
+					hvStat.noncombat.support.confirmBeforeBattle();
+				}
+				break;
+			case "itemWorld":
+				if (hvStat.settings.isShowTags[2]) {
+					hvStat.noncombat.inventory.equipment.showTagInputFields(false);
+				}
+				if (hvStat.settings.isStartAlert) {
+					hvStat.noncombat.support.confirmBeforeBattle();
+				}
+				break;
 			}
 			hvStat.gadget.initialize();
 		}
