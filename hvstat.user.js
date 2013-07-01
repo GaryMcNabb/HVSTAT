@@ -1624,6 +1624,18 @@ hvStat.gadget = {
 	addStyle: function () {
 		browser.extension.style.addFromResource("css/", "jquery-ui-1.9.2.custom.min.css", this.imageResources);
 	},
+	initialize: function () {
+		if (hvStat.settings.isShowEquippedSet) {
+			hvStat.gadget.equippedSet.create();
+		}
+		if (hvStat.settings.isShowSidebarProfs) {
+			hvStat.gadget.proficiencyPopupIcon.create();
+		}
+		if (hvStat.characterStatus.didReachInventoryLimit) {
+			hvStat.gadget.inventoryWarningIcon.create();
+		}
+		hvStat.gadget.wrenchIcon.create();
+	},
 };
 
 hvStat.gadget.wrenchIcon = {
@@ -5802,6 +5814,7 @@ hvStat.startup = {
 		}
 		hvStat.gadget.addStyle();
 		if (hv.battle.isActive) {
+			hvStat.gadget.initialize();
 			hvStat.battle.initialize();
 			if (hvStat.settings.delayRoundEndAlerts) {
 				hvStat.battle.warningSystem.restoreAlerts();
@@ -5848,7 +5861,7 @@ hvStat.startup = {
 			}
 			document.addEventListener("keydown", hvStat.battle.keyboard.documentKeydown);
 		} else if (hv.location === "riddle") {
-			// Do nothing
+			hvStat.gadget.initialize();
 		} else {
 			hvStat.storage.roundContext.remove();
 			hvStat.storage.warningState.remove();
@@ -5898,17 +5911,8 @@ hvStat.startup = {
 			if (hvStat.settings.isStartAlert) {
 				hvStat.noncombat.support.confirmBeforeBattle();
 			}
+			hvStat.gadget.initialize();
 		}
-		if (hvStat.settings.isShowEquippedSet) {
-			hvStat.gadget.equippedSet.create();
-		}
-		if (hvStat.settings.isShowSidebarProfs) {
-			hvStat.gadget.proficiencyPopupIcon.create();
-		}
-		if (hvStat.characterStatus.didReachInventoryLimit) {
-			hvStat.gadget.inventoryWarningIcon.create();
-		}
-		hvStat.gadget.wrenchIcon.create();
 		if (hvStat.settings.adjustKeyEventHandling) {
 			document.onkeydown = hvStat.onkeydown;
 		}
