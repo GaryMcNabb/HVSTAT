@@ -135,6 +135,27 @@ util.CallbackQueue.prototype = {
 	},
 };
 
+util.document = {
+	bodyRange: null,
+	_body: null,
+	get body() {
+		return this._body || document.body;
+	},
+	extractBody: function () {
+		if (document.body) {
+			this.bodyRange = document.createRange();
+			this.bodyRange.selectNode(document.body);
+			this._body = this.bodyRange.extractContents();
+		}
+	},
+	restoreBody: function () {
+		if (this._body) {
+			this.bodyRange.insertNode(this._body);
+			this._body = null;
+		}
+	},
+};
+
 //------------------------------------
 // Browser utilities
 //------------------------------------
@@ -1640,7 +1661,7 @@ hvStat.gadget = {
 
 hvStat.gadget.wrenchIcon = {
 	create: function () {
-		var stuffBox = document.querySelector('div.stuffbox');
+		var stuffBox = util.document.body.querySelector('div.stuffbox');
 		var icon = document.createElement("div");
 		icon.id = "hvstat-icon";
 		icon.className = "ui-state-default ui-corner-all";
@@ -1666,13 +1687,13 @@ hvStat.gadget.wrenchIcon = {
 
 hvStat.gadget.equippedSet = {
 	create: function () {
-		var leftBar = document.querySelector('div.clb');
+		var leftBar = util.document.body.querySelector('div.clb');
 		var cssText = leftBar.querySelector('table.cit td > div > div').style.cssText;
 		var table = document.createElement("table");
 		table.className = "cit";
 		table.innerHTML = '<tbody><tr><td><div class="fd4"><div id="hvstat-equipped-set"></div></div></td></tr></tbody>';
 		leftBar.insertBefore(table, null);
-		var equippedSet = document.getElementById("hvstat-equipped-set");
+		var equippedSet = leftBar.querySelector('#hvstat-equipped-set');
 		equippedSet.style.cssText = cssText;
 		equippedSet.textContent = "Equipped set: " + hvStat.characterStatus.equippedSet;
 	},
@@ -1708,7 +1729,7 @@ hvStat.gadget.proficiencyPopupIcon = {
 		icon.appendChild(this.popup);
 		icon.addEventListener("mouseover", this.onmouseover);
 		icon.addEventListener("mouseout", this.onmouseout);
-		var leftBar = document.querySelector('div.clb');
+		var leftBar = util.document.body.querySelector('div.clb');
 		leftBar.parentNode.insertBefore(icon, leftBar.nextSibling);
 	},
 	onmouseover: function (event) {
@@ -1721,7 +1742,7 @@ hvStat.gadget.proficiencyPopupIcon = {
 
 hvStat.gadget.inventoryWarningIcon = {
 	create: function () {
-		var stuffBox = document.querySelector('div.stuffbox');
+		var stuffBox = util.document.body.querySelector('div.stuffbox');
 		var icon = document.createElement("div");
 		icon.id = "hvstat-inventory-warning-icon";
 		icon.className = "ui-state-error ui-corner-all";
@@ -2613,7 +2634,7 @@ hvStat.battle = {
 //------------------------------------
 hvStat.battle.character = {
 	get isSpiritStanceEnabled() {
-		var spiritCommand = document.getElementById("ckey_spirit");
+		var spiritCommand = util.document.body.querySelector('#ckey_spirit');
 		if (spiritCommand) {
 			var src = spiritCommand.getAttribute("src");
 			if (src.indexOf("spirit_a") >= 0) {
@@ -4130,9 +4151,9 @@ hvStat.battle.enhancement.powerupBox = {
 	// Adds a Powerup box to the Battle screen.
 	// Creates a shortcut to the powerup if one is available.
 	create: function () {
-		var battleMenu = document.getElementsByClassName("btp"),
+		var battleMenu = util.document.body.querySelector('.btp'),
 			powerBox = document.createElement("div"),
-			powerup = document.getElementById("ikey_p");
+			powerup = util.document.body.querySelector('#ikey_p');
 
 		powerBox.className = "hvstat-powerup-box";
 		if (!powerup) {
@@ -4155,7 +4176,7 @@ hvStat.battle.enhancement.powerupBox = {
 				powerBox.className += " hvstat-powerup-box-channeling";
 			}
 		}
-		battleMenu[0].appendChild(powerBox);
+		battleMenu.appendChild(powerBox);
 	},
 };
 
@@ -4318,7 +4339,7 @@ hvStat.battle.enhancement.skillButton = {
 
 hvStat.battle.enhancement.monsterLabel = {
 	replaceWithNumber: function () {
-		var targets = document.querySelectorAll('div.btm2 > div > img');
+		var targets = util.document.body.querySelectorAll('div.btm2 > div > img');
 		for (var i = 0; i < targets.length; i++) {
 			var target = targets[i];
 			target.className += " hvstat-monster-number";
@@ -5438,7 +5459,7 @@ hvStat.battle.warningSystem = {
 		}
 	},
 	warnMonsterEffectExpiring: function () {
-		var elements = document.querySelectorAll('#monsterpane div.btm6 > img');
+		var elements = util.document.body.querySelectorAll('#monsterpane div.btm6 > img');
 		for (var i = 0; i < elements.length; i++) {
 			var element = elements[i];
 			var onmouseover = element.getAttribute("onmouseover");
@@ -5814,6 +5835,7 @@ hvStat.startup = {
 		}
 		hvStat.gadget.addStyle();
 		if (hv.battle.isActive) {
+			util.document.extractBody();
 			hvStat.gadget.initialize();
 			hvStat.battle.initialize();
 			if (hvStat.settings.delayRoundEndAlerts) {
@@ -5824,6 +5846,7 @@ hvStat.startup = {
 				hvStat.battle.enhancement.roundCounter.create();
 			}
 			hvStat.battle.monster.showHealthAll();
+			util.document.restoreBody();
 			if (!hvStat.database.loadingMonsterInfoFromDB) {
 				hvStat.battle.monster.showStatusAll();
 			}
