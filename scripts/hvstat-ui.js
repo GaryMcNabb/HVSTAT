@@ -892,6 +892,7 @@ function initSettingsPane() {
 	// General
 	if (hvStat.settings.isChangePageTitle) $("input[name=isChangePageTitle]").attr("checked", "checked");
 	$("input[name=customPageTitle]").attr("value", hvStat.settings.customPageTitle);
+	if (hvStat.settings.doesHideLogo) $("input[name=doesHideLogo]").attr("checked", "checked");
 	if (hvStat.settings.isShowEquippedSet) $("input[name=isShowEquippedSet]").attr("checked", "checked");
 	if (hvStat.settings.isShowSidebarProfs) $("input[name=isShowSidebarProfs]").attr("checked", "checked");
 	if (hvStat.settings.isStartAlert) $("input[name=isStartAlert]").attr("checked", "checked");
@@ -1086,6 +1087,7 @@ function initSettingsPane() {
 	// General
 	$("input[name=isChangePageTitle]").click(saveSettings);
 	$("input[name=customPageTitle]").change(saveSettings);
+	$("input[name=doesHideLogo]").click(saveSettings);
 	$("input[name=isShowEquippedSet]").click(saveSettings);
 	$("input[name=isShowSidebarProfs]").click(reminderAndSaveSettings);
 	$("input[name=isStartAlert]").click(saveSettings);
@@ -1230,6 +1232,7 @@ function saveSettings() {
 	// General
 	hvStat.settings.isChangePageTitle = $("input[name=isChangePageTitle]").get(0).checked;
 	hvStat.settings.customPageTitle = $("input[name=customPageTitle]").get(0).value;
+	hvStat.settings.doesHideLogo = $("input[name=doesHideLogo]").get(0).checked;
 	hvStat.settings.isShowEquippedSet = $("input[name=isShowEquippedSet]").get(0).checked;
 	hvStat.settings.isShowSidebarProfs = $("input[name=isShowSidebarProfs]").get(0).checked;
 	hvStat.settings.isStartAlert = $("input[name=isStartAlert]").get(0).checked;
