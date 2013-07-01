@@ -257,11 +257,13 @@ hvStat.ui.dropsPane = {
 							(battleType === null || battleType === equipment.battleType)) {
 						var arenaNumber = (equipment.arenaNumber === null) ? "-" : String(equipment.arenaNumber);
 						var roundNumber = (equipment.roundNumber === null) ? "-" : String(equipment.roundNumber);
+						var difficultyConst = hvStat.constant.difficulty[equipment.difficulty];
+						var battleTypeConst = hvStat.constant.battleType[equipment.battleType];
 						// Reverse order
 						equipmentsHTML = '<tr>' +
 							'<th class="hvstat-color-equipment">' + equipment.name + '</th>' +
-							'<td>' + hvStat.constant.difficulty[equipment.difficulty].name + '</td>' +
-							'<td>' + hvStat.constant.battleType[equipment.battleType].name + '</td>' +
+							'<td>' + (difficultyConst ? difficultyConst.name : "?") + '</td>' +
+							'<td>' + (battleTypeConst ? battleTypeConst.name : "?") + '</td>' +
 							'<td>' + arenaNumber + '</td>' +
 							'<td>' + roundNumber + '</td>' +
 							'<td>' + hvStat.util.getDateTimeString(new Date(equipment.timeStamp)) + '</td>' +
