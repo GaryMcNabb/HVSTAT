@@ -3,6 +3,9 @@
 //------------------------------------
 hvStat.noncombat = {};
 
+//------------------------------------
+// Noncombat - Support
+//------------------------------------
 hvStat.noncombat.support = {
 	captureStatuses: function () {
 		var difficulties = ["", "NORMAL", "HARD", "NIGHTMARE", "HELL", "NINTENDO", "BATTLETOADS", "IWBTH"];
@@ -97,6 +100,55 @@ hvStat.noncombat.support = {
 	},
 };
 
+hvStat.noncombat.support.popup = {
+	popup0: null,
+	popup1:null,
+	observer: null,
+	adjustments: [
+		{ location: "equipment", from: "598px", to: "680px" },
+		{ location: "equipment", from: "445px", to: "527px" },
+		{ location: "equipmentShop", from: "540px", to: "680px" },
+		{ location: "equipmentShop", from: "212px", to: "310px" },
+		{ location: "forge", from: "620px", to: "680px" },
+		{ location: "itemWorld", from: "620px", to: "680px" },
+	],
+	addObserver: function () {
+		this.popup0 = hv.elementCache.popup;
+		this.observer = new MutationObserver(this.adjustHorizontalPosition);
+		this.observer.observe(this.popup0, { attributes: true });
+		if (hv.location === "equipment") {
+			this.popup1 = util.document.body.querySelector('#compare_pane');
+			if (this.popup1) {
+				this.observer.observe(this.popup1, { attributes: true });
+			}
+		}
+	},
+	adjustHorizontalPosition: function (mutations) {
+		var isStyleChanged = false;
+		for (var i = 0; i < mutations.length; i++) {
+			var mutation = mutations[i];
+//			console.debug(mutation);
+			if (mutation.attributeName === "style") {
+				isStyleChanged = true;
+			}
+		}
+		if (isStyleChanged) {
+			var style = mutation.target.style;
+//			console.debug(style);
+			var adjustments = hvStat.noncombat.support.popup.adjustments;
+			for (i = 0; i < adjustments.length; i++) {
+				var adjustment = adjustments[i];
+				if (hv.location === adjustment.location && style.left === adjustment.from) {
+					style.left = adjustment.to;
+				}
+			}
+		}
+	},
+};
+
+//------------------------------------
+// Noncombat - Inventory
+//------------------------------------
 hvStat.noncombat.inventory = {};
 
 hvStat.noncombat.inventory.equipment = {
@@ -226,6 +278,9 @@ hvStat.noncombat.inventory.equipment = {
 	},
 };
 
+//------------------------------------
+// Noncombat - Keyboard
+//------------------------------------
 hvStat.noncombat.keyboard = {
 	scrollable: {
 		targets: [

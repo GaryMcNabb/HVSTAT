@@ -5911,16 +5911,19 @@ hvStat.startup = {
 			case "equipment":
 				if (hvStat.settings.isShowTags[0]) {
 					hvStat.noncombat.inventory.equipment.showTagInputFields(false);
+					hvStat.noncombat.support.popup.addObserver();
 				}
 				break;
 			case "inventory":
 				if (hvStat.settings.isShowTags[5]) {
 					hvStat.noncombat.inventory.equipment.showTagInputFields(true);
+					hvStat.noncombat.support.popup.addObserver();
 				}
 				break;
 			case "equipmentShop":
 				if (hvStat.settings.isShowTags[1]) {
 					hvStat.noncombat.inventory.equipment.showTagInputFields(false);
+					hvStat.noncombat.support.popup.addObserver();
 				}
 				break;
 			case "shrine":
@@ -5935,6 +5938,7 @@ hvStat.startup = {
 			case "forge":
 				if (hvStat.settings.isShowTags[4]) {
 					hvStat.noncombat.inventory.equipment.showTagInputFields(false);
+					hvStat.noncombat.support.popup.addObserver();
 				}
 				if (hvStat.settings.isDisableForgeHotKeys) {
 					document.onkeypress = null;
@@ -5943,6 +5947,7 @@ hvStat.startup = {
 			case "moogleMailWriteNew":
 				if (hvStat.settings.isShowTags[3]) {
 					hvStat.noncombat.inventory.equipment.showTagInputFields(false);
+					hvStat.noncombat.support.popup.addObserver();
 				}
 				break;
 			case "arena":
@@ -5963,6 +5968,7 @@ hvStat.startup = {
 			case "itemWorld":
 				if (hvStat.settings.isShowTags[2]) {
 					hvStat.noncombat.inventory.equipment.showTagInputFields(false);
+					hvStat.noncombat.support.popup.addObserver();
 				}
 				if (hvStat.settings.isStartAlert) {
 					hvStat.noncombat.support.confirmBeforeBattle();
