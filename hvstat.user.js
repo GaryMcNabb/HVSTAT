@@ -423,6 +423,7 @@ hv.initialize = function () {
 			_dialogButton: null,
 			_characterEffectIcons: null,
 			_monsters: null,
+			_monsterEffectIcons: null,
 			get mainPane() {
 				if (!this._mainPane) {
 					this._mainPane = util.document.body.querySelector('#mainpane');
@@ -464,6 +465,12 @@ hv.initialize = function () {
 					this._monsters = this.monsterPane.querySelectorAll('div[id^="mkey_"]');
 				}
 				return this._monsters;
+			},
+			get monsterEffectIcons() {
+				if (!this._monsterEffectIcons) {
+					this._monsterEffectIcons = this.monsterPane.querySelectorAll('div[id^="mkey_"] img[onmouseover^="battle.set_infopane_effect"]');
+				}
+				return this._monsterEffectIcons;
 			},
 		};
 	}
@@ -4098,14 +4105,11 @@ hvStat.battle.enhancement.effectDurationBadge = {
 		}
 	},
 	showForMonsters: function () {
-		for (var i = 0; i < hv.battle.elementCache.monsters.length; i++) {
-			var monster = hv.battle.elementCache.monsters[i];
-			var effectIcons = monster.querySelectorAll('img[onmouseover^="battle.set_infopane_effect"]');
-			for (var j = 0; j < effectIcons.length; j++) {
-				var badge = this.create(effectIcons[j]);
-				if (badge) {
-					badge.className += " hvstat-duration-badge-monster";
-				}
+		var effectIcons = hv.battle.elementCache.monsterEffectIcons;
+		for (var i = 0; i < effectIcons.length; i++) {
+			var badge = this.create(effectIcons[i]);
+			if (badge) {
+				badge.className += " hvstat-duration-badge-monster";
 			}
 		}
 	}
@@ -4134,14 +4138,17 @@ hvStat.battle.enhancement.effectStackLevelBadge = {
 		var effectIcons = hv.battle.elementCache.characterEffectIcons;
 		for (var i = 0; i < effectIcons.length; i++) {
 			var badge = this.create(effectIcons[i]);
+			if (badge) {
+				badge.className += " hvstat-effect-stack-level-badge-character";
+			}
 		}
 	},
 	showForMonsters: function () {
-		for (var i = 0; i < hv.battle.elementCache.monsters.length; i++) {
-			var monster = hv.battle.elementCache.monsters[i];
-			var effectIcons = monster.querySelectorAll('img[onmouseover^="battle.set_infopane_effect"]');
-			for (var j = 0; j < effectIcons.length; j++) {
-				this.create(effectIcons[j]);
+		var effectIcons = hv.battle.elementCache.monsterEffectIcons;
+		for (var i = 0; i < effectIcons.length; i++) {
+			var badge = this.create(effectIcons[i]);
+			if (badge) {
+				badge.className += " hvstat-effect-stack-level-badge-monster";
 			}
 		}
 	}
