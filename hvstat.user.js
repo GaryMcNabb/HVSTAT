@@ -424,6 +424,7 @@ hv.initialize = function () {
 			_characterEffectIcons: null,
 			_monsters: null,
 			_monsterEffectIcons: null,
+			_monsterGauges: null,
 			get mainPane() {
 				if (!this._mainPane) {
 					this._mainPane = util.document.body.querySelector('#mainpane');
@@ -456,21 +457,27 @@ hv.initialize = function () {
 			},
 			get characterEffectIcons() {
 				if (!this._characterEffectIcons) {
-					this._characterEffectIcons = this.mainPane.querySelectorAll('div.bte img[onmouseover^="battle.set_infopane_effect"]');
+					this._characterEffectIcons = this.mainPane.querySelectorAll('div.btt > div.bte > img[onmouseover^="battle.set_infopane_effect"]');
 				}
 				return this._characterEffectIcons;
 			},
 			get monsters() {
 				if (!this._monsters) {
-					this._monsters = this.monsterPane.querySelectorAll('div[id^="mkey_"]');
+					this._monsters = this.monsterPane.querySelectorAll('div.btm1');
 				}
 				return this._monsters;
 			},
 			get monsterEffectIcons() {
 				if (!this._monsterEffectIcons) {
-					this._monsterEffectIcons = this.monsterPane.querySelectorAll('div[id^="mkey_"] img[onmouseover^="battle.set_infopane_effect"]');
+					this._monsterEffectIcons = this.monsterPane.querySelectorAll('div.btm1 > div.btm6 > img[onmouseover^="battle.set_infopane_effect"]');
 				}
 				return this._monsterEffectIcons;
+			},
+			get monsterGauges() {
+				if (!this._monsterGauges) {
+					this._monsterGauges = this.monsterPane.querySelectorAll('div.btm1 > div.btm4 > div.btm5 > div.chbd > img.chb2');
+				}
+				return this._monsterGauges;
 			},
 		};
 	}
@@ -1707,11 +1714,22 @@ hvStat.gadget.equippedSet = {
 };
 
 hvStat.gadget.proficiencyPopupIcon = {
+	icon: null,
 	popup: null,
 	create: function () {
 		if (!hvStat.characterStatus.areProficienciesCaptured) {
 			return;
 		}
+		this.icon = document.createElement("div");
+		this.icon.id = "hvstat-proficiency-popup-icon";
+		this.icon.className = "ui-corner-all";
+		this.icon.textContent = "Proficiency";
+		this.icon.addEventListener("mouseover", this.onmouseover);
+		this.icon.addEventListener("mouseout", this.onmouseout);
+		var leftBar = util.document.body.querySelector('div.clb');
+		leftBar.parentNode.insertBefore(this.icon, leftBar.nextSibling);
+	},
+	createPopup: function () {
 		this.popup = document.createElement("div");
 		this.popup.id = "hvstat-proficiency-popup";
 		this.popup.innerHTML = browser.extension.getResourceText("html/", "proficiency-table.html");
@@ -1729,20 +1747,18 @@ hvStat.gadget.proficiencyPopupIcon = {
 		tableData[ 5].textContent = prof.forbidden.toFixed(2);
 		tableData[ 7].textContent = prof.deprecating.toFixed(2);
 		tableData[ 9].textContent = prof.supportive.toFixed(2);
-		var icon = document.createElement("div");
-		icon.id = "hvstat-proficiency-popup-icon";
-		icon.className = "ui-corner-all";
-		icon.textContent = "Proficiency";
-		icon.appendChild(this.popup);
-		icon.addEventListener("mouseover", this.onmouseover);
-		icon.addEventListener("mouseout", this.onmouseout);
-		var leftBar = util.document.body.querySelector('div.clb');
-		leftBar.parentNode.insertBefore(icon, leftBar.nextSibling);
+		this.icon.appendChild(this.popup);
 	},
 	onmouseover: function (event) {
+		if (!hvStat.gadget.proficiencyPopupIcon.popup) {
+			hvStat.gadget.proficiencyPopupIcon.createPopup();
+		}
 		hvStat.gadget.proficiencyPopupIcon.popup.style.visibility = "visible";
 	},
 	onmouseout: function (event) {
+		if (!hvStat.gadget.proficiencyPopupIcon.popup) {
+			hvStat.gadget.proficiencyPopupIcon.createPopup();
+		}
 		hvStat.gadget.proficiencyPopupIcon.popup.style.visibility = "hidden";
 	},
 };
@@ -4346,7 +4362,7 @@ hvStat.battle.enhancement.skillButton = {
 
 hvStat.battle.enhancement.monsterLabel = {
 	replaceWithNumber: function () {
-		var targets = util.document.body.querySelectorAll('div.btm2 > div > img');
+		var targets = hv.battle.elementCache.monsterPane.querySelectorAll('div.btm1 > div.btm2 > div > img');
 		for (var i = 0; i < targets.length; i++) {
 			var target = targets[i];
 			target.className += " hvstat-monster-number";
@@ -5077,7 +5093,14 @@ hvStat.battle.monster.Monster.prototype = {
 	},
 	get gauges() {
 		if (!this._gauges) {
-			this._gauges = this._baseElement.querySelectorAll('div.btm5 img.chb2');
+			var allGauges = hv.battle.elementCache.monsterGauges;
+			this._gauges = [];
+			for (var i = 0; i < allGauges.length; i++) {
+				var gauge = allGauges[i];
+				if (gauge.parentNode.parentNode.parentNode.parentNode === this.baseElement) {
+					this._gauges.push(gauge);
+				}
+			}
 		}
 		return this._gauges;
 	},
@@ -5466,7 +5489,7 @@ hvStat.battle.warningSystem = {
 		}
 	},
 	warnMonsterEffectExpiring: function () {
-		var elements = util.document.body.querySelectorAll('#monsterpane div.btm6 > img');
+		var elements = hv.battle.elementCache.monsterEffectIcons;
 		for (var i = 0; i < elements.length; i++) {
 			var element = elements[i];
 			var onmouseover = element.getAttribute("onmouseover");
