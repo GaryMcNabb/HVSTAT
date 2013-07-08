@@ -2106,9 +2106,10 @@ hvStat.database.openIndexedDB = function (callback) {
 	var idbVersion = 2; // Must be an integer
 	var idbOpenDBRequest = indexedDB.open("HVStat", idbVersion);
 	idbOpenDBRequest.onerror = function (event) {
-		errorMessage = "Database open error: " + event.target.errorCode;
+		errorMessage = event.target.webkitErrorMessage || event.target.error.message || event.target.error.name || "";
+		errorMessage = "Database open error: " + errorMessage;
+		console.log(event.target);
 		alert(errorMessage);
-		console.log(event);
 	};
 	// Latest W3C draft (Firefox and Chrome 23 or later)
 	idbOpenDBRequest.onupgradeneeded = function (event) {
