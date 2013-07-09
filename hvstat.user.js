@@ -340,16 +340,16 @@ hv.locationMap = {
 
 hv.character = {
 	get healthRate() {
-		return hv.util.getCharacterGaugeRate(util.document.body.querySelector('img[alt="health"]'));
+		return hv.util.getCharacterGaugeRate(hv.elementCache.leftBar.querySelector('img[alt="health"]'));
 	},
 	get magicRate() {
-		return hv.util.getCharacterGaugeRate(util.document.body.querySelector('img[alt="magic"]'));
+		return hv.util.getCharacterGaugeRate(hv.elementCache.leftBar.querySelector('img[alt="magic"]'));
 	},
 	get spiritRate() {
-		return hv.util.getCharacterGaugeRate(util.document.body.querySelector('img[alt="spirit"]'));
+		return hv.util.getCharacterGaugeRate(hv.elementCache.leftBar.querySelector('img[alt="spirit"]'));
 	},
 	get overchargeRate() {
-		return hv.util.getCharacterGaugeRate(util.document.body.querySelector('img[alt="overcharge"]'));
+		return hv.util.getCharacterGaugeRate(hv.elementCache.leftBar.querySelector('img[alt="overcharge"]'));
 	},
 	get healthPercent() {
 		return hv.util.percent(this.healthRate);
@@ -366,22 +366,47 @@ hv.character = {
 };
 
 hv.elementCache = {
-	get popup() { return util.document.body.querySelector('#popup_box'); },
+	_popup: null,
+	get popup() {
+		if (!this._popup) {
+			this._popup = util.document.body.querySelector('#popup_box');
+		}
+		return this._popup;
+	},
+	_stuffBox: null,
+	get stuffBox() {
+		if (!this._stuffBox) {
+			this._stuffBox = util.document.body.querySelector('div.stuffbox');
+		}
+		return this._stuffBox;
+	},
+	_leftBar: null,
+	get leftBar() {
+		if (!this._leftBar) {
+			this._leftBar = this.stuffBox.children[0];
+		}
+		return this._leftBar;
+	},
+	_infoTables: null,
+	get infoTables() {
+		if (!this._infoTables) {
+			this._infoTables = this.leftBar.querySelectorAll('table.cit');
+		}
+		return this._infoTables;
+	},
 };
 
 hv.initialize = function () {
-	this.util.isUsingHVFontEngine = util.document.body.querySelector('.fd2').textContent !== "Health points";
+	this.util.isUsingHVFontEngine = util.innerText(hv.elementCache.infoTables[0]).indexOf("Level") === -1;
 	var settings = {
 		isUsingHVFontEngine: this.util.isUsingHVFontEngine,
 		get difficulty() {
-			var e = util.document.body.querySelectorAll('div.clb table.cit div.fd4');
-			for (var i = 0; i < e.length; i++) {
-				var r = /(Normal|Hard|Nightmare|Hell|Nintendo|Battletoads|IWBTH)/i.exec(hv.util.innerText(e[i]));
-				if (r) {
-					return r[1].toUpperCase();
-				}
+			var regexResult = hv.util.innerText(hv.elementCache.infoTables[1]).match(/(Normal|Hard|Nightmare|Hell|Nintendo|Battletoads|IWBTH)/i);
+			if (regexResult) {
+				return regexResult[1].toUpperCase();
+			} else {
+				return "";
 			}
-			return "";
 		},
 	};
 
@@ -1675,7 +1700,7 @@ hvStat.gadget = {
 
 hvStat.gadget.wrenchIcon = {
 	create: function () {
-		var stuffBox = util.document.body.querySelector('div.stuffbox');
+		var stuffBox = hv.elementCache.stuffBox;
 		var icon = document.createElement("div");
 		icon.id = "hvstat-icon";
 		icon.className = "ui-state-default ui-corner-all";
@@ -1701,15 +1726,18 @@ hvStat.gadget.wrenchIcon = {
 
 hvStat.gadget.equippedSet = {
 	create: function () {
-		var leftBar = util.document.body.querySelector('div.clb');
-		var cssText = leftBar.querySelector('table.cit td > div > div').style.cssText;
+		var leftBar = hv.elementCache.leftBar;
 		var table = document.createElement("table");
 		table.className = "cit";
-		table.innerHTML = '<tbody><tr><td><div class="fd4"><div id="hvstat-equipped-set"></div></div></td></tr></tbody>';
+		var tbody = table.appendChild(document.createElement("tbody"));
+		var tr = tbody.appendChild(document.createElement("tr"));
+		var td = tr.appendChild(document.createElement("td"));
+		var div0 = td.appendChild(document.createElement("div"));
+		div0.className = "fd4";
+		var div1 = div0.appendChild(document.createElement("div"));
+		div1.style.cssText = hv.elementCache.infoTables[0].children[0].children[0].children[0].children[0].children[0].style.cssText;
+		div1.textContent = "Equipped set: " + hvStat.characterStatus.equippedSet;
 		leftBar.insertBefore(table, null);
-		var equippedSet = leftBar.querySelector('#hvstat-equipped-set');
-		equippedSet.style.cssText = cssText;
-		equippedSet.textContent = "Equipped set: " + hvStat.characterStatus.equippedSet;
 	},
 };
 
@@ -1726,7 +1754,7 @@ hvStat.gadget.proficiencyPopupIcon = {
 		this.icon.textContent = "Proficiency";
 		this.icon.addEventListener("mouseover", this.onmouseover);
 		this.icon.addEventListener("mouseout", this.onmouseout);
-		var leftBar = util.document.body.querySelector('div.clb');
+		var leftBar = hv.elementCache.leftBar;
 		leftBar.parentNode.insertBefore(this.icon, leftBar.nextSibling);
 	},
 	createPopup: function () {
@@ -1765,7 +1793,7 @@ hvStat.gadget.proficiencyPopupIcon = {
 
 hvStat.gadget.inventoryWarningIcon = {
 	create: function () {
-		var stuffBox = util.document.body.querySelector('div.stuffbox');
+		var stuffBox = hv.elementCache.stuffBox;
 		var icon = document.createElement("div");
 		icon.id = "hvstat-inventory-warning-icon";
 		icon.className = "ui-state-error ui-corner-all";
