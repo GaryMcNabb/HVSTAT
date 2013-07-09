@@ -3961,7 +3961,7 @@ hvStat.battle.command.MenuItem.prototype = {
 hvStat.battle.command.Menu = function (spec) {
 	this.parent = spec && spec.parent || null;
 	this.elementId = spec && spec.elementId || null;
-	this.element = this.elementId && document.getElementById(this.elementId) || null;
+	this.element = this.elementId && util.document.body.querySelector("#" + this.elementId) || null;
 
 	this.items = [];
 	var itemElements = this.element.querySelectorAll('div.btsd, #ikey_p, img.btii');
@@ -4014,7 +4014,7 @@ hvStat.battle.command.Command = function (spec) {
 	this.elementId = spec && spec.elementId || null;
 	this.name = spec && spec.name || "";
 	this.menuElementIds = spec && spec.menuElementIds || [];
-	this.element = this.elementId && document.getElementById(this.elementId) || null;
+	this.element = this.elementId && util.document.body.querySelector('#' + this.elementId) || null;
 	this.menus = [];
 
 	// Build menus
