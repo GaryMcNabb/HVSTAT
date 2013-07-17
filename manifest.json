@@ -46,6 +46,7 @@
 		"html/settings-pane.html",
 		"html/shrine-pane.html",
 		"json/drops-display-table.json",
+		"scripts/hvstat-injection.js",
 		"scripts/hvstat-migration.js",
 		"scripts/hvstat-noncombat.js",
 		"scripts/hvstat-ui.js",

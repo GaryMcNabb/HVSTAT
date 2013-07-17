@@ -35,6 +35,7 @@
 // @resource        settings-pane.html                          html/settings-pane.html
 // @resource        shrine-pane.html                            html/shrine-pane.html
 // @resource        drops-display-table.json                    json/drops-display-table.json
+// @resource        hvstat-injection.js                         scripts/hvstat-injection.js
 // @resource        hvstat-migration.js                         scripts/hvstat-migration.js
 // @resource        hvstat-noncombat.js                         scripts/hvstat-noncombat.js
 // @resource        hvstat-ui.js                                scripts/hvstat-ui.js
@@ -106,6 +107,15 @@ var util = {
 		}
 		return s;
 	},
+	siteScriptElement: null,
+	addSiteScript: function (fn) {
+		if (!this.siteScriptElement) {
+			this.scriptElement = document.createElement("script");
+			this.scriptElement.type = "text/javascript";
+			document.body.appendChild(this.scriptElement);
+		}
+		this.scriptElement.textContent += '\n' + String(fn) + '\n';
+	},
 };
 util.CallbackQueue = function () {
 	this.closures = [];
@@ -132,6 +142,33 @@ util.CallbackQueue.prototype = {
 		while (this.closures[0]) {
 			this.closures.shift()(this.context);
 		}
+	},
+};
+
+util.event = {
+	clickEvent: null,
+	click: function (element) {
+		if (!this.clickEvent) {
+			this.clickEvent = document.createEvent("MouseEvents");
+			this.clickEvent.initMouseEvent("click", true, true, window, 0, 0, 0, 0, 0, false, false, false, false, 0, null);
+		}
+		element.dispatchEvent(this.clickEvent);
+	},
+	mouseOverEvent: null,
+	mouseOver: function (element) {
+		if (!this.mouseOverEvent) {
+			this.mouseOverEvent = document.createEvent("MouseEvents");
+			this.mouseOverEvent.initMouseEvent("mouseover", true, true, window, 0, 0, 0, 0, 0, false, false, false, false, 0, null);
+		}
+		element.dispatchEvent(this.mouseOverEvent);
+	},
+	mouseOutEvent: null,
+	mouseOut: function (element) {
+		if (!this.mouseOutEvent) {
+			this.mouseOutEvent = document.createEvent("MouseEvents");
+			this.mouseOutEvent.initMouseEvent("mouseout", true, true, window, 0, 0, 0, 0, 0, false, false, false, false, 0, null);
+		}
+		element.dispatchEvent(this.mouseOutEvent);
 	},
 };
 
@@ -3938,7 +3975,7 @@ hvStat.battle.command.MenuItem.prototype = {
 				this.parent.open();
 			}
 			if (!this.selected) {
-				this.element.onclick();	// select
+				util.event.click(this.element);
 			}
 		}
 	},
@@ -3975,12 +4012,12 @@ hvStat.battle.command.Menu.prototype = {
 	},
 	open: function () {
 		while (!this.opened) {
-			this.parent.element.onclick();
+			util.event.click(this.parent.element);
 		}
 	},
 	close: function () {
 		if (this.opened) {
-			this.parent.element.onclick();
+			util.event.click(this.parent.element);
 		}
 	},
 	getItemById: function (id) {
@@ -4043,7 +4080,7 @@ hvStat.battle.command.Command.prototype = {
 		return null;
 	},
 	select: function (menuElementId) {
-		this.element.onclick();
+		util.event.click(this.element);
 	},
 	close: function () {
 		if (this.menuOpened) {
@@ -4126,8 +4163,12 @@ hvStat.battle.enhancement.effectDurationBadge = {
 		}
 		var badgeBase = document.createElement("div");
 		badgeBase.className = "hvstat-duration-badge";
-		badgeBase.onmouseover = effectIcon.onmouseover;
-		badgeBase.onmouseout = effectIcon.onmouseout;
+		badgeBase.addEventListener("mouseover", function (event) {
+			util.event.mouseOver(effectIcon);
+		});
+		badgeBase.addEventListener("mouseout", function (event) {
+			util.event.mouseOut(effectIcon);
+		});
 		if (hvStat.settings.isSelfEffectsWarnColor) {
 			if (duration <= Number(hvStat.settings.SelfWarnRedRounds)) {
 				badgeBase.className += " hvstat-duration-badge-red-alert";
@@ -4171,8 +4212,12 @@ hvStat.battle.enhancement.effectStackLevelBadge = {
 			return null;
 		}
 		var badgeBase = document.createElement("div");
-		badgeBase.onmouseover = effectIcon.onmouseover;
-		badgeBase.onmouseout = effectIcon.onmouseout;
+		badgeBase.addEventListener("mouseover", function (event) {
+			util.event.mouseOver(effectIcon);
+		});
+		badgeBase.addEventListener("mouseout", function (event) {
+			util.event.mouseOut(effectIcon);
+		});
 		badgeBase.className = "hvstat-effect-stack-level-badge";
 		var badge = badgeBase.appendChild(document.createElement("div"));
 		badge.textContent = String(rEffectStackLevel[1]);
@@ -4202,22 +4247,18 @@ hvStat.battle.enhancement.effectStackLevelBadge = {
 hvStat.battle.enhancement.powerupBox = {
 	// Adds a Powerup box to the Battle screen.
 	// Creates a shortcut to the powerup if one is available.
+	powerup: null,
 	create: function () {
 		var battleMenu = util.document.body.querySelector('.btp'),
-			powerBox = document.createElement("div"),
-			powerup = util.document.body.querySelector('#ikey_p');
+			powerBox = document.createElement("div");
+		this.powerup = util.document.body.querySelector('#ikey_p');
 
 		powerBox.className = "hvstat-powerup-box";
-		if (!powerup) {
+		if (!this.powerup) {
 			powerBox.className += " hvstat-powerup-box-none";
 			powerBox.textContent = "P";
 		} else {
-			var powerInfo = powerup.getAttribute("onmouseover");
-			powerBox.setAttribute("onmouseover", powerInfo);
-			powerBox.setAttribute("onmouseout", powerup.getAttribute("onmouseout"));
-			powerBox.addEventListener("click", function (event) {
-				hvStat.battle.command.menuItemMap["PowerupGem"].select();
-			});
+			var powerInfo = this.powerup.getAttribute("onmouseover");
 			if (powerInfo.indexOf('Health') > -1) {
 				powerBox.className += " hvstat-powerup-box-health";
 			} else if (powerInfo.indexOf('Mana') > -1) {
@@ -4227,8 +4268,26 @@ hvStat.battle.enhancement.powerupBox = {
 			} else if (powerInfo.indexOf('Mystic') > -1) {
 				powerBox.className += " hvstat-powerup-box-channeling";
 			}
+			powerBox.addEventListener("click", this.onclick);
+			powerBox.addEventListener("mouseover", this.onmouseover);
+			powerBox.addEventListener("mouseout", this.onmouseout);
 		}
 		battleMenu.appendChild(powerBox);
+	},
+	onclick: function (event) {
+		hvStat.battle.command.menuItemMap["PowerupGem"].select();
+	},
+	onmouseover: function (event) {
+		var powerup = hvStat.battle.enhancement.powerupBox.powerup;
+		if (powerup) {
+			util.event.mouseOver(powerup);
+		}
+	},
+	onmouseout: function (event) {
+		var powerup = hvStat.battle.enhancement.powerupBox.powerup;
+		if (powerup) {
+			util.event.mouseOut(powerup);
+		}
 	},
 };
 
@@ -4317,7 +4376,7 @@ hvStat.battle.enhancement.scanButton = {
 		button.textContent = "Scan";
 		button.addEventListener("click", function (event) {
 			hvStat.battle.command.menuItemMap["Scan"].select();
-			monster.onclick();
+			util.event.click(monster);
 		});
 		return button;
 	},
@@ -4383,7 +4442,7 @@ hvStat.battle.enhancement.skillButton = {
 		}
 		button.addEventListener("click", function (event) {
 			hvStat.battle.command.menuItemMap["Skill" + skillNumber].select();
-			monster.onclick();
+			util.event.click(monster);
 		});
 		return button;
 	},
@@ -5881,10 +5940,6 @@ hvStat.startup = {
 		}
 	},
 	phase2: function () {
-		if (hvStat.settings.adjustKeyEventHandling) {
-			hvStat.onkeydown = document.onkeydown;
-			document.onkeydown = null;
-		}
 		hv.initialize();
 		console.debug(hv);
 		hvStat.addStyle();
@@ -5893,7 +5948,12 @@ hvStat.startup = {
 			document.title = hvStat.settings.customPageTitle;
 		}
 		hvStat.gadget.addStyle();
+
 		if (hv.battle.isActive) {
+			if (hvStat.settings.adjustKeyEventHandling) {
+				var siteScript = browser.extension.getResourceText("scripts/", "hvstat-injection.js");
+				util.addSiteScript(siteScript);
+			}
 			util.document.extractBody();
 			hvStat.gadget.initialize();
 			hvStat.battle.initialize();
@@ -5941,6 +6001,9 @@ hvStat.startup = {
 				hvStat.battle.warningSystem.alertAllFromQueue();
 			}
 			document.addEventListener("keydown", hvStat.battle.keyboard.documentKeydown);
+			if (hvStat.settings.adjustKeyEventHandling) {
+				document.dispatchEvent(new CustomEvent("hvstatcomplete"));
+			}
 		} else if (hv.location === "riddle") {
 			hvStat.gadget.initialize();
 		} else {
@@ -5993,7 +6056,7 @@ hvStat.startup = {
 					hvStat.noncombat.support.popup.addObserver();
 				}
 				if (hvStat.settings.isDisableForgeHotKeys) {
-					document.onkeypress = null;
+					util.addSiteScript('document.onkeypress = null;');
 				}
 				break;
 			case "moogleMailWriteNew":
@@ -6028,9 +6091,6 @@ hvStat.startup = {
 				break;
 			}
 			hvStat.gadget.initialize();
-		}
-		if (hvStat.settings.adjustKeyEventHandling) {
-			document.onkeydown = hvStat.onkeydown;
 		}
 	},
 };
