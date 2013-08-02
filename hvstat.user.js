@@ -6,7 +6,7 @@
 // @exclude         http://hentaiverse.org/pages/showequip*
 // @exclude         http://hentaiverse.org/?login*
 // @author          Various (http://forums.e-hentai.org/index.php?showtopic=79552)
-// @version         5.6.2
+// @version         5.6.3
 // @resource        battle-log-type0.css                        css/battle-log-type0.css
 // @resource        battle-log-type1.css                        css/battle-log-type1.css
 // @resource        hide-logo.css                               css/hide-logo.css
@@ -573,7 +573,7 @@ hv.initialize = function () {
 // HV STAT object
 //------------------------------------
 var hvStat = {
-	version: "5.6.2",
+	version: "5.6.3",
 	imageResources: [
 		new browser.I("images/", "channeling.png", "css/images/"),
 		new browser.I("images/", "healthpot.png", "css/images/"),
