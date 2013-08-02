@@ -97,7 +97,6 @@
 	text-align: right;
 	position: relative;
 	margin-left: -30px;
-	top: -4px;
 	opacity: 0.75;
 }
 .hvstat-effect-stack-level-badge > div {
@@ -107,6 +106,8 @@
 	display: inline-block;
 	font-weight: bold;
 }
+.hvstat-effect-stack-level-badge-character { top: -22px; }
+.hvstat-effect-stack-level-badge-monster { top: -4px; }
 
 /* Powerup box */
 .hvstat-powerup-box {
