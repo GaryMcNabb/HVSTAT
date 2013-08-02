@@ -1,6 +1,6 @@
 {
 	"name": "HV Statistics, Tracking, and Analysis Tool",
-	"version": "5.6.2",
+	"version": "5.6.3",
 	"manifest_version": 2,
 	"description": "Collects data, analyzes statistics, and enhances the interface of the HentaiVerse",
 	"icons": {
@@ -20,6 +20,7 @@
 	"web_accessible_resources": [
 		"css/battle-log-type0.css",
 		"css/battle-log-type1.css",
+		"css/hide-logo.css",
 		"css/hvstat.css",
 		"css/hvstat-ui.css",
 		"css/jquery-ui-1.9.2.custom.min.css",
@@ -45,6 +46,10 @@
 		"html/settings-pane.html",
 		"html/shrine-pane.html",
 		"json/drops-display-table.json",
+		"scripts/hvstat-injection.js",
+		"scripts/hvstat-migration.js",
+		"scripts/hvstat-noncombat.js",
+		"scripts/hvstat-ui.js",
 		"scripts/jquery-1.8.3.min.js",
 		"scripts/jquery-ui-1.9.2.custom.min.js"
 	]
