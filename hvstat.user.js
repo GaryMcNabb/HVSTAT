@@ -4488,7 +4488,7 @@ hvStat.battle.monster = {
 	},
 	showHealthAll: function () {
 		for (var i = 0; i < this.monsters.length; i++) {
-			this.monsters[i].renderHealth();
+			this.monsters[i].showHealth();
 		}
 	},
 	showStatusAll: function () {
@@ -4912,13 +4912,7 @@ hvStat.battle.monster.Monster.prototype = {
 	},
 	showStatus: function () {
 		var that = this;
-		if (that.isDead) {
-			return;
-		}
-		if (!(hvStat.settings.showMonsterHP ||
-				hvStat.settings.showMonsterMP ||
-				hvStat.settings.showMonsterSP ||
-				hvStat.settings.showMonsterInfoFromDB)) {
+		if (that.isDead || !hvStat.settings.showMonsterInfoFromDB) {
 			return;
 		}
 
@@ -5062,7 +5056,7 @@ hvStat.battle.monster.Monster.prototype = {
 						nameInnerFrameElement.parentNode.removeChild(div);
 					}
 				} else {
-					html = '<div class="hvstat-monster-status-on-custom-font">' + statsHtml + "</div>";
+					html = '<div class="hvstat-monster-status-on-custom-font">' + statsHtml + '</div>';
 					var nameElement = nameInnerFrameElement.children[0];
 					var name = nameElement.innerHTML;
 					nameOuterFrameElement.style.width = "auto"; // Tweak for Firefox
@@ -5427,7 +5421,7 @@ hvStat.battle.monster.Monster.prototype = {
 			alert('request error.');
 		};
 	},
-	renderHealth: function () {
+	showHealth: function () {
 		var that = this;
 		if (that.isDead || !hvStat.settings.showMonsterHP && !hvStat.settings.showMonsterMP && !hvStat.settings.showMonsterSP) {
 			return;
