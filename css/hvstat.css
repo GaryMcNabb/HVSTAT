@@ -97,7 +97,6 @@
 	text-align: right;
 	position: relative;
 	margin-left: -30px;
-	top: -4px;
 	opacity: 0.75;
 }
 .hvstat-effect-stack-level-badge > div {
@@ -107,6 +106,8 @@
 	display: inline-block;
 	font-weight: bold;
 }
+.hvstat-effect-stack-level-badge-character { top: -22px; }
+.hvstat-effect-stack-level-badge-monster { top: -4px; }
 
 /* Powerup box */
 .hvstat-powerup-box {
@@ -193,12 +194,11 @@
 .hvstat-monster-number + div {
 	position: relative;
 	display: inline-block;
-	top: 0px;
+	top: -4px;
 	left: 0px;
 	width: 25px;
-	font-size: 7pt;
+	font-size: 6pt;
 	font-weight: bold;
-	padding-top: 0.0em;
 	color: rgb(92,13,17);
 	text-shadow: 0px 0px 1px rgba(92,13,17,0.5);
 }
@@ -208,12 +208,12 @@
 	top: 0px;
 	left: 0px;
 	width: 25px;
-	font-size: 12pt;
+	font-size: 18pt;
 	font-weight: bold;
-	margin-top: -2px;
+	margin-top: -8px;
 	margin-bottom: 2px;
 	color: rgb(193,0,19);
-	text-shadow: -1px -1px 5px #000,1px -1px 5px #000,-1px 1px 5px #000,1px 1px 5px #000;
+	text-shadow: -1px -1px 8px #000,1px -1px 8px #000,-1px 1px 8px #000,1px 1px 8px #000;
 }
 
 div.hvstat-monster-health,
@@ -264,7 +264,7 @@ div.hvstat-monster-spirit {
 /* Equipment tag */
 input.hvstat-equipment-tag {
 	position: absolute;
-	left: 414px;
+	left: 450px;
 	opacity: 0.8;
 	font-size: 8pt;
 	padding: 0px 0px;
