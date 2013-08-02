@@ -5063,7 +5063,6 @@ hvStat.battle.monster.Monster.prototype = {
 					nameInnerFrameElement.style.width = "auto"; // Tweak for Firefox
 					nameElement.innerHTML = name + html;
 					nameElement.style.whiteSpace = "nowrap";
-					//console.log("scrollWidth = " + nameElement.prop("scrollWidth"));
 					if (Number(nameElement.scrollWidth) <= maxStatsWidth) {	// Does not work with Firefox without tweak
 						break;
 					} else if (hvStat.settings.ResizeMonsterInfo) {
@@ -5074,7 +5073,6 @@ hvStat.battle.monster.Monster.prototype = {
 							for (var len = name.length - 2; len >= 6; len--) {
 								var reducedName = name.substring(0, len) + "...";
 								nameElement.innerHTML = reducedName + html;
-								//console.log("scrollWidth = " + nameElement.prop("scrollWidth"));
 								if (Number(nameElement.scrollWidth) <= maxStatsWidth) {	// does not work with Firefox without tweak
 									break;
 								}
@@ -5966,8 +5964,8 @@ hvStat.startup = {
 			if (hvStat.settings.isShowStatsPopup) {
 				hvStat.battle.monster.popup.initialize();
 			}
-			// Show warnings
 			if (!hv.battle.isRoundFinished) {
+				// Show warnings
 				if (hvStat.settings.warnMode[hvStat.roundContext.battleType]) {
 					hvStat.battle.warningSystem.warnHealthStatus();
 				}
