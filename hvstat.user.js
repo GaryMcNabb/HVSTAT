@@ -2197,7 +2197,6 @@ hvStat.database.openIndexedDB = function (callback) {
 			if (oldVersion === "") {
 				oldVersion = 0;
 			}
-			console.debug("setVersion: old version = " + oldVersion);
 			var versionChangeRequest = idb.setVersion(String(idbVersion));
 			versionChangeRequest.onerror = function (event) {
 				errorMessage = "Database setVersion error: " + event.target.errorCode;
@@ -2770,7 +2769,6 @@ hvStat.battle.eventLog = {
 			} else {
 				turnEvents = currentTurnEvents;
 			}
-			console.debug(turnEvents);
 			turnEvents.process();
 			if (i === 0) {
 				if (hvStat.settings.isShowRoundReminder &&
@@ -5933,9 +5931,7 @@ hvStat.startup = {
 	},
 	phase2: function () {
 		hv.initialize();
-		console.debug(hv);
 		hvStat.addStyle();
-		console.debug(hvStat);
 		if (hvStat.settings.isChangePageTitle) {
 			document.title = hvStat.settings.customPageTitle;
 		}
