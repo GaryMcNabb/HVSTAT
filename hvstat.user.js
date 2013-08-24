@@ -3459,7 +3459,7 @@ hvStat.battle.command.MenuItem.prototype = {
 				this.parent.open();
 			}
 			if (!this.selected) {
-				util.event.click(this.element);
+				this.element.click();
 			}
 		}
 	},
@@ -3496,12 +3496,12 @@ hvStat.battle.command.Menu.prototype = {
 	},
 	open: function () {
 		while (!this.opened) {
-			util.event.click(this.parent.element);
+			this.parent.element.click();
 		}
 	},
 	close: function () {
 		if (this.opened) {
-			util.event.click(this.parent.element);
+			this.parent.element.click();
 		}
 	},
 	getItemById: function (id) {
@@ -3564,7 +3564,7 @@ hvStat.battle.command.Command.prototype = {
 		return null;
 	},
 	select: function (menuElementId) {
-		util.event.click(this.element);
+		this.element.click();
 	},
 	close: function () {
 		if (this.menuOpened) {
@@ -3860,7 +3860,7 @@ hvStat.battle.enhancement.scanButton = {
 		button.textContent = "Scan";
 		button.addEventListener("click", function (event) {
 			hvStat.battle.command.menuItemMap["Scan"].select();
-			util.event.click(monster);
+			monster.click();
 		});
 		return button;
 	},
@@ -3926,7 +3926,7 @@ hvStat.battle.enhancement.skillButton = {
 		}
 		button.addEventListener("click", function (event) {
 			hvStat.battle.command.menuItemMap["Skill" + skillNumber].select();
-			util.event.click(monster);
+			monster.click();
 		});
 		return button;
 	},
