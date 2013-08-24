@@ -9,7 +9,12 @@
 		"48": "icons/48.png"
 	},
 	"content_scripts": [ {
-		"js": [ "hvstat.user.js" ],
+		"js": [
+			"scripts/util.js",
+			"scripts/browser.js",
+			"scripts/hv.js",
+			"hvstat.user.js"
+		],
 		"matches": [ "http://hentaiverse.org/*" ],
 		"exclude_matches": [
 			"http://hentaiverse.org/pages/showequip*",
