@@ -3956,9 +3956,9 @@ hvStat.battle.monster = {
 	monsters: [],	// Instances of hvStat.battle.Monster
 	initialize: function () {
 		for (var i = 0; i < hv.battle.elementCache.monsters.length; i++) {
-			hvStat.battle.monster.monsters[i] = new hvStat.battle.monster.Monster(i);
+			this.monsters[i] = new hvStat.battle.monster.Monster(i);
 			if (hvStat.roundContext.monsters[i]) {
-				hvStat.battle.monster.monsters[i].setFromValueObject(hvStat.roundContext.monsters[i]);
+				this.monsters[i].setFromValueObject(hvStat.roundContext.monsters[i]);
 			}
 		}
 	},
