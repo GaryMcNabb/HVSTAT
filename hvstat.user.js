@@ -6,7 +6,7 @@
 // @exclude         http://hentaiverse.org/pages/showequip*
 // @exclude         http://hentaiverse.org/?login*
 // @author          Various (http://forums.e-hentai.org/index.php?showtopic=79552)
-// @version         5.6.3
+// @version         5.6.4
 // @require         scripts/util.js
 // @require         scripts/browser.js
 // @require         scripts/hv.js
@@ -59,7 +59,7 @@ window.IDBCursor = window.IDBCursor || window.webkitIDBCursor;
 // HV STAT object
 //------------------------------------
 var hvStat = {
-	version: "5.6.3",
+	version: "5.6.4",
 	imageResources: [
 		new browser.I("images/", "channeling.png", "css/images/"),
 		new browser.I("images/", "healthpot.png", "css/images/"),
