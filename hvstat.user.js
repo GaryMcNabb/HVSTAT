@@ -6,7 +6,10 @@
 // @exclude         http://hentaiverse.org/pages/showequip*
 // @exclude         http://hentaiverse.org/?login*
 // @author          Various (http://forums.e-hentai.org/index.php?showtopic=79552)
-// @version         5.6.3
+// @version         5.6.4
+// @require         scripts/util.js
+// @require         scripts/browser.js
+// @require         scripts/hv.js
 // @resource        battle-log-type0.css                        css/battle-log-type0.css
 // @resource        battle-log-type1.css                        css/battle-log-type1.css
 // @resource        hide-logo.css                               css/hide-logo.css
@@ -53,527 +56,10 @@ window.IDBKeyRange = window.IDBKeyRange|| window.webkitIDBKeyRange;
 window.IDBCursor = window.IDBCursor || window.webkitIDBCursor;
 
 //------------------------------------
-// Generic utilities
-//------------------------------------
-var util = {
-	clone: function (item) {
-		//console.debug(item);
-		if (item === null) return null;
-		var primitives = [ "boolean", "number", "string", "undefined" ];
-		var i = primitives.length;
-		while (i--) {
-			if (typeof item === primitives[i]) {
-				return item;
-			}
-		}
-		var clone;
-		if (Array.isArray(item)) {
-			clone = [];
-			i = item.length;
-			for (i = 0; i < item.length; i++) {
-				//console.debug(i);
-				clone[i] = arguments.callee(item[i]);
-			}
-		} else {
-			clone = {};
-			for (i in item) {
-				if (Object.prototype.hasOwnProperty.call(item, i)) {
-					//console.debug(i);
-					clone[i] = arguments.callee(item[i]);
-				}
-			}
-		}
-		return clone;
-	},
-	escapeRegex: function (value) {
-		return value.replace(/[\-\[\]{}()*+?.,\\\^$|#\s]/g, "\\$&");
-	},
-	innerText: function (node) {
-		var s = "", t, i;
-		if (node.nodeType === document.TEXT_NODE) {
-			if (node.nodeValue) {
-				s = node.nodeValue;
-			}
-		} else if (node.nodeType === document.ELEMENT_NODE) {
-			for (i = 0; i < node.childNodes.length; i++) {
-				t = arguments.callee(node.childNodes[i]);
-				if (t) {
-					if (s !== "") {
-						s += " ";
-					}
-					s += t;
-				}
-			}
-		}
-		return s;
-	},
-	siteScriptElement: null,
-	addSiteScript: function (fn) {
-		if (!this.siteScriptElement) {
-			this.scriptElement = document.createElement("script");
-			this.scriptElement.type = "text/javascript";
-			document.body.appendChild(this.scriptElement);
-		}
-		this.scriptElement.textContent += '\n' + String(fn) + '\n';
-	},
-};
-util.CallbackQueue = function () {
-	this.closures = [];
-	this.executed = false;
-	this.context = null;
-};
-util.CallbackQueue.prototype = {
-	add: function (fn) {
-		if (!(fn instanceof Function)) {
-			return;
-		}
-		if (this.executed) {
-			fn(this.context);
-		} else {
-			this.closures.push(fn);
-		}
-	},
-	execute: function (context) {
-		if (this.executed) {
-			return;
-		}
-		this.executed = true;
-		this.context = context;
-		while (this.closures[0]) {
-			this.closures.shift()(this.context);
-		}
-	},
-};
-
-util.event = {
-	clickEvent: null,
-	click: function (element) {
-		if (!this.clickEvent) {
-			this.clickEvent = document.createEvent("MouseEvents");
-			this.clickEvent.initMouseEvent("click", true, true, window, 0, 0, 0, 0, 0, false, false, false, false, 0, null);
-		}
-		element.dispatchEvent(this.clickEvent);
-	},
-	mouseOverEvent: null,
-	mouseOver: function (element) {
-		if (!this.mouseOverEvent) {
-			this.mouseOverEvent = document.createEvent("MouseEvents");
-			this.mouseOverEvent.initMouseEvent("mouseover", true, true, window, 0, 0, 0, 0, 0, false, false, false, false, 0, null);
-		}
-		element.dispatchEvent(this.mouseOverEvent);
-	},
-	mouseOutEvent: null,
-	mouseOut: function (element) {
-		if (!this.mouseOutEvent) {
-			this.mouseOutEvent = document.createEvent("MouseEvents");
-			this.mouseOutEvent.initMouseEvent("mouseout", true, true, window, 0, 0, 0, 0, 0, false, false, false, false, 0, null);
-		}
-		element.dispatchEvent(this.mouseOutEvent);
-	},
-};
-
-util.document = {
-	bodyRange: null,
-	_body: null,
-	get body() {
-		return this._body || document.body;
-	},
-	extractBody: function () {
-		if (document.body) {
-			this.bodyRange = document.createRange();
-			this.bodyRange.selectNode(document.body);
-			this._body = this.bodyRange.extractContents();
-		}
-	},
-	restoreBody: function () {
-		if (this._body) {
-			this.bodyRange.insertNode(this._body);
-			this._body = null;
-		}
-	},
-};
-
-//------------------------------------
-// Browser utilities
-//------------------------------------
-var browser = {
-	get isChrome() {
-		return navigator.userAgent.indexOf("Chrome") >= 0;
-	},
-};
-
-browser.extension = {
-	getResourceURL: function (resourcePath, resourceName) {
-		var resourceURL;
-		if (browser.isChrome) {
-			resourceURL = chrome.extension.getURL(resourcePath + resourceName);
-		} else {
-			resourceURL = GM_getResourceURL(resourceName);
-		}
-		return resourceURL;
-	},
-	getResourceText: function (resoucePath, resourceName) {
-		var resourceText;
-		if (browser.isChrome) {
-			var request = new XMLHttpRequest();
-			var resourceURL = browser.extension.getResourceURL(resoucePath, resourceName);
-			request.open("GET", resourceURL, false);
-			request.send(null);
-			resourceText = request.responseText;
-		} else {
-			resourceText = GM_getResourceText(resourceName);
-		}
-		return resourceText;
-	},
-	loadScript: function (scriptPath, scriptName) {
-		eval.call(window, browser.extension.getResourceText(scriptPath, scriptName));
-	}
-};
-
-browser.extension.style = {
-	element: null,
-	add: function (styleText) {
-		if (!browser.isChrome) {
-			GM_addStyle(styleText);
-		} else {
-			if (!this.element) {
-				this.element = document.createElement("style");
-				this.element.type = "text/css";
-				(document.head || document.documentElement).insertBefore(this.element, null);
-			}
-			this.element.textContent += "\n" + styleText;
-		}
-	},
-	addFromResource: function (styleResourcePath, styleResouceName, imageResouceInfoArray) {
-		var styleText = browser.extension.getResourceText(styleResourcePath, styleResouceName);
-		if (Array.isArray(imageResouceInfoArray)) {
-			// Replace image URLs
-			for (var i = 0; i < imageResouceInfoArray.length; i++) {
-				var imageResourceName = imageResouceInfoArray[i].name;
-				var imageOriginalPath = imageResouceInfoArray[i].originalPath;
-				var imageResourcePath = imageResouceInfoArray[i].resourcePath;
-				var imageResourceURL = browser.extension.getResourceURL(imageResourcePath, imageResourceName);
-				var regex = new RegExp(util.escapeRegex(imageOriginalPath + imageResourceName), "g");
-				styleText = styleText.replace(regex, imageResourceURL);
-			}
-		}
-		this.add(styleText);
-	},
-	ImageResourceInfo: function (originalPath, name, resourcePath) {
-		this.originalPath = originalPath;
-		this.name = name;
-		this.resourcePath = resourcePath;
-	},
-};
-
-browser.I = browser.extension.style.ImageResourceInfo;	// Alias
-
-//------------------------------------
-// HV utility object
-//------------------------------------
-var hv = {};
-
-hv.util = {
-	getGaugeRate: function (gaugeElement, gaugeMaxWidth) {
-		if (!gaugeElement) {
-			return 0;
-		}
-		var result = /width\s*?:\s*?(\d+?)px/i.exec(gaugeElement.style.cssText);
-		var rate = 0;
-		if (result) {
-			rate = Number(result[1]) / gaugeMaxWidth;
-		} else {
-			rate = gaugeElement.width / gaugeMaxWidth;
-		}
-		return rate;
-	},
-	getCharacterGaugeRate: function (gauge) {
-		return hv.util.getGaugeRate(gauge, 120);
-	},
-	percent: function (value) {
-		return Math.floor(value * 100);
-	},
-	isUsingHVFontEngine: null,
-	hvFontMap: "0123456789.,!?%+-=/\\'\":;()[]_           ABCDEFGHIJKLMNOPQRSTUVWXYZ ",
-	hvFontTextBlockSelector: 'div.fd2, div.fd4',
-	hvFontCharsLtoRSelector: 'div.f2lb, div.f2lg, div.f2lr, div.f2ly, div.f2la, div.f4lb, div.f4lg, div.f4lr, div.f4ly, div.f4la',
-	hvFontCharsRtoLSelector: 'div.f2rb, div.f2rg, div.f2rr, div.f2ry, div.f2ra, div.f4rb, div.f4rg, div.f4rr, div.f4ry, div.f4ra',
-	innerText: function (element) {
-		if (!this.isUsingHVFontEngine) {
-			return util.innerText(element);
-		}
-		// Parse HV Font text
-		var innerText = "";
-		var textBlock, textBlocks;
-		var selfClassNames = element.className.split(' ');
-		//console.debug(selfClassNames);
-		if (selfClassNames.indexOf('fd2') >= 0 || selfClassNames.indexOf('fd4') >= 0) {
-			textBlocks = [element];
-		} else {
-			textBlocks = element.querySelectorAll(this.hvFontTextBlockSelector);
-		}
-		//console.debug(textBlocks);
-		var charDivsLtoR, charDivsRtoL, charDivs, charDiv, regexResult, index;
-		var i, j, len;
-		for (i = 0; i < textBlocks.length; i++) {
-			textBlock = textBlocks[i];
-			charDivsLtoR = textBlock.querySelectorAll(this.hvFontCharsLtoRSelector);
-			charDivsRtoL = textBlock.querySelectorAll(this.hvFontCharsRtoLSelector);
-			charDivs = [];
-			if (charDivsLtoR) {
-				len = charDivsLtoR.length;
-				for (j = 0; j < len; j++) {
-					charDivs[j] = charDivsLtoR[j];
-				}
-			}
-			if (charDivsRtoL) {
-				len = charDivsRtoL.length;
-				for (j = 0; j < len; j++) {
-					charDivs.unshift(charDivsRtoL[j]);
-				}
-			}
-			//console.debug(charDivs);
-			len = charDivs.length;
-			for (j = 0; j < len; j++) {
-				charDiv = charDivs[j];
-				regexResult = charDiv.className.match(/f(?:2|4)(\d+)/i);
-				//console.debug(regexResult);
-				if (regexResult) {
-					index = Number(regexResult[1]);
-					innerText += this.hvFontMap[index];
-				}
-			}
-			innerText += " ";	//	Separator between text blocks
-		}
-		return innerText;
-	}
-};
-
-hv.locationMap = {
-	"character":		"?s=Character&ss=ch",
-	"equipment":		"?s=Character&ss=eq",
-	"abilities":		"?s=Character&ss=ab",
-	"training":			"?s=Character&ss=tr",
-	"battleItems":		"?s=Character&ss=it",
-	"inventory":		"?s=Character&ss=in",
-	"settings":			"?s=Character&ss=se",
-	"equipmentShop":	"?s=Bazaar&ss=es",
-	"itemShop":			"?s=Bazaar&ss=is",
-	"itemShopBot":		"?s=Bazaar&ss=ib",
-	"monsterLab":		"?s=Bazaar&ss=ml",
-	"shrine":			"?s=Bazaar&ss=ss",
-	"forge":			"?s=Bazaar&ss=fr",
-	"moogleMailInbox":		"?s=Bazaar&ss=mm&filter=Inbox",
-	"moogleMailWriteNew":	"?s=Bazaar&ss=mm&filter=Write%20New",
-	"moogleMailReadMail":	"?s=Bazaar&ss=mm&filter=Read%20Mail",
-	"moogleMailSentMail":	"?s=Bazaar&ss=mm&filter=Sent%20Mail",
-	"moogleMail":		"?s=Bazaar&ss=mm",
-	"battle":			"?s=Battle&ss=ba",
-	"arena":			"?s=Battle&ss=ar",
-	"ringOfBlood":		"?s=Battle&ss=rb",
-	"grindfest":		"?s=Battle&ss=gr",
-	"itemWorld":		"?s=Battle&ss=iw",
-};
-
-hv.character = {
-	get healthRate() {
-		return hv.util.getCharacterGaugeRate(hv.elementCache.leftBar.querySelector('img[alt="health"]'));
-	},
-	get magicRate() {
-		return hv.util.getCharacterGaugeRate(hv.elementCache.leftBar.querySelector('img[alt="magic"]'));
-	},
-	get spiritRate() {
-		return hv.util.getCharacterGaugeRate(hv.elementCache.leftBar.querySelector('img[alt="spirit"]'));
-	},
-	get overchargeRate() {
-		return hv.util.getCharacterGaugeRate(hv.elementCache.leftBar.querySelector('img[alt="overcharge"]'));
-	},
-	get healthPercent() {
-		return hv.util.percent(this.healthRate);
-	},
-	get magicPercent() {
-		return hv.util.percent(this.magicRate);
-	},
-	get spiritPercent() {
-		return hv.util.percent(this.spiritRate);
-	},
-	get overchargePercent() {
-		return hv.util.percent(this.overchargeRate);
-	},
-};
-
-hv.elementCache = {
-	_popup: null,
-	get popup() {
-		if (!this._popup) {
-			this._popup = util.document.body.querySelector('#popup_box');
-		}
-		return this._popup;
-	},
-	_stuffBox: null,
-	get stuffBox() {
-		if (!this._stuffBox) {
-			this._stuffBox = util.document.body.querySelector('div.stuffbox');
-		}
-		return this._stuffBox;
-	},
-	_leftBar: null,
-	get leftBar() {
-		if (!this._leftBar) {
-			this._leftBar = this.stuffBox.children[0];
-		}
-		return this._leftBar;
-	},
-	_infoTables: null,
-	get infoTables() {
-		if (!this._infoTables) {
-			this._infoTables = this.leftBar.querySelectorAll('table.cit');
-		}
-		return this._infoTables;
-	},
-};
-
-hv.initialize = function () {
-	this.util.isUsingHVFontEngine = util.innerText(hv.elementCache.infoTables[0]).indexOf("Level") === -1;
-	var settings = {
-		isUsingHVFontEngine: this.util.isUsingHVFontEngine,
-		get difficulty() {
-			var regexResult = hv.util.innerText(hv.elementCache.infoTables[1]).match(/(Normal|Hard|Nightmare|Hell|Nintendo|Battletoads|IWBTH)/i);
-			if (regexResult) {
-				return regexResult[1].toUpperCase();
-			} else {
-				return "";
-			}
-		},
-	};
-
-	var battleLog = util.document.body.querySelector('#togpane_log');
-	var battle = {
-		isActive: !!battleLog,
-		elementCache: null,
-		get isRoundFinished() {
-			if (!this.isActive) {
-				return false;
-			}
-			return !!this.elementCache.dialog;
-		},
-		get isFinished() {
-			if (!this.isActive) {
-				return false;
-			}
-			if (!this.isRoundFinished) {
-				return false;
-			} else {
-				if (!this.elementCache.dialogButton) {
-					// Hourly Encounter
-					return true;
-				} else {
-					// The others
-					var onclick = this.elementCache.dialogButton.getAttribute("onclick");
-					return onclick.indexOf("battle.battle_continue") === -1;
-				}
-			}
-		},
-	};
-	if (battle.isActive) {
-		battle.elementCache = {
-			battleLog: battleLog,
-			_mainPane: null,
-			_quickcastBar: null,
-			_monsterPane: null,
-			_dialog: null,
-			_dialogButton: null,
-			_characterEffectIcons: null,
-			_monsters: null,
-			_monsterEffectIcons: null,
-			_monsterGauges: null,
-			get mainPane() {
-				if (!this._mainPane) {
-					this._mainPane = util.document.body.querySelector('#mainpane');
-				}
-				return this._mainPane;
-			},
-			get quickcastBar() {
-				if (!this._quickcastBar) {
-					this._quickcastBar = util.document.body.querySelector('#quickbar');
-				}
-				return this._quickcastBar;
-			},
-			get monsterPane() {
-				if (!this._monsterPane) {
-					this._monsterPane = util.document.body.querySelector('#monsterpane');
-				}
-				return this._monsterPane;
-			},
-			get dialog() {
-				if (!this._dialog) {
-					this._dialog = util.document.body.querySelector('div.btcp');
-				}
-				return this._dialog;
-			},
-			get dialogButton() {
-				if (!this._dialogButton) {
-					this._dialogButton = util.document.body.querySelector('#ckey_continue');
-				}
-				return this._dialogButton;
-			},
-			get characterEffectIcons() {
-				if (!this._characterEffectIcons) {
-					this._characterEffectIcons = this.mainPane.querySelectorAll('div.btt > div.bte > img[onmouseover^="battle.set_infopane_effect"]');
-				}
-				return this._characterEffectIcons;
-			},
-			get monsters() {
-				if (!this._monsters) {
-					this._monsters = this.monsterPane.querySelectorAll('div.btm1');
-				}
-				return this._monsters;
-			},
-			get monsterEffectIcons() {
-				if (!this._monsterEffectIcons) {
-					this._monsterEffectIcons = this.monsterPane.querySelectorAll('div.btm1 > div.btm6 > img[onmouseover^="battle.set_infopane_effect"]');
-				}
-				return this._monsterEffectIcons;
-			},
-			get monsterGauges() {
-				if (!this._monsterGauges) {
-					this._monsterGauges = this.monsterPane.querySelectorAll('div.btm1 > div.btm4 > div.btm5 > div.chbd > img.chb2');
-				}
-				return this._monsterGauges;
-			},
-		};
-	}
-	var isLocationFound = false,
-		location = "",
-		key;
-	if (battle.isActive) {
-		location = "engagingBattle";
-	} else {
-		for (key in this.locationMap) {
-			if (document.location.search.indexOf(this.locationMap[key]) === 0) {
-				location = key;
-				isLocationFound = true;
-				break;
-			}
-		}
-		if (!isLocationFound) {
-			if (util.document.body.querySelector('#riddleform')) {
-				location = "riddle";
-			} else if (util.document.body.querySelector('#pattrform')) {
-				location = "character";
-			}
-		}
-	}
-	this.location = location;
-	this.settings = settings;
-	this.battle = battle;
-};
-
-//------------------------------------
 // HV STAT object
 //------------------------------------
 var hvStat = {
-	version: "5.6.3",
+	version: "5.6.4",
 	imageResources: [
 		new browser.I("images/", "channeling.png", "css/images/"),
 		new browser.I("images/", "healthpot.png", "css/images/"),
@@ -1076,6 +562,7 @@ hvStat.storage.initialValue = {
 		isWarnSparkTrigger: true,
 		isWarnSparkExpire: true,
 		alertWhenChannelingIsGained: false,
+		alertWhenCooldownExpiredForDrain: false,
 		// - Effects Expiring Warnings
 		isMainEffectsAlertSelf: false,
 		isEffectsAlertSelf: [false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false],
@@ -1089,6 +576,7 @@ hvStat.storage.initialValue = {
 		isRememberScan: false,
 		isRememberSkillsTypes: false,
 		// - Monster Display
+		doesScaleMonsterGauges: false,
 		showMonsterHP: true,
 		showMonsterHPPercent: false,
 		showMonsterMP: true,
@@ -2197,7 +1685,6 @@ hvStat.database.openIndexedDB = function (callback) {
 			if (oldVersion === "") {
 				oldVersion = 0;
 			}
-			console.debug("setVersion: old version = " + oldVersion);
 			var versionChangeRequest = idb.setVersion(String(idbVersion));
 			versionChangeRequest.onerror = function (event) {
 				errorMessage = "Database setVersion error: " + event.target.errorCode;
@@ -2770,7 +2257,6 @@ hvStat.battle.eventLog = {
 			} else {
 				turnEvents = currentTurnEvents;
 			}
-			console.debug(turnEvents);
 			turnEvents.process();
 			if (i === 0) {
 				if (hvStat.settings.isShowRoundReminder &&
@@ -3323,6 +2809,10 @@ hvStat.battle.eventLog.messageTypeParams = {
 		relatedMessageTypeNames: null,
 		contentType: "text",
 		evaluationFn: function (message) {
+			var abilityName = message.regexResult[1];
+			if (hvStat.settings.alertWhenCooldownExpiredForDrain && abilityName === "Drain") {
+				hvStat.battle.warningSystem.enqueueAlert(message.regexResult[0]);
+			}
 		},
 	},
 	GAINING_EFFECT: {
@@ -3975,7 +3465,7 @@ hvStat.battle.command.MenuItem.prototype = {
 				this.parent.open();
 			}
 			if (!this.selected) {
-				util.event.click(this.element);
+				this.element.click();
 			}
 		}
 	},
@@ -4012,12 +3502,12 @@ hvStat.battle.command.Menu.prototype = {
 	},
 	open: function () {
 		while (!this.opened) {
-			util.event.click(this.parent.element);
+			this.parent.element.click();
 		}
 	},
 	close: function () {
 		if (this.opened) {
-			util.event.click(this.parent.element);
+			this.parent.element.click();
 		}
 	},
 	getItemById: function (id) {
@@ -4080,7 +3570,7 @@ hvStat.battle.command.Command.prototype = {
 		return null;
 	},
 	select: function (menuElementId) {
-		util.event.click(this.element);
+		this.element.click();
 	},
 	close: function () {
 		if (this.menuOpened) {
@@ -4376,7 +3866,7 @@ hvStat.battle.enhancement.scanButton = {
 		button.textContent = "Scan";
 		button.addEventListener("click", function (event) {
 			hvStat.battle.command.menuItemMap["Scan"].select();
-			util.event.click(monster);
+			monster.click();
 		});
 		return button;
 	},
@@ -4442,7 +3932,7 @@ hvStat.battle.enhancement.skillButton = {
 		}
 		button.addEventListener("click", function (event) {
 			hvStat.battle.command.menuItemMap["Skill" + skillNumber].select();
-			util.event.click(monster);
+			monster.click();
 		});
 		return button;
 	},
@@ -4472,9 +3962,9 @@ hvStat.battle.monster = {
 	monsters: [],	// Instances of hvStat.battle.Monster
 	initialize: function () {
 		for (var i = 0; i < hv.battle.elementCache.monsters.length; i++) {
-			hvStat.battle.monster.monsters[i] = new hvStat.battle.monster.Monster(i);
+			this.monsters[i] = new hvStat.battle.monster.Monster(i);
 			if (hvStat.roundContext.monsters[i]) {
-				hvStat.battle.monster.monsters[i].setFromValueObject(hvStat.roundContext.monsters[i]);
+				this.monsters[i].setFromValueObject(hvStat.roundContext.monsters[i]);
 			}
 		}
 	},
@@ -4485,6 +3975,24 @@ hvStat.battle.monster = {
 			}
 		}
 		return true;
+	},
+	setScale: function () {
+		var i, highestHp = -1;
+		for (i = 0; i < this.monsters.length; i++) {
+			var hp = this.monsters[i].maxHp;
+			if (hp && highestHp < hp) {
+				highestHp = hp;
+			}
+		}
+		for (i = 0; i < this.monsters.length; i++) {
+			var monster = this.monsters[i];
+			monster.gaugeScale = monster.maxHp / highestHp;
+		}
+	},
+	scaleGaugesAll: function () {
+		for (var i = 0; i < this.monsters.length; i++) {
+			this.monsters[i].scaleGauges();
+		}
 	},
 	showHealthAll: function () {
 		for (var i = 0; i < this.monsters.length; i++) {
@@ -4831,6 +4339,7 @@ hvStat.battle.monster.Monster = function (index) {
 	this._prevSpRate = null;
 	this._scanResult = null;
 	this._skills = [];
+	this.gaugeScale = null;
 };
 hvStat.battle.monster.Monster.prototype = {
 	gaugeRate: function (gaugeIndex) {
@@ -5419,6 +4928,20 @@ hvStat.battle.monster.Monster.prototype = {
 			alert('request error.');
 		};
 	},
+	getCssScaleXText: function (scaleX) {
+		var s = "scaleX(" + scaleX + ")";
+		var t = "transform: " + s + "; transform-origin: left;" +
+			"-moz-transform: " + s + "; -moz-transform-origin: left;" +
+			"-webkit-transform: " + s + "; -webkit-transform-origin: left;";
+		return t;
+	},
+	scaleGauges: function () {
+		if (hvStat.settings.doesScaleMonsterGauges && this.gaugeScale) {
+			for (var i = 0; i < this.gauges.length; i++) {
+				this.gauges[i].parentNode.style.cssText += this.getCssScaleXText(this.gaugeScale);
+			}
+		}
+	},
 	showHealth: function () {
 		var that = this;
 		if (that.isDead || !hvStat.settings.showMonsterHP && !hvStat.settings.showMonsterMP && !hvStat.settings.showMonsterSP) {
@@ -5427,6 +4950,9 @@ hvStat.battle.monster.Monster.prototype = {
 		var div;
 		if (hvStat.settings.showMonsterHP || hvStat.settings.showMonsterHPPercent) {
 			div = document.createElement("div");
+			if (hvStat.settings.doesScaleMonsterGauges && this.gaugeScale) {
+				div.style.cssText += this.getCssScaleXText(1 / this.gaugeScale);
+			}
 			div.className = "hvstat-monster-health";
 			if (hvStat.settings.showMonsterHPPercent) {
 				div.textContent = (that.healthPointRate * 100).toFixed(2) + "%";
@@ -5437,12 +4963,18 @@ hvStat.battle.monster.Monster.prototype = {
 		}
 		if (hvStat.settings.showMonsterMP) {
 			div = document.createElement("div");
+			if (hvStat.settings.doesScaleMonsterGauges && this.gaugeScale) {
+				div.style.cssText += this.getCssScaleXText(1 / this.gaugeScale);
+			}
 			div.className = "hvstat-monster-magic";
 			div.textContent = (that.magicPointRate * 100).toFixed(1) + "%";
 			this.gauges[1].parentNode.insertBefore(div, null);
 		}
 		if (hvStat.settings.showMonsterSP && this.hasSpiritPoint) {
 			div = document.createElement("div");
+			if (hvStat.settings.doesScaleMonsterGauges && this.gaugeScale) {
+				div.style.cssText += this.getCssScaleXText(1 / this.gaugeScale);
+			}
 			div.className = "hvstat-monster-spirit";
 			div.textContent = (that.spiritPointRate * 100).toFixed(1) + "%";
 			this.gauges[2].parentNode.insertBefore(div, null);
@@ -5933,9 +5465,7 @@ hvStat.startup = {
 	},
 	phase2: function () {
 		hv.initialize();
-		console.debug(hv);
 		hvStat.addStyle();
-		console.debug(hvStat);
 		if (hvStat.settings.isChangePageTitle) {
 			document.title = hvStat.settings.customPageTitle;
 		}
@@ -5956,7 +5486,13 @@ hvStat.startup = {
 			if (hvStat.roundContext.currRound > 0 && hvStat.settings.isShowRoundCounter) {
 				hvStat.battle.enhancement.roundCounter.create();
 			}
+			if (hvStat.settings.doesScaleMonsterGauges) {
+				hvStat.battle.monster.setScale();
+			}
 			hvStat.battle.monster.showHealthAll();
+			if (hvStat.settings.doesScaleMonsterGauges) {
+				hvStat.battle.monster.scaleGaugesAll();
+			}
 			util.document.restoreBody();
 			if (!hvStat.database.loadingMonsterInfoFromDB) {
 				hvStat.battle.monster.showStatusAll();

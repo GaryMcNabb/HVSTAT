@@ -127,10 +127,22 @@
 	line-height: 32px;
 	cursor: default;
 }
-.hvstat-powerup-box-channeling { background-image: url(images/channeling.png); cursor: pointer; }
-.hvstat-powerup-box-health { background-image: url(images/healthpot.png); cursor: pointer; }
-.hvstat-powerup-box-mana { background-image: url(images/manapot.png); cursor: pointer; }
-.hvstat-powerup-box-spirit { background-image: url(images/spiritpot.png); cursor: pointer; }
+.hvstat-powerup-box-channeling {
+	cursor: pointer;
+	background-image: url(http://ehgt.org/v/e/channeling.png);
+}
+.hvstat-powerup-box-health {
+	cursor: pointer;
+	background-image: url(http://ehgt.org/v/e/healthpot.png);
+}
+.hvstat-powerup-box-mana {
+	cursor: pointer;
+	background-image: url(http://ehgt.org/v/e/manapot.png);
+}
+.hvstat-powerup-box-spirit {
+	cursor: pointer;
+	background-image: url(http://ehgt.org/v/e/spiritpot.png);
+}
 
 /* Quickcast highlight */
 .hvstat-health-yellow-alert { background-color: orange; }
@@ -227,6 +239,7 @@ div.hvstat-monster-spirit {
 	font-size: 8pt;
 	font-weight: bolder;
 	color: yellow;
+	text-shadow: -1px -1px 0px Black, 1px -1px 0px Black, -1px 1px 0px Black, 1px 1px 0px Black;
 }
 
 .hvstat-monster-status-on-hv-font {
@@ -272,4 +285,11 @@ input.hvstat-equipment-tag {
 }
 input.hvstat-equipment-tag-new {
 	color: Red;
+}
+
+/* Improvements for official HV page */
+div.bte > img,
+div.btm6 > img {
+	width: 30px;
+	height: 32px;
 }

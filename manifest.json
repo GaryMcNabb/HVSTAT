@@ -1,6 +1,6 @@
 {
 	"name": "HV Statistics, Tracking, and Analysis Tool",
-	"version": "5.6.3",
+	"version": "5.6.4",
 	"manifest_version": 2,
 	"description": "Collects data, analyzes statistics, and enhances the interface of the HentaiVerse",
 	"icons": {
@@ -9,7 +9,12 @@
 		"48": "icons/48.png"
 	},
 	"content_scripts": [ {
-		"js": [ "hvstat.user.js" ],
+		"js": [
+			"scripts/util.js",
+			"scripts/browser.js",
+			"scripts/hv.js",
+			"hvstat.user.js"
+		],
 		"matches": [ "http://hentaiverse.org/*" ],
 		"exclude_matches": [
 			"http://hentaiverse.org/pages/showequip*",

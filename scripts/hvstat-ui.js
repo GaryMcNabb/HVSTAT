@@ -993,6 +993,7 @@ function initSettingsPane() {
 	if (hvStat.settings.isWarnSparkTrigger) $("input[name=isWarnSparkTrigger]").attr("checked", "checked");
 	if (hvStat.settings.isWarnSparkExpire) $("input[name=isWarnSparkExpire]").attr("checked", "checked");
 	if (hvStat.settings.alertWhenChannelingIsGained) $("input[name=alertWhenChannelingIsGained]").attr("checked", "checked");
+	if (hvStat.settings.alertWhenCooldownExpiredForDrain) $("input[name=alertWhenCooldownExpiredForDrain]").attr("checked", "checked");
 	// - Effects Expiring Warnings
 	if (hvStat.settings.isMainEffectsAlertSelf) $("input[name=isMainEffectsAlertSelf]").attr("checked", "checked");
 	if (hvStat.settings.isEffectsAlertSelf[0]) $("input[name=isEffectsAlertSelf0]").attr("checked", "checked");
@@ -1056,6 +1057,7 @@ function initSettingsPane() {
 	if (hvStat.settings.isRememberScan) $("input[name=isRememberScan]").attr("checked", "checked");
 	if (hvStat.settings.isRememberSkillsTypes) $("input[name=isRememberSkillsTypes]").attr("checked", "checked");
 	// - Monster Display
+	if (hvStat.settings.doesScaleMonsterGauges) $("input[name=doesScaleMonsterGauges]").attr("checked", "checked");
 	if (hvStat.settings.showMonsterHP) $("input[name=showMonsterHP]").attr("checked", "checked");
 	if (hvStat.settings.showMonsterHPPercent) $("input[name=showMonsterHPPercent]").attr("checked", "checked");
 	if (hvStat.settings.showMonsterMP) $("input[name=showMonsterMP]").attr("checked", "checked");
@@ -1075,7 +1077,6 @@ function initSettingsPane() {
 	if (hvStat.settings.hideSpecificDamageType[6]) $("input[name=hideSpecificDamageType6]").attr("checked", "checked");
 	if (hvStat.settings.hideSpecificDamageType[7]) $("input[name=hideSpecificDamageType7]").attr("checked", "checked");
 	if (hvStat.settings.hideSpecificDamageType[8]) $("input[name=hideSpecificDamageType8]").attr("checked", "checked");
-	if (hvStat.settings.hideSpecificDamageType[9]) $("input[name=hideSpecificDamageType9]").attr("checked", "checked");
 	if (hvStat.settings.hideSpecificDamageType[10]) $("input[name=hideSpecificDamageType10]").attr("checked", "checked");
 	if (hvStat.settings.ResizeMonsterInfo) $("input[name=ResizeMonsterInfo]").attr("checked", "checked");
 	if (hvStat.settings.isShowStatsPopup) $("input[name=isShowStatsPopup]").attr("checked", "checked");
@@ -1177,6 +1178,7 @@ function initSettingsPane() {
 	$("input[name=isWarnSparkTrigger]").click(saveSettings);
 	$("input[name=isWarnSparkExpire]").click(saveSettings);
 	$("input[name=alertWhenChannelingIsGained]").click(saveSettings);
+	$("input[name=alertWhenCooldownExpiredForDrain]").click(saveSettings);
 	// - Effects Expiring Warnings
 	$("input[name=isMainEffectsAlertSelf]").click(saveSettings);
 	$("input[name^=isEffectsAlertSelf]").click(saveSettings);
@@ -1190,6 +1192,7 @@ function initSettingsPane() {
 	$("input[name=isRememberScan]").click(reminderAndSaveSettings);
 	$("input[name=isRememberSkillsTypes]").click(reminderAndSaveSettings);
 	// - Monster Display
+	$("input[name=doesScaleMonsterGauges]").click(saveSettings);
 	$("input[name=showMonsterHP]").click(saveSettings);
 	$("input[name=showMonsterHPPercent]").click(saveSettings);
 	$("input[name=showMonsterMP]").click(saveSettings);
@@ -1209,7 +1212,6 @@ function initSettingsPane() {
 	$("input[name=hideSpecificDamageType6]").click(saveSettings);
 	$("input[name=hideSpecificDamageType7]").click(saveSettings);
 	$("input[name=hideSpecificDamageType8]").click(saveSettings);
-	$("input[name=hideSpecificDamageType9]").click(saveSettings);
 	$("input[name=hideSpecificDamageType10]").click(saveSettings);
 	$("input[name=ResizeMonsterInfo]").click(saveSettings);
 	$("input[name=isShowStatsPopup]").click(saveSettings);
@@ -1326,6 +1328,7 @@ function saveSettings() {
 	hvStat.settings.isWarnSparkTrigger = $("input[name=isWarnSparkTrigger]").get(0).checked;
 	hvStat.settings.isWarnSparkExpire = $("input[name=isWarnSparkExpire]").get(0).checked;
 	hvStat.settings.alertWhenChannelingIsGained = $("input[name=alertWhenChannelingIsGained]").get(0).checked;
+	hvStat.settings.alertWhenCooldownExpiredForDrain = $("input[name=alertWhenCooldownExpiredForDrain]").get(0).checked;
 	// - Effects Expiring Warnings
 	hvStat.settings.isMainEffectsAlertSelf = $("input[name=isMainEffectsAlertSelf]").get(0).checked;
 	hvStat.settings.isEffectsAlertSelf[0] = $("input[name=isEffectsAlertSelf0]").get(0).checked;
@@ -1390,6 +1393,7 @@ function saveSettings() {
 	// - Monster Database
 	hvStat.settings.isRememberScan = $("input[name=isRememberScan]").get(0).checked;
 	hvStat.settings.isRememberSkillsTypes = $("input[name=isRememberSkillsTypes]").get(0).checked;
+	hvStat.settings.doesScaleMonsterGauges = $("input[name=doesScaleMonsterGauges]").get(0).checked;
 	hvStat.settings.showMonsterHP = $("input[name=showMonsterHP]").get(0).checked;
 	hvStat.settings.showMonsterHPPercent = $("input[name=showMonsterHPPercent]").get(0).checked;
 	hvStat.settings.showMonsterMP = $("input[name=showMonsterMP]").get(0).checked;
@@ -1409,7 +1413,7 @@ function saveSettings() {
 	hvStat.settings.hideSpecificDamageType[6] = $("input[name=hideSpecificDamageType6]").get(0).checked;
 	hvStat.settings.hideSpecificDamageType[7] = $("input[name=hideSpecificDamageType7]").get(0).checked;
 	hvStat.settings.hideSpecificDamageType[8] = $("input[name=hideSpecificDamageType8]").get(0).checked;
-	hvStat.settings.hideSpecificDamageType[9] = $("input[name=hideSpecificDamageType9]").get(0).checked;
+	hvStat.settings.hideSpecificDamageType[9] = false;	// Soul is obsolete
 	hvStat.settings.hideSpecificDamageType[10] = $("input[name=hideSpecificDamageType10]").get(0).checked;
 	hvStat.settings.ResizeMonsterInfo = $("input[name=ResizeMonsterInfo]").get(0).checked;
 	hvStat.settings.isShowStatsPopup = $("input[name=isShowStatsPopup]").get(0).checked;
