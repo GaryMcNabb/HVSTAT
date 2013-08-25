@@ -1077,7 +1077,6 @@ function initSettingsPane() {
 	if (hvStat.settings.hideSpecificDamageType[6]) $("input[name=hideSpecificDamageType6]").attr("checked", "checked");
 	if (hvStat.settings.hideSpecificDamageType[7]) $("input[name=hideSpecificDamageType7]").attr("checked", "checked");
 	if (hvStat.settings.hideSpecificDamageType[8]) $("input[name=hideSpecificDamageType8]").attr("checked", "checked");
-	if (hvStat.settings.hideSpecificDamageType[9]) $("input[name=hideSpecificDamageType9]").attr("checked", "checked");
 	if (hvStat.settings.hideSpecificDamageType[10]) $("input[name=hideSpecificDamageType10]").attr("checked", "checked");
 	if (hvStat.settings.ResizeMonsterInfo) $("input[name=ResizeMonsterInfo]").attr("checked", "checked");
 	if (hvStat.settings.isShowStatsPopup) $("input[name=isShowStatsPopup]").attr("checked", "checked");
@@ -1213,7 +1212,6 @@ function initSettingsPane() {
 	$("input[name=hideSpecificDamageType6]").click(saveSettings);
 	$("input[name=hideSpecificDamageType7]").click(saveSettings);
 	$("input[name=hideSpecificDamageType8]").click(saveSettings);
-	$("input[name=hideSpecificDamageType9]").click(saveSettings);
 	$("input[name=hideSpecificDamageType10]").click(saveSettings);
 	$("input[name=ResizeMonsterInfo]").click(saveSettings);
 	$("input[name=isShowStatsPopup]").click(saveSettings);
@@ -1415,7 +1413,7 @@ function saveSettings() {
 	hvStat.settings.hideSpecificDamageType[6] = $("input[name=hideSpecificDamageType6]").get(0).checked;
 	hvStat.settings.hideSpecificDamageType[7] = $("input[name=hideSpecificDamageType7]").get(0).checked;
 	hvStat.settings.hideSpecificDamageType[8] = $("input[name=hideSpecificDamageType8]").get(0).checked;
-	hvStat.settings.hideSpecificDamageType[9] = $("input[name=hideSpecificDamageType9]").get(0).checked;
+	hvStat.settings.hideSpecificDamageType[9] = false;	// Soul is obsolete
 	hvStat.settings.hideSpecificDamageType[10] = $("input[name=hideSpecificDamageType10]").get(0).checked;
 	hvStat.settings.ResizeMonsterInfo = $("input[name=ResizeMonsterInfo]").get(0).checked;
 	hvStat.settings.isShowStatsPopup = $("input[name=isShowStatsPopup]").get(0).checked;
