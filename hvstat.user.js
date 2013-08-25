@@ -576,6 +576,7 @@ hvStat.storage.initialValue = {
 		isRememberScan: false,
 		isRememberSkillsTypes: false,
 		// - Monster Display
+		doesScaleMonsterGauges: false,
 		showMonsterHP: true,
 		showMonsterHPPercent: false,
 		showMonsterMP: true,
@@ -3975,6 +3976,24 @@ hvStat.battle.monster = {
 		}
 		return true;
 	},
+	setScale: function () {
+		var i, highestHp = -1;
+		for (i = 0; i < this.monsters.length; i++) {
+			var hp = this.monsters[i].maxHp;
+			if (hp && highestHp < hp) {
+				highestHp = hp;
+			}
+		}
+		for (i = 0; i < this.monsters.length; i++) {
+			var monster = this.monsters[i];
+			monster.gaugeScale = monster.maxHp / highestHp;
+		}
+	},
+	scaleGaugesAll: function () {
+		for (var i = 0; i < this.monsters.length; i++) {
+			this.monsters[i].scaleGauges();
+		}
+	},
 	showHealthAll: function () {
 		for (var i = 0; i < this.monsters.length; i++) {
 			this.monsters[i].showHealth();
@@ -4320,6 +4339,7 @@ hvStat.battle.monster.Monster = function (index) {
 	this._prevSpRate = null;
 	this._scanResult = null;
 	this._skills = [];
+	this.gaugeScale = null;
 };
 hvStat.battle.monster.Monster.prototype = {
 	gaugeRate: function (gaugeIndex) {
@@ -4908,6 +4928,20 @@ hvStat.battle.monster.Monster.prototype = {
 			alert('request error.');
 		};
 	},
+	getCssScaleXText: function (scaleX) {
+		var s = "scaleX(" + scaleX + ")";
+		var t = "transform: " + s + "; transform-origin: left;" +
+			"-moz-transform: " + s + "; -moz-transform-origin: left;" +
+			"-webkit-transform: " + s + "; -webkit-transform-origin: left;";
+		return t;
+	},
+	scaleGauges: function () {
+		if (hvStat.settings.doesScaleMonsterGauges && this.gaugeScale) {
+			for (var i = 0; i < this.gauges.length; i++) {
+				this.gauges[i].parentNode.style.cssText += this.getCssScaleXText(this.gaugeScale);
+			}
+		}
+	},
 	showHealth: function () {
 		var that = this;
 		if (that.isDead || !hvStat.settings.showMonsterHP && !hvStat.settings.showMonsterMP && !hvStat.settings.showMonsterSP) {
@@ -4916,6 +4950,9 @@ hvStat.battle.monster.Monster.prototype = {
 		var div;
 		if (hvStat.settings.showMonsterHP || hvStat.settings.showMonsterHPPercent) {
 			div = document.createElement("div");
+			if (hvStat.settings.doesScaleMonsterGauges && this.gaugeScale) {
+				div.style.cssText += this.getCssScaleXText(1 / this.gaugeScale);
+			}
 			div.className = "hvstat-monster-health";
 			if (hvStat.settings.showMonsterHPPercent) {
 				div.textContent = (that.healthPointRate * 100).toFixed(2) + "%";
@@ -4926,12 +4963,18 @@ hvStat.battle.monster.Monster.prototype = {
 		}
 		if (hvStat.settings.showMonsterMP) {
 			div = document.createElement("div");
+			if (hvStat.settings.doesScaleMonsterGauges && this.gaugeScale) {
+				div.style.cssText += this.getCssScaleXText(1 / this.gaugeScale);
+			}
 			div.className = "hvstat-monster-magic";
 			div.textContent = (that.magicPointRate * 100).toFixed(1) + "%";
 			this.gauges[1].parentNode.insertBefore(div, null);
 		}
 		if (hvStat.settings.showMonsterSP && this.hasSpiritPoint) {
 			div = document.createElement("div");
+			if (hvStat.settings.doesScaleMonsterGauges && this.gaugeScale) {
+				div.style.cssText += this.getCssScaleXText(1 / this.gaugeScale);
+			}
 			div.className = "hvstat-monster-spirit";
 			div.textContent = (that.spiritPointRate * 100).toFixed(1) + "%";
 			this.gauges[2].parentNode.insertBefore(div, null);
@@ -5443,7 +5486,13 @@ hvStat.startup = {
 			if (hvStat.roundContext.currRound > 0 && hvStat.settings.isShowRoundCounter) {
 				hvStat.battle.enhancement.roundCounter.create();
 			}
+			if (hvStat.settings.doesScaleMonsterGauges) {
+				hvStat.battle.monster.setScale();
+			}
 			hvStat.battle.monster.showHealthAll();
+			if (hvStat.settings.doesScaleMonsterGauges) {
+				hvStat.battle.monster.scaleGaugesAll();
+			}
 			util.document.restoreBody();
 			if (!hvStat.database.loadingMonsterInfoFromDB) {
 				hvStat.battle.monster.showStatusAll();

@@ -1057,6 +1057,7 @@ function initSettingsPane() {
 	if (hvStat.settings.isRememberScan) $("input[name=isRememberScan]").attr("checked", "checked");
 	if (hvStat.settings.isRememberSkillsTypes) $("input[name=isRememberSkillsTypes]").attr("checked", "checked");
 	// - Monster Display
+	if (hvStat.settings.doesScaleMonsterGauges) $("input[name=doesScaleMonsterGauges]").attr("checked", "checked");
 	if (hvStat.settings.showMonsterHP) $("input[name=showMonsterHP]").attr("checked", "checked");
 	if (hvStat.settings.showMonsterHPPercent) $("input[name=showMonsterHPPercent]").attr("checked", "checked");
 	if (hvStat.settings.showMonsterMP) $("input[name=showMonsterMP]").attr("checked", "checked");
@@ -1192,6 +1193,7 @@ function initSettingsPane() {
 	$("input[name=isRememberScan]").click(reminderAndSaveSettings);
 	$("input[name=isRememberSkillsTypes]").click(reminderAndSaveSettings);
 	// - Monster Display
+	$("input[name=doesScaleMonsterGauges]").click(saveSettings);
 	$("input[name=showMonsterHP]").click(saveSettings);
 	$("input[name=showMonsterHPPercent]").click(saveSettings);
 	$("input[name=showMonsterMP]").click(saveSettings);
@@ -1393,6 +1395,7 @@ function saveSettings() {
 	// - Monster Database
 	hvStat.settings.isRememberScan = $("input[name=isRememberScan]").get(0).checked;
 	hvStat.settings.isRememberSkillsTypes = $("input[name=isRememberSkillsTypes]").get(0).checked;
+	hvStat.settings.doesScaleMonsterGauges = $("input[name=doesScaleMonsterGauges]").get(0).checked;
 	hvStat.settings.showMonsterHP = $("input[name=showMonsterHP]").get(0).checked;
 	hvStat.settings.showMonsterHPPercent = $("input[name=showMonsterHPPercent]").get(0).checked;
 	hvStat.settings.showMonsterMP = $("input[name=showMonsterMP]").get(0).checked;
