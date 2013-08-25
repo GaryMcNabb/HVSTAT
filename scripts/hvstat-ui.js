@@ -993,6 +993,7 @@ function initSettingsPane() {
 	if (hvStat.settings.isWarnSparkTrigger) $("input[name=isWarnSparkTrigger]").attr("checked", "checked");
 	if (hvStat.settings.isWarnSparkExpire) $("input[name=isWarnSparkExpire]").attr("checked", "checked");
 	if (hvStat.settings.alertWhenChannelingIsGained) $("input[name=alertWhenChannelingIsGained]").attr("checked", "checked");
+	if (hvStat.settings.alertWhenCooldownExpiredForDrain) $("input[name=alertWhenCooldownExpiredForDrain]").attr("checked", "checked");
 	// - Effects Expiring Warnings
 	if (hvStat.settings.isMainEffectsAlertSelf) $("input[name=isMainEffectsAlertSelf]").attr("checked", "checked");
 	if (hvStat.settings.isEffectsAlertSelf[0]) $("input[name=isEffectsAlertSelf0]").attr("checked", "checked");
@@ -1177,6 +1178,7 @@ function initSettingsPane() {
 	$("input[name=isWarnSparkTrigger]").click(saveSettings);
 	$("input[name=isWarnSparkExpire]").click(saveSettings);
 	$("input[name=alertWhenChannelingIsGained]").click(saveSettings);
+	$("input[name=alertWhenCooldownExpiredForDrain]").click(saveSettings);
 	// - Effects Expiring Warnings
 	$("input[name=isMainEffectsAlertSelf]").click(saveSettings);
 	$("input[name^=isEffectsAlertSelf]").click(saveSettings);
@@ -1326,6 +1328,7 @@ function saveSettings() {
 	hvStat.settings.isWarnSparkTrigger = $("input[name=isWarnSparkTrigger]").get(0).checked;
 	hvStat.settings.isWarnSparkExpire = $("input[name=isWarnSparkExpire]").get(0).checked;
 	hvStat.settings.alertWhenChannelingIsGained = $("input[name=alertWhenChannelingIsGained]").get(0).checked;
+	hvStat.settings.alertWhenCooldownExpiredForDrain = $("input[name=alertWhenCooldownExpiredForDrain]").get(0).checked;
 	// - Effects Expiring Warnings
 	hvStat.settings.isMainEffectsAlertSelf = $("input[name=isMainEffectsAlertSelf]").get(0).checked;
 	hvStat.settings.isEffectsAlertSelf[0] = $("input[name=isEffectsAlertSelf0]").get(0).checked;

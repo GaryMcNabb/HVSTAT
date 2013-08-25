@@ -562,6 +562,7 @@ hvStat.storage.initialValue = {
 		isWarnSparkTrigger: true,
 		isWarnSparkExpire: true,
 		alertWhenChannelingIsGained: false,
+		alertWhenCooldownExpiredForDrain: false,
 		// - Effects Expiring Warnings
 		isMainEffectsAlertSelf: false,
 		isEffectsAlertSelf: [false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false],
@@ -2807,6 +2808,10 @@ hvStat.battle.eventLog.messageTypeParams = {
 		relatedMessageTypeNames: null,
 		contentType: "text",
 		evaluationFn: function (message) {
+			var abilityName = message.regexResult[1];
+			if (hvStat.settings.alertWhenCooldownExpiredForDrain && abilityName === "Drain") {
+				hvStat.battle.warningSystem.enqueueAlert(message.regexResult[0]);
+			}
 		},
 	},
 	GAINING_EFFECT: {
