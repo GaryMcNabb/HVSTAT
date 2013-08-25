@@ -239,6 +239,7 @@ div.hvstat-monster-spirit {
 	font-size: 8pt;
 	font-weight: bolder;
 	color: yellow;
+	text-shadow: -1px -1px 0px Black, 1px -1px 0px Black, -1px 1px 0px Black, 1px 1px 0px Black;
 }
 
 .hvstat-monster-status-on-hv-font {
