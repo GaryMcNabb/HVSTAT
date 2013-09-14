@@ -1433,49 +1433,28 @@ hvStat.vo.MonsterScanResultsVO = function (spec) {
 			this.meleeAttack = spec.meleeAttack.toUpperCase();
 		}
 		dl = hvStat.constant.defenseLevel[spec.defCrushing.toUpperCase()];
-		if (dl) {
-			this.defenseLevel.CRUSHING = dl.id;
-		}
+		this.defenseLevel.CRUSHING = dl && dl.id || spec.defCrushing;
 		dl = hvStat.constant.defenseLevel[spec.defSlashing.toUpperCase()];
-		if (dl) {
-			this.defenseLevel.SLASHING = dl.id;
-		}
+		this.defenseLevel.SLASHING = dl && dl.id || spec.defSlashing;
 		dl = hvStat.constant.defenseLevel[spec.defPiercing.toUpperCase()];
-		if (dl) {
-			this.defenseLevel.PIERCING = dl.id;
-		}
+		this.defenseLevel.PIERCING = dl && dl.id || spec.defPiercing;
 		dl = hvStat.constant.defenseLevel[spec.defFire.toUpperCase()];
-		if (dl) {
-			this.defenseLevel.FIRE = dl.id;
-		}
+		this.defenseLevel.FIRE = dl && dl.id || spec.defFire;
 		dl = hvStat.constant.defenseLevel[spec.defCold.toUpperCase()];
-		if (dl) {
-			this.defenseLevel.COLD = dl.id;
-		}
+		this.defenseLevel.COLD = dl && dl.id || spec.defCold;
 		dl = hvStat.constant.defenseLevel[spec.defElec.toUpperCase()];
-		if (dl) {
-			this.defenseLevel.ELEC = dl.id;
-		}
+		this.defenseLevel.ELEC = dl && dl.id || spec.defElec;
 		dl = hvStat.constant.defenseLevel[spec.defWind.toUpperCase()];
-		if (dl) {
-			this.defenseLevel.WIND = dl.id;
-		}
+		this.defenseLevel.WIND = dl && dl.id || spec.defWind;
 		dl = hvStat.constant.defenseLevel[spec.defHoly.toUpperCase()];
-		if (dl) {
-			this.defenseLevel.HOLY = dl.id;
-		}
+		this.defenseLevel.HOLY = dl && dl.id || spec.defHoly;
 		dl = hvStat.constant.defenseLevel[spec.defDark.toUpperCase()];
-		if (dl) {
-			this.defenseLevel.DARK = dl.id;
-		}
+		this.defenseLevel.DARK = dl && dl.id || spec.defDark;
 		dl = hvStat.constant.defenseLevel[spec.defSoul.toUpperCase()];
-		if (dl) {
-			this.defenseLevel.SOUL = dl.id;
-		}
+		this.defenseLevel.SOUL = dl && dl.id || spec.defSoul;
 		dl = hvStat.constant.defenseLevel[spec.defVoid.toUpperCase()];
-		if (dl) {
-			this.defenseLevel.VOID = dl.id;
-		}
+		this.defenseLevel.VOID = dl && dl.id || spec.defVoid;
+
 		if (spec.debuffsAffected) {
 			debuffs = spec.debuffsAffected.replace(" ", "").split(", ");
 			for (i = 0; i < debuffs.length; i++) {
@@ -1935,17 +1914,17 @@ hvStat.database.monsterScanResults = new hvStat.database.ObjectStoreDelegate({
 			obj.powerLevel !== null ? obj.powerLevel : "",
 			obj.trainer !== null ? obj.trainer : "",
 			obj.meleeAttack !== null ? obj.meleeAttack : "",
-			obj.defenseLevel && obj.defenseLevel.CRUSHING ? obj.defenseLevel.CRUSHING : "",
-			obj.defenseLevel && obj.defenseLevel.SLASHING ? obj.defenseLevel.SLASHING : "",
-			obj.defenseLevel && obj.defenseLevel.PIERCING ? obj.defenseLevel.PIERCING : "",
-			obj.defenseLevel && obj.defenseLevel.FIRE ? obj.defenseLevel.FIRE : "",
-			obj.defenseLevel && obj.defenseLevel.COLD ? obj.defenseLevel.COLD : "",
-			obj.defenseLevel && obj.defenseLevel.ELEC ? obj.defenseLevel.ELEC : "",
-			obj.defenseLevel && obj.defenseLevel.WIND ? obj.defenseLevel.WIND : "",
-			obj.defenseLevel && obj.defenseLevel.HOLY ? obj.defenseLevel.HOLY : "",
-			obj.defenseLevel && obj.defenseLevel.DARK ? obj.defenseLevel.DARK : "",
-			obj.defenseLevel && obj.defenseLevel.SOUL ? obj.defenseLevel.SOUL : "",
-			obj.defenseLevel && obj.defenseLevel.VOID ? obj.defenseLevel.VOID : "",
+			obj.defenseLevel && obj.defenseLevel.CRUSHING !== null ? obj.defenseLevel.CRUSHING : "",
+			obj.defenseLevel && obj.defenseLevel.SLASHING !== null ? obj.defenseLevel.SLASHING : "",
+			obj.defenseLevel && obj.defenseLevel.PIERCING !== null ? obj.defenseLevel.PIERCING : "",
+			obj.defenseLevel && obj.defenseLevel.FIRE !== null ? obj.defenseLevel.FIRE : "",
+			obj.defenseLevel && obj.defenseLevel.COLD !== null ? obj.defenseLevel.COLD : "",
+			obj.defenseLevel && obj.defenseLevel.ELEC !== null ? obj.defenseLevel.ELEC : "",
+			obj.defenseLevel && obj.defenseLevel.WIND !== null ? obj.defenseLevel.WIND : "",
+			obj.defenseLevel && obj.defenseLevel.HOLY !== null ? obj.defenseLevel.HOLY : "",
+			obj.defenseLevel && obj.defenseLevel.DARK !== null ? obj.defenseLevel.DARK : "",
+			obj.defenseLevel && obj.defenseLevel.SOUL !== null ? obj.defenseLevel.SOUL : "",
+			obj.defenseLevel && obj.defenseLevel.VOID !== null ? obj.defenseLevel.VOID : "",
 			obj.debuffsAffected ? obj.debuffsAffected.join(", ") : "",
 		];
 	},
@@ -2933,7 +2912,7 @@ hvStat.battle.eventLog.messageTypeParams = {
 		},
 	},
 	SCAN: {
-		regex: /^Scanning (.*)\.\.\.\s+HP: [^\s]+\/([^\s]+)\s+MP: [^\s]+\/[^\s]+(?:\s+SP: [^\s]+\/[^\s]+)? Monster Class: (.+?)(?:, Power Level (\d+))? Monster Trainer:(?: (.+))? Melee Attack: (.+) Weak against: (.+) Resistant to: (.+) Impervious to: (.+)/,
+		regex: /^Scanning (.*)\.\.\.\s+HP: [^\s]+\/([^\s]+)\s+MP: [^\s]+\/[^\s]+(?:\s+SP: [^\s]+\/[^\s]+)? Monster Class: (.+?)(?:, Power Level (\d+))? Monster Trainer:(?: (.+))? Melee Attack: (.+) Fire: ([\-\+]?\d+)% Cold: ([\-\+]?\d+)% Elec: ([\-\+]?\d+)% Wind: ([\-\+]?\d+)% Holy: ([\-\+]?\d+)% Dark: ([\-\+]?\d+)% Crushing: ([\-\+]?\d+)% Slashing: ([\-\+]?\d+)% Piercing: ([\-\+]?\d+)%/,
 		relatedMessageTypeNames: null,
 		contentType: "text",
 		evaluationFn: function (message) {
@@ -4124,12 +4103,16 @@ hvStat.battle.monster.MonsterScanResults = function (vo) {
 
 	var damageTypeId, debuffId;
 	for (damageTypeId in hvStat.constant.damageType) {
-		this._defenseLevel[damageTypeId] = hvStat.constant.defenseLevel[(vo.defenseLevel || vo.defenceLevel)[damageTypeId]] || null;
+		this._defenseLevel[damageTypeId] = hvStat.constant.defenseLevel[(vo.defenseLevel || vo.defenceLevel)[damageTypeId]] || vo.defenseLevel[damageTypeId];
 	}
 	for (damageTypeId in this._defenseLevel) {
 		switch (this._defenseLevel[damageTypeId]) {
+		// HV 0.76 or earlier
 		case hvStat.constant.defenseLevel.WEAK:
 			this._defWeak.push(hvStat.constant.damageType[damageTypeId]);
+			break;
+		case hvStat.constant.defenseLevel.AVERAGE:
+			// Do nothing
 			break;
 		case hvStat.constant.defenseLevel.RESISTANT:
 			this._defResistant.push(hvStat.constant.damageType[damageTypeId]);
@@ -4137,6 +4120,20 @@ hvStat.battle.monster.MonsterScanResults = function (vo) {
 		case hvStat.constant.defenseLevel.IMPERVIOUS:
 			this._defImpervious.push(hvStat.constant.damageType[damageTypeId]);
 			break;
+		// HV 0.77 or later
+		default:
+			var mitigation = parseFloat(this._defenseLevel[damageTypeId]);
+			if (!isNaN(mitigation)) {
+				if (mitigation < 25) {
+					this._defWeak.push(hvStat.constant.damageType[damageTypeId]);
+				} else if (mitigation < 50) {
+					// Do nothing
+				} else if (mitigation < 75) {
+					this._defResistant.push(hvStat.constant.damageType[damageTypeId]);
+				} else {
+					this._defImpervious.push(hvStat.constant.damageType[damageTypeId]);
+				}
+			}
 		}
 	}
 	for (i in vo.debuffsAffected) {
@@ -4260,7 +4257,11 @@ hvStat.battle.monster.MonsterScanResults.prototype = {
 		vo.trainer = this._trainer;
 		vo.meleeAttack = this._meleeAttack ? this._meleeAttack.id : null;
 		for (i in this._defenseLevel) {
-			vo.defenseLevel[i] = this._defenseLevel[i].id;
+			if (!isNaN(parseFloat(this._defenseLevel[i]))) {
+				vo.defenseLevel[i] = this._defenseLevel[i];
+			} else {
+				vo.defenseLevel[i] = this._defenseLevel[i] && this._defenseLevel[i].id || null;
+			}
 		}
 		len = this._debuffsAffected.length;
 		for (i = 0; i < len; i++) {
@@ -4287,34 +4288,19 @@ hvStat.battle.monster.MonsterScanResults.prototype = {
 		vo.powerLevel = Number(regexResult[4]) || null;
 		vo.trainer = regexResult[5] || null;
 		vo.meleeAttack = regexResult[6].toUpperCase() || null;
-		var array;
-		var defWeak = regexResult[7] || null;
-		if (defWeak) {
-			array = defWeak.toUpperCase().split(", ");
-			array.forEach(function (element, index, array) {
-				if (element !== "NOTHING") {
-					vo.defenseLevel[element] = hvStat.constant.defenseLevel.WEAK.id;
-				}
-			});
-		}
-		var defResistant = regexResult[8] || null;
-		if (defResistant) {
-			array = defResistant.toUpperCase().split(", ");
-			array.forEach(function (element, index, array) {
-				if (element !== "NOTHING") {
-					vo.defenseLevel[element] = hvStat.constant.defenseLevel.RESISTANT.id;
-				}
-			});
-		}
-		var defImpervious = regexResult[9] || null;
-		if (defImpervious) {
-			array = defImpervious.toUpperCase().split(", ");
-			array.forEach(function (element, index, array) {
-				if (element !== "NOTHING") {
-					vo.defenseLevel[element] = hvStat.constant.defenseLevel.IMPERVIOUS.id;
-				}
-			});
-		}
+
+		vo.defenseLevel.FIRE = String(Number(regexResult[7]));
+		vo.defenseLevel.COLD = String(Number(regexResult[8]));
+		vo.defenseLevel.ELEC = String(Number(regexResult[9]));
+		vo.defenseLevel.WIND = String(Number(regexResult[10]));
+		vo.defenseLevel.HOLY = String(Number(regexResult[11]));
+		vo.defenseLevel.DARK = String(Number(regexResult[12]));
+		vo.defenseLevel.CRUSHING = String(Number(regexResult[13]));
+		vo.defenseLevel.SLASHING = String(Number(regexResult[14]));
+		vo.defenseLevel.PIERCING = String(Number(regexResult[15]));
+		vo.defenseLevel.SOUL = null;
+		vo.defenseLevel.VOID = null;
+
 		vo.debuffsAffected = [];
 		var i, debuffElements, debuffInfo, debuffId;
 		debuffElements = hv.battle.elementCache.monsters[index].querySelectorAll('div.btm6 > img');
