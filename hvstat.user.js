@@ -3762,7 +3762,9 @@ hvStat.battle.enhancement.powerupBox = {
 			} else if (powerInfo.indexOf('Mystic') > -1) {
 				powerBox.className += " hvstat-powerup-box-channeling";
 			}
-			powerBox.addEventListener("click", this.onclick);
+			if (!hv.battle.isRoundFinished) {
+				powerBox.addEventListener("click", this.onclick);
+			}
 			powerBox.addEventListener("mouseover", this.onmouseover);
 			powerBox.addEventListener("mouseout", this.onmouseout);
 		}
