@@ -168,7 +168,7 @@ hv.initialize = function () {
 	var settings = {
 		isUsingHVFontEngine: this.util.isUsingHVFontEngine,
 		get difficulty() {
-			var regexResult = hv.util.innerText(hv.elementCache.infoTables[1]).match(/(Normal|Hard|Nightmare|Hell|Nintendo|Battletoads|IWBTH)/i);
+			var regexResult = hv.util.innerText(hv.elementCache.infoTables[1]).match(/(Normal|Hard|Nightmare|Hell|Nintendo|Battletoads|IWBTH|PFUDOR)/i);
 			if (regexResult) {
 				return regexResult[1].toUpperCase();
 			} else {

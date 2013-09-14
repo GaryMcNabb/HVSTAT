@@ -366,6 +366,7 @@ hvStat.constant.difficulty = hvStat.constant.factory([
 	new hvStat.C("NINTENDO", "Nintendo"),
 	new hvStat.C("BATTLETOADS", "Battletoads"),
 	new hvStat.C("IWBTH", "IWBTH"),
+	new hvStat.C("PFUDOR", "PFUDOR"),
 ]);
 
 hvStat.constant.battleType = hvStat.constant.factory([
