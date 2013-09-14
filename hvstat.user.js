@@ -4124,11 +4124,11 @@ hvStat.battle.monster.MonsterScanResults = function (vo) {
 		default:
 			var mitigation = parseFloat(this._defenseLevel[damageTypeId]);
 			if (!isNaN(mitigation)) {
-				if (mitigation < 25) {
+				if (mitigation <= 25) {
 					this._defWeak.push(hvStat.constant.damageType[damageTypeId]);
-				} else if (mitigation < 50) {
+				} else if (mitigation <= 50) {
 					// Do nothing
-				} else if (mitigation < 75) {
+				} else if (mitigation <= 75) {
 					this._defResistant.push(hvStat.constant.damageType[damageTypeId]);
 				} else {
 					this._defImpervious.push(hvStat.constant.damageType[damageTypeId]);
