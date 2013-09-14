@@ -497,7 +497,6 @@ hvStat.storage.initialValue = {
 		enableOFCHotkey: false,
 		enableScrollHotkey: false,
 		isDisableForgeHotKeys: false,
-		enableShrineKeyPatch: false,
 
 		// Tracking
 		isTrackStats: true,
@@ -1158,6 +1157,10 @@ hvStat.versions = {
 };
 
 hvStat.versions.functions = {
+	from_5_6_5: function () {
+		delete hvStat.settings.enableShrineKeyPatch;
+		hvStat.storage.settings.save();
+	},
 	from_5_5_5_1 : function () {
 		while (hvStat.overview.expbyBT.length < 4)
 			hvStat.overview.expbyBT.push(0);
@@ -5573,10 +5576,6 @@ hvStat.startup = {
 			case "shrine":
 				if (hvStat.settings.isTrackShrine) {
 					hvStat.noncombat.support.captureShrine();
-				}
-				if (browser.isChrome && hvStat.settings.enableShrineKeyPatch) {
-					// Remove keydown handler to apply keypress handler
-					util.addSiteScript('document.onkeydown = null;');
 				}
 				break;
 			case "forge":

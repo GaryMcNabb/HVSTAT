@@ -918,7 +918,6 @@ function initSettingsPane() {
 	if (hvStat.settings.enableOFCHotkey) $("input[name=enableOFCHotkey]").attr("checked", "checked");
 	if (hvStat.settings.enableScrollHotkey) $("input[name=enableScrollHotkey]").attr("checked", "checked");
 	if (hvStat.settings.isDisableForgeHotKeys) $("input[name=isDisableForgeHotKeys]").attr("checked", "checked");
-	if (hvStat.settings.enableShrineKeyPatch) $("input[name=enableShrineKeyPatch]").attr("checked", "checked");
 
 	// Tracking
 	if (hvStat.settings.isTrackStats) $("input[name=isTrackStats]").attr("checked", "checked");
@@ -1108,7 +1107,6 @@ function initSettingsPane() {
 	$("input[name=enableOFCHotkey]").click(saveSettings);
 	$("input[name=enableScrollHotkey]").click(saveSettings);
 	$("input[name=isDisableForgeHotKeys]").click(saveSettings);
-	$("input[name=enableShrineKeyPatch]").click(saveSettings);
 
 	// Tracking Functions
 	$("input[name=isTrackStats]").click(saveSettings);
@@ -1259,7 +1257,6 @@ function saveSettings() {
 	hvStat.settings.enableOFCHotkey = $("input[name=enableOFCHotkey]").get(0).checked;
 	hvStat.settings.enableScrollHotkey = $("input[name=enableScrollHotkey]").get(0).checked;
 	hvStat.settings.isDisableForgeHotKeys = $("input[name=isDisableForgeHotKeys]").get(0).checked;
-	hvStat.settings.enableShrineKeyPatch = $("input[name=enableShrineKeyPatch]").get(0).checked;
 
 	// Tracking
 	hvStat.settings.isTrackStats = $("input[name=isTrackStats]").get(0).checked;
