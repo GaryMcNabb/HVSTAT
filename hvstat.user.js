@@ -6,7 +6,7 @@
 // @exclude         http://hentaiverse.org/pages/showequip*
 // @exclude         http://hentaiverse.org/?login*
 // @author          Various (http://forums.e-hentai.org/index.php?showtopic=79552)
-// @version         5.6.4
+// @version         5.6.5
 // @require         scripts/util.js
 // @require         scripts/browser.js
 // @require         scripts/hv.js
@@ -33,6 +33,7 @@
 // @resource        database-pane.html                          html/database-pane.html
 // @resource        drops-pane.html                             html/drops-pane.html
 // @resource        main.html                                   html/main.html
+// @resource        monster-popup.html                          html/monster-popup.html
 // @resource        overview-pane.html                          html/overview-pane.html
 // @resource        proficiency-table.html                      html/proficiency-table.html
 // @resource        settings-pane.html                          html/settings-pane.html
@@ -59,7 +60,7 @@ window.IDBCursor = window.IDBCursor || window.webkitIDBCursor;
 // HV STAT object
 //------------------------------------
 var hvStat = {
-	version: "5.6.4",
+	version: "5.6.5",
 	imageResources: [
 		new browser.I("images/", "channeling.png", "css/images/"),
 		new browser.I("images/", "healthpot.png", "css/images/"),
@@ -212,12 +213,20 @@ hvStat.util = {
 			days = Math.floor(hours / 24);
 			hours = hours % 24;
 		}
-		str = String(mins) + ((mins > 1) ? " mins" : " min");
-		if (hours > 0) {
-			str = String(hours) + ((hours > 1) ? " hours, " : " hour, ") + str;
-		}
-		if (days > 0) {
-			str = String(days) + ((days > 1) ? " days, " : " day, ") + str;
+		if (days >= 2) {
+			return days + " days ago";
+		} else if (days === 1) {
+			return "1 day ago";
+		} else if (hours >= 2) {
+			return "about " + hours + " hours ago";
+		} else if (hours === 1) {
+			return "about an hour ago";
+		} else if (mins >= 2) {
+			return mins + " minites ago";
+		} else if (mins === 1) {
+			return "about a minite ago";
+		} else {
+			return "less than a minute ago";
 		}
 		return str;
 	},
@@ -366,6 +375,7 @@ hvStat.constant.difficulty = hvStat.constant.factory([
 	new hvStat.C("NINTENDO", "Nintendo"),
 	new hvStat.C("BATTLETOADS", "Battletoads"),
 	new hvStat.C("IWBTH", "IWBTH"),
+	new hvStat.C("PFUDOR", "PFUDOR"),
 ]);
 
 hvStat.constant.battleType = hvStat.constant.factory([
@@ -496,7 +506,6 @@ hvStat.storage.initialValue = {
 		enableOFCHotkey: false,
 		enableScrollHotkey: false,
 		isDisableForgeHotKeys: false,
-		enableShrineKeyPatch: false,
 
 		// Tracking
 		isTrackStats: true,
@@ -1157,6 +1166,10 @@ hvStat.versions = {
 };
 
 hvStat.versions.functions = {
+	from_5_6_5: function () {
+		delete hvStat.settings.enableShrineKeyPatch;
+		hvStat.storage.settings.save();
+	},
 	from_5_5_5_1 : function () {
 		while (hvStat.overview.expbyBT.length < 4)
 			hvStat.overview.expbyBT.push(0);
@@ -1429,49 +1442,28 @@ hvStat.vo.MonsterScanResultsVO = function (spec) {
 			this.meleeAttack = spec.meleeAttack.toUpperCase();
 		}
 		dl = hvStat.constant.defenseLevel[spec.defCrushing.toUpperCase()];
-		if (dl) {
-			this.defenseLevel.CRUSHING = dl.id;
-		}
+		this.defenseLevel.CRUSHING = dl && dl.id || spec.defCrushing;
 		dl = hvStat.constant.defenseLevel[spec.defSlashing.toUpperCase()];
-		if (dl) {
-			this.defenseLevel.SLASHING = dl.id;
-		}
+		this.defenseLevel.SLASHING = dl && dl.id || spec.defSlashing;
 		dl = hvStat.constant.defenseLevel[spec.defPiercing.toUpperCase()];
-		if (dl) {
-			this.defenseLevel.PIERCING = dl.id;
-		}
+		this.defenseLevel.PIERCING = dl && dl.id || spec.defPiercing;
 		dl = hvStat.constant.defenseLevel[spec.defFire.toUpperCase()];
-		if (dl) {
-			this.defenseLevel.FIRE = dl.id;
-		}
+		this.defenseLevel.FIRE = dl && dl.id || spec.defFire;
 		dl = hvStat.constant.defenseLevel[spec.defCold.toUpperCase()];
-		if (dl) {
-			this.defenseLevel.COLD = dl.id;
-		}
+		this.defenseLevel.COLD = dl && dl.id || spec.defCold;
 		dl = hvStat.constant.defenseLevel[spec.defElec.toUpperCase()];
-		if (dl) {
-			this.defenseLevel.ELEC = dl.id;
-		}
+		this.defenseLevel.ELEC = dl && dl.id || spec.defElec;
 		dl = hvStat.constant.defenseLevel[spec.defWind.toUpperCase()];
-		if (dl) {
-			this.defenseLevel.WIND = dl.id;
-		}
+		this.defenseLevel.WIND = dl && dl.id || spec.defWind;
 		dl = hvStat.constant.defenseLevel[spec.defHoly.toUpperCase()];
-		if (dl) {
-			this.defenseLevel.HOLY = dl.id;
-		}
+		this.defenseLevel.HOLY = dl && dl.id || spec.defHoly;
 		dl = hvStat.constant.defenseLevel[spec.defDark.toUpperCase()];
-		if (dl) {
-			this.defenseLevel.DARK = dl.id;
-		}
+		this.defenseLevel.DARK = dl && dl.id || spec.defDark;
 		dl = hvStat.constant.defenseLevel[spec.defSoul.toUpperCase()];
-		if (dl) {
-			this.defenseLevel.SOUL = dl.id;
-		}
+		this.defenseLevel.SOUL = dl && dl.id || spec.defSoul;
 		dl = hvStat.constant.defenseLevel[spec.defVoid.toUpperCase()];
-		if (dl) {
-			this.defenseLevel.VOID = dl.id;
-		}
+		this.defenseLevel.VOID = dl && dl.id || spec.defVoid;
+
 		if (spec.debuffsAffected) {
 			debuffs = spec.debuffsAffected.replace(" ", "").split(", ");
 			for (i = 0; i < debuffs.length; i++) {
@@ -1931,17 +1923,17 @@ hvStat.database.monsterScanResults = new hvStat.database.ObjectStoreDelegate({
 			obj.powerLevel !== null ? obj.powerLevel : "",
 			obj.trainer !== null ? obj.trainer : "",
 			obj.meleeAttack !== null ? obj.meleeAttack : "",
-			obj.defenseLevel && obj.defenseLevel.CRUSHING ? obj.defenseLevel.CRUSHING : "",
-			obj.defenseLevel && obj.defenseLevel.SLASHING ? obj.defenseLevel.SLASHING : "",
-			obj.defenseLevel && obj.defenseLevel.PIERCING ? obj.defenseLevel.PIERCING : "",
-			obj.defenseLevel && obj.defenseLevel.FIRE ? obj.defenseLevel.FIRE : "",
-			obj.defenseLevel && obj.defenseLevel.COLD ? obj.defenseLevel.COLD : "",
-			obj.defenseLevel && obj.defenseLevel.ELEC ? obj.defenseLevel.ELEC : "",
-			obj.defenseLevel && obj.defenseLevel.WIND ? obj.defenseLevel.WIND : "",
-			obj.defenseLevel && obj.defenseLevel.HOLY ? obj.defenseLevel.HOLY : "",
-			obj.defenseLevel && obj.defenseLevel.DARK ? obj.defenseLevel.DARK : "",
-			obj.defenseLevel && obj.defenseLevel.SOUL ? obj.defenseLevel.SOUL : "",
-			obj.defenseLevel && obj.defenseLevel.VOID ? obj.defenseLevel.VOID : "",
+			obj.defenseLevel && obj.defenseLevel.CRUSHING !== null ? obj.defenseLevel.CRUSHING : "",
+			obj.defenseLevel && obj.defenseLevel.SLASHING !== null ? obj.defenseLevel.SLASHING : "",
+			obj.defenseLevel && obj.defenseLevel.PIERCING !== null ? obj.defenseLevel.PIERCING : "",
+			obj.defenseLevel && obj.defenseLevel.FIRE !== null ? obj.defenseLevel.FIRE : "",
+			obj.defenseLevel && obj.defenseLevel.COLD !== null ? obj.defenseLevel.COLD : "",
+			obj.defenseLevel && obj.defenseLevel.ELEC !== null ? obj.defenseLevel.ELEC : "",
+			obj.defenseLevel && obj.defenseLevel.WIND !== null ? obj.defenseLevel.WIND : "",
+			obj.defenseLevel && obj.defenseLevel.HOLY !== null ? obj.defenseLevel.HOLY : "",
+			obj.defenseLevel && obj.defenseLevel.DARK !== null ? obj.defenseLevel.DARK : "",
+			obj.defenseLevel && obj.defenseLevel.SOUL !== null ? obj.defenseLevel.SOUL : "",
+			obj.defenseLevel && obj.defenseLevel.VOID !== null ? obj.defenseLevel.VOID : "",
 			obj.debuffsAffected ? obj.debuffsAffected.join(", ") : "",
 		];
 	},
@@ -2929,7 +2921,7 @@ hvStat.battle.eventLog.messageTypeParams = {
 		},
 	},
 	SCAN: {
-		regex: /^Scanning (.*)\.\.\.\s+HP: [^\s]+\/([^\s]+)\s+MP: [^\s]+\/[^\s]+(?:\s+SP: [^\s]+\/[^\s]+)? Monster Class: (.+?)(?:, Power Level (\d+))? Monster Trainer:(?: (.+))? Melee Attack: (.+) Weak against: (.+) Resistant to: (.+) Impervious to: (.+)/,
+		regex: /^Scanning (.*)\.\.\.\s+HP: [^\s]+\/([^\s]+)\s+MP: [^\s]+\/[^\s]+(?:\s+SP: [^\s]+\/[^\s]+)? Monster Class: (.+?)(?:, Power Level (\d+))? Monster Trainer:(?: (.+))? Melee Attack: (.+) Fire: ([\-\+]?\d+)% Cold: ([\-\+]?\d+)% Elec: ([\-\+]?\d+)% Wind: ([\-\+]?\d+)% Holy: ([\-\+]?\d+)% Dark: ([\-\+]?\d+)% Crushing: ([\-\+]?\d+)% Slashing: ([\-\+]?\d+)% Piercing: ([\-\+]?\d+)%/,
 		relatedMessageTypeNames: null,
 		contentType: "text",
 		evaluationFn: function (message) {
@@ -3758,7 +3750,9 @@ hvStat.battle.enhancement.powerupBox = {
 			} else if (powerInfo.indexOf('Mystic') > -1) {
 				powerBox.className += " hvstat-powerup-box-channeling";
 			}
-			powerBox.addEventListener("click", this.onclick);
+			if (!hv.battle.isRoundFinished) {
+				powerBox.addEventListener("click", this.onclick);
+			}
 			powerBox.addEventListener("mouseover", this.onmouseover);
 			powerBox.addEventListener("mouseout", this.onmouseout);
 		}
@@ -4033,13 +4027,13 @@ hvStat.battle.monster.popup = {
 			}
 		}
 		if (index < 0) return;
-		var html = hvStat.battle.monster.monsters[index].createPopupHTML();
-		hv.elementCache.popup.style.width = "270px";
+		hv.elementCache.popup.style.width = "290px";
 		hv.elementCache.popup.style.height = "auto";
-		hv.elementCache.popup.innerHTML = html;
+		hv.elementCache.popup.innerHTML = browser.extension.getResourceText("html/", "monster-popup.html");
+		hvStat.battle.monster.monsters[index].setPopupContents(hv.elementCache.popup);
 		var popupTopOffset = hv.battle.elementCache.monsterPane.offsetTop +
 			index * ((hv.battle.elementCache.monsterPane.scrollHeight - hv.elementCache.popup.scrollHeight) / 9);
-		var popupLeftOffset = hvStat.settings.isMonsterPopupPlacement ? 1245 : 555;
+		var popupLeftOffset = hvStat.settings.isMonsterPopupPlacement ? 1245 : 535;
 		hv.elementCache.popup.style.top = popupTopOffset + "px";
 		hv.elementCache.popup.style.left = popupLeftOffset + "px";
 		hv.elementCache.popup.style.visibility = "visible";
@@ -4118,12 +4112,16 @@ hvStat.battle.monster.MonsterScanResults = function (vo) {
 
 	var damageTypeId, debuffId;
 	for (damageTypeId in hvStat.constant.damageType) {
-		this._defenseLevel[damageTypeId] = hvStat.constant.defenseLevel[(vo.defenseLevel || vo.defenceLevel)[damageTypeId]] || null;
+		this._defenseLevel[damageTypeId] = hvStat.constant.defenseLevel[(vo.defenseLevel || vo.defenceLevel)[damageTypeId]] || vo.defenseLevel[damageTypeId];
 	}
 	for (damageTypeId in this._defenseLevel) {
 		switch (this._defenseLevel[damageTypeId]) {
+		// HV 0.76 or earlier
 		case hvStat.constant.defenseLevel.WEAK:
 			this._defWeak.push(hvStat.constant.damageType[damageTypeId]);
+			break;
+		case hvStat.constant.defenseLevel.AVERAGE:
+			// Do nothing
 			break;
 		case hvStat.constant.defenseLevel.RESISTANT:
 			this._defResistant.push(hvStat.constant.damageType[damageTypeId]);
@@ -4131,6 +4129,20 @@ hvStat.battle.monster.MonsterScanResults = function (vo) {
 		case hvStat.constant.defenseLevel.IMPERVIOUS:
 			this._defImpervious.push(hvStat.constant.damageType[damageTypeId]);
 			break;
+		// HV 0.77 or later
+		default:
+			var mitigation = parseFloat(this._defenseLevel[damageTypeId]);
+			if (!isNaN(mitigation)) {
+				if (mitigation <= 0) {
+					this._defWeak.push(hvStat.constant.damageType[damageTypeId]);
+				} else if (mitigation <= 50) {
+					// Do nothing
+				} else if (mitigation <= 75) {
+					this._defResistant.push(hvStat.constant.damageType[damageTypeId]);
+				} else {
+					this._defImpervious.push(hvStat.constant.damageType[damageTypeId]);
+				}
+			}
 		}
 	}
 	for (i in vo.debuffsAffected) {
@@ -4254,7 +4266,11 @@ hvStat.battle.monster.MonsterScanResults.prototype = {
 		vo.trainer = this._trainer;
 		vo.meleeAttack = this._meleeAttack ? this._meleeAttack.id : null;
 		for (i in this._defenseLevel) {
-			vo.defenseLevel[i] = this._defenseLevel[i].id;
+			if (!isNaN(parseFloat(this._defenseLevel[i]))) {
+				vo.defenseLevel[i] = this._defenseLevel[i];
+			} else {
+				vo.defenseLevel[i] = this._defenseLevel[i] && this._defenseLevel[i].id || null;
+			}
 		}
 		len = this._debuffsAffected.length;
 		for (i = 0; i < len; i++) {
@@ -4281,34 +4297,19 @@ hvStat.battle.monster.MonsterScanResults.prototype = {
 		vo.powerLevel = Number(regexResult[4]) || null;
 		vo.trainer = regexResult[5] || null;
 		vo.meleeAttack = regexResult[6].toUpperCase() || null;
-		var array;
-		var defWeak = regexResult[7] || null;
-		if (defWeak) {
-			array = defWeak.toUpperCase().split(", ");
-			array.forEach(function (element, index, array) {
-				if (element !== "NOTHING") {
-					vo.defenseLevel[element] = hvStat.constant.defenseLevel.WEAK.id;
-				}
-			});
-		}
-		var defResistant = regexResult[8] || null;
-		if (defResistant) {
-			array = defResistant.toUpperCase().split(", ");
-			array.forEach(function (element, index, array) {
-				if (element !== "NOTHING") {
-					vo.defenseLevel[element] = hvStat.constant.defenseLevel.RESISTANT.id;
-				}
-			});
-		}
-		var defImpervious = regexResult[9] || null;
-		if (defImpervious) {
-			array = defImpervious.toUpperCase().split(", ");
-			array.forEach(function (element, index, array) {
-				if (element !== "NOTHING") {
-					vo.defenseLevel[element] = hvStat.constant.defenseLevel.IMPERVIOUS.id;
-				}
-			});
-		}
+
+		vo.defenseLevel.FIRE = String(Number(regexResult[7]));
+		vo.defenseLevel.COLD = String(Number(regexResult[8]));
+		vo.defenseLevel.ELEC = String(Number(regexResult[9]));
+		vo.defenseLevel.WIND = String(Number(regexResult[10]));
+		vo.defenseLevel.HOLY = String(Number(regexResult[11]));
+		vo.defenseLevel.DARK = String(Number(regexResult[12]));
+		vo.defenseLevel.CRUSHING = String(Number(regexResult[13]));
+		vo.defenseLevel.SLASHING = String(Number(regexResult[14]));
+		vo.defenseLevel.PIERCING = String(Number(regexResult[15]));
+		vo.defenseLevel.SOUL = null;
+		vo.defenseLevel.VOID = null;
+
 		vo.debuffsAffected = [];
 		var i, debuffElements, debuffInfo, debuffId;
 		debuffElements = hv.battle.elementCache.monsters[index].querySelectorAll('div.btm6 > img');
@@ -4616,69 +4617,140 @@ hvStat.battle.monster.Monster.prototype = {
 			}
 		}
 	},
-	createPopupHTML: function () {
-		var that = this;
-		var i, len, skill, lastScanString;
-		var doesScanResultExist = that.doesScanResultExist;
-		var html = '<table cellspacing="0" cellpadding="0" style="width:100%">' +
-			'<tr class="monname"><td colspan="2"><b>' + that._name + '</b></td></tr>' +
-			'<tr><td width="33%">ID: </td><td>' + that._id + '</td></tr>' +
-			'<tr><td>Health: </td><td>' + that.healthPoints.toFixed(1) + ' / ' + that._maxHp.toFixed(1) + '</td></tr>' +
-			'<tr><td>Mana: </td><td>' + (that.magicPointRate * 100).toFixed(2) + '%</td></tr>';
-		if (that.hasSpiritPoint) {
-			html += '<tr><td>Spirit: </td><td>' + (that.spiritPointRate * 100).toFixed(2) + '%</td></tr>';
-		}
-		if (doesScanResultExist) {
-			html += '<tr><td>Class:</td><td>' + (that._scanResult.monsterClass ? that._scanResult.monsterClass : "") + '</td></tr>' +
-				'<tr><td>Trainer:</td><td>' + (that._scanResult.trainer ? that._scanResult.trainer : "") + '</td></tr>';
-			if (that._scanResult.powerLevel) {
-				html += '<tr><td>Power Level:</td><td>' + that._scanResult.powerLevel + '</td></tr>';
+	setPopupContents: function (popup) {
+		var tdName = popup.querySelector('.hvstat-monster-popup-name td');
+		if (tdName) tdName.textContent = this._name;
+
+		var tdId = popup.querySelector('.hvstat-monster-popup-id td');
+		if (tdId) tdId.textContent = this._id;
+
+		var tdHealth = popup.querySelector('.hvstat-monster-popup-health td');
+		if (tdHealth) tdHealth.textContent = this.healthPoints.toFixed(1) + ' / ' + this._maxHp.toFixed(1);
+
+		var tdMana = popup.querySelector('.hvstat-monster-popup-mana td');
+		if (tdMana) tdMana.textContent = (this.magicPointRate * 100).toFixed(2) + '%';
+
+		var tdSpirit = popup.querySelector('.hvstat-monster-popup-spirit td');
+		if (tdSpirit) {
+			if (!this.hasSpiritPoint) {
+				tdSpirit.className += " hvstat-display-none";
+			} else {
+				tdSpirit.textContent = (this.spiritPointRate * 100).toFixed(2) + '%';
 			}
-			html += '<tr><td>Melee Attack:</td><td>' + (that._scanResult.meleeAttack ? that._scanResult.meleeAttack : "") + '</td></tr>';
 		}
-		var magicSkills = that.magicSkills;
-		if (magicSkills && magicSkills.length > 0) {
-			html += '<tr><td valign="top">Skills:</td><td>';
-			len = magicSkills.length;
-			var skillTable = that.magicSkillTable;
-			var skillCount = 0;
-			for (var attackType in skillTable) {
-				if (skillTable[attackType].exists) {
-					for (var damageType in skillTable[attackType].damageTable) {
-						if (skillTable[attackType].damageTable[damageType]) {
-							if (skillCount > 0) {
-								html += '<br/>';
+
+		var tdClass = popup.querySelector('.hvstat-monster-popup-class td');
+		var trClass = tdClass.parentNode;
+		var tdTrainer = popup.querySelector('.hvstat-monster-popup-trainer td');
+		var trTrainer = tdTrainer.parentNode;
+		var tdPowerLevel = popup.querySelector('.hvstat-monster-popup-power-level td');
+		var trPowerLevel = tdPowerLevel.parentNode;
+		var tdMeleeAttack = popup.querySelector('.hvstat-monster-popup-melee-attack td');
+		var trMeleeAttack = tdMeleeAttack.parentNode;
+		var tdMagicSkills = popup.querySelector('.hvstat-monster-popup-magic-skills td');
+		var trMagicSkills = tdMagicSkills.parentNode;
+		var tdSpiritSkill = popup.querySelector('.hvstat-monster-popup-spirit-skill td');
+		var trSpiritSkill = tdSpiritSkill.parentNode;
+		var trMitigationsTitle = popup.querySelector('.hvstat-monster-popup-mitigations-title');
+		var trMitigations = popup.querySelector('.hvstat-monster-popup-mitigations');
+		var tdMitigations = popup.querySelectorAll('.hvstat-monster-popup-mitigations table td');
+		var tdWeaknesses = popup.querySelector('.hvstat-monster-popup-weaknesses td');
+		var trWeaknesses = tdWeaknesses.parentNode;
+		var tdResistances = popup.querySelector('.hvstat-monster-popup-resistances td');
+		var trResistances = tdResistances.parentNode;
+		var tdImperviousnesses = popup.querySelector('.hvstat-monster-popup-imperviousnesses td');
+		var trImperviousnesses = tdImperviousnesses.parentNode;
+		var tdDebuffsAffected = popup.querySelector('.hvstat-monster-popup-debuffs-affected td');
+		var trDebuffsAffected = tdDebuffsAffected.parentNode;
+
+		if (!this.doesScanResultExist) {
+			if (trClass) trClass.className += " hvstat-display-none";
+			if (trTrainer) trTrainer.className += " hvstat-display-none";
+			if (trPowerLevel) trPowerLevel.className += " hvstat-display-none";
+			if (trMeleeAttack) trMeleeAttack.className += " hvstat-display-none";
+			if (trMitigationsTitle) trMitigationsTitle.className += " hvstat-display-none";
+			if (trMitigations) trMitigations.className += " hvstat-display-none";
+			if (trWeaknesses) trWeaknesses.className += " hvstat-display-none";
+			if (trResistances) trResistances.className += " hvstat-display-none";
+			if (trImperviousnesses) trImperviousnesses.className += " hvstat-display-none";
+			if (trDebuffsAffected) trDebuffsAffected.className += " hvstat-display-none";
+		} else {
+			if (tdClass) tdClass.textContent = this._scanResult.monsterClass ? this._scanResult.monsterClass : "";
+			if (tdTrainer) tdTrainer.textContent = this._scanResult.trainer ? this._scanResult.trainer : "";
+			if (tdPowerLevel) {
+				if (!this._scanResult.powerLevel) {
+					trPowerLevel.className += " hvstat-display-none";
+				} else {
+					tdPowerLevel.textContent = this._scanResult.powerLevel;
+				}
+			}
+			if (tdMeleeAttack) tdMeleeAttack.textContent = this._scanResult.meleeAttack ? this._scanResult.meleeAttack : "";
+
+			if (tdMitigations) {
+				var mit = this._scanResult.defenseLevel;
+				var mitArray = [mit.FIRE, mit.COLD, mit.ELEC, mit.WIND, mit.HOLY, mit.DARK, mit.CRUSHING, mit.SLASHING, mit.PIERCING];
+				var isHV077Format = false;
+				for (var i = 0; i < mitArray.length; i++) {
+					var value = parseFloat(mitArray[i]);
+					if (!isNaN(value)) {
+						tdMitigations[i].textContent = String(value) + '%';
+						isHV077Format = true;
+					}
+				}
+				if (!isHV077Format) {
+					trMitigationsTitle.className += " hvstat-display-none";
+					trMitigations.className += " hvstat-display-none";
+				}
+			}
+
+			if (tdWeaknesses) tdWeaknesses.textContent = this._scanResult.defWeak.length > 0 ? this._scanResult.getDefWeakString(false, true, 0) : "-";
+			if (tdResistances) tdResistances.textContent = this._scanResult.defResistant.length > 0 ? this._scanResult.getDefResistantString(false, true, 0) : "-";
+			if (tdImperviousnesses) tdImperviousnesses.textContent = this._scanResult.defImpervious.length > 0 ? this._scanResult.getDefImperviousString(false, true, 0) : "-";
+			if (tdDebuffsAffected) tdDebuffsAffected.textContent = this._scanResult.debuffsAffected.length > 0 ? this._scanResult.debuffsAffected.join(", ") : "-";
+		}
+
+		if (tdMagicSkills) {
+			var magicSkills = this.magicSkills;
+			if (!magicSkills || magicSkills.length === 0) {
+				trMagicSkills.className += " hvstat-display-none";
+			} else {
+				var magicSkillsHTML = "";
+				var skillTable = this.magicSkillTable;
+				var skillCount = 0;
+				for (var attackType in skillTable) {
+					if (skillTable[attackType].exists) {
+						for (var damageType in skillTable[attackType].damageTable) {
+							if (skillTable[attackType].damageTable[damageType]) {
+								if (skillCount > 0) {
+									magicSkillsHTML += '<br />';
+								}
+								magicSkillsHTML += hvStat.constant.attackType[attackType].name + '-' + hvStat.constant.damageType[damageType].name;
+								skillCount++;
 							}
-							html += hvStat.constant.attackType[attackType].name + '-' + hvStat.constant.damageType[damageType].name;
-							skillCount++;
 						}
 					}
 				}
-			}
-			html += '</td></tr>';
-		}
-		var spiritSkill = that.spiritSkill;
-		if (spiritSkill) {
-			html += '<tr><td>Spirit Skill:</td><td>';
-			html += spiritSkill.toString();
-			html += '</td></tr>';
-		}
-		lastScanString = "Never";
-		if (doesScanResultExist) {
-			html += '<tr><td>Weak against:</td><td>' + (that._scanResult.defWeak.length > 0 ? that._scanResult.getDefWeakString(false, true, 0) : "-") + '</td></tr>' +
-				'<tr><td>Resistant to:</td><td>' + (that._scanResult.defResistant.length > 0 ? that._scanResult.getDefResistantString(false, true, 0) : "-") + '</td></tr>' +
-				'<tr><td>Impervious to:</td><td>' + (that._scanResult.defImpervious.length > 0 ? that._scanResult.getDefImperviousString(false, true, 0) : "-") + '</td></tr>' +
-				'<tr><td>Debuffs affected:</td><td>' + (that._scanResult.debuffsAffected.length > 0 ? that._scanResult.debuffsAffected.join(", ") : "-") + '</td></tr>';
-			if (that._scanResult.lastScanDate) {
-				lastScanString = hvStat.util.getDateTimeString(that._scanResult.lastScanDate);
+				tdMagicSkills.innerHTML = magicSkillsHTML;
 			}
 		}
-		html += '<tr><td valign="top">Last Scan:</td><td>' + lastScanString + '</td></tr>';
-		if (doesScanResultExist && that._scanResult.lastScanDate) {
-			html += '<tr><td></td><td>' + hvStat.util.getElapseFrom(that._scanResult.lastScanDate) + ' ago</td></tr>';
+
+		if (tdSpiritSkill) {
+			if (!this.spiritSkill) {
+				trSpiritSkill.className += " hvstat-display-none";
+			} else {
+				tdSpiritSkill.textContent = this.spiritSkill;
+			}
 		}
-		html += '</table>';
-		return html;
+
+		var tdLastScan = popup.querySelector('.hvstat-monster-popup-last-scan td');
+		if (tdLastScan) {
+			if (!this.doesScanResultExist || !this._scanResult.lastScanDate) {
+				tdLastScan.textContent = "Never";
+			} else {
+				tdLastScan.innerHTML = hvStat.util.getDateTimeString(this._scanResult.lastScanDate) + '<br />' +
+					hvStat.util.getElapseFrom(this._scanResult.lastScanDate);
+			}
+		}
 	},
 	get gauges() {
 		if (!this._gauges) {
@@ -5572,10 +5644,6 @@ hvStat.startup = {
 			case "shrine":
 				if (hvStat.settings.isTrackShrine) {
 					hvStat.noncombat.support.captureShrine();
-				}
-				if (browser.isChrome && hvStat.settings.enableShrineKeyPatch) {
-					// Remove keydown handler to apply keypress handler
-					util.addSiteScript('document.onkeydown = null;');
 				}
 				break;
 			case "forge":

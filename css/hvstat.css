@@ -1,3 +1,8 @@
+/* General */
+.hvstat-display-none {
+	display: none;
+}
+
 /* Icon */
 #hvstat-icon {
 	position: absolute;
@@ -269,6 +274,45 @@ div.hvstat-monster-spirit {
 .hvstat-monster-status-spirit-skill-attack-type { color: red; }
 
 /* Monster popup */
+.hvstat-monster-popup {
+	width: 100%;
+	border-collapse: collapse;
+}
+
+.hvstat-monster-popup th {
+	white-space: nowrap;
+	text-align: right;
+	vertical-align: top;
+}
+
+.hvstat-monster-popup td {
+	white-space: nowrap;
+}
+
+.hvstat-monster-popup > tbody > tr > td:nth-child(2) {
+	width: 70%;
+}
+
+.hvstat-monster-popup-name td {
+	text-align: center;
+	font-size: 1.2em;
+	font-weight: bold;
+	border-bottom: 1px solid #5C0D11;
+}
+
+.hvstat-monster-popup-mitigations div {
+	align: right;
+}
+.hvstat-monster-popup-mitigations table {
+	margin-left: auto;
+	border-collapse: collapse;
+}
+.hvstat-monster-popup-mitigations table td {
+	text-align: right;
+}
+.hvstat-monster-popup-mitigations table th {
+	font-weight: normal;
+}
 
 /* Battle round stats */
 .hvstat-battle-round-stats {

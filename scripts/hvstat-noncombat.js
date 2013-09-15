@@ -8,7 +8,7 @@ hvStat.noncombat = {};
 //------------------------------------
 hvStat.noncombat.support = {
 	captureStatuses: function () {
-		var difficulties = ["", "NORMAL", "HARD", "NIGHTMARE", "HELL", "NINTENDO", "BATTLETOADS", "IWBTH"];
+		var difficulties = ["", "NORMAL", "HARD", "NIGHTMARE", "HELL", "NINTENDO", "BATTLETOADS", "IWBTH", "PFUDOR"];
 		var difficulty = hv.settings.difficulty;
 		if (difficulty) {
 			hvStat.characterStatus.difficulty.id = hv.settings.difficulty;
