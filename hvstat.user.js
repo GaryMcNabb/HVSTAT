@@ -33,6 +33,7 @@
 // @resource        database-pane.html                          html/database-pane.html
 // @resource        drops-pane.html                             html/drops-pane.html
 // @resource        main.html                                   html/main.html
+// @resource        monster-popup.html                          html/monster-popup.html
 // @resource        overview-pane.html                          html/overview-pane.html
 // @resource        proficiency-table.html                      html/proficiency-table.html
 // @resource        settings-pane.html                          html/settings-pane.html
@@ -212,12 +213,20 @@ hvStat.util = {
 			days = Math.floor(hours / 24);
 			hours = hours % 24;
 		}
-		str = String(mins) + ((mins > 1) ? " mins" : " min");
-		if (hours > 0) {
-			str = String(hours) + ((hours > 1) ? " hours, " : " hour, ") + str;
-		}
-		if (days > 0) {
-			str = String(days) + ((days > 1) ? " days, " : " day, ") + str;
+		if (days >= 2) {
+			return days + " days ago";
+		} else if (days === 1) {
+			return "1 day ago";
+		} else if (hours >= 2) {
+			return "about " + hours + " hours ago";
+		} else if (hours === 1) {
+			return "about an hour ago";
+		} else if (mins >= 2) {
+			return mins + " minites ago";
+		} else if (mins === 1) {
+			return "about a minite ago";
+		} else {
+			return "less than a minute ago";
 		}
 		return str;
 	},
@@ -4018,13 +4027,13 @@ hvStat.battle.monster.popup = {
 			}
 		}
 		if (index < 0) return;
-		var html = hvStat.battle.monster.monsters[index].createPopupHTML();
-		hv.elementCache.popup.style.width = "270px";
+		hv.elementCache.popup.style.width = "290px";
 		hv.elementCache.popup.style.height = "auto";
-		hv.elementCache.popup.innerHTML = html;
+		hv.elementCache.popup.innerHTML = browser.extension.getResourceText("html/", "monster-popup.html");
+		hvStat.battle.monster.monsters[index].setPopupContents(hv.elementCache.popup);
 		var popupTopOffset = hv.battle.elementCache.monsterPane.offsetTop +
 			index * ((hv.battle.elementCache.monsterPane.scrollHeight - hv.elementCache.popup.scrollHeight) / 9);
-		var popupLeftOffset = hvStat.settings.isMonsterPopupPlacement ? 1245 : 555;
+		var popupLeftOffset = hvStat.settings.isMonsterPopupPlacement ? 1245 : 535;
 		hv.elementCache.popup.style.top = popupTopOffset + "px";
 		hv.elementCache.popup.style.left = popupLeftOffset + "px";
 		hv.elementCache.popup.style.visibility = "visible";
@@ -4608,69 +4617,140 @@ hvStat.battle.monster.Monster.prototype = {
 			}
 		}
 	},
-	createPopupHTML: function () {
-		var that = this;
-		var i, len, skill, lastScanString;
-		var doesScanResultExist = that.doesScanResultExist;
-		var html = '<table cellspacing="0" cellpadding="0" style="width:100%">' +
-			'<tr class="monname"><td colspan="2"><b>' + that._name + '</b></td></tr>' +
-			'<tr><td width="33%">ID: </td><td>' + that._id + '</td></tr>' +
-			'<tr><td>Health: </td><td>' + that.healthPoints.toFixed(1) + ' / ' + that._maxHp.toFixed(1) + '</td></tr>' +
-			'<tr><td>Mana: </td><td>' + (that.magicPointRate * 100).toFixed(2) + '%</td></tr>';
-		if (that.hasSpiritPoint) {
-			html += '<tr><td>Spirit: </td><td>' + (that.spiritPointRate * 100).toFixed(2) + '%</td></tr>';
-		}
-		if (doesScanResultExist) {
-			html += '<tr><td>Class:</td><td>' + (that._scanResult.monsterClass ? that._scanResult.monsterClass : "") + '</td></tr>' +
-				'<tr><td>Trainer:</td><td>' + (that._scanResult.trainer ? that._scanResult.trainer : "") + '</td></tr>';
-			if (that._scanResult.powerLevel) {
-				html += '<tr><td>Power Level:</td><td>' + that._scanResult.powerLevel + '</td></tr>';
+	setPopupContents: function (popup) {
+		var tdName = popup.querySelector('.hvstat-monster-popup-name td');
+		if (tdName) tdName.textContent = this._name;
+
+		var tdId = popup.querySelector('.hvstat-monster-popup-id td');
+		if (tdId) tdId.textContent = this._id;
+
+		var tdHealth = popup.querySelector('.hvstat-monster-popup-health td');
+		if (tdHealth) tdHealth.textContent = this.healthPoints.toFixed(1) + ' / ' + this._maxHp.toFixed(1);
+
+		var tdMana = popup.querySelector('.hvstat-monster-popup-mana td');
+		if (tdMana) tdMana.textContent = (this.magicPointRate * 100).toFixed(2) + '%';
+
+		var tdSpirit = popup.querySelector('.hvstat-monster-popup-spirit td');
+		if (tdSpirit) {
+			if (!this.hasSpiritPoint) {
+				tdSpirit.className += " hvstat-display-none";
+			} else {
+				tdSpirit.textContent = (this.spiritPointRate * 100).toFixed(2) + '%';
 			}
-			html += '<tr><td>Melee Attack:</td><td>' + (that._scanResult.meleeAttack ? that._scanResult.meleeAttack : "") + '</td></tr>';
 		}
-		var magicSkills = that.magicSkills;
-		if (magicSkills && magicSkills.length > 0) {
-			html += '<tr><td valign="top">Skills:</td><td>';
-			len = magicSkills.length;
-			var skillTable = that.magicSkillTable;
-			var skillCount = 0;
-			for (var attackType in skillTable) {
-				if (skillTable[attackType].exists) {
-					for (var damageType in skillTable[attackType].damageTable) {
-						if (skillTable[attackType].damageTable[damageType]) {
-							if (skillCount > 0) {
-								html += '<br/>';
+
+		var tdClass = popup.querySelector('.hvstat-monster-popup-class td');
+		var trClass = tdClass.parentNode;
+		var tdTrainer = popup.querySelector('.hvstat-monster-popup-trainer td');
+		var trTrainer = tdTrainer.parentNode;
+		var tdPowerLevel = popup.querySelector('.hvstat-monster-popup-power-level td');
+		var trPowerLevel = tdPowerLevel.parentNode;
+		var tdMeleeAttack = popup.querySelector('.hvstat-monster-popup-melee-attack td');
+		var trMeleeAttack = tdMeleeAttack.parentNode;
+		var tdMagicSkills = popup.querySelector('.hvstat-monster-popup-magic-skills td');
+		var trMagicSkills = tdMagicSkills.parentNode;
+		var tdSpiritSkill = popup.querySelector('.hvstat-monster-popup-spirit-skill td');
+		var trSpiritSkill = tdSpiritSkill.parentNode;
+		var trMitigationsTitle = popup.querySelector('.hvstat-monster-popup-mitigations-title');
+		var trMitigations = popup.querySelector('.hvstat-monster-popup-mitigations');
+		var tdMitigations = popup.querySelectorAll('.hvstat-monster-popup-mitigations table td');
+		var tdWeaknesses = popup.querySelector('.hvstat-monster-popup-weaknesses td');
+		var trWeaknesses = tdWeaknesses.parentNode;
+		var tdResistances = popup.querySelector('.hvstat-monster-popup-resistances td');
+		var trResistances = tdResistances.parentNode;
+		var tdImperviousnesses = popup.querySelector('.hvstat-monster-popup-imperviousnesses td');
+		var trImperviousnesses = tdImperviousnesses.parentNode;
+		var tdDebuffsAffected = popup.querySelector('.hvstat-monster-popup-debuffs-affected td');
+		var trDebuffsAffected = tdDebuffsAffected.parentNode;
+
+		if (!this.doesScanResultExist) {
+			if (trClass) trClass.className += " hvstat-display-none";
+			if (trTrainer) trTrainer.className += " hvstat-display-none";
+			if (trPowerLevel) trPowerLevel.className += " hvstat-display-none";
+			if (trMeleeAttack) trMeleeAttack.className += " hvstat-display-none";
+			if (trMitigationsTitle) trMitigationsTitle.className += " hvstat-display-none";
+			if (trMitigations) trMitigations.className += " hvstat-display-none";
+			if (trWeaknesses) trWeaknesses.className += " hvstat-display-none";
+			if (trResistances) trResistances.className += " hvstat-display-none";
+			if (trImperviousnesses) trImperviousnesses.className += " hvstat-display-none";
+			if (trDebuffsAffected) trDebuffsAffected.className += " hvstat-display-none";
+		} else {
+			if (tdClass) tdClass.textContent = this._scanResult.monsterClass ? this._scanResult.monsterClass : "";
+			if (tdTrainer) tdTrainer.textContent = this._scanResult.trainer ? this._scanResult.trainer : "";
+			if (tdPowerLevel) {
+				if (!this._scanResult.powerLevel) {
+					trPowerLevel.className += " hvstat-display-none";
+				} else {
+					tdPowerLevel.textContent = this._scanResult.powerLevel;
+				}
+			}
+			if (tdMeleeAttack) tdMeleeAttack.textContent = this._scanResult.meleeAttack ? this._scanResult.meleeAttack : "";
+
+			if (tdMitigations) {
+				var mit = this._scanResult.defenseLevel;
+				var mitArray = [mit.FIRE, mit.COLD, mit.ELEC, mit.WIND, mit.HOLY, mit.DARK, mit.CRUSHING, mit.SLASHING, mit.PIERCING];
+				var isHV077Format = false;
+				for (var i = 0; i < mitArray.length; i++) {
+					var value = parseFloat(mitArray[i]);
+					if (!isNaN(value)) {
+						tdMitigations[i].textContent = String(value) + '%';
+						isHV077Format = true;
+					}
+				}
+				if (!isHV077Format) {
+					trMitigationsTitle.className += " hvstat-display-none";
+					trMitigations.className += " hvstat-display-none";
+				}
+			}
+
+			if (tdWeaknesses) tdWeaknesses.textContent = this._scanResult.defWeak.length > 0 ? this._scanResult.getDefWeakString(false, true, 0) : "-";
+			if (tdResistances) tdResistances.textContent = this._scanResult.defResistant.length > 0 ? this._scanResult.getDefResistantString(false, true, 0) : "-";
+			if (tdImperviousnesses) tdImperviousnesses.textContent = this._scanResult.defImpervious.length > 0 ? this._scanResult.getDefImperviousString(false, true, 0) : "-";
+			if (tdDebuffsAffected) tdDebuffsAffected.textContent = this._scanResult.debuffsAffected.length > 0 ? this._scanResult.debuffsAffected.join(", ") : "-";
+		}
+
+		if (tdMagicSkills) {
+			var magicSkills = this.magicSkills;
+			if (!magicSkills || magicSkills.length === 0) {
+				trMagicSkills.className += " hvstat-display-none";
+			} else {
+				var magicSkillsHTML = "";
+				var skillTable = this.magicSkillTable;
+				var skillCount = 0;
+				for (var attackType in skillTable) {
+					if (skillTable[attackType].exists) {
+						for (var damageType in skillTable[attackType].damageTable) {
+							if (skillTable[attackType].damageTable[damageType]) {
+								if (skillCount > 0) {
+									magicSkillsHTML += '<br />';
+								}
+								magicSkillsHTML += hvStat.constant.attackType[attackType].name + '-' + hvStat.constant.damageType[damageType].name;
+								skillCount++;
 							}
-							html += hvStat.constant.attackType[attackType].name + '-' + hvStat.constant.damageType[damageType].name;
-							skillCount++;
 						}
 					}
 				}
-			}
-			html += '</td></tr>';
-		}
-		var spiritSkill = that.spiritSkill;
-		if (spiritSkill) {
-			html += '<tr><td>Spirit Skill:</td><td>';
-			html += spiritSkill.toString();
-			html += '</td></tr>';
-		}
-		lastScanString = "Never";
-		if (doesScanResultExist) {
-			html += '<tr><td>Weak against:</td><td>' + (that._scanResult.defWeak.length > 0 ? that._scanResult.getDefWeakString(false, true, 0) : "-") + '</td></tr>' +
-				'<tr><td>Resistant to:</td><td>' + (that._scanResult.defResistant.length > 0 ? that._scanResult.getDefResistantString(false, true, 0) : "-") + '</td></tr>' +
-				'<tr><td>Impervious to:</td><td>' + (that._scanResult.defImpervious.length > 0 ? that._scanResult.getDefImperviousString(false, true, 0) : "-") + '</td></tr>' +
-				'<tr><td>Debuffs affected:</td><td>' + (that._scanResult.debuffsAffected.length > 0 ? that._scanResult.debuffsAffected.join(", ") : "-") + '</td></tr>';
-			if (that._scanResult.lastScanDate) {
-				lastScanString = hvStat.util.getDateTimeString(that._scanResult.lastScanDate);
+				tdMagicSkills.innerHTML = magicSkillsHTML;
 			}
 		}
-		html += '<tr><td valign="top">Last Scan:</td><td>' + lastScanString + '</td></tr>';
-		if (doesScanResultExist && that._scanResult.lastScanDate) {
-			html += '<tr><td></td><td>' + hvStat.util.getElapseFrom(that._scanResult.lastScanDate) + ' ago</td></tr>';
+
+		if (tdSpiritSkill) {
+			if (!this.spiritSkill) {
+				trSpiritSkill.className += " hvstat-display-none";
+			} else {
+				tdSpiritSkill.textContent = this.spiritSkill;
+			}
 		}
-		html += '</table>';
-		return html;
+
+		var tdLastScan = popup.querySelector('.hvstat-monster-popup-last-scan td');
+		if (tdLastScan) {
+			if (!this.doesScanResultExist || !this._scanResult.lastScanDate) {
+				tdLastScan.textContent = "Never";
+			} else {
+				tdLastScan.innerHTML = hvStat.util.getDateTimeString(this._scanResult.lastScanDate) + '<br />' +
+					hvStat.util.getElapseFrom(this._scanResult.lastScanDate);
+			}
+		}
 	},
 	get gauges() {
 		if (!this._gauges) {
