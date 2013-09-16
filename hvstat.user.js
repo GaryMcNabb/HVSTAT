@@ -6,7 +6,7 @@
 // @exclude         http://hentaiverse.org/pages/showequip*
 // @exclude         http://hentaiverse.org/?login*
 // @author          Various (http://forums.e-hentai.org/index.php?showtopic=79552)
-// @version         5.6.5
+// @version         5.6.5.1
 // @require         scripts/util.js
 // @require         scripts/browser.js
 // @require         scripts/hv.js
@@ -60,7 +60,7 @@ window.IDBCursor = window.IDBCursor || window.webkitIDBCursor;
 // HV STAT object
 //------------------------------------
 var hvStat = {
-	version: "5.6.5",
+	version: "5.6.5.1",
 	imageResources: [
 		new browser.I("images/", "channeling.png", "css/images/"),
 		new browser.I("images/", "healthpot.png", "css/images/"),
@@ -2539,7 +2539,7 @@ hvStat.battle.eventLog.messageTypeParams = {
 		},
 	},
 	HIT: {
-		regex: /^(.+?) (hits|crits|blasts) (?!you)(.+?) for (\d+(?:\.\d+)?)(?: (.+?))? damage\.$/,
+		regex: /^(.+?) (hits|crits|blasts) (?!you)(.+?) for (\d+(?:\.\d+)?)(?: (.+?))? damage(?: \((\d+)% resisted\))?\.?$/,
 		relatedMessageTypeNames: null,
 		contentType: "text",
 		evaluationFn: function (message) {
@@ -4018,6 +4018,13 @@ hvStat.battle.monster.popup = {
 			monsterElement.addEventListener("mouseout", this.onmouseout);
 		}
 	},
+	_templateHTML: null,
+	get templateHTML() {
+		if (!this._templateHTML) {
+			this._templateHTML = browser.extension.getResourceText("html/", "monster-popup.html");
+		}
+		return this._templateHTML;
+	},
 	show: function (event) {
 		var i, index = -1;
 		for (i = 0; i < hvStat.battle.monster.monsters.length; i++) {
@@ -4029,7 +4036,7 @@ hvStat.battle.monster.popup = {
 		if (index < 0) return;
 		hv.elementCache.popup.style.width = "290px";
 		hv.elementCache.popup.style.height = "auto";
-		hv.elementCache.popup.innerHTML = browser.extension.getResourceText("html/", "monster-popup.html");
+		hv.elementCache.popup.innerHTML = hvStat.battle.monster.popup.templateHTML;
 		hvStat.battle.monster.monsters[index].setPopupContents(hv.elementCache.popup);
 		var popupTopOffset = hv.battle.elementCache.monsterPane.offsetTop +
 			index * ((hv.battle.elementCache.monsterPane.scrollHeight - hv.elementCache.popup.scrollHeight) / 9);
