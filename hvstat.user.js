@@ -4018,6 +4018,13 @@ hvStat.battle.monster.popup = {
 			monsterElement.addEventListener("mouseout", this.onmouseout);
 		}
 	},
+	_templateHTML: null,
+	get templateHTML() {
+		if (!this._templateHTML) {
+			this._templateHTML = browser.extension.getResourceText("html/", "monster-popup.html");
+		}
+		return this._templateHTML;
+	},
 	show: function (event) {
 		var i, index = -1;
 		for (i = 0; i < hvStat.battle.monster.monsters.length; i++) {
@@ -4029,7 +4036,7 @@ hvStat.battle.monster.popup = {
 		if (index < 0) return;
 		hv.elementCache.popup.style.width = "290px";
 		hv.elementCache.popup.style.height = "auto";
-		hv.elementCache.popup.innerHTML = browser.extension.getResourceText("html/", "monster-popup.html");
+		hv.elementCache.popup.innerHTML = hvStat.battle.monster.popup.templateHTML;
 		hvStat.battle.monster.monsters[index].setPopupContents(hv.elementCache.popup);
 		var popupTopOffset = hv.battle.elementCache.monsterPane.offsetTop +
 			index * ((hv.battle.elementCache.monsterPane.scrollHeight - hv.elementCache.popup.scrollHeight) / 9);
