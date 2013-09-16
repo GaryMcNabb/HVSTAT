@@ -48,10 +48,10 @@
 #togpane_log td[title^='You counter '],
 #togpane_log td[title^='Your offhand hit '],
 #togpane_log td[title^='Your offhand crit ']
-{color: Blue;}
+{color: MediumBlue;}
 
 #togpane_log td[title^='You crit ']
-{color: Blue; font-weight: bold;}
+{color: MediumBlue; font-weight: bold;}
 
 #togpane_log td[title*='You evade '],
 #togpane_log td[title*='You block '],
