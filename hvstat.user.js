@@ -5,11 +5,17 @@
 // @include         http://hentaiverse.org/*
 // @exclude         http://hentaiverse.org/pages/showequip*
 // @exclude         http://hentaiverse.org/?login*
+// @include         http://alt.hentaiverse.org/*
+// @exclude         http://alt.hentaiverse.org/pages/showequip*
+// @exclude         http://alt.hentaiverse.org/?login*
 // @author          Various (http://forums.e-hentai.org/index.php?showtopic=79552)
-// @version         5.6.5.1
+// @version         5.6.6
 // @require         scripts/util.js
 // @require         scripts/browser.js
 // @require         scripts/hv.js
+// @grant           GM_getResourceText
+// @grant           GM_getResourceURL
+// @grant           GM_addStyle
 // @resource        battle-log-type0.css                        css/battle-log-type0.css
 // @resource        battle-log-type1.css                        css/battle-log-type1.css
 // @resource        hide-logo.css                               css/hide-logo.css
