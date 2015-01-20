@@ -572,6 +572,10 @@ hvStat.storage.initialValue = {
 		warnMode: [true, true, false, false],
 		// - Event Notifications
 		isAlertGem: true,
+		isAlertGemHealth: true,
+		isAlertGemMana: true,
+		isAlertGemSpirit: true,
+		isAlertGemMystic: true,
 		isAlertOverchargeFull: false,
 		isWarnAbsorbTrigger: false,
 		isWarnSparkTrigger: true,
@@ -2921,7 +2925,15 @@ hvStat.battle.eventLog.messageTypeParams = {
 		contentType: "text",
 		evaluationFn: function (message) {
 			if (hvStat.settings.isAlertGem) {
-				hvStat.battle.warningSystem.enqueueAlert("You picked up a " + message.regexResult[2] + ".");
+				if (hvStat.settings.isAlertGemHealth && message.regexResult[2] === "Health Gem") {
+					hvStat.battle.warningSystem.enqueueAlert("You picked up a " + message.regexResult[2] + ".");
+				} else if (hvStat.settings.isAlertGemMana && message.regexResult[2] === "Mana Gem") {
+					hvStat.battle.warningSystem.enqueueAlert("You picked up a " + message.regexResult[2] + ".");
+				} else if (hvStat.settings.isAlertGemSpirit && message.regexResult[2] === "Spirit Gem") {
+					hvStat.battle.warningSystem.enqueueAlert("You picked up a " + message.regexResult[2] + ".");
+				} else if (hvStat.settings.isAlertGemMystic && message.regexResult[2] === "Mystic Gem") {
+					hvStat.battle.warningSystem.enqueueAlert("You picked up a " + message.regexResult[2] + ".");
+				} 
 			}
 			// TODO: Collect statistics
 		},

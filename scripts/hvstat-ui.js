@@ -987,6 +987,10 @@ function initSettingsPane() {
 	if (hvStat.settings.warnMode[3]) $("input[name=isWarnIW]").attr("checked", "checked");
 	// - Event Notifications
 	if (hvStat.settings.isAlertGem) $("input[name=isAlertGem]").attr("checked", "checked");
+	if (hvStat.settings.isAlertGemHealth) $("input[name=isAlertGemHealth]").attr("checked", "checked");
+	if (hvStat.settings.isAlertGemMana) $("input[name=isAlertGemMana]").attr("checked", "checked");
+	if (hvStat.settings.isAlertGemSpirit) $("input[name=isAlertGemSpirit]").attr("checked", "checked");
+	if (hvStat.settings.isAlertGemMystic) $("input[name=isAlertGemMystic]").attr("checked", "checked");
 	if (hvStat.settings.isAlertOverchargeFull) $("input[name=isAlertOverchargeFull]").attr("checked", "checked");
 	if (hvStat.settings.isWarnAbsorbTrigger) $("input[name=isWarnAbsorbTrigger]").attr("checked", "checked");
 	if (hvStat.settings.isWarnSparkTrigger) $("input[name=isWarnSparkTrigger]").attr("checked", "checked");
@@ -1171,6 +1175,10 @@ function initSettingsPane() {
 	$("input[name=isWarnCF]").click(saveSettings);
 	// - Event Notifications
 	$("input[name=isAlertGem]").click(saveSettings);
+	$("input[name=isAlertGemHealth]").click(saveSettings);
+	$("input[name=isAlertGemMana]").click(saveSettings);
+	$("input[name=isAlertGemSpirit]").click(saveSettings);
+	$("input[name=isAlertGemMystic]").click(saveSettings);
 	$("input[name=isAlertOverchargeFull]").click(saveSettings);
 	$("input[name=isWarnAbsorbTrigger]").click(saveSettings);
 	$("input[name=isWarnSparkTrigger]").click(saveSettings);
@@ -1320,6 +1328,10 @@ function saveSettings() {
 	hvStat.settings.warnMode[3] = $("input[name=isWarnIW]").get(0).checked;
 	// - Event Notifications
 	hvStat.settings.isAlertGem = $("input[name=isAlertGem]").get(0).checked;
+	hvStat.settings.isAlertGemHealth = $("input[name=isAlertGemHealth]").get(0).checked;
+	hvStat.settings.isAlertGemMana = $("input[name=isAlertGemMana]").get(0).checked;
+	hvStat.settings.isAlertGemSpirit = $("input[name=isAlertGemSpirit]").get(0).checked;
+	hvStat.settings.isAlertGemMystic = $("input[name=isAlertGemMystic]").get(0).checked;
 	hvStat.settings.isAlertOverchargeFull = $("input[name=isAlertOverchargeFull]").get(0).checked;
 	hvStat.settings.isWarnAbsorbTrigger = $("input[name=isWarnAbsorbTrigger]").get(0).checked;
 	hvStat.settings.isWarnSparkTrigger = $("input[name=isWarnSparkTrigger]").get(0).checked;
