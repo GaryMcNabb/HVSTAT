@@ -1,0 +1,101 @@
+/* character and monster */
+
+#togpane_log td[title*=' crits '],
+#togpane_log td[title*=' blasts ']
+{font-weight: bold;}
+
+
+/* monster */
+
+#togpane_log td[title*='its you for ']:not([title*='its you for 1 '])/*hits and crits*/
+{color: Crimson;}
+
+#togpane_log td[title*='its you for 1 ']/*hits and crits*/
+{color: #999;}
+
+#togpane_log td[title*=' misses ']
+{color: #555;}
+
+#togpane_log td[title*=' uses ']
+{text-shadow: 1px 0px 0px Blue;}
+
+#togpane_log td[title*=' casts ']:not([title*=' but is absorbed']):not([title*=' healing '])
+{text-shadow: 1px 0px 0px #0016B8;}
+
+#togpane_log td[title*=' casts '][title*=' but is absorbed']
+{color: SteelBlue;}
+
+#togpane_log td[title*=' casts '][title*=' healing ']
+{color: #0016B8;}
+
+#togpane_log td[title*=' powerup']
+{color: #F0F;}
+
+#togpane_log td[title*=' evades '],
+#togpane_log td[title*=' parries '],
+#togpane_log td[title*=' resists ']
+{color: Brown; font-weight: bold;}
+
+
+/* character */
+
+#togpane_log td[title*=' hits ']:not([title*=' hits you ']),
+#togpane_log td[title*=' crits ']:not([title*=' crits you ']),
+#togpane_log td[title*=' blasts ']
+{color: Black;}
+
+#togpane_log td[title^='You hit '],
+#togpane_log td[title^='You counter '],
+#togpane_log td[title^='Your offhand hit '],
+#togpane_log td[title^='Your offhand crit ']
+{color: Black;}
+
+#togpane_log td[title^='You crit ']
+{color: Black; font-weight: bold;}
+
+#togpane_log td[title*='You evade '],
+#togpane_log td[title*='You block '],
+#togpane_log td[title*='You parry '],
+#togpane_log td[title*='You resist ']
+{color: #555;}
+
+#togpane_log td[title^='Your'][title*=' misses its mark'],
+#togpane_log td[title^='Your spell fails']
+{color: Orange;}
+
+#togpane_log td[title^='You cast '],
+#togpane_log td[title*=' explodes for ']
+{color: Teal;}
+
+#togpane_log td[title*=' restores '],
+#togpane_log td[title^='You are healed '],
+#togpane_log td[title^='Recovered '],
+#togpane_log td[title^='You drain '],
+#togpane_log td[title^='Ether Theft drains '],
+#togpane_log td[title^='Vital Theft drains ']
+{color: Green;}
+
+#togpane_log td[title^='Your spirit shield absorbs ']
+{color: #C97600;}
+
+#togpane_log td[title*=' proficiency']
+{color: #BA9E1C;}
+
+
+/* effect */
+
+#togpane_log td[title^='Bleeding Wound hits '],
+#togpane_log td[title^='Spreading poison hits '],
+#togpane_log td[title^='Vital Theft hits '],
+#togpane_log td[title^='Your spike shield hits '],
+#togpane_log td[title^='Ripened Soul hits '],
+#togpane_log td[title^='Burning Soul hits ']
+{color: Purple !important;}
+
+#togpane_log td[title*=' gains the effect Penetrated Armor'],
+#togpane_log td[title*=' gains the effect Stun'],
+#togpane_log td[title*=' gains the effect Bleeding Wound'],
+#togpane_log td[title*=' gains the effect Ripened Soul'],
+#togpane_log td[title*=' gains the effect Burning Soul'],
+#togpane_log td[title*=' gains the effect Coalesced Mana']
+{color: Purple;}

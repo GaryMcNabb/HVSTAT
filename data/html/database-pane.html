@@ -1,0 +1,68 @@
+<div>
+
+<h2>Administration</h2>
+
+<div>
+<table>
+<thead>
+<tr>
+<th></th><th>Export</th><th>Import</th><th>Delete</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<th>Monster Scan Results</th>
+<td><input type="button" id="hvstat-database-monster-scan-results-export" value="Export" />
+	<a id="hvstat-database-monster-scan-results-download" style="visibility:hidden;" href="#">Download</a></td>
+<td><input type="file" id="hvstat-database-monster-scan-results-import" /></td>
+<td><input type="button" id="hvstat-database-monster-scan-results-delete" value="Delete" /></td>
+</tr>
+<tr>
+<th>Monster Skills</th>
+<td><input type="button" id="hvstat-database-monster-skills-export" value="Export" />
+	<a id="hvstat-database-monster-skills-download" style="visibility:hidden;" href="#">Download</a></td>
+<td><input type="file" id="hvstat-database-monster-skills-import" /></td>
+<td><input type="button" id="hvstat-database-monster-skills-delete" value="Delete" /></td>
+</tr>
+<tr>
+<th>Item Drops</th>
+<td><input type="button" id="hvstat-database-item-drops-export" value="Export" />
+	<a id="hvstat-database-item-drops-download" style="visibility:hidden;" href="#">Download</a></td>
+<td><input type="file" id="hvstat-database-item-drops-import" /></td>
+<td><input type="button" id="hvstat-database-item-drops-delete" value="Delete" /></td>
+</tr>
+<tr>
+<th>Equipment Drops</th>
+<td><input type="button" id="hvstat-database-equipment-drops-export" value="Export" />
+	<a id="hvstat-database-equipment-drops-download" style="visibility:hidden;" href="#">Download</a></td>
+<td><input type="file" id="hvstat-database-equipment-drops-import" /></td>
+<td><input type="button" id="hvstat-database-equipment-drops-delete" value="Delete" /></td>
+</tr>
+</tbody>
+</table>
+</div>
+
+<p>Export - The data can be exported as a TSV (tab-separated-values) format text file.</p>
+<p>Import - An exported TSV file can be merged into the database. The rows in the file that have older date will be skipped.</p>
+<p>Delete - You can delete specific data if you want to clean them.</p>
+<p><em><span style="color: red;">Note: 'Chance PCT.' values on Drops tab will be incorrect if you import the data of Item Drops after resetting Drops tab.</span></em></p>
+
+<h2>Delete IndexedDB Database</h3>
+<div>
+<p>Delete if there is a problem with the database. The database will be re-created after the next page load. Then you can import the data previously exported.</p>
+<input type="button" id="hvstat-database-delete" value="Delete IndexedDB Database" />
+</div>
+
+<h2>Monster Database Migration</h2>
+<h3>Migrate to New Database</h3>
+<div>
+<p>HV STAT will now use the new IndexedDB database instead of the localStorage database. You can migrate your old database into the new database.</p>
+<p><em><span style="color: red;">Note: If you have already scanned, note that this operation will overwrite existing data on the new database.</span></em></p>
+<input type="button" id="hvstat-database-migrate-monster-database" value="Migrate" />
+</div>
+<h3>Delete Old Monster Database on localStorage</h3>
+<div>
+<p>Currently your old monster database occupies <span id="hvstat-database-old-monster-database-size" style="font-weight: bold;" /> MB on the localStorage. In order to free up space for other HV scripts, delete the old database after migration.</p>
+<p><span style="color: red;"></span></p>
+<input type="button" id="hvstat-database-delete-old-monster-database" value="Delete" />
+</div>

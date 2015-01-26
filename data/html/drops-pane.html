@@ -1,0 +1,225 @@
+<div class="ui-state-error ui-corner-all hvstat-tracking-paused">TRACKING PAUSED</div>
+
+<p><em><span style="color: red;">The report can be narrowed down by selecting the dropdown lists.</span></em></p>
+
+<div id="hvstat-drops-overall-stats">
+<h2>Overall Stats</h2>
+
+<div>
+Obtained from: <select id="hvstat-drops-overall-stats-drop-type">
+	<option value="_ALL_" selected="selected">[All]</option>
+	<option value="MONSTER_DROP">Monster Drop</option>
+	<option value="ARENA_CLEAR_BONUS">Arena Crear Bonus</option>
+	<option value="ARENA_TOKEN_BONUS">Arena Token Bonus</option>
+</select>
+Difficulty: <select id="hvstat-drops-overall-stats-difficulty">
+	<option value="_ALL_" selected="selected">[All]</option>
+	<option value="NORMAL">Normal</option>
+	<option value="HARD">Hard</option>
+	<option value="NIGHTMARE">Nightmare</option>
+	<option value="HELL">Hell</option>
+	<option value="NINTENDO">Nintendo</option>
+	<option value="BATTLETOADS">Battletoads</option>
+	<option value="IWBTH">IWBTH</option>
+	<option value="PFUDOR">PFUDOR</option>
+</select>
+</div>
+
+<div>
+<table>
+<thead>
+<tr>
+<th rowspan="2"></th>
+<th colspan="3">Hourly Encounter</th>
+<th colspan="3">Arena</th>
+<th colspan="3">Grindfest</th>
+<th colspan="3">Item World</th>
+<th colspan="3" class="hvstat-table-column-total">Total</th>
+</tr>
+<tr>
+<th>Drops</th><th>Drop<br />PCT.</th><th>Chance<br />PCT.</th>
+<th>Drops</th><th>Drop<br />PCT.</th><th>Chance<br />PCT.</th>
+<th>Drops</th><th>Drop<br />PCT.</th><th>Chance<br />PCT.</th>
+<th>Drops</th><th>Drop<br />PCT.</th><th>Chance<br />PCT.</th>
+<th class="hvstat-table-column-total">Drops</th><th class="hvstat-table-column-total">Drop<br />PCT.</th><th class="hvstat-table-column-total">Chance<br />PCT.</th>
+</tr>
+</thead>
+<tbody>
+<tr id="hvstat-drops-overall-stats-credits">
+<th>Credits</th>
+<td></td><td></td><td></td>
+<td></td><td></td><td></td>
+<td></td><td></td><td></td>
+<td></td><td></td><td></td>
+<td class="hvstat-table-column-total"></td><td class="hvstat-table-column-total"></td><td class="hvstat-table-column-total"></td>
+</tr>
+<tr id="hvstat-drops-overall-stats-item">
+<th>Items</th>
+<td></td><td></td><td></td>
+<td></td><td></td><td></td>
+<td></td><td></td><td></td>
+<td></td><td></td><td></td>
+<td class="hvstat-table-column-total"></td><td class="hvstat-table-column-total"></td><td class="hvstat-table-column-total"></td>
+</tr>
+<tr id="hvstat-drops-overall-stats-crystal">
+<th>Crystals</th>
+<td></td><td></td><td></td>
+<td></td><td></td><td></td>
+<td></td><td></td><td></td>
+<td></td><td></td><td></td>
+<td class="hvstat-table-column-total"></td><td class="hvstat-table-column-total"></td><td class="hvstat-table-column-total"></td>
+</tr>
+<tr id="hvstat-drops-overall-stats-monster-food">
+<th>Monster Food</th>
+<td></td><td></td><td></td>
+<td></td><td></td><td></td>
+<td></td><td></td><td></td>
+<td></td><td></td><td></td>
+<td class="hvstat-table-column-total"></td><td class="hvstat-table-column-total"></td><td class="hvstat-table-column-total"></td>
+</tr>
+<tr id="hvstat-drops-overall-stats-token">
+<th>Tokens</th>
+<td></td><td></td><td></td>
+<td></td><td></td><td></td>
+<td></td><td></td><td></td>
+<td></td><td></td><td></td>
+<td class="hvstat-table-column-total"></td><td class="hvstat-table-column-total"></td><td class="hvstat-table-column-total"></td>
+</tr>
+<tr id="hvstat-drops-overall-stats-artifact">
+<th>Artifacts</th>
+<td></td><td></td><td></td>
+<td></td><td></td><td></td>
+<td></td><td></td><td></td>
+<td></td><td></td><td></td>
+<td class="hvstat-table-column-total"></td><td class="hvstat-table-column-total"></td><td class="hvstat-table-column-total"></td>
+</tr>
+<tr id="hvstat-drops-overall-stats-equipment">
+<th>Equipments</th>
+<td></td><td></td><td></td>
+<td></td><td></td><td></td>
+<td></td><td></td><td></td>
+<td></td><td></td><td></td>
+<td class="hvstat-table-column-total"></td><td class="hvstat-table-column-total"></td><td class="hvstat-table-column-total"></td>
+</tr>
+<tr class="hvstat-table-total">
+<th rowspan="2">Total</th>
+<th>Drops</th><th>Chances</th><th>Chance<br />PCT.</th>
+<th>Drops</th><th>Chances</th><th>Chance<br />PCT.</th>
+<th>Drops</th><th>Chances</th><th>Chance<br />PCT.</th>
+<th>Drops</th><th>Chances</th><th>Chance<br />PCT.</th>
+<th class="hvstat-table-column-total">Drops</th><th class="hvstat-table-column-total">Chances</th><th class="hvstat-table-column-total">Chance<br />PCT.</th>
+</tr>
+<tr id="hvstat-drops-overall-stats-chances" class="hvstat-table-total">
+<td></td><td></td><td></td>
+<td></td><td></td><td></td>
+<td></td><td></td><td></td>
+<td></td><td></td><td></td>
+<td class="hvstat-table-column-total"></td><td class="hvstat-table-column-total"></td><td class="hvstat-table-column-total"></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+
+<div id="hvstat-drops-items">
+<h2>General Drops</h2>
+
+<div>
+Obtained from: <select id="hvstat-drops-items-drop-type">
+	<option value="_ALL_" selected="selected">[All]</option>
+	<option value="MONSTER_DROP">Monster Drop</option>
+	<option value="ARENA_CLEAR_BONUS">Arena Crear Bonus</option>
+	<option value="ARENA_TOKEN_BONUS">Arena Token Bonus</option>
+</select>
+Difficulty: <select id="hvstat-drops-items-difficulty">
+	<option value="_ALL_" selected="selected">[All]</option>
+	<option value="NORMAL">Normal</option>
+	<option value="HARD">Hard</option>
+	<option value="NIGHTMARE">Nightmare</option>
+	<option value="HELL">Hell</option>
+	<option value="NINTENDO">Nintendo</option>
+	<option value="BATTLETOADS">Battletoads</option>
+	<option value="IWBTH">IWBTH</option>
+	<option value="PFUDOR">PFUDOR</option>
+</select>
+Battle Type: <select id="hvstat-drops-items-battle-type">
+	<option value="_ALL_" selected="selected">[All]</option>
+	<option value="HOURLY_ENCOUNTER">Hourly Encounter</option>
+	<option value="ARENA">Arena</option>
+	<option value="GRINDFEST">Grindfest</option>
+	<option value="ITEM_WORLD">Item World</option>
+</select>
+</div>
+
+<div class="hvstat-box">
+
+<div>
+<table>
+<thead>
+<tr>
+<th></th><th>QTY/<br />AMT</th><th>Drops</th><th>Drop<br />PCT.</th><th>Chance<br />PCT.</th>
+</tr>
+</thead>
+<tbody id="hvstat-drops-items-tbody-1">
+</tbody>
+</table>
+</div>
+
+<div>
+<table>
+<thead>
+<tr>
+<th></th><th>QTY/<br />AMT</th><th>Drops</th><th>Drop<br />PCT.</th><th>Chance<br />PCT.</th>
+</tr>
+</thead>
+<tbody id="hvstat-drops-items-tbody-2">
+</tbody>
+</table>
+</div>
+
+</div>
+</div>
+
+<div id="hvstat-drops-equipments">
+<h2>Equipments</h2>
+
+<div>
+Obtained from: <select id="hvstat-drops-equipments-drop-type">
+	<option value="_ALL_" selected="selected">[All]</option>
+	<option value="MONSTER_DROP">Monster Drop</option>
+	<option value="ARENA_CLEAR_BONUS">Arena Crear Bonus</option>
+</select>
+Difficulty: <select id="hvstat-drops-equipments-difficulty">
+	<option value="_ALL_" selected="selected">[All]</option>
+	<option value="NORMAL">Normal</option>
+	<option value="HARD">Hard</option>
+	<option value="NIGHTMARE">Nightmare</option>
+	<option value="HELL">Hell</option>
+	<option value="NINTENDO">Nintendo</option>
+	<option value="BATTLETOADS">Battletoads</option>
+	<option value="IWBTH">IWBTH</option>
+	<option value="PFUDOR">PFUDOR</option>
+</select>
+Battle Type: <select id="hvstat-drops-equipments-battle-type">
+	<option value="_ALL_" selected="selected">[All]</option>
+	<option value="HOURLY_ENCOUNTER">Hourly Encounter</option>
+	<option value="ARENA">Arena</option>
+	<option value="GRINDFEST">Grindfest</option>
+	<option value="ITEM_WORLD">Item World</option>
+</select>
+</div>
+
+<table>
+<thead>
+<tr>
+<th></th><th>Difficulty</th><th>Battle Type</th><th>Arena#</th><th>Round#</th><th>Date</th>
+</tr>
+</thead>
+<tbody id="hvstat-drops-equipments-tbody">
+</tbody>
+</table>
+</div>
+
+<hr />
+
+<div><input id="hvstat-drops-reset" type="button" value="Reset Drops" /></div>
