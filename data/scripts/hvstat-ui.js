@@ -21,7 +21,7 @@ hvStat.ui = {
 			closeOnEscape: true,
 			draggable: false,
 			resizable: false,
-			height: 620,
+			height: 627,
 			width: 1080,
 			modal: true,
 			position: ["center", "center"],
