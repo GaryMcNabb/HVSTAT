@@ -9,7 +9,7 @@
 // @exclude         http://alt.hentaiverse.org/pages/showequip*
 // @exclude         http://alt.hentaiverse.org/?login*
 // @author          Various (http://forums.e-hentai.org/index.php?showtopic=79552)
-// @version         5.6.6
+// @version         5.6.7
 // @require         scripts/util.js
 // @require         scripts/browser.js
 // @require         scripts/hv.js

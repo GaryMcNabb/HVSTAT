@@ -3,7 +3,6 @@
 //------------------------------------
 var browser = {
 	get isChrome() {
-        alert(navigator.userAgent);
 		return navigator.userAgent.indexOf("Chrome") >= 0;
 	},
 };
