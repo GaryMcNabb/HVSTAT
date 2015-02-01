@@ -9,6 +9,11 @@ hvStat.ui = {
 		browser.extension.loadScript("scripts/", "jquery-ui-1.9.2.custom.min.js");
 		// Load CSS for the dialog
 		browser.extension.style.addFromResource("css/", "hvstat-ui.css");
+        browser.extension.style.add(
+            ".ui-widget-overlay {background: #000 url(" +
+            browser.extension.getResourceURL("css/images/", "hvs.gif") +
+            ") 50% 50% repeat;"
+        );
 
 		browser.extension.loadScript("scripts/", "hvstat-migration.js");
 
@@ -25,7 +30,7 @@ hvStat.ui = {
 			width: 1080,
 			modal: true,
 			position: ["center", "center"],
-			title: "HentaiVerse Statistics, Tracking, and Analysis Tool v." + hvStat.version,
+			title: "HVS - Statistics, Tracking, and Analysis Tool v." + hvStat.version,
 		});
 		$('#hvstat-tabs').tabs();
 		initOverviewPane();
@@ -233,12 +238,18 @@ hvStat.ui.dropsPane = {
 			alert(e);
 		}
 	},
-	updateEquipments: function (dropType, difficulty, battleType) {
+	updateEquipments: function (dropType, difficulty, battleType, limit) {
+        $('#hvstat-drops-equipments-tbody').html(
+            "</tr><tr><td colspan='6' style='text-align:center'><img src='" + 
+            browser.extension.getResourceURL("css/images/", "throbber.gif" ) + 
+            "' /><br />Loading</td></tr>"
+        );
 		try {
+            limit = typeof limit !== 'undefined' ? limit : 50;
 			var tx = hvStat.database.idb.transaction(["EquipmentDrops"], "readonly");
 			var store = tx.objectStore("EquipmentDrops");
 			var range = null;	// Select all
-			var cursorOpenRequest = store.openCursor(range, "next");
+			var cursorOpenRequest = store.index('ix_date').openCursor(range, "prev");
 			cursorOpenRequest.onerror = function (event) {
 				var errorMessage = "EquipmentDrops: openCursor: error";
 				console.log(errorMessage);
@@ -246,31 +257,35 @@ hvStat.ui.dropsPane = {
 				alert(errorMessage);
 			};
 			var equipmentsHTML = "";
+            var extraEquip = "";
+            var firstChunk = 0;
 			cursorOpenRequest.onsuccess = function (event) {
 				//console.debug(event);
 				var cursor = this.result;
-				if (cursor) {
-					//console.debug(cursor);
-					var equipment = cursor.value;
-					if ((dropType === null || dropType === equipment.dropType) &&
-							(difficulty === null || difficulty === equipment.difficulty) &&
-							(battleType === null || battleType === equipment.battleType)) {
-						var arenaNumber = (equipment.arenaNumber === null) ? "-" : String(equipment.arenaNumber);
-						var roundNumber = (equipment.roundNumber === null) ? "-" : String(equipment.roundNumber);
-						var difficultyConst = hvStat.constant.difficulty[equipment.difficulty];
-						var battleTypeConst = hvStat.constant.battleType[equipment.battleType];
-						// Reverse order
-						equipmentsHTML = '<tr>' +
-							'<th class="hvstat-color-equipment">' + equipment.name + '</th>' +
-							'<td>' + (difficultyConst ? difficultyConst.name : "?") + '</td>' +
-							'<td>' + (battleTypeConst ? battleTypeConst.name : "?") + '</td>' +
-							'<td>' + arenaNumber + '</td>' +
-							'<td>' + roundNumber + '</td>' +
-							'<td>' + hvStat.util.getDateTimeString(new Date(equipment.timeStamp)) + '</td>' +
-							'</tr>\n' +
-							equipmentsHTML;
-					}
-					cursor.continue();
+				if (cursor && (limit == 0 || firstChunk < limit)) {
+                    //console.debug(cursor);
+                    var equipment = cursor.value;
+                    if ((dropType === null || dropType === equipment.dropType) &&
+                            (difficulty === null || difficulty === equipment.difficulty) &&
+                            (battleType === null || battleType === equipment.battleType)) {
+                        var arenaNumber = (equipment.arenaNumber === null) ? "-" : String(equipment.arenaNumber);
+                        var roundNumber = (equipment.roundNumber === null) ? "-" : String(equipment.roundNumber);
+                        var difficultyConst = hvStat.constant.difficulty[equipment.difficulty];
+                        var battleTypeConst = hvStat.constant.battleType[equipment.battleType];
+                        // Reverse order
+                        equipmentsHTML += '<tr>' +
+                            '<th class="hvstat-color-equipment">' + equipment.name + '</th>' +
+                            '<td>' + (difficultyConst ? difficultyConst.name : "?") + '</td>' +
+                            '<td>' + (battleTypeConst ? battleTypeConst.name : "?") + '</td>' +
+                            '<td>' + arenaNumber + '</td>' +
+                            '<td>' + roundNumber + '</td>' +
+                            '<td>' + hvStat.util.getDateTimeString(new Date(equipment.timeStamp)) + '</td>' +
+                            '</tr>\n';
+                        firstChunk += 1;
+                        if (firstChunk == limit && limit != 0)
+                            equipmentsHTML += '<tr><td colspan="6" style="text-align:center"><a id="showAllDropsLink" style="cursor:pointer">▼ Show All ▼</a></td></tr>';
+                    }
+                    cursor.continue();
 				} else {
 					if (equipmentsHTML === "") {
 						equipmentsHTML = '<tr>' +
@@ -283,6 +298,9 @@ hvStat.ui.dropsPane = {
 							'</tr>\n';
 					}
 					$('#hvstat-drops-equipments-tbody').html(equipmentsHTML);
+                    $("#showAllDropsLink").click(function () {
+                        hvStat.ui.dropsPane.updateEquipments(dropType, difficulty, battleType, 0);
+                    });
 				}
 			};
 		} catch (e) {
@@ -389,6 +407,53 @@ hvStat.ui.databasePane = {
 				}
 			});
 		});
+		
+		$('#hvstat-localstorage-overview-export').click(function () {
+			if (confirm("Export Overview Stats?")) {
+				var downloadLink = $('#hvstat-localstorage-overview-download');
+				downloadLink.attr("href", "data:text/json;charset=utf-8," + JSON.stringify(localStorage["HVOverview"]));
+				downloadLink.attr("download", "hvstat_ls_overview.json");
+				downloadLink.css("visibility", "visible");
+				alert("Ready to export.\nClick the download link.");
+			}
+		});
+		$('#hvstat-localstorage-shrine-export').click(function () {
+			if (confirm("Export Shrine Stats?")) {
+				var downloadLink = $('#hvstat-localstorage-shrine-download');
+				downloadLink.attr("href", "data:text/json;charset=utf-8," + JSON.stringify(localStorage["HVShrine"]));
+				downloadLink.attr("download", "hvstat_ls_shrine.json");
+				downloadLink.css("visibility", "visible");
+				alert("Ready to export.\nClick the download link.");
+			}
+		});
+		$('#hvstat-localstorage-battle-export').click(function () {
+			if (confirm("Export Battle Stats?")) {
+				var downloadLink = $('#hvstat-localstorage-battle-download');
+				downloadLink.attr("href", "data:text/json;charset=utf-8," + JSON.stringify(localStorage["HVStats"]));
+				downloadLink.attr("download", "hvstat_ls_battle.json");
+				downloadLink.css("visibility", "visible");
+				alert("Ready to export.\nClick the download link.");
+			}
+		});
+		$('#hvstat-localstorage-drops-export').click(function () {
+			if (confirm("Export Drop Stats?")) {
+				var downloadLink = $('#hvstat-localstorage-drops-download');
+				downloadLink.attr("href", "data:text/json;charset=utf-8," + JSON.stringify(localStorage["hvStat.dropStats"]));
+				downloadLink.attr("download", "hvstat_ls_drops.json");
+				downloadLink.css("visibility", "visible");
+				alert("Ready to export.\nClick the download link.");
+			}
+		});
+		$('#hvstat-localstorage-settings-export').click(function () {
+			if (confirm("Export Settings?")) {
+				var downloadLink = $('#hvstat-localstorage-settings-download');
+				downloadLink.attr("href", "data:text/json;charset=utf-8," + JSON.stringify(localStorage["HVSettings"]));
+				downloadLink.attr("download", "hvstat_ls_settings.json");
+				downloadLink.css("visibility", "visible");
+				alert("Ready to export.\nClick the download link.");
+			}
+		});
+		
 		$('#hvstat-database-monster-scan-results-import').change(function (event) {
 			var file = event.target.files[0];
 			if (!file) {
@@ -429,6 +494,108 @@ hvStat.ui.databasePane = {
 				}
 			}
 		});
+		
+		$('#hvstat-localstorage-overview-import').change(function (event) {
+			var file = event.target.files[0];
+			if (!file) {
+				alert("Failed to load file");
+			} else {
+				if (confirm("Are you SURE you want to import from this file?\n\r!!WILL OVERWRITE CURRENT VALUES!!")) {
+					var reader = new FileReader();
+					reader.onerror = function (event) {
+						console.log(event);
+						alert(event);
+					};
+					reader.onload = function (event) {
+						var contents = event.target.result;
+						localStorage.setItem("HVOverview", JSON.parse(contents));
+						alert("Overview Stats loaded.\n\rChanges take effect after refresh!");
+					};
+					reader.readAsText(file, 'UTF-8');
+				}
+			}
+		});
+		$('#hvstat-localstorage-shrine-import').change(function (event) {
+			var file = event.target.files[0];
+			if (!file) {
+				alert("Failed to load file");
+			} else {
+				if (confirm("Are you SURE you want to import from this file?\n\r!!WILL OVERWRITE CURRENT VALUES!!")) {
+					var reader = new FileReader();
+					reader.onerror = function (event) {
+						console.log(event);
+						alert(event);
+					};
+					reader.onload = function (event) {
+						var contents = event.target.result;
+						localStorage.setItem("HVShrine", JSON.parse(contents));
+						alert("Shrine Stats loaded.\n\rChanges take effect after refresh!");
+					};
+					reader.readAsText(file, 'UTF-8');
+				}
+			}
+		});
+		$('#hvstat-localstorage-battle-import').change(function (event) {
+			var file = event.target.files[0];
+			if (!file) {
+				alert("Failed to load file");
+			} else {
+				if (confirm("Are you SURE you want to import from this file?\n\r!!WILL OVERWRITE CURRENT VALUES!!")) {
+					var reader = new FileReader();
+					reader.onerror = function (event) {
+						console.log(event);
+						alert(event);
+					};
+					reader.onload = function (event) {
+						var contents = event.target.result;
+						localStorage.setItem("HVStats", JSON.parse(contents));
+						alert("Battle Stats loaded.\n\rChanges take effect after refresh!");
+					};
+					reader.readAsText(file, 'UTF-8');
+				}
+			}
+		});
+		$('#hvstat-localstorage-drops-import').change(function (event) {
+			var file = event.target.files[0];
+			if (!file) {
+				alert("Failed to load file");
+			} else {
+				if (confirm("Are you SURE you want to import from this file?\n\r!!WILL OVERWRITE CURRENT VALUES!!")) {
+					var reader = new FileReader();
+					reader.onerror = function (event) {
+						console.log(event);
+						alert(event);
+					};
+					reader.onload = function (event) {
+						var contents = event.target.result;
+						localStorage.setItem("hvStat.dropStats", JSON.parse(contents));
+						alert("Drop Stats loaded.\n\rChanges take effect after refresh!");
+					};
+					reader.readAsText(file, 'UTF-8');
+				}
+			}
+		});
+		$('#hvstat-localstorage-settings-import').change(function (event) {
+			var file = event.target.files[0];
+			if (!file) {
+				alert("Failed to load file");
+			} else {
+				if (confirm("Are you SURE you want to import from this file? !!WILL OVERWRITE CURRENT VALUES!!")) {
+					var reader = new FileReader();
+					reader.onerror = function (event) {
+						console.log(event);
+						alert(event);
+					};
+					reader.onload = function (event) {
+						var contents = event.target.result;
+						localStorage.setItem("HVSettings", JSON.parse(contents));
+						alert("Settings loaded. !!Changes take effect after refresh!!");
+					};
+					reader.readAsText(file, 'UTF-8');
+				}
+			}
+		});
+		
 		$('#hvstat-database-monster-scan-results-delete').click(function () {
 			if (confirm("Are you sure to delete the data of monster scan results?")) {
 				hvStat.database.monsterScanResults.delete(function (result) {
@@ -923,6 +1090,8 @@ function initSettingsPane() {
 	if (hvStat.settings.isTrackStats) $("input[name=isTrackStats]").attr("checked", "checked");
 	if (hvStat.settings.isTrackShrine) $("input[name=isTrackShrine]").attr("checked", "checked");
 	if (hvStat.settings.isTrackItems) $("input[name=isTrackItems]").attr("checked", "checked");
+	if (hvStat.settings.noTrackItems) $("input[name=noTrackItems]").attr("checked", "checked");
+	if (hvStat.settings.noTrackEquip) $("input[name=noTrackEquip]").attr("checked", "checked");
 
 	// Battle Enhancement
 	if (hvStat.settings.isShowRoundCounter) $("input[name=isShowRoundCounter]").attr("checked", "checked");
@@ -1116,6 +1285,8 @@ function initSettingsPane() {
 	$("input[name=isTrackStats]").click(saveSettings);
 	$("input[name=isTrackShrine]").click(saveSettings);
 	$("input[name=isTrackItems]").click(saveSettings);
+	$("input[name=noTrackItems]").click(saveSettings);
+	$("input[name=noTrackEquip]").click(saveSettings);
 
 	// Battle Enhancement
 	$("input[name=isShowRoundCounter]").click(saveSettings);
@@ -1270,6 +1441,8 @@ function saveSettings() {
 	hvStat.settings.isTrackStats = $("input[name=isTrackStats]").get(0).checked;
 	hvStat.settings.isTrackShrine = $("input[name=isTrackShrine]").get(0).checked;
 	hvStat.settings.isTrackItems = $("input[name=isTrackItems]").get(0).checked;
+	hvStat.settings.noTrackItems = $("input[name=noTrackItems]").get(0).checked;
+	hvStat.settings.noTrackItems = $("input[name=noTrackEquip]").get(0).checked;
 
 	// Battle Enhancement
 	hvStat.settings.isShowRoundCounter = $("input[name=isShowRoundCounter]").get(0).checked;

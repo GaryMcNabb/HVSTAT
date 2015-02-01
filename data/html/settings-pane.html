@@ -66,6 +66,12 @@
 <table>
 <tr><td><input type="checkbox" name="isTrackStats" />	</td><td>Track Battle Statistics</td></tr>
 <tr><td><input type="checkbox" name="isTrackItems" />	</td><td>Track Drops (Arena Rewards are also included)</td></tr>
+<tr><td></td><td>
+	<table>
+	<tr><td><input type="checkbox" name="noTrackItems" /></td>		<td>Don't track General Drops</td></tr>
+    <tr><td><input type="checkbox" name="noTrackEquip" /></td>		<td>Don't track Equipment</td></tr>
+	</table>
+</td></tr>
 <tr><td><input type="checkbox" name="isTrackShrine" />	</td><td>Track Shrine</td></tr>
 </table>
 <p><input type="button" class="_resetAll" value="Reset" title="Reset all tracking data." /></p>
@@ -309,8 +315,8 @@
 </table>
 </div>
 
-<hr/>
-<div>
-<input type="button" class="_resetSettings" value="Default Settings" title="Reset settings to default."/>
-<input type="button" class="_masterReset" value="MASTER RESET" title="Deletes all of STAT's saved data and settings."/>
+<hr />
+<div style="text-align:right">
+    <input type="button" class="_resetSettings" value="Default Settings" title="Reset settings to default."/>
+    <input type="button" class="_masterReset" value="MASTER RESET" title="Deletes all of STAT's saved data and settings."/>
 </div>

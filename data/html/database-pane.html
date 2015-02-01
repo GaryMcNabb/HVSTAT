@@ -38,12 +38,47 @@
 <td><input type="file" id="hvstat-database-equipment-drops-import" /></td>
 <td><input type="button" id="hvstat-database-equipment-drops-delete" value="Delete" /></td>
 </tr>
+<tr>
+<th>Overview Stats</th>
+<td><input type="button" id="hvstat-localstorage-overview-export" value="Export" />
+	<a id="hvstat-localstorage-overview-download" style="visibility:hidden;" href="#">Download</a></td>
+<td><input type="file" id="hvstat-localstorage-overview-import" /></td>
+<td><input type="button" id="hvstat-localstorage-overview-delete" style="visibility:hidden;" value="Delete" /></td>
+</tr>
+<tr>
+<th>Shrine Stats</th>
+<td><input type="button" id="hvstat-localstorage-shrine-export" value="Export" />
+	<a id="hvstat-localstorage-shrine-download" style="visibility:hidden;" href="#">Download</a></td>
+<td><input type="file" id="hvstat-localstorage-shrine-import" /></td>
+<td><input type="button" id="hvstat-localstorage-shrine-delete" style="visibility:hidden;" value="Delete" /></td>
+</tr>
+<tr>
+<th>Battle Stats</th>
+<td><input type="button" id="hvstat-localstorage-battle-export" value="Export" />
+	<a id="hvstat-localstorage-battle-download" style="visibility:hidden;" href="#">Download</a></td>
+<td><input type="file" id="hvstat-localstorage-battle-import" /></td>
+<td><input type="button" id="hvstat-localstorage-battle-delete" style="visibility:hidden;" value="Delete" /></td>
+</tr>
+<tr>
+<th>Drop Stats</th>
+<td><input type="button" id="hvstat-localstorage-drops-export" value="Export" />
+	<a id="hvstat-localstorage-drops-download" style="visibility:hidden;" href="#">Download</a></td>
+<td><input type="file" id="hvstat-localstorage-drops-import" /></td>
+<td><input type="button" id="hvstat-localstorage-drops-delete" style="visibility:hidden;" value="Delete" /></td>
+</tr>
+<tr>
+<th>HVStat Settings</th>
+<td><input type="button" id="hvstat-localstorage-settings-export" value="Export" />
+	<a id="hvstat-localstorage-settings-download" style="visibility:hidden;" href="#">Download</a></td>
+<td><input type="file" id="hvstat-localstorage-settings-import" /></td>
+<td><input type="button" id="hvstat-localstorage-settings-delete" style="visibility:hidden;" value="Delete" /></td>
+</tr>
 </tbody>
 </table>
 </div>
 
-<p>Export - The data can be exported as a TSV (tab-separated-values) format text file.</p>
-<p>Import - An exported TSV file can be merged into the database. The rows in the file that have older date will be skipped.</p>
+<p>Export - The data can be exported to a file.</p>
+<p>Import - An exported file can be merged into the database. The rows in the file that have older date will be skipped.</p>
 <p>Delete - You can delete specific data if you want to clean them.</p>
 <p><em><span style="color: red;">Note: 'Chance PCT.' values on Drops tab will be incorrect if you import the data of Item Drops after resetting Drops tab.</span></em></p>
 

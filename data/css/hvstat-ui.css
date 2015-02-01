@@ -6,6 +6,10 @@
 	text-align: left;
 }
 
+#hvstat-tabs {
+    border: 0px;
+ }
+
 #hvstat-tabs > div {
 	height: 512px;
 	overflow: auto;
@@ -144,6 +148,8 @@
 #hvstat-drops-overall-stats tbody tr:nth-of-type(5) { color: #254117; }
 #hvstat-drops-overall-stats tbody tr:nth-of-type(6) { color: #0000FF; }
 #hvstat-drops-overall-stats tbody tr:nth-of-type(7) { color: #FF0000; }
+
+#hvstat-drops-equipments { overflow-x: scroll; }
 
 #hvstat-drops-items thead th:nth-child(1),
 #hvstat-drops-items tbody th:nth-child(1),

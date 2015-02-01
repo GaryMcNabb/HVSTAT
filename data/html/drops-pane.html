@@ -9,7 +9,7 @@
 Obtained from: <select id="hvstat-drops-overall-stats-drop-type">
 	<option value="_ALL_" selected="selected">[All]</option>
 	<option value="MONSTER_DROP">Monster Drop</option>
-	<option value="ARENA_CLEAR_BONUS">Arena Crear Bonus</option>
+	<option value="ARENA_CLEAR_BONUS">Arena Clear Bonus</option>
 	<option value="ARENA_TOKEN_BONUS">Arena Token Bonus</option>
 </select>
 Difficulty: <select id="hvstat-drops-overall-stats-difficulty">
@@ -30,18 +30,18 @@ Difficulty: <select id="hvstat-drops-overall-stats-difficulty">
 <thead>
 <tr>
 <th rowspan="2"></th>
-<th colspan="3">Hourly Encounter</th>
+<th colspan="3">Random Encounter</th>
 <th colspan="3">Arena</th>
 <th colspan="3">Grindfest</th>
 <th colspan="3">Item World</th>
 <th colspan="3" class="hvstat-table-column-total">Total</th>
 </tr>
 <tr>
-<th>Drops</th><th>Drop<br />PCT.</th><th>Chance<br />PCT.</th>
-<th>Drops</th><th>Drop<br />PCT.</th><th>Chance<br />PCT.</th>
-<th>Drops</th><th>Drop<br />PCT.</th><th>Chance<br />PCT.</th>
-<th>Drops</th><th>Drop<br />PCT.</th><th>Chance<br />PCT.</th>
-<th class="hvstat-table-column-total">Drops</th><th class="hvstat-table-column-total">Drop<br />PCT.</th><th class="hvstat-table-column-total">Chance<br />PCT.</th>
+<th>Drops</th><th>Drop<br />%</th><th>Chance<br />%</th>
+<th>Drops</th><th>Drop<br />%</th><th>Chance<br />%</th>
+<th>Drops</th><th>Drop<br />%</th><th>Chance<br />%</th>
+<th>Drops</th><th>Drop<br />%</th><th>Chance<br />%</th>
+<th class="hvstat-table-column-total">Drops</th><th class="hvstat-table-column-total">Drop<br />%</th><th class="hvstat-table-column-total">Chance<br />%</th>
 </tr>
 </thead>
 <tbody>
@@ -94,7 +94,7 @@ Difficulty: <select id="hvstat-drops-overall-stats-difficulty">
 <td class="hvstat-table-column-total"></td><td class="hvstat-table-column-total"></td><td class="hvstat-table-column-total"></td>
 </tr>
 <tr id="hvstat-drops-overall-stats-equipment">
-<th>Equipments</th>
+<th>Equipment</th>
 <td></td><td></td><td></td>
 <td></td><td></td><td></td>
 <td></td><td></td><td></td>
@@ -103,11 +103,11 @@ Difficulty: <select id="hvstat-drops-overall-stats-difficulty">
 </tr>
 <tr class="hvstat-table-total">
 <th rowspan="2">Total</th>
-<th>Drops</th><th>Chances</th><th>Chance<br />PCT.</th>
-<th>Drops</th><th>Chances</th><th>Chance<br />PCT.</th>
-<th>Drops</th><th>Chances</th><th>Chance<br />PCT.</th>
-<th>Drops</th><th>Chances</th><th>Chance<br />PCT.</th>
-<th class="hvstat-table-column-total">Drops</th><th class="hvstat-table-column-total">Chances</th><th class="hvstat-table-column-total">Chance<br />PCT.</th>
+<th>Drops</th><th>Chances</th><th>Chance<br />%</th>
+<th>Drops</th><th>Chances</th><th>Chance<br />%</th>
+<th>Drops</th><th>Chances</th><th>Chance<br />%</th>
+<th>Drops</th><th>Chances</th><th>Chance<br />%</th>
+<th class="hvstat-table-column-total">Drops</th><th class="hvstat-table-column-total">Chances</th><th class="hvstat-table-column-total">Chance<br />%</th>
 </tr>
 <tr id="hvstat-drops-overall-stats-chances" class="hvstat-table-total">
 <td></td><td></td><td></td>
@@ -128,7 +128,7 @@ Difficulty: <select id="hvstat-drops-overall-stats-difficulty">
 Obtained from: <select id="hvstat-drops-items-drop-type">
 	<option value="_ALL_" selected="selected">[All]</option>
 	<option value="MONSTER_DROP">Monster Drop</option>
-	<option value="ARENA_CLEAR_BONUS">Arena Crear Bonus</option>
+	<option value="ARENA_CLEAR_BONUS">Arena Clear Bonus</option>
 	<option value="ARENA_TOKEN_BONUS">Arena Token Bonus</option>
 </select>
 Difficulty: <select id="hvstat-drops-items-difficulty">
@@ -144,7 +144,7 @@ Difficulty: <select id="hvstat-drops-items-difficulty">
 </select>
 Battle Type: <select id="hvstat-drops-items-battle-type">
 	<option value="_ALL_" selected="selected">[All]</option>
-	<option value="HOURLY_ENCOUNTER">Hourly Encounter</option>
+	<option value="HOURLY_ENCOUNTER">Random Encounter</option>
 	<option value="ARENA">Arena</option>
 	<option value="GRINDFEST">Grindfest</option>
 	<option value="ITEM_WORLD">Item World</option>
@@ -157,7 +157,7 @@ Battle Type: <select id="hvstat-drops-items-battle-type">
 <table>
 <thead>
 <tr>
-<th></th><th>QTY/<br />AMT</th><th>Drops</th><th>Drop<br />PCT.</th><th>Chance<br />PCT.</th>
+<th></th><th>Qty</th><th>Drops</th><th>Drop<br />%</th><th>Chance<br />%</th>
 </tr>
 </thead>
 <tbody id="hvstat-drops-items-tbody-1">
@@ -169,7 +169,7 @@ Battle Type: <select id="hvstat-drops-items-battle-type">
 <table>
 <thead>
 <tr>
-<th></th><th>QTY/<br />AMT</th><th>Drops</th><th>Drop<br />PCT.</th><th>Chance<br />PCT.</th>
+<th></th><th>Qty</th><th>Drops</th><th>Drop<br />%</th><th>Chance<br />%</th>
 </tr>
 </thead>
 <tbody id="hvstat-drops-items-tbody-2">
@@ -181,13 +181,13 @@ Battle Type: <select id="hvstat-drops-items-battle-type">
 </div>
 
 <div id="hvstat-drops-equipments">
-<h2>Equipments</h2>
+<h2>Equipment</h2>
 
 <div>
 Obtained from: <select id="hvstat-drops-equipments-drop-type">
 	<option value="_ALL_" selected="selected">[All]</option>
 	<option value="MONSTER_DROP">Monster Drop</option>
-	<option value="ARENA_CLEAR_BONUS">Arena Crear Bonus</option>
+	<option value="ARENA_CLEAR_BONUS">Arena Clear Bonus</option>
 </select>
 Difficulty: <select id="hvstat-drops-equipments-difficulty">
 	<option value="_ALL_" selected="selected">[All]</option>
@@ -202,14 +202,14 @@ Difficulty: <select id="hvstat-drops-equipments-difficulty">
 </select>
 Battle Type: <select id="hvstat-drops-equipments-battle-type">
 	<option value="_ALL_" selected="selected">[All]</option>
-	<option value="HOURLY_ENCOUNTER">Hourly Encounter</option>
+	<option value="HOURLY_ENCOUNTER">Random Encounter</option>
 	<option value="ARENA">Arena</option>
 	<option value="GRINDFEST">Grindfest</option>
 	<option value="ITEM_WORLD">Item World</option>
 </select>
 </div>
 
-<table>
+<table style="width:100%">
 <thead>
 <tr>
 <th></th><th>Difficulty</th><th>Battle Type</th><th>Arena#</th><th>Round#</th><th>Date</th>

@@ -38,16 +38,12 @@ browser.extension = {
 browser.extension.style = {
 	element: null,
 	add: function (styleText) {
-//		if (!browser.isChrome) {
-//			GM_addStyle(styleText);
-//		} else {
         if (!this.element) {
             this.element = document.createElement("style");
             this.element.type = "text/css";
             (document.head || document.documentElement).insertBefore(this.element, null);
         }
         this.element.textContent += "\n" + styleText;
-//		}
 	},
 	addFromResource: function (styleResourcePath, styleResouceName, imageResouceInfoArray) {
 		var styleText = browser.extension.getResourceText(styleResourcePath, styleResouceName);
