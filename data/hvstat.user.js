@@ -9,7 +9,7 @@
 // @exclude         http://alt.hentaiverse.org/pages/showequip*
 // @exclude         http://alt.hentaiverse.org/?login*
 // @author          Various (http://forums.e-hentai.org/index.php?showtopic=79552)
-// @version         5.6.8.1
+// @version         5.6.8.2
 // @require         scripts/util.js
 // @require         scripts/browser.js
 // @require         scripts/hv.js
@@ -66,7 +66,7 @@ window.IDBCursor = window.IDBCursor || window.webkitIDBCursor;
 // HV STAT object
 //------------------------------------
 var hvStat = {
-	version: "5.6.8.1",
+	version: "5.6.8.2",
 	imageResources: [
 		new browser.I("images/", "channeling.png", "css/images/"),
 		new browser.I("images/", "healthpot.png", "css/images/"),
@@ -512,7 +512,12 @@ hvStat.storage.initialValue = {
 		isTrackStats: true,
 		isTrackShrine: false,
 		isTrackItems: false,
+		noTrackCredits: false,
 		noTrackItems: false,
+		noTrackCrystals: false,
+		noTrackMonsterFood: false,
+		noTrackTokens: false,
+		noTrackArtifacts: false,
 		noTrackEquip: false,
 
 		// Battle Enhancement
@@ -3028,7 +3033,7 @@ hvStat.battle.eventLog.messageTypeParams = {
 			var regexResult, qty = 0;
 			switch (styleColor.toLowerCase()) {
 			case "#a89000":	// Credit
-				if (hvStat.settings.isTrackItems && !hvStat.settings.noTrackItems) {
+				if (hvStat.settings.isTrackItems && !hvStat.settings.noTrackCredits) {
 					regexResult = stuffName.match(/(\d+) (Credits)/);
 					if (regexResult[1]) {
 						qty = Number(regexResult[1]);
@@ -3046,7 +3051,7 @@ hvStat.battle.eventLog.messageTypeParams = {
 				}
 				break;
 			case "#ba05b4":	// Crystal
-				if (hvStat.settings.isTrackItems && !hvStat.settings.noTrackItems) {
+				if (hvStat.settings.isTrackItems && !hvStat.settings.noTrackCrystals) {
 					regexResult = stuffName.match(/(?:(\d+)x\s*)?(Crystal of .+)/);
 					qty = 1;
 					if (regexResult) {
@@ -3061,13 +3066,13 @@ hvStat.battle.eventLog.messageTypeParams = {
 				}
 				break;
 			case "#489eff":	// Monster Food
-				if (hvStat.settings.isTrackItems && !hvStat.settings.noTrackItems) {
+				if (hvStat.settings.isTrackItems && !hvStat.settings.noTrackMonsterFood) {
 					hvStat.statistics.drops.addMonsterFood(stuffName, hvStat.constant.dropType.MONSTER_DROP.id,
 						hvStat.characterStatus.difficulty.id, hvStat.roundContext.battleTypeName);
 				}
 				break;
 			case "#254117":	// Token
-				if (hvStat.settings.isTrackItems && !hvStat.settings.noTrackItems) {
+				if (hvStat.settings.isTrackItems && !hvStat.settings.noTrackTokens) {
 					hvStat.statistics.drops.addToken(stuffName, hvStat.constant.dropType.MONSTER_DROP.id,
 						hvStat.characterStatus.difficulty.id, hvStat.roundContext.battleTypeName);
 				}
@@ -3075,7 +3080,7 @@ hvStat.battle.eventLog.messageTypeParams = {
 			case "#0000ff":	// Artifact or Collectable
 				hvStat.roundContext.artifacts++;
 				hvStat.roundContext.lastArtName = stuffName;
-				if (hvStat.settings.isTrackItems && !hvStat.settings.noTrackItems) {
+				if (hvStat.settings.isTrackItems && !hvStat.settings.noTrackArtifacts) {
 					hvStat.statistics.drops.addArtifact(stuffName, hvStat.constant.dropType.MONSTER_DROP.id,
 						hvStat.characterStatus.difficulty.id, hvStat.roundContext.battleTypeName);
 				}
@@ -3090,7 +3095,7 @@ hvStat.battle.eventLog.messageTypeParams = {
 				}
 				break;
 			case "#461b7e":	// Trophy
-				if (hvStat.settings.isTrackItems && !hvStat.settings.noTrackItems) {
+				if (hvStat.settings.isTrackItems && !hvStat.settings.noTrackTrophies) {
 					// Decrease number of chances
 					hvStat.statistics.drops.increaseChance(-1, hvStat.constant.dropType.MONSTER_DROP.id,
 						hvStat.characterStatus.difficulty.id, hvStat.roundContext.battleTypeName);
@@ -3197,7 +3202,7 @@ hvStat.battle.eventLog.messageTypeParams = {
 				}
 				break;
 			case "#ba05b4":	// Crystal
-				if (hvStat.settings.isTrackItems && !hvStat.settings.noTrackItems) {
+				if (hvStat.settings.isTrackItems && !hvStat.settings.noTrackCrystals) {
 					regexResult = stuffName.match(/(?:(\d+)x\s*)?(Crystal of .+)/);
 					qty = 1;
 					if (regexResult) {
@@ -3212,13 +3217,13 @@ hvStat.battle.eventLog.messageTypeParams = {
 				}
 				break;
 			case "#489eff":	// Monster Food
-				if (hvStat.settings.isTrackItems && !hvStat.settings.noTrackItems) {
+				if (hvStat.settings.isTrackItems && !hvStat.settings.noTrackMonsterFood) {
 					hvStat.statistics.drops.addItem(stuffName, hvStat.constant.dropType.ARENA_CLEAR_BONUS.id,
 						hvStat.characterStatus.difficulty.id, hvStat.roundContext.battleTypeName);
 				}
 				break;
 			case "#254117":	// Token
-				if (hvStat.settings.isTrackItems && !hvStat.settings.noTrackItems) {
+				if (hvStat.settings.isTrackItems && !hvStat.settings.noTrackTokens) {
 					hvStat.statistics.drops.addToken(stuffName, hvStat.constant.dropType.ARENA_CLEAR_BONUS.id,
 						hvStat.characterStatus.difficulty.id, hvStat.roundContext.battleTypeName);
 				}
@@ -3226,7 +3231,7 @@ hvStat.battle.eventLog.messageTypeParams = {
 			case "#0000ff":	// Artifact or Collectable
 				hvStat.roundContext.artifacts++;
 				hvStat.roundContext.lastArtName = stuffName;
-				if (hvStat.settings.isTrackItems && !hvStat.settings.noTrackItems) {
+				if (hvStat.settings.isTrackItems && !hvStat.settings.noTrackArtifacts) {
 					hvStat.statistics.drops.addArtifact(stuffName, hvStat.constant.dropType.ARENA_CLEAR_BONUS.id,
 						hvStat.characterStatus.difficulty.id, hvStat.roundContext.battleTypeName);
 				}
@@ -3252,7 +3257,7 @@ hvStat.battle.eventLog.messageTypeParams = {
 			var stuffName = message.regexResult[2];
 			switch (styleColor.toLowerCase()) {
 			case "#254117":	// Token
-				if (hvStat.settings.isTrackItems && !hvStat.settings.noTrackItems) {
+				if (hvStat.settings.isTrackItems && !hvStat.settings.noTrackTokens) {
 					hvStat.statistics.drops.addToken(stuffName, hvStat.constant.dropType.ARENA_TOKEN_BONUS.id,
 						hvStat.characterStatus.difficulty.id, hvStat.roundContext.battleTypeName);
 				}

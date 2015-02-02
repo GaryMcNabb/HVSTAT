@@ -1090,7 +1090,13 @@ function initSettingsPane() {
 	if (hvStat.settings.isTrackStats) $("input[name=isTrackStats]").attr("checked", "checked");
 	if (hvStat.settings.isTrackShrine) $("input[name=isTrackShrine]").attr("checked", "checked");
 	if (hvStat.settings.isTrackItems) $("input[name=isTrackItems]").attr("checked", "checked");
+	if (hvStat.settings.noTrackCredits) $("input[name=noTrackCredits]").attr("checked", "checked");
 	if (hvStat.settings.noTrackItems) $("input[name=noTrackItems]").attr("checked", "checked");
+	if (hvStat.settings.noTrackCrystals) $("input[name=noTrackCrystals]").attr("checked", "checked");
+	if (hvStat.settings.noTrackMonsterFood) $("input[name=noTrackMonsterFood]").attr("checked", "checked");
+	if (hvStat.settings.noTrackTokens) $("input[name=noTrackTokens]").attr("checked", "checked");
+	if (hvStat.settings.noTrackArtifacts) $("input[name=noTrackArtifacts]").attr("checked", "checked");
+	if (hvStat.settings.noTrackTrophies) $("input[name=noTrackTrophies]").attr("checked", "checked");
 	if (hvStat.settings.noTrackEquip) $("input[name=noTrackEquip]").attr("checked", "checked");
 
 	// Battle Enhancement
@@ -1285,7 +1291,13 @@ function initSettingsPane() {
 	$("input[name=isTrackStats]").click(saveSettings);
 	$("input[name=isTrackShrine]").click(saveSettings);
 	$("input[name=isTrackItems]").click(saveSettings);
+	$("input[name=noTrackCredits]").click(saveSettings);
 	$("input[name=noTrackItems]").click(saveSettings);
+	$("input[name=noTrackCrystals]").click(saveSettings);
+	$("input[name=noTrackMonsterFood]").click(saveSettings);
+	$("input[name=noTrackTokens]").click(saveSettings);
+	$("input[name=noTrackArtifacts]").click(saveSettings);
+	$("input[name=noTrackTrophies]").click(saveSettings);
 	$("input[name=noTrackEquip]").click(saveSettings);
 
 	// Battle Enhancement
@@ -1441,8 +1453,14 @@ function saveSettings() {
 	hvStat.settings.isTrackStats = $("input[name=isTrackStats]").get(0).checked;
 	hvStat.settings.isTrackShrine = $("input[name=isTrackShrine]").get(0).checked;
 	hvStat.settings.isTrackItems = $("input[name=isTrackItems]").get(0).checked;
+	hvStat.settings.noTrackCredits = $("input[name=noTrackCredits]").get(0).checked;
 	hvStat.settings.noTrackItems = $("input[name=noTrackItems]").get(0).checked;
-	hvStat.settings.noTrackItems = $("input[name=noTrackEquip]").get(0).checked;
+	hvStat.settings.noTrackCrystals = $("input[name=noTrackCrystals]").get(0).checked;
+	hvStat.settings.noTrackMonsterFood = $("input[name=noTrackMonsterFood]").get(0).checked;
+	hvStat.settings.noTrackTokens = $("input[name=noTrackTokens]").get(0).checked;
+	hvStat.settings.noTrackArtifacts = $("input[name=noTrackArtifacts]").get(0).checked;
+	hvStat.settings.noTrackTrophies = $("input[name=noTrackTrophies]").get(0).checked;
+	hvStat.settings.noTrackEquip = $("input[name=noTrackEquip]").get(0).checked;
 
 	// Battle Enhancement
 	hvStat.settings.isShowRoundCounter = $("input[name=isShowRoundCounter]").get(0).checked;
